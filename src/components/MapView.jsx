@@ -1,7 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
 import { useEffect } from "react";
 import L from "leaflet";
-import { Compass } from 'lucide-react'; 
+import { Compass, ExternalLink } from 'lucide-react';
 import "leaflet/dist/leaflet.css";
 
 // Fix Leaflet default icons
