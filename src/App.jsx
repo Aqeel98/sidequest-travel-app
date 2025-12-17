@@ -4,6 +4,7 @@ import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
 import ScrollToTop from './components/ScrollToTop';
+import { Compass } from 'lucide-react'; // Import Icon for loader
 
 import Home from './pages/Home';
 import QuestDetails from './pages/QuestDetails';
@@ -15,7 +16,6 @@ import Profile from './pages/Profile';
 import PartnerDashboard from './pages/PartnerDashboard'; 
 import Emergency from './pages/Emergency';
 
-// --- DEMO BUTTON (Kept for testing) ---
 const RoleSwitcher = () => {
   const { currentUser, switchRole } = useSideQuest();
   if (!currentUser) return null;
@@ -29,14 +29,29 @@ const RoleSwitcher = () => {
   );
 };
 
-const Layout = () => (
-  <div className="min-h-screen bg-gray-50 pt-20 font-sans text-gray-900">
-    <Navbar />
-    <AuthModal />
-    <Outlet />
-    <RoleSwitcher /> {/* Button is active */}
-  </div>
+// --- NEW LOADING COMPONENT ---
+const LoadingScreen = () => (
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
+        <Compass size={48} className="animate-spin mb-4" />
+        <h2 className="text-xl font-bold animate-pulse">Loading SideQuest...</h2>
+    </div>
 );
+
+// --- WRAPPER TO HANDLE LOADING STATE ---
+const MainLayout = () => {
+    const { isLoading } = useSideQuest();
+
+    if (isLoading) return <LoadingScreen />;
+
+    return (
+        <div className="min-h-screen bg-gray-50 pt-20 font-sans text-gray-900">
+            <Navbar />
+            <AuthModal />
+            <Outlet />
+            <RoleSwitcher />
+        </div>
+    );
+};
 
 export default function App() {
   return (
@@ -44,7 +59,7 @@ export default function App() {
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="map" element={<MapPage />} />
             <Route path="quest/:id" element={<QuestDetails />} />
