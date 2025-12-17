@@ -89,14 +89,38 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   const signup = async (email, password, name, role) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) { alert(error.message); return; }
-    
-    if (data.user) {
-        const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
-        await supabase.from('profiles').insert([{ id: data.user.id, email, full_name: name, role: finalRole }]);
-        alert("Account created! You are logged in.");
-        setShowAuthModal(false);
+    try {
+        // 1. Attempt Sign Up
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        
+        if (error) throw error;
+
+        // 2. Check if Email Confirmation is enforced
+        if (data.user && !data.session) {
+            alert("Signup successful! Please check your email to confirm your account before logging in.");
+            return; // Stop here
+        }
+        
+        if (data.user) {
+            // 3. Admin Override logic
+            const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
+            
+            // 4. Create Profile
+            const { error: profileError } = await supabase.from('profiles').insert([{ 
+                id: data.user.id, 
+                email, 
+                full_name: name, 
+                role: finalRole 
+            }]);
+
+            if (profileError) throw profileError;
+
+            alert("Account created! You are logged in.");
+            setShowAuthModal(false);
+        }
+    } catch (err) {
+        console.error("Signup Error:", err);
+        alert(err.message); // Show the actual error message
     }
   };
 

@@ -1,14 +1,41 @@
 import React, { useState } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
-import { PlusCircle, Clock, Edit, Trash2, Check, MapPin, Award } from 'lucide-react';
+import { supabase } from '../supabaseClient'; // Import supabase directly for uploading
+import { PlusCircle, Clock, Edit, Trash2, Check, MapPin, Award, UploadCloud } from 'lucide-react';
 
-// Reusable Quest/Reward Edit Form
+// --- NEW EDIT FORM WITH FILE UPLOAD ---
 const EditForm = ({ item, onSave, onCancel, type }) => {
     const [formData, setFormData] = useState(item);
+    const [uploading, setUploading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // New: Handle Image Upload to Supabase
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        const fileName = `quest-images/${Date.now()}_${file.name.replace(/\s/g, '')}`;
+        
+        // Upload to the 'proofs' bucket (or create a new 'public' bucket if you prefer)
+        const { error } = await supabase.storage.from('proofs').upload(fileName, file);
+
+        if (error) {
+            alert("Error uploading image: " + error.message);
+            setUploading(false);
+            return;
+        }
+
+        // Get the Public URL
+        const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+        
+        // Update the form data with the new Supabase URL
+        setFormData(prev => ({ ...prev, image: data.publicUrl }));
+        setUploading(false);
     };
 
     const fields = type === 'quest' ? [
@@ -16,18 +43,19 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         { name: 'xp_value', label: 'XP Value', type: 'number' },
         { name: 'location_address', label: 'Location', type: 'text' },
         { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending_admin'] },
-        { name: 'image', label: 'Image URL', type: 'url' },
+        // We handle 'image' separately now
         { name: 'description', label: 'Description', type: 'textarea' },
-    ] : [ // Reward Fields
+    ] : [ 
         { name: 'title', label: 'Reward Title', type: 'text' },
         { name: 'xp_cost', label: 'XP Cost', type: 'number' },
         { name: 'description', label: 'Description', type: 'text' },
-        { name: 'image', label: 'Image URL', type: 'url' },
     ];
 
     return (
         <form className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3" onSubmit={(e) => { e.preventDefault(); onSave(item.id, formData); }}>
             <h4 className="font-bold text-lg">{type === 'quest' ? 'Edit Quest' : 'Edit Reward'}</h4>
+            
+            {/* Standard Fields */}
             {fields.map(field => (
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
@@ -42,16 +70,42 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
                     )}
                 </div>
             ))}
+
+            {/* Image Upload Field */}
+            <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Quest Image</label>
+                <div className="flex items-center gap-3">
+                    {formData.image && (
+                        <img src={formData.image} alt="Preview" className="w-12 h-12 object-cover rounded border" />
+                    )}
+                    <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center">
+                        <UploadCloud size={16} className="mr-2" />
+                        {uploading ? "Uploading..." : "Upload New Image"}
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                    </label>
+                </div>
+                {/* Fallback URL input if they still want to paste */}
+                <input 
+                    type="text" 
+                    name="image" 
+                    placeholder="Or paste URL here..." 
+                    value={formData.image || ''} 
+                    onChange={handleChange} 
+                    className="mt-1 w-full border p-2 rounded text-xs text-gray-500" 
+                />
+            </div>
+
             <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={onCancel} className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm transition">Cancel</button>
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition">Save Changes</button>
+                <button type="submit" disabled={uploading} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition">
+                    {uploading ? 'Wait...' : 'Save Changes'}
+                </button>
             </div>
         </form>
     );
 };
 
 const Admin = () => {
-  // Removed switchRole from here
   const { currentUser, questProgress, quests, rewards, users, approveSubmission, rejectSubmission, approveNewQuest, updateQuest, deleteQuest, updateReward, deleteReward } = useSideQuest();
   const [activeTab, setActiveTab] = useState('submissions');
   const [editingId, setEditingId] = useState(null);
