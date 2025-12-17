@@ -90,37 +90,40 @@ export const SideQuestProvider = ({ children }) => {
 
   const signup = async (email, password, name, role) => {
     try {
-        // 1. Attempt Sign Up
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        // 1. Create Auth User
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password }).catch(() => ({})); 
+        // Try login first just in case, if fails, sign up:
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
         
-        if (error) throw error;
+        if (signUpError) throw signUpError;
+        if (!signUpData.user) throw new Error("Signup failed");
 
-        // 2. Check if Email Confirmation is enforced
-        if (data.user && !data.session) {
-            alert("Signup successful! Please check your email to confirm your account before logging in.");
-            return; // Stop here
-        }
+        // 2. Prepare Profile Data
+        const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
+        const newProfile = { 
+            id: signUpData.user.id, 
+            email, 
+            full_name: name, 
+            role: finalRole 
+        };
+
+        // 3. Save Profile to Database
+        const { error: profileError } = await supabase.from('profiles').insert([newProfile]);
         
-        if (data.user) {
-            // 3. Admin Override logic
-            const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
-            
-            // 4. Create Profile
-            const { error: profileError } = await supabase.from('profiles').insert([{ 
-                id: data.user.id, 
-                email, 
-                full_name: name, 
-                role: finalRole 
-            }]);
-
-            if (profileError) throw profileError;
-
-            alert("Account created! You are logged in.");
-            setShowAuthModal(false);
+        if (profileError) {
+            // Ignore "duplicate key" error (means profile already exists from a previous attempt)
+            if (!profileError.message.includes('duplicate key')) throw profileError;
         }
+
+        // 4. --- FORCE UPDATE THE UI ---
+        setCurrentUser(newProfile); // <--- This makes the Login button disappear instantly!
+        
+        alert("Account created! Welcome, " + name);
+        setShowAuthModal(false);
+        
     } catch (err) {
         console.error("Signup Error:", err);
-        alert(err.message); // Show the actual error message
+        alert(err.message);
     }
   };
 
