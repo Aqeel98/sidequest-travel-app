@@ -137,6 +137,8 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                   <h3 className="font-bold text-lg mb-1 text-gray-900">{quest.title}</h3>
                   <div className="text-xs text-gray-500 mb-3">{quest.location_address}</div>
                   
+                  
+
                   {/* --- STATUS --- */}
                   <div className={`text-xs font-bold mb-3 p-1 rounded ${status === 'approved' ? 'text-emerald-600 bg-emerald-50' : status === 'in_progress' ? 'text-blue-600 bg-blue-50' : 'text-brand-600 bg-brand-50'}`}>
                      STATUS: {status.replace('_', ' ').toUpperCase()} 
@@ -146,6 +148,24 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                   <button
                       onClick={() => onSelectQuest(quest)}
                       className="mt-2 w-full bg-brand-500 text-white px-3 py-2 rounded text-sm font-bold flex items-center justify-center hover:bg-brand-600 transition-colors"
+                    >
+                      View Quest Details →
+                    </button>
+                    {/* --- GOOGLE MAPS BUTTON (NEW) --- */}
+                  <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent map click interference
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${quest.lat},${quest.lng}`, '_blank');
+                      }}
+                      className="w-full mb-2 bg-blue-50 text-blue-600 px-3 py-2 rounded text-sm font-bold flex items-center justify-center hover:bg-blue-100 transition-colors border border-blue-200"
+                    >
+                      <ExternalLink size={14} className="mr-2" /> Open in Google Maps
+                  </button>
+
+                  {/* --- APP NAVIGATION BUTTON --- */}
+                  <button
+                      onClick={() => onSelectQuest(quest)}
+                      className="w-full bg-brand-500 text-white px-3 py-2 rounded text-sm font-bold flex items-center justify-center hover:bg-brand-600 transition-colors shadow-sm"
                     >
                       View Quest Details →
                     </button>

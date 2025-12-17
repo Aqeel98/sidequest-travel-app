@@ -56,7 +56,7 @@ export const SideQuestProvider = ({ children }) => {
 
   // --- AUTH ACTIONS ---
 
-  const login = (email, name) => {
+  const login = (email, name, role = 'Traveler') => { // <-- Accept Role
     let existingUser = users.find(u => u.email === email);
     
     if (existingUser) {
@@ -66,7 +66,7 @@ export const SideQuestProvider = ({ children }) => {
         id: Date.now().toString(), 
         email, 
         name: name || email.split('@')[0], 
-        role: 'Traveler', 
+        role: role, // <-- Use the selected role
         xp: 0 
       };
       setUsers([...users, newUser]);
