@@ -76,7 +76,7 @@ export const initialData = {
       title: "English Skill Share - Village Library",
       description: "Spend an hour at the Ahangama Community Library reading to kids or helping catalog English books.",
       category: "Education",
-      xp_value: 65,
+      xp_value: 70,
       location_address: "Ahangama Town",
       status: "active",
       instructions: "Speak to the librarian. Spend time conversing in English with local students to improve their confidence.",
@@ -110,9 +110,8 @@ export const initialData = {
       instructions: "Explore the museum, observe artisans at work, and interact with mask makers to learn about the tradition.",
       proof_requirements: "Photo of a traditional mask with you standing beside it or with an artisan.",
       image: "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSzpIsLFFykqlzy4zybcJCwga6AB-d8kBvKlg3qRT0rF6NXR_YYqBQr8_WIuHPKA-mzFUrztOEVtU8zUc_COPsusz9BCE03OogqigrzJDi6WDGxRA4kAuVp67J1dRTSBdEg4R1ZTBikQa0Vd=s1360-w1360-h1020-rw", 
-      lat: 6.242412132460779,
-      lng: 80.05062198165373,
-      
+      lat: 6.241865476196491,
+      lng: 80.05032749590787,
     },
     {
       id: '9',
@@ -244,10 +243,10 @@ export const initialData = {
       image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&auto=format&fit=crop"
     },
     {
-      id: '4', // This is the updated reward
+      id: '4', 
       title: "10% Off Eco-Lodge Stay",
       description: "Redeem 10% off a room booking at a certified South Coast Eco-Lodge (e.g., Koggala / Mirissa).",
-      xp_cost: 85, // Increased XP cost to reflect value
+      xp_cost: 85, 
       status: "active",
       image: "https://www.journeyera.com/wp-content/uploads/2023/05/eco-resorts-sri-lanka-342837544.jpg"
     }
