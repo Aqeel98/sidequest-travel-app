@@ -224,18 +224,32 @@ export const SideQuestProvider = ({ children }) => {
   };
   
   const acceptQuest = async (questId) => {
-      const { data, error } = await supabase.from('submissions').insert([{
-          quest_id: questId, 
-          traveler_id: currentUser.id, 
-          status: 'in_progress'
-      }]).select();
-      
-      if (!error) { 
-          setQuestProgress([...questProgress, data[0]]); 
-          return true; 
-      }
-      return false;
-  };
+    if (!currentUser) {
+        alert("Please log in to accept a quest.");
+        return false;
+    }
+    
+    try {
+        const { data, error } = await supabase.from('submissions').insert([{
+            quest_id: questId, 
+            traveler_id: currentUser.id, // <--- MUST be currentUser.id
+            status: 'in_progress'
+        }]).select();
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+            setQuestProgress([...questProgress, data[0]]); 
+            return true; 
+        }
+        return false;
+
+    } catch (error) {
+        console.error("Accept Quest Failed:", error);
+        alert("Failed to accept quest. You might have already accepted it, or there's a connection error.");
+        return false;
+    }
+};
 
   const submitProof = async (questId, note, file) => {
     let proofUrl = null;
