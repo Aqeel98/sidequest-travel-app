@@ -100,7 +100,7 @@ export const initialData = {
       lng: 80.6058419,
     },
     {
-      id: '16',
+      id: '8',
       title: "Ariyapala Traditional Masks & Museum",
       description: "Visit the Ariyapala Traditional Masks & Museum to learn about Sri Lanka’s rich mask‑making traditions and support local artisans who keep this cultural craft alive.",
       category: "Cultural",
@@ -110,8 +110,8 @@ export const initialData = {
       instructions: "Explore the museum, observe artisans at work, and interact with mask makers to learn about the tradition.",
       proof_requirements: "Photo of a traditional mask with you standing beside it or with an artisan.",
       image: "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSzpIsLFFykqlzy4zybcJCwga6AB-d8kBvKlg3qRT0rF6NXR_YYqBQr8_WIuHPKA-mzFUrztOEVtU8zUc_COPsusz9BCE03OogqigrzJDi6WDGxRA4kAuVp67J1dRTSBdEg4R1ZTBikQa0Vd=s1360-w1360-h1020-rw", 
-      lat: 6.247363,
-      lng: 80.085420
+      lat: 6.241823,
+      lng: 80.0503797,
     },
     {
       id: '9',
