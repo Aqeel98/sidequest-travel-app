@@ -55,8 +55,8 @@ const Navbar = () => {
             <div className="flex items-center space-x-4 pl-2">
             {/* Wrap the user info in a Link */}
             <Link to="/profile" className="flex flex-col items-end cursor-pointer hover:opacity-80 transition-opacity">
-              <span className="text-xs text-gray-400 font-medium">Traveler</span>
-              <span className="text-sm font-bold text-gray-800">{currentUser.name || currentUser.email.split('@')[0]}</span>
+              <span className="text-xs text-gray-400 font-medium">{currentUser.role}</span>
+              <span className="text-sm font-bold text-gray-800">{currentUser.full_name || currentUser.email.split('@')[0]}</span>
             </Link>
             <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full font-bold text-xs shadow-md">
               ⭐ {currentUser.xp} XP

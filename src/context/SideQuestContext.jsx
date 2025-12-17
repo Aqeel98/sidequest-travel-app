@@ -310,16 +310,47 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   // --- ADMIN ACTIONS ---
+  // --- ADMIN ACTIONS ---
   const approveSubmission = async (submissionId) => {
+    // 1. Find the submission to get the Traveler ID and Quest XP
     const sub = questProgress.find(p => p.id === submissionId);
-    const quest = quests.find(q => q.id === sub.quest_id);
+    if (!sub) return; // Exit if not found
     
+    const quest = quests.find(q => q.id === sub.quest_id);
+    if (!quest) return; // Exit if quest not found
+
+    // 2. Mark submission as approved
     await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId);
     
-    const { data: traveler } = await supabase.from('profiles').select('xp').eq('id', sub.traveler_id).single();
-    await supabase.from('profiles').update({ xp: (traveler.xp || 0) + quest.xp_value }).eq('id', sub.traveler_id);
+    // 3. Award XP to the TRAVELER (sub.traveler_id)
+    const { data: traveler, error: xpError } = await supabase
+        .from('profiles')
+        .select('xp')
+        .eq('id', sub.traveler_id) // <--- CRITICAL: Use the Traveler's ID
+        .single();
+    
+    if (xpError) {
+        console.error("XP Lookup Error:", xpError);
+        alert("Error looking up Traveler XP. Contact Support.");
+        return;
+    }
+
+    const newXp = (traveler.xp || 0) + quest.xp_value;
+    
+    // 4. Update XP in the Database
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ xp: newXp })
+        .eq('id', sub.traveler_id);
+
+    if (updateError) {
+        console.error("XP Update Error:", updateError);
+        alert("Error updating Traveler XP in database. Contact Support.");
+        return;
+    }
 
     alert("Verified and XP Awarded!");
+    // Refresh the submission list for the Admin
     fetchSubmissions(currentUser.id, 'Admin'); 
   };
 

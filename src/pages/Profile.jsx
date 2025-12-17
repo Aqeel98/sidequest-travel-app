@@ -87,7 +87,7 @@ const Profile = () => {
                 <Award className="text-yellow-500 mr-3" size={32} />
                 Traveler Profile
             </h1>
-            <p className="text-lg text-gray-500 mb-8">Welcome back, {currentUser.name || currentUser.email.split('@')[0]}!</p>
+            <p className="text-lg text-gray-500 mb-8">Welcome back, {currentUser.full_name || currentUser.email.split('@')[0]}!</p>
 
             {/* --- XP & STATS --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
