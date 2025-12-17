@@ -219,9 +219,20 @@ export const SideQuestProvider = ({ children }) => {
   };
   
   const deleteQuest = async (id) => {
-      const { error } = await supabase.from('quests').delete().eq('id', id);
-      if (!error) fetchQuests();
-  };
+    try {
+        const { error } = await supabase.from('quests').delete().eq('id', id);
+
+        if (error) throw error;
+        
+        // --- FIX: Update the local state immediately ---
+        setQuests(prevQuests => prevQuests.filter(q => q.id !== id));
+        
+        alert("Quest successfully deleted from Database!");
+    } catch (error) {
+        console.error("Delete Quest Error:", error);
+        alert("Failed to delete quest: " + error.message);
+    }
+};
   
   const acceptQuest = async (questId) => {
     if (!currentUser) {
