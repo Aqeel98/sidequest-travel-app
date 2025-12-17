@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
 import { PlusCircle, Clock, Edit, Trash2, Check, MapPin, Award } from 'lucide-react';
 
-// Reusable Quest/Reward Edit Form (To manage state for the main forms)
+// Reusable Quest/Reward Edit Form
 const EditForm = ({ item, onSave, onCancel, type }) => {
     const [formData, setFormData] = useState(item);
 
@@ -28,7 +28,6 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
     return (
         <form className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3" onSubmit={(e) => { e.preventDefault(); onSave(item.id, formData); }}>
             <h4 className="font-bold text-lg">{type === 'quest' ? 'Edit Quest' : 'Edit Reward'}</h4>
-            
             {fields.map(field => (
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
@@ -43,7 +42,6 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
                     )}
                 </div>
             ))}
-
             <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={onCancel} className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm transition">Cancel</button>
                 <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition">Save Changes</button>
@@ -52,9 +50,9 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
     );
 };
 
-
 const Admin = () => {
-  const { currentUser, questProgress, quests, rewards, users, approveSubmission, rejectSubmission, approveNewQuest, switchRole, updateQuest, deleteQuest, updateReward, deleteReward } = useSideQuest();
+  // Removed switchRole from here
+  const { currentUser, questProgress, quests, rewards, users, approveSubmission, rejectSubmission, approveNewQuest, updateQuest, deleteQuest, updateReward, deleteReward } = useSideQuest();
   const [activeTab, setActiveTab] = useState('submissions');
   const [editingId, setEditingId] = useState(null);
 
@@ -62,7 +60,8 @@ const Admin = () => {
     return (
       <div className="p-12 text-center">
         <h2 className="text-2xl font-bold text-red-500 mb-4">Admin Access Only</h2>
-        <button onClick={() => switchRole('Admin')} className="text-blue-500 underline">Demo: Switch to Admin Role</button>
+        <p className="text-gray-600">Please log in with an Admin account.</p>
+        <p className="text-sm text-gray-400 mt-2">(Tip: Change your role to 'Admin' in the Supabase Database)</p>
       </div>
     );
   }
@@ -70,20 +69,18 @@ const Admin = () => {
   const pendingSubmissions = questProgress.filter(p => p.status === 'pending');
   const pendingNewQuests = quests.filter(q => q.status === 'pending_admin');
 
-  // Handlers for Quest/Reward Management
+  // Handlers
   const handleSaveQuest = (id, fields) => { updateQuest(id, fields); setEditingId(null); };
   const handleSaveReward = (id, fields) => { updateReward(id, fields); setEditingId(null); };
-  
   const handleDeleteQuest = (id) => { if(window.confirm('Are you sure you want to delete this quest?')) deleteQuest(id); };
   const handleDeleteReward = (id) => { if(window.confirm('Are you sure you want to delete this reward?')) deleteReward(id); };
-
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Content Management System</h1>
 
       {/* --- TAB NAVIGATION --- */}
-      <div className="flex border-b mb-6">
+      <div className="flex border-b mb-6 overflow-x-auto">
         <button onClick={() => setActiveTab('submissions')} className={`px-6 py-3 font-semibold transition ${activeTab === 'submissions' ? 'border-b-4 border-yellow-500 text-yellow-600' : 'text-gray-500 hover:text-yellow-600'}`}>
           Proof Submissions ({pendingSubmissions.length})
         </button>
@@ -98,10 +95,6 @@ const Admin = () => {
         </button>
       </div>
 
-
-      {/* -------------------- TAB CONTENT -------------------- */}
-
-
       {/* --- PENDING SUBMISSIONS TAB --- */}
       {activeTab === 'submissions' && (
         <div className="space-y-6">
@@ -113,16 +106,28 @@ const Admin = () => {
                 return (
                   <div key={progress.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                      {/* ... Submission Details ... */}
+                      
                       <div className="flex-1">
                         <h3 className="font-bold text-lg text-gray-800">{quest?.title}</h3>
                         <p className="text-sm text-gray-600">Traveler: {traveler?.email || 'Unknown'}</p>
                         <p className="text-sm text-gray-600 mt-1">XP to Award: <span className="font-bold text-green-600">{quest?.xp_value} XP</span></p>
+    
                         <div className="mt-3 bg-gray-50 p-3 rounded">
-                          <p className="text-sm font-medium text-gray-700">Submission Note:</p>
-                          <p className="text-sm text-gray-600 mt-1">{progress.completion_note || 'No note provided'}</p>
+                           <p className="text-sm font-medium text-gray-700">Submission Note:</p>
+                           <p className="text-sm text-gray-600 mt-1">{progress.completion_note || 'No note provided'}</p>
+      
+                           {/* SHOW PHOTO */}
+                           {progress.proof_photo_url && (
+                                <div className="mt-2">
+                                   <p className="text-xs font-bold text-gray-500 mb-1">Proof Photo:</p>
+                                   <a href={progress.proof_photo_url} target="_blank" rel="noreferrer">
+                                      <img src={progress.proof_photo_url} alt="Proof" className="h-40 w-auto rounded-lg border border-gray-300 shadow-sm object-cover" />
+                                   </a>
+                                </div>
+                           )}
                         </div>
                       </div>
+
                       <div className="flex gap-2 h-fit">
                         <button onClick={() => approveSubmission(progress.id)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition">Approve</button>
                         <button onClick={() => rejectSubmission(progress.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition">Reject</button>
@@ -135,7 +140,6 @@ const Admin = () => {
           )}
         </div>
       )}
-
 
       {/* --- PENDING NEW QUESTS TAB --- */}
       {activeTab === 'newQuests' && (
@@ -163,7 +167,6 @@ const Admin = () => {
         </div>
       )}
 
-
       {/* --- QUEST MANAGER TAB --- */}
       {activeTab === 'quests' && (
         <div className="space-y-4">
@@ -187,7 +190,6 @@ const Admin = () => {
             </div>
         </div>
       )}
-
 
       {/* --- REWARD MANAGER TAB --- */}
       {activeTab === 'rewards' && (
