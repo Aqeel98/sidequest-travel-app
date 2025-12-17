@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
@@ -71,6 +72,7 @@ export default function App() {
             <Route path="emergency" element={<Emergency />} />
           </Route>
         </Routes>
+        <SpeedInsights />
       </BrowserRouter>
     </SideQuestProvider>
   );
