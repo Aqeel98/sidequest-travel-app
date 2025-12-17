@@ -162,13 +162,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                       <ExternalLink size={14} className="mr-2" /> Open in Google Maps
                   </button>
 
-                  {/* --- APP NAVIGATION BUTTON --- */}
-                  <button
-                      onClick={() => onSelectQuest(quest)}
-                      className="w-full bg-brand-500 text-white px-3 py-2 rounded text-sm font-bold flex items-center justify-center hover:bg-brand-600 transition-colors shadow-sm"
-                    >
-                    
-                    </button>
+                
                 </div>
               </Popup>
             </Marker>
