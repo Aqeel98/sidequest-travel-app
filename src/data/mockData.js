@@ -245,7 +245,7 @@ export const initialData = {
     {
       id: '4', 
       title: "10% Off Eco-Lodge Stay",
-      description: "Redeem 10% off a room booking at a certified South Coast Eco-Lodge (e.g., Koggala / Mirissa).",
+      description: "Redeem 10% off a room booking at a certified South Coast Eco-Lodge (e.g., Koggala).",
       xp_cost: 85, 
       status: "active",
       image: "https://www.journeyera.com/wp-content/uploads/2023/05/eco-resorts-sri-lanka-342837544.jpg"
