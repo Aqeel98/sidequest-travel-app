@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
-import { supabase } from '../supabaseClient'; // Import supabase directly for uploading
+import { supabase } from '../supabaseClient'; // <--- Import Supabase for uploads
 import { PlusCircle, Clock, Edit, Trash2, Check, MapPin, Award, UploadCloud } from 'lucide-react';
 
-// --- NEW EDIT FORM WITH FILE UPLOAD ---
+// --- EDIT FORM WITH FILE UPLOAD ---
 const EditForm = ({ item, onSave, onCancel, type }) => {
     const [formData, setFormData] = useState(item);
     const [uploading, setUploading] = useState(false);
@@ -13,37 +13,41 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // New: Handle Image Upload to Supabase
+    // --- NEW: HANDLE IMAGE UPLOAD ---
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         setUploading(true);
-        const fileName = `quest-images/${Date.now()}_${file.name.replace(/\s/g, '')}`;
-        
-        // Upload to the 'proofs' bucket (or create a new 'public' bucket if you prefer)
-        const { error } = await supabase.storage.from('proofs').upload(fileName, file);
+        try {
+            // 1. Upload to Supabase Storage ('proofs' bucket)
+            const fileName = `admin-uploads/${Date.now()}_${file.name.replace(/\s/g, '')}`;
+            const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, file);
+            
+            if (uploadError) throw uploadError;
 
-        if (error) {
-            alert("Error uploading image: " + error.message);
+            // 2. Get the Public URL
+            const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+            
+            // 3. Update the form state with the new URL
+            setFormData(prev => ({ ...prev, image: data.publicUrl }));
+            alert("Image uploaded successfully!");
+            
+        } catch (error) {
+            console.error(error);
+            alert("Upload failed: " + error.message);
+        } finally {
             setUploading(false);
-            return;
         }
-
-        // Get the Public URL
-        const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
-        
-        // Update the form data with the new Supabase URL
-        setFormData(prev => ({ ...prev, image: data.publicUrl }));
-        setUploading(false);
     };
 
+    // Form Fields definition
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
         { name: 'xp_value', label: 'XP Value', type: 'number' },
         { name: 'location_address', label: 'Location', type: 'text' },
         { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending_admin'] },
-        // We handle 'image' separately now
+        // Removed 'image' text input from here, we handle it separately below
         { name: 'description', label: 'Description', type: 'textarea' },
     ] : [ 
         { name: 'title', label: 'Reward Title', type: 'text' },
@@ -55,7 +59,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         <form className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3" onSubmit={(e) => { e.preventDefault(); onSave(item.id, formData); }}>
             <h4 className="font-bold text-lg">{type === 'quest' ? 'Edit Quest' : 'Edit Reward'}</h4>
             
-            {/* Standard Fields */}
+            {/* Standard Text Fields */}
             {fields.map(field => (
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
@@ -71,33 +75,33 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
                 </div>
             ))}
 
-            {/* Image Upload Field */}
-            <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Quest Image</label>
-                <div className="flex items-center gap-3">
+            {/* --- NEW: IMAGE UPLOADER --- */}
+            <div className="border-t pt-2 mt-2">
+                <label className="block text-xs font-medium text-gray-700 mb-2">Quest/Reward Image</label>
+                <div className="flex items-center gap-4">
                     {formData.image && (
-                        <img src={formData.image} alt="Preview" className="w-12 h-12 object-cover rounded border" />
+                        <img src={formData.image} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
                     )}
-                    <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center">
-                        <UploadCloud size={16} className="mr-2" />
-                        {uploading ? "Uploading..." : "Upload New Image"}
-                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                    
+                    <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center transition-all shadow-sm">
+                        <UploadCloud size={18} className="mr-2 text-brand-600" />
+                        {uploading ? "Uploading..." : "Click to Change Photo"}
+                        <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={handleImageUpload} 
+                            disabled={uploading} 
+                        />
                     </label>
                 </div>
-                {/* Fallback URL input if they still want to paste */}
-                <input 
-                    type="text" 
-                    name="image" 
-                    placeholder="Or paste URL here..." 
-                    value={formData.image || ''} 
-                    onChange={handleChange} 
-                    className="mt-1 w-full border p-2 rounded text-xs text-gray-500" 
-                />
+                {/* Hidden input to store the URL string */}
+                <input type="hidden" name="image" value={formData.image || ''} />
             </div>
 
-            <div className="flex gap-3 justify-end pt-2">
+            <div className="flex gap-3 justify-end pt-4">
                 <button type="button" onClick={onCancel} className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm transition">Cancel</button>
-                <button type="submit" disabled={uploading} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition">
+                <button type="submit" disabled={uploading} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition font-bold shadow">
                     {uploading ? 'Wait...' : 'Save Changes'}
                 </button>
             </div>
@@ -169,8 +173,6 @@ const Admin = () => {
                         <div className="mt-3 bg-gray-50 p-3 rounded">
                            <p className="text-sm font-medium text-gray-700">Submission Note:</p>
                            <p className="text-sm text-gray-600 mt-1">{progress.completion_note || 'No note provided'}</p>
-      
-                           {/* SHOW PHOTO */}
                            {progress.proof_photo_url && (
                                 <div className="mt-2">
                                    <p className="text-xs font-bold text-gray-500 mb-1">Proof Photo:</p>
@@ -207,7 +209,6 @@ const Admin = () => {
                     <div className="flex-1 text-left">
                       <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
                       <p className="text-sm text-gray-600 mt-1">By: {creator?.email || 'Unknown Partner'}</p>
-                      <p className="text-xs text-brand-700 font-medium">{quest.location_address}</p>
                     </div>
                     <div className="flex gap-2 mt-3 md:mt-0">
                       <button onClick={() => approveNewQuest(quest.id)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition flex items-center"><Check size={18} className="mr-1"/> Approve</button>
@@ -229,9 +230,12 @@ const Admin = () => {
             {quests.map(quest => (
                 <div key={quest.id} className="border-b pb-4">
                     <div className="flex justify-between items-start">
-                        <div>
-                            <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
-                            <p className="text-xs text-gray-500 flex items-center"><MapPin size={12} className="mr-1"/> {quest.location_address} - <span className="ml-1 font-semibold text-brand-600">({quest.status})</span></p>
+                        <div className="flex items-center gap-4">
+                            <img src={quest.image || "https://via.placeholder.com/50"} className="w-12 h-12 rounded object-cover border" alt="thumbnail" />
+                            <div>
+                                <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
+                                <p className="text-xs text-gray-500 flex items-center"><MapPin size={12} className="mr-1"/> {quest.location_address}</p>
+                            </div>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => setEditingId(editingId === quest.id ? null : quest.id)} className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50"><Edit size={18} /></button>
@@ -253,9 +257,12 @@ const Admin = () => {
             {rewards.map(reward => (
                 <div key={reward.id} className="border-b pb-4">
                     <div className="flex justify-between items-start">
-                        <div>
-                            <h3 className="font-bold text-lg text-gray-900">{reward.title}</h3>
-                            <p className="text-xs text-gray-500 flex items-center"><Award size={12} className="mr-1"/> Cost: {reward.xp_cost} XP</p>
+                        <div className="flex items-center gap-4">
+                             <img src={reward.image || "https://via.placeholder.com/50"} className="w-12 h-12 rounded object-cover border" alt="thumbnail" />
+                             <div>
+                                <h3 className="font-bold text-lg text-gray-900">{reward.title}</h3>
+                                <p className="text-xs text-gray-500 flex items-center"><Award size={12} className="mr-1"/> Cost: {reward.xp_cost} XP</p>
+                             </div>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => setEditingId(editingId === reward.id ? null : reward.id)} className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50"><Edit size={18} /></button>

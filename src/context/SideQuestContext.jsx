@@ -90,40 +90,44 @@ export const SideQuestProvider = ({ children }) => {
 
   const signup = async (email, password, name, role) => {
     try {
-        // 1. Create Auth User
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password }).catch(() => ({})); 
-        // Try login first just in case, if fails, sign up:
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+        // 1. Try to Sign Up
+        const { data, error } = await supabase.auth.signUp({ email, password });
         
-        if (signUpError) throw signUpError;
-        if (!signUpData.user) throw new Error("Signup failed");
+        if (error) throw error;
 
-        // 2. Prepare Profile Data
-        const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
-        const newProfile = { 
-            id: signUpData.user.id, 
-            email, 
-            full_name: name, 
-            role: finalRole 
-        };
+        // If email confirmation is ON, session might be null, but user exists.
+        // We proceed to create the profile anyway so they can log in later.
+        if (data.user) {
+            
+            // 2. Prepare Profile Data
+            const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
+            const newProfile = { 
+                id: data.user.id, 
+                email, 
+                full_name: name, 
+                role: finalRole 
+            };
 
-        // 3. Save Profile to Database
-        const { error: profileError } = await supabase.from('profiles').insert([newProfile]);
-        
-        if (profileError) {
-            // Ignore "duplicate key" error (means profile already exists from a previous attempt)
-            if (!profileError.message.includes('duplicate key')) throw profileError;
+            // 3. Save Profile (Upsert = Fixes the "Hang" if profile is missing)
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .upsert([newProfile], { onConflict: 'id' }); 
+            
+            if (profileError) throw profileError;
+
+            // 4. Update UI
+            setCurrentUser(newProfile);
+            alert("Account created! Welcome, " + name);
+            setShowAuthModal(false);
         }
-
-        // 4. --- FORCE UPDATE THE UI ---
-        setCurrentUser(newProfile); // <--- This makes the Login button disappear instantly!
-        
-        alert("Account created! Welcome, " + name);
-        setShowAuthModal(false);
-        
     } catch (err) {
         console.error("Signup Error:", err);
-        alert(err.message);
+        // If the error is "User already registered", we try to just log them in automatically
+        if (err.message.includes("registered")) {
+             alert("You are already registered! Please switch to 'Log In'.");
+        } else {
+             alert(err.message);
+        }
     }
   };
 
