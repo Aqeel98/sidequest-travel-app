@@ -11,7 +11,7 @@ export const initialData = {
       status: "active",
       instructions: "Grab a bag. Spend 30 mins collecting plastic bottles, wrappers, or nets. Dispose of them in a municipal bin.",
       proof_requirements: "Photo of your collected trash bag with the ocean in the background.",
-      image: "https://www.redcross.lk/wp-content/uploads/2016/06/IMG_0552.jpg",
+      image: "  ",
       lat: 6.8511, // Pin placed at Mt Lavinia, but applies to coast
       lng: 79.8659,
     },
