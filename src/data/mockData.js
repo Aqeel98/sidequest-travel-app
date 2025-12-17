@@ -11,9 +11,9 @@ export const initialData = {
       status: "active",
       instructions: "Grab a bag. Spend 30 mins collecting plastic bottles, wrappers, or nets. Dispose of them in a municipal bin.",
       proof_requirements: "Photo of your collected trash bag with the ocean in the background.",
-      image: "https://images.squarespace-cdn.com/content/v1/624b15eaed90eb4638ead49d/1682009905898-QDDJG8JX47K0KFY3BFAJ/header_8_.jpg?format=2500w",
-      lat: 6.8200,
-      lng: 79.8650,
+      image: "https://insightresortsrilanka.com/wp-content/uploads/2023/04/beach-cleanup-ahangama.webp",
+      lat: 6.8418072,
+      lng: 79.8624083,
     },
     {
       id: '2',
@@ -40,22 +40,22 @@ export const initialData = {
       instructions: "Drop off non-perishable dry rations (dhal, rice, sugar) or hygiene kits at the collection desk.",
       proof_requirements: "Photo of your donation receipt or the handover.",
       image: "https://www.redcross.lk/wp-content/uploads/2012/01/Emblem_10.jpg",
-      lat: 6.9147,
-      lng: 79.8608,
+      lat: 6.913392,
+      lng: 79.857521
     },
     {
       id: '4',
-      title: "Community Kitchen Volunteer",
+      title: "SOS Children’s Village Galle",
       description: "Help prepare or serve meals for low-income families via local temple kitchens or 'Voice for Voiceless'.",
       category: "Social",
       xp_value: 70,
-      location_address: "Galle / South Coast",
+      location_address: "Galle",
       status: "active",
       instructions: "Assist in chopping vegetables, packing meal parcels, or serving food during the lunch hour service.",
       proof_requirements: "Selfie wearing an apron or serving spoon at the location.",
-      image: "https://images.unsplash.com/photo-1599059813005-11265ba4b4ce?w=800&auto=format&fit=crop",
-      lat: 6.0535,
-      lng: 80.2210,
+      image: "https://www.soschildrensvillages.lk/getmedia/0fe4f67a-0fd7-4916-8e01-7a5994e7ed37/SOS-Umbrella-pos-en.png?width=319&height=80&ext=.png",
+      lat: 6.0626158,
+      lng: 80.1999893,
     },
     {
       id: '5',
@@ -68,8 +68,8 @@ export const initialData = {
       instructions: "Purchase merchandise (proceeds go to dogs) or drop off a bag of dry dog food.",
       proof_requirements: "Photo of your purchase or food donation.",
       image: "https://cdn.brandfetch.io/idbMyeU1dn/w/295/h/101/theme/light/logo.png?c=1dxbfHSJFAPEGdCLU4o5B",
-      lat: 6.8967,
-      lng: 79.8589,
+      lat: 6.8873854,
+      lng: 79.8624083,
     },
     {
       id: '6',
@@ -96,8 +96,8 @@ export const initialData = {
       instructions: "Bring old clean towels, cotton wool, or bandages. These supplies are vital for daily surgeries.",
       proof_requirements: "Photo outside the WECare clinic signage.",
       image: "https://z-p3-scontent.fcmb7-1.fna.fbcdn.net/v/t39.30808-6/275054290_324386229727586_8927748864198790942_n.png?_nc_cat=111&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=-6kEBTrLyaIQ7kNvwGXKgWv&_nc_oc=AdlyDGBc6Sv2uJKvaMCm8wQOBUC6SZw3aqdnrCqXW0a6MwxKO1P7cTTqCvMEJkwWya8&_nc_zt=23&_nc_ht=z-p3-scontent.fcmb7-1.fna&_nc_gid=ue75Of4RFqkBuwV3GJOcMA&oh=00_AfnODr8PKbBLTWuptF5AsTM3d14V8zaK5G5QjrXhvm73tw&oe=69474FA1",
-      lat: 5.9381,
-      lng: 80.6058,
+      lat: 5.9381131,
+      lng: 80.6058419,
     },
     {
       id: '8',
@@ -138,11 +138,11 @@ export const initialData = {
       instructions: "Pay the entrance fee (funding conservation) and observe the rehabilitation tanks.",
       proof_requirements: "Selfie near the conservation information board.",
       image: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1a/60/f6/9b/sea-turtle-farm-and-hatchery.jpg?w=1400&h=-1&s=1",
-      lat: 6.3353,
-      lng: 80.0274,
+      lat: 6.2999135,
+      lng: 80.0377064,
     },
     
-    // --- UPDATED QUESTS (11-15) ---
+  
     
     {
       id: '11',
@@ -169,8 +169,8 @@ export const initialData = {
       instructions: "Visit the Ahangama Sunday market (or daily stalls). Spend at least 1000 LKR on local produce.",
       proof_requirements: "Photo of your basket of fresh fruit/veg at the market stalls.",
       image: "https://www.horana.ps.gov.lk/wp-content/uploads/Pola.jpg",
-      lat: 6.0120,
-      lng: 80.3644,
+      lat: 5.9731851,
+      lng: 80.3618497,
     },
     {
       id: '13',
@@ -183,8 +183,9 @@ export const initialData = {
       instructions: "Purchase a ball or bat from a local shop. Hand it over to the school security or administration block.",
       proof_requirements: "Photo of the sports equipment with the school in background.",
       image: "https://srilankaglocalcountryprofile.wordpress.com/wp-content/uploads/2013/07/s070427_cricket.jpg",
-      lat: 6.0020,
-      lng: 80.2900,
+      lat: 6.0025174,
+      lng: 80.3098695,
+
     },
     {
       id: '14',
@@ -197,8 +198,8 @@ export const initialData = {
       instructions: "Visit the sanctuary (donation based). Learn about Sri Lanka's endemic species and conservation efforts.",
       proof_requirements: "Photo at the Hiyare reservoir or entrance gate.",
       image: "https://wsrv.nl/?url=https://wp.resplendentceylon.com/wp-content/uploads/2025/07/Amazing-Hotels-GIF-V2-2.png&w=699&h=440&output=webp&dpr=2&q=100",
-      lat: 6.0580,
-      lng: 80.3100,
+      lat: 6.0582322,
+      lng: 80.3195698,
     },
     {
       id: '15',
@@ -211,8 +212,8 @@ export const initialData = {
       instructions: "Hike to the Jungle Beach or Peace Pagoda. Collect plastic bottles along the forest path.",
       proof_requirements: "Photo of your collected trash with the Peace Pagoda in view.",
       image: "https://cdn.forevervacation.com/uploads/digital/assets/rumassala-sanctuaries-jungle.webp?tr=w-1235,h-354",
-      lat: 6.0169,
-      lng: 80.2363,
+      lat: 6.0180556,
+      lng: 80.2416667,
     }
   ],
   questProgress: [],
