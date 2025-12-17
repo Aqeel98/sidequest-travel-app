@@ -167,7 +167,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                       onClick={() => onSelectQuest(quest)}
                       className="w-full bg-brand-500 text-white px-3 py-2 rounded text-sm font-bold flex items-center justify-center hover:bg-brand-600 transition-colors shadow-sm"
                     >
-                      View Quest Details →
+                    
                     </button>
                 </div>
               </Popup>
