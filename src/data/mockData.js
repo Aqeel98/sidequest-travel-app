@@ -11,7 +11,7 @@ export const initialData = {
       status: "active",
       instructions: "Grab a bag. Spend 30 mins collecting plastic bottles, wrappers, or nets. Dispose of them in a municipal bin.",
       proof_requirements: "Photo of your collected trash bag with the ocean in the background.",
-      image: "  ",
+      image: "https://images.squarespace-cdn.com/content/v1/624b15eaed90eb4638ead49d/1682009905898-QDDJG8JX47K0KFY3BFAJ/header_8_.jpg?format=2500w",
       lat: 6.8511, // Pin placed at Mt Lavinia, but applies to coast
       lng: 79.8659,
     },
