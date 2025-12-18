@@ -55,9 +55,10 @@ export const SideQuestProvider = ({ children }) => {
 
     initializeApp();
 
+    // Safety timer to prevent infinite loading screens
     const safetyTimer = setTimeout(() => {
       if (mounted) setIsLoading(false);
-  }, 5000);
+    }, 5000);
 
     // 3. Listen for Login/Logout events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -153,7 +154,7 @@ export const SideQuestProvider = ({ children }) => {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
 
-        // 2. Prepare Profile Data (Safe Check)
+        // 2. Prepare Profile Data
         if (data.user) {
             const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
             const newProfile = { 
@@ -213,7 +214,7 @@ export const SideQuestProvider = ({ children }) => {
             lng: parseFloat(formData.lng),
             instructions: formData.instructions,
             proof_requirements: formData.proof_requirements,
-            image: imageUrl, // Save the Supabase URL here
+            image: imageUrl, 
             created_by: currentUser.id,
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         }]);
@@ -238,7 +239,7 @@ export const SideQuestProvider = ({ children }) => {
 
         const { error } = await supabase.from('quests')
             .update(updates)
-            .eq('id', questId); 
+            .eq('id', questId); // Use the converted number ID
 
         if (error) throw error;
         
@@ -277,7 +278,7 @@ export const SideQuestProvider = ({ children }) => {
     try {
         const { data, error } = await supabase.from('submissions').insert([{
             quest_id: questId, 
-            traveler_id: currentUser.id, // <--- MUST be currentUser.id
+            traveler_id: currentUser.id, 
             status: 'in_progress'
         }]).select();
         
@@ -358,10 +359,10 @@ export const SideQuestProvider = ({ children }) => {
   const approveSubmission = async (submissionId) => {
     // 1. Find the submission to get the Traveler ID and Quest XP
     const sub = questProgress.find(p => p.id === submissionId);
-    if (!sub) return; // Exit if not found
+    if (!sub) return; 
     
     const quest = quests.find(q => q.id === sub.quest_id);
-    if (!quest) return; // Exit if quest not found
+    if (!quest) return; 
 
     // 2. Mark submission as approved
     await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId);
@@ -394,7 +395,6 @@ export const SideQuestProvider = ({ children }) => {
     }
 
     // 5. Force the Admin's XP to update locally if they are approving their own submission
-    // (Optional polish for testing)
     if (sub.traveler_id === currentUser.id) {
         setCurrentUser(prevUser => ({ ...prevUser, xp: newXp }));
     }
