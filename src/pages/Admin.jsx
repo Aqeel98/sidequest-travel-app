@@ -231,7 +231,12 @@ const Admin = () => {
                 <div key={quest.id} className="border-b pb-4">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
-                            <img src={quest.image || "https://via.placeholder.com/50"} className="w-12 h-12 rounded object-cover border" alt="thumbnail" />
+                          <img 
+                           // Add a timestamp to the end of the URL to prevent the old thumbnail from caching
+                           src={(quest.image ? quest.image + '?t=' + Date.now() : "https://via.placeholder.com/50")} 
+                            className="w-12 h-12 rounded object-cover border" 
+                            alt="thumbnail" 
+                          />
                             <div>
                                 <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
                                 <p className="text-xs text-gray-500 flex items-center"><MapPin size={12} className="mr-1"/> {quest.location_address}</p>

@@ -74,7 +74,7 @@ const Home = () => {
                 >
                     <div className="relative h-64 overflow-hidden">
                         <img 
-                            src={quest.image} 
+                            src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
                             alt={quest.title} 
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                         />

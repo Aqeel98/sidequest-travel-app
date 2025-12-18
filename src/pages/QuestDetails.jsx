@@ -44,7 +44,7 @@ const QuestDetails = () => {
       
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         <div className="relative h-80">
-            <img src={quest.image || 'https://via.placeholder.com/800x400'} className="w-full h-full object-cover" alt={quest.title} />
+            <img src={quest.image || 'https://via.placeholder.com/800x400/CCCCCC/808080?text=Quest+Image+Missing'} className="w-full h-full object-cover" alt={quest.title} />
             <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-8">
                 <h1 className="text-4xl font-bold text-white mb-2">{quest.title}</h1>
                 <div className="flex items-center text-white/90">
