@@ -21,19 +21,29 @@ export const SideQuestProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
+    // --- CRITICAL FIX: PARALLEL DATA FETCHING ---
     const initializeApp = async () => {
       try {
-        // 1. Check for active session
+        // 1. START PUBLIC DATA FETCHING PARALLEL (FAST)
+        const [questsData, rewardsData, redemptionsData] = await Promise.all([
+            supabase.from('quests').select('*'),
+            supabase.from('rewards').select('*'),
+            supabase.from('redemptions').select('*'),
+        ]);
+
+        // 2. Set Public State
+        if (mounted) {
+            setQuests(questsData.data || []);
+            setRewards(rewardsData.data || []);
+            setRedemptions(redemptionsData.data || []);
+        }
+
+        // 3. CHECK AUTH (Can run slightly slower, but public data is already rendered)
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
            await fetchProfile(session.user.id, session.user.email);
         }
-        
-        // 2. Load all public data
-        await fetchQuests();
-        await fetchRewards();
-        await fetchRedemptions();
         
       } catch (error) {
         console.error("Initialization Error:", error);
@@ -41,13 +51,13 @@ export const SideQuestProvider = ({ children }) => {
         if (mounted) setIsLoading(false); // Stop loading when done
       }
     };
+    // ---------------------------------------------
 
     initializeApp();
 
     // 3. Listen for Login/Logout events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // If we have a session but no user in state, fetch the profile
         if (!currentUser) await fetchProfile(session.user.id, session.user.email);
       } else {
         setCurrentUser(null);
@@ -62,19 +72,15 @@ export const SideQuestProvider = ({ children }) => {
     };
   }, []);
 
-  // --- DATA FETCHING ---
+  // --- DATA FETCHING (Now simple fetchers, as Promise.all handles the big job) ---
   
-  // Robust Profile Fetcher (Includes "Zombie User" Fix)
   const fetchProfile = async (userId, userEmail) => {
     try {
       let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
       
-      // If profile is missing in DB but Auth exists (Zombie state), fix it:
       if (!data) {
           const newProfile = { 
-              id: userId, 
-              email: userEmail, 
-              full_name: userEmail.split('@')[0], 
+              id: userId, email: userEmail, full_name: userEmail.split('@')[0], 
               role: userEmail === 'sidequestsrilanka@gmail.com' ? 'Admin' : 'Traveler'
           };
           
@@ -85,7 +91,6 @@ export const SideQuestProvider = ({ children }) => {
       }
 
       if (data) {
-          // Force Admin role for your specific email
           if (data.email === 'sidequestsrilanka@gmail.com') data.role = 'Admin';
           
           setCurrentUser(data);
@@ -108,14 +113,11 @@ export const SideQuestProvider = ({ children }) => {
 
   const fetchSubmissions = async (userId, role) => {
     if (role === 'Admin') {
-        // Admin sees ALL submissions
         const { data } = await supabase.from('submissions').select('*');
         setQuestProgress(data || []);
-        // Admin also gets the list of users for display
         const { data: allUsers } = await supabase.from('profiles').select('*');
         setUsers(allUsers || []);
     } else {
-        // Travelers only see their own
         const { data } = await supabase.from('submissions').select('*').eq('traveler_id', userId);
         setQuestProgress(data || []);
     }
@@ -321,7 +323,6 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   // --- ADMIN ACTIONS ---
-  // --- ADMIN ACTIONS ---
   const approveSubmission = async (submissionId) => {
     // 1. Find the submission to get the Traveler ID and Quest XP
     const sub = questProgress.find(p => p.id === submissionId);
@@ -386,7 +387,7 @@ export const SideQuestProvider = ({ children }) => {
 
   return (
     <SideQuestContext.Provider value={{
-      currentUser, isLoading, // <--- EXPOSE LOADING STATE
+      currentUser, isLoading, 
       users, quests, questProgress, redemptions, rewards,
       showAuthModal, setShowAuthModal,
       login, signup, logout,
