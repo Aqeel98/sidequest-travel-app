@@ -9,14 +9,13 @@ const Rewards = () => {
     ? redemptions.filter(r => r.traveler_id === currentUser.id) 
     : [];
 
-  // --- FIX 1: Added 'async' keyword here ---
   const handleRedeem = async (reward) => {
     if (!currentUser) {
       setShowAuthModal(true);
       return;
     }
     
-    // --- FIX 2: Added 'await' here to wait for the code ---
+    // Fix: Wait for the redemption to finish to get the code
     const code = await redeemReward(reward);
     
     if (code) {
@@ -45,7 +44,6 @@ const Rewards = () => {
           const canAfford = currentUser && currentUser.xp >= reward.xp_cost;
           return (
             <div key={reward.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-              {/* Added fallback image to prevent crashes if URL is empty */}
               <img 
                 src={reward.image || "https://via.placeholder.com/400x200?text=Reward"} 
                 alt={reward.title} 
@@ -82,9 +80,9 @@ const Rewards = () => {
           <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Your Redemptions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {myRedemptions.map(redemption => {
-              const reward = rewards.find(r => r.id === redemption.reward_id);
+              // --- FIX: Use loose equality (==) to match String ID with Number ID ---
+              const reward = rewards.find(r => r.id == redemption.reward_id);
               
-              // --- FIX 3: Use 'redeemed_at' (DB column) instead of 'redeemed_date' ---
               const dateString = redemption.redeemed_at 
                 ? new Date(redemption.redeemed_at).toLocaleDateString() 
                 : 'Date Unknown';
