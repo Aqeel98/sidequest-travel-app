@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient'; 
-import { PlusCircle, Clock, Edit, Trash2, Check, MapPin, Award, UploadCloud } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Check, MapPin, Award, UploadCloud, Eye, EyeOff, Info } from 'lucide-react';
 
-// --- EDIT FORM COMPONENT (With File Upload & Memory Cleanup) ---
+// --- EDIT FORM COMPONENT (Unchanged) ---
 const EditForm = ({ item, onSave, onCancel, type }) => {
     const [formData, setFormData] = useState(item);
     const [uploading, setUploading] = useState(false);
-    
-    // Initialize preview with the existing image or null
     const [previewUrl, setPreviewUrl] = useState(item.image || null);
 
-    // 1. CLEANUP EFFECT: Prevents browser memory leaks
     useEffect(() => {
         return () => {
             if (previewUrl && previewUrl.startsWith('blob:')) {
@@ -20,7 +17,6 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         };
     }, [previewUrl]);
 
-    // 2. RESET EFFECT: Updates preview if you switch between items
     useEffect(() => {
         setPreviewUrl(item.image || null);
         setFormData(item);
@@ -31,40 +27,33 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // --- HANDLE IMAGE UPLOAD ---
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // A. Create Local Preview immediately (Fast Feedback)
         const localPreview = URL.createObjectURL(file);
         setPreviewUrl(localPreview); 
 
         setUploading(true);
         try {
-            // B. Upload to Supabase Storage
             const fileName = `admin-uploads/${Date.now()}_${file.name.replace(/\s/g, '')}`;
             const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, file);
             
             if (uploadError) throw uploadError;
 
-            // C. Get Public URL
             const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
-            
-            // D. Update Form Data (This is what gets saved to DB)
             setFormData(prev => ({ ...prev, image: data.publicUrl }));
             alert("Image uploaded successfully!");
             
         } catch (error) {
             console.error(error);
-            setPreviewUrl(item.image || null); // Revert on error
+            setPreviewUrl(item.image || null); 
             alert("Upload failed: " + error.message);
         } finally {
             setUploading(false);
         }
     };
 
-    // Fields definition based on type (Quest or Reward)
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
         { name: 'xp_value', label: 'XP Value', type: 'number' },
@@ -80,8 +69,6 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
     return (
         <form className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3" onSubmit={(e) => { e.preventDefault(); onSave(item.id, formData); }}>
             <h4 className="font-bold text-lg">{type === 'quest' ? 'Edit Quest' : 'Edit Reward'}</h4>
-            
-            {/* Dynamic Text Inputs */}
             {fields.map(field => (
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
@@ -96,31 +83,20 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
                     )}
                 </div>
             ))}
-
-            {/* --- IMAGE UPLOADER --- */}
             <div className="border-t pt-2 mt-2">
                 <label className="block text-xs font-medium text-gray-700 mb-2">Quest/Reward Image</label>
                 <div className="flex items-center gap-4">
                     {previewUrl && (
                         <img src={previewUrl} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
                     )}
-                    
                     <label className={`cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center transition-all shadow-sm ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                         <UploadCloud size={18} className="mr-2 text-brand-600" />
                         {uploading ? "Uploading..." : "Click to Change Photo"}
-                        <input 
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*" 
-                            onChange={handleImageUpload} 
-                            disabled={uploading} 
-                        />
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
                     </label>
                 </div>
-                {/* Hidden input to ensure image URL is submitted */}
                 <input type="hidden" name="image" value={formData.image || ''} />
             </div>
-
             <div className="flex gap-3 justify-end pt-4">
                 <button type="button" onClick={onCancel} className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm transition">Cancel</button>
                 <button type="submit" disabled={uploading} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition font-bold shadow">
@@ -136,13 +112,15 @@ const Admin = () => {
   const { currentUser, questProgress, quests, rewards, users, approveSubmission, rejectSubmission, approveNewQuest, updateQuest, deleteQuest, updateReward, deleteReward } = useSideQuest();
   const [activeTab, setActiveTab] = useState('submissions');
   const [editingId, setEditingId] = useState(null);
+  
+  // New State for toggling details view
+  const [viewDetailsId, setViewDetailsId] = useState(null);
 
   if (currentUser?.role !== 'Admin') {
     return (
       <div className="p-12 text-center">
         <h2 className="text-2xl font-bold text-red-500 mb-4">Admin Access Only</h2>
         <p className="text-gray-600">Please log in with an Admin account.</p>
-        <p className="text-sm text-gray-400 mt-2">(Tip: Change your role to 'Admin' in the Supabase Database)</p>
       </div>
     );
   }
@@ -220,23 +198,67 @@ const Admin = () => {
         </div>
       )}
 
-      {/* --- 2. PENDING NEW QUESTS TAB --- */}
+      {/* --- 2. PENDING NEW QUESTS TAB (UPDATED WITH DETAILS VIEW) --- */}
       {activeTab === 'newQuests' && (
         <div className="space-y-6">
           {pendingNewQuests.length === 0 ? <p className="text-gray-500">No new quests pending review.</p> : (
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
               {pendingNewQuests.map(quest => {
                 const creator = users.find(u => u.id === quest.created_by_id);
+                const isDetailsOpen = viewDetailsId === quest.id;
+
                 return (
-                  <div key={quest.id} className="border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row justify-between items-center bg-gray-50">
-                    <div className="flex-1 text-left">
-                      <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">By: {creator?.email || 'Unknown Partner'}</p>
+                  <div key={quest.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex flex-col md:flex-row justify-between items-start">
+                        <div className="flex-1 text-left">
+                            <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
+                            <p className="text-sm text-gray-600 mt-1">Submitted by: {creator?.email || 'Unknown Partner'}</p>
+                            <p className="text-xs text-brand-700 font-medium mt-1">{quest.location_address}</p>
+                        </div>
+                        <div className="flex gap-2 mt-3 md:mt-0">
+                            {/* View Details Button */}
+                            <button 
+                                onClick={() => setViewDetailsId(isDetailsOpen ? null : quest.id)} 
+                                className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 font-medium transition flex items-center"
+                            >
+                                <Info size={18} className="mr-1"/> {isDetailsOpen ? 'Hide Details' : 'View Details'}
+                            </button>
+                            <button onClick={() => approveNewQuest(quest.id)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition flex items-center"><Check size={18} className="mr-1"/> Approve</button>
+                            <button onClick={() => deleteQuest(quest.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"><Trash2 size={18} className="mr-1"/> Reject</button>
+                        </div>
                     </div>
-                    <div className="flex gap-2 mt-3 md:mt-0">
-                      <button onClick={() => approveNewQuest(quest.id)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition flex items-center"><Check size={18} className="mr-1"/> Approve</button>
-                      <button onClick={() => deleteQuest(quest.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"><Trash2 size={18} className="mr-1"/> Reject</button>
-                    </div>
+
+                    {/* EXPANDABLE DETAILS PANEL */}
+                    {isDetailsOpen && (
+                        <div className="mt-4 pt-4 border-t border-gray-200 bg-white p-4 rounded-lg">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    {quest.image && (
+                                        <img src={quest.image} alt="Quest" className="w-full h-48 object-cover rounded-lg border mb-4" />
+                                    )}
+                                    <div className="flex gap-2 mb-2">
+                                        <span className="bg-brand-100 text-brand-800 text-xs px-2 py-1 rounded font-bold">{quest.category}</span>
+                                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold">⭐ {quest.xp_value} XP</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mb-2">Coordinates: {quest.lat}, {quest.lng}</p>
+                                </div>
+                                <div className="space-y-3">
+                                    <div>
+                                        <h4 className="text-sm font-bold text-gray-900">Description</h4>
+                                        <p className="text-sm text-gray-600">{quest.description}</p>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-gray-900">Instructions</h4>
+                                        <p className="text-sm text-gray-600">{quest.instructions}</p>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-gray-900">Proof Requirements</h4>
+                                        <p className="text-sm text-gray-600">{quest.proof_requirements}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                   </div>
                 );
               })}
@@ -255,7 +277,6 @@ const Admin = () => {
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
                           <img 
-                           // Cache buster logic for instant updates
                            src={(quest.image ? quest.image + '?t=' + Date.now() : "https://via.placeholder.com/50")} 
                             className="w-12 h-12 rounded object-cover border" 
                             alt="thumbnail" 
