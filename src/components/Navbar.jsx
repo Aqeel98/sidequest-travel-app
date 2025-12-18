@@ -78,7 +78,7 @@ const Navbar = () => {
         </button>
       </div>
 
-      // --- Mobile Menu ---
+      
 {isOpen && (
     <div className="md:hidden bg-white border-t p-4 flex flex-col space-y-2 shadow-xl animate-in slide-in-from-top-5">
         
