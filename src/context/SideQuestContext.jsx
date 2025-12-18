@@ -213,12 +213,25 @@ export const SideQuestProvider = ({ children }) => {
 
 
   const updateQuest = async (id, updates) => {
-      const { error } = await supabase.from('quests').update(updates).eq('id', id);
-      if (!error) { 
-          fetchQuests(); 
-          alert("Quest Updated"); 
-      }
-  };
+    try {
+        // CRITICAL FIX: Ensure ID is a number for the database query
+        const questId = Number(id); 
+
+        const { error } = await supabase.from('quests')
+            .update(updates)
+            .eq('id', questId); // Use the converted number ID
+
+        if (error) throw error;
+        
+        // Successful update
+        fetchQuests(); 
+        alert("Quest Updated"); 
+
+    } catch (error) {
+        console.error("Update Quest Failed:", error);
+        alert("Update Failed: " + error.message);
+    }
+};
   
   const deleteQuest = async (id) => {
     try {
