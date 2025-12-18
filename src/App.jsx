@@ -4,8 +4,9 @@ import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
 import ScrollToTop from './components/ScrollToTop';
-import { Compass } from 'lucide-react'; // Import Icon for loader
+import { Compass } from 'lucide-react'; 
 
+// Pages
 import Home from './pages/Home';
 import QuestDetails from './pages/QuestDetails';
 import MyQuests from './pages/MyQuests';
@@ -16,6 +17,7 @@ import Profile from './pages/Profile';
 import PartnerDashboard from './pages/PartnerDashboard'; 
 import Emergency from './pages/Emergency';
 
+// --- DEMO BUTTON (Kept for testing) ---
 const RoleSwitcher = () => {
   const { currentUser, switchRole } = useSideQuest();
   if (!currentUser) return null;
@@ -29,7 +31,7 @@ const RoleSwitcher = () => {
   );
 };
 
-// --- NEW LOADING COMPONENT ---
+// --- LOADING SCREEN COMPONENT ---
 const LoadingScreen = () => (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
         <Compass size={48} className="animate-spin mb-4" />
@@ -37,10 +39,11 @@ const LoadingScreen = () => (
     </div>
 );
 
-// --- WRAPPER TO HANDLE LOADING STATE ---
+// --- MAIN LAYOUT WRAPPER (Handles Global Loading) ---
 const MainLayout = () => {
     const { isLoading } = useSideQuest();
 
+    // Prevent "Logout Flash" by showing loader until Auth is checked
     if (isLoading) return <LoadingScreen />;
 
     return (

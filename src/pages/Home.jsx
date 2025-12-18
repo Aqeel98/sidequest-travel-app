@@ -7,6 +7,9 @@ const Home = () => {
   const { quests } = useSideQuest();
   const navigate = useNavigate();
 
+  // Filter for active quests once
+  const activeQuests = quests.filter(quest => quest.status === 'active');
+
   return (
     <div className="pb-12 bg-slate-50 min-h-screen">
       
@@ -63,52 +66,56 @@ const Home = () => {
           <button onClick={() => navigate('/map')} className="hidden md:block text-brand-600 font-bold hover:underline">View All</button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {quests
-                .filter(quest => quest.status === 'active') // <-- FILTER: Only show active quests
-                .map(quest => (
-                <div 
-                    key={quest.id} 
-                    onClick={() => navigate(`/quest/${quest.id}`)} 
-                    className="group bg-white rounded-3xl shadow-sm hover:shadow-xl hover:shadow-brand-100/50 transition-all duration-300 overflow-hidden cursor-pointer border border-gray-100"
-                >
-                    <div className="relative h-64 overflow-hidden">
-                        <img 
-                            src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
-                            alt={quest.title} 
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                        />
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-brand-600 shadow-lg">
-                            ⭐ {quest.xp_value} XP
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                    
-                    <div className="p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                quest.category === 'Environmental' ? 'bg-emerald-100 text-emerald-700' :
-                                quest.category === 'Social' ? 'bg-blue-100 text-blue-700' :
-                                quest.category === 'Education' ? 'bg-indigo-100 text-indigo-700' :
-                                quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
-                                'bg-orange-100 text-orange-700'
-                            }`}>
-                                {quest.category}
-                            </span>
+        {activeQuests.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-dashed border-gray-300">
+                <p className="text-gray-500 text-lg">No active quests found right now. Check back soon!</p>
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {activeQuests.map(quest => (
+                    <div 
+                        key={quest.id} 
+                        onClick={() => navigate(`/quest/${quest.id}`)} 
+                        className="group bg-white rounded-3xl shadow-sm hover:shadow-xl hover:shadow-brand-100/50 transition-all duration-300 overflow-hidden cursor-pointer border border-gray-100"
+                    >
+                        <div className="relative h-64 overflow-hidden">
+                            <img 
+                                src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
+                                alt={quest.title} 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                            />
+                            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-brand-600 shadow-lg">
+                                ⭐ {quest.xp_value} XP
+                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </div>
                         
-                        <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-brand-600 transition-colors">
-                            {quest.title}
-                        </h3>
-                        
-                        <div className="flex items-center text-gray-500 text-sm mt-4">
-                            <MapPin size={16} className="mr-1.5 text-gray-400" /> 
-                            {quest.location_address}
+                        <div className="p-6">
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                    quest.category === 'Environmental' ? 'bg-emerald-100 text-emerald-700' :
+                                    quest.category === 'Social' ? 'bg-blue-100 text-blue-700' :
+                                    quest.category === 'Education' ? 'bg-indigo-100 text-indigo-700' :
+                                    quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
+                                    'bg-orange-100 text-orange-700'
+                                }`}>
+                                    {quest.category}
+                                </span>
+                            </div>
+                            
+                            <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-brand-600 transition-colors">
+                                {quest.title}
+                            </h3>
+                            
+                            <div className="flex items-center text-gray-500 text-sm mt-4">
+                                <MapPin size={16} className="mr-1.5 text-gray-400" /> 
+                                {quest.location_address}
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
-        </div>
+                ))}
+            </div>
+        )}
       </div>
     </div>
   );

@@ -20,13 +20,17 @@ const Profile = () => {
     const stats = useMemo(() => {
         // If no user, return empty stats safely
         if (!currentUser) return {
-            totalXP: 0, completedQuests: 0, totalQuests: 0, badges: [], recentQuests: []
+            totalXP: 0, completedQuests: 0, activeQuests: 0, badges: [], recentQuests: []
         };
         
         const myProgress = questProgress.filter(p => p.traveler_id === currentUser.id);
         const completedProgress = myProgress.filter(p => p.status === 'approved');
+        
+        // Fix: Calculate "Active" properly (In Progress + Pending), ignoring Rejected
+        const activeProgress = myProgress.filter(p => p.status === 'in_progress' || p.status === 'pending');
+
         const completedQuests = completedProgress.length;
-        const totalQuests = myProgress.length; // Correct variable usage here
+        const activeQuests = activeProgress.length; 
 
         // Count completed quests by category
         const categoryCounts = completedProgress.reduce((acc, p) => {
@@ -62,7 +66,7 @@ const Profile = () => {
         return {
             totalXP: currentUser.xp,
             completedQuests,
-            totalQuests, // Correct variable usage here
+            activeQuests, // Updated variable
             badges,
             recentQuests: completedProgress.slice(-3).reverse(),
         };
@@ -77,9 +81,7 @@ const Profile = () => {
         );
     }
     
-    // Use the values returned from stats
-    const { totalXP, completedQuests, totalQuests, badges, recentQuests } = stats;
-
+    const { totalXP, completedQuests, activeQuests, badges, recentQuests } = stats;
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -87,6 +89,7 @@ const Profile = () => {
                 <Award className="text-yellow-500 mr-3" size={32} />
                 Traveler Profile
             </h1>
+            {/* Correctly displays Full Name or falls back to Email */}
             <p className="text-lg text-gray-500 mb-8">Welcome back, {currentUser.full_name || currentUser.email.split('@')[0]}!</p>
 
             {/* --- XP & STATS --- */}
@@ -101,8 +104,7 @@ const Profile = () => {
                 </div>
                 <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500">
                     <p className="text-sm font-semibold text-gray-500">Quests In Progress</p>
-                    {/* FIXED: Use the correct variable from the destructured stats object */}
-                    <p className="text-4xl font-extrabold text-gray-900 mt-1">{totalQuests - completedQuests}</p>
+                    <p className="text-4xl font-extrabold text-gray-900 mt-1">{activeQuests}</p>
                 </div>
             </div>
 
@@ -138,7 +140,7 @@ const Profile = () => {
                                     <div className="flex items-center">
                                         <Clock size={20} className="mr-3 text-gray-400" />
                                         <div className="text-gray-800 font-medium">
-                                            {quest?.title}
+                                            {quest?.title || "Unknown Quest"}
                                             <p className={`text-xs mt-1 font-bold uppercase ${p.status === 'approved' ? 'text-emerald-500' : 'text-yellow-500'}`}>
                                                 {p.status.replace('_', ' ')}
                                             </p>

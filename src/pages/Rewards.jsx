@@ -9,12 +9,16 @@ const Rewards = () => {
     ? redemptions.filter(r => r.traveler_id === currentUser.id) 
     : [];
 
-  const handleRedeem = (reward) => {
+  // --- FIX 1: Added 'async' keyword here ---
+  const handleRedeem = async (reward) => {
     if (!currentUser) {
       setShowAuthModal(true);
       return;
     }
-    const code = redeemReward(reward);
+    
+    // --- FIX 2: Added 'await' here to wait for the code ---
+    const code = await redeemReward(reward);
+    
     if (code) {
       alert(`Success! Your redemption code is: ${code}`);
     }
@@ -41,7 +45,12 @@ const Rewards = () => {
           const canAfford = currentUser && currentUser.xp >= reward.xp_cost;
           return (
             <div key={reward.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-              <img src={reward.image} alt={reward.title} className="w-full h-40 object-cover" />
+              {/* Added fallback image to prevent crashes if URL is empty */}
+              <img 
+                src={reward.image || "https://via.placeholder.com/400x200?text=Reward"} 
+                alt={reward.title} 
+                className="w-full h-40 object-cover" 
+              />
               <div className="p-5">
                 <h3 className="font-bold text-lg mb-2 text-gray-800">{reward.title}</h3>
                 <p className="text-gray-600 text-sm mb-4 h-10 line-clamp-2">{reward.description}</p>
@@ -74,14 +83,20 @@ const Rewards = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {myRedemptions.map(redemption => {
               const reward = rewards.find(r => r.id === redemption.reward_id);
+              
+              // --- FIX 3: Use 'redeemed_at' (DB column) instead of 'redeemed_date' ---
+              const dateString = redemption.redeemed_at 
+                ? new Date(redemption.redeemed_at).toLocaleDateString() 
+                : 'Date Unknown';
+
               return (
                 <div key={redemption.id} className="bg-green-50 rounded-lg p-5 border border-green-200 flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-gray-800">{reward?.title}</h3>
+                    <h3 className="font-bold text-gray-800">{reward?.title || 'Unknown Reward'}</h3>
                     <p className="text-sm text-gray-600 mt-1">
                       Code: <span className="font-mono font-bold text-green-700 bg-white px-2 py-0.5 rounded border border-green-200">{redemption.redemption_code}</span>
                     </p>
-                    <p className="text-xs text-gray-400 mt-2">Redeemed on {new Date(redemption.redeemed_date).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-400 mt-2">Redeemed on {dateString}</p>
                   </div>
                   <Award className="text-green-500" size={36} />
                 </div>

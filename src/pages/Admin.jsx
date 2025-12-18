@@ -1,53 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
-import { supabase } from '../supabaseClient'; // <--- Import Supabase for uploads
+import { supabase } from '../supabaseClient'; 
 import { PlusCircle, Clock, Edit, Trash2, Check, MapPin, Award, UploadCloud } from 'lucide-react';
 
-// --- EDIT FORM WITH FILE UPLOAD ---
+// --- EDIT FORM COMPONENT (With File Upload & Memory Cleanup) ---
 const EditForm = ({ item, onSave, onCancel, type }) => {
     const [formData, setFormData] = useState(item);
     const [uploading, setUploading] = useState(false);
+    
+    // Initialize preview with the existing image or null
+    const [previewUrl, setPreviewUrl] = useState(item.image || null);
+
+    // 1. CLEANUP EFFECT: Prevents browser memory leaks
+    useEffect(() => {
+        return () => {
+            if (previewUrl && previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
+
+    // 2. RESET EFFECT: Updates preview if you switch between items
+    useEffect(() => {
+        setPreviewUrl(item.image || null);
+        setFormData(item);
+    }, [item.id, item.image]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // --- NEW: HANDLE IMAGE UPLOAD ---
+    // --- HANDLE IMAGE UPLOAD ---
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // A. Create Local Preview immediately (Fast Feedback)
+        const localPreview = URL.createObjectURL(file);
+        setPreviewUrl(localPreview); 
+
         setUploading(true);
         try {
-            // 1. Upload to Supabase Storage ('proofs' bucket)
+            // B. Upload to Supabase Storage
             const fileName = `admin-uploads/${Date.now()}_${file.name.replace(/\s/g, '')}`;
             const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, file);
             
             if (uploadError) throw uploadError;
 
-            // 2. Get the Public URL
+            // C. Get Public URL
             const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
             
-            // 3. Update the form state with the new URL
+            // D. Update Form Data (This is what gets saved to DB)
             setFormData(prev => ({ ...prev, image: data.publicUrl }));
             alert("Image uploaded successfully!");
             
         } catch (error) {
             console.error(error);
+            setPreviewUrl(item.image || null); // Revert on error
             alert("Upload failed: " + error.message);
         } finally {
             setUploading(false);
         }
     };
 
-    // Form Fields definition
+    // Fields definition based on type (Quest or Reward)
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
         { name: 'xp_value', label: 'XP Value', type: 'number' },
         { name: 'location_address', label: 'Location', type: 'text' },
         { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending_admin'] },
-        // Removed 'image' text input from here, we handle it separately below
         { name: 'description', label: 'Description', type: 'textarea' },
     ] : [ 
         { name: 'title', label: 'Reward Title', type: 'text' },
@@ -59,7 +81,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         <form className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3" onSubmit={(e) => { e.preventDefault(); onSave(item.id, formData); }}>
             <h4 className="font-bold text-lg">{type === 'quest' ? 'Edit Quest' : 'Edit Reward'}</h4>
             
-            {/* Standard Text Fields */}
+            {/* Dynamic Text Inputs */}
             {fields.map(field => (
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
@@ -75,15 +97,15 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
                 </div>
             ))}
 
-            {/* --- NEW: IMAGE UPLOADER --- */}
+            {/* --- IMAGE UPLOADER --- */}
             <div className="border-t pt-2 mt-2">
                 <label className="block text-xs font-medium text-gray-700 mb-2">Quest/Reward Image</label>
                 <div className="flex items-center gap-4">
-                    {formData.image && (
-                        <img src={formData.image} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
+                    {previewUrl && (
+                        <img src={previewUrl} alt="Preview" className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
                     )}
                     
-                    <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center transition-all shadow-sm">
+                    <label className={`cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center transition-all shadow-sm ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                         <UploadCloud size={18} className="mr-2 text-brand-600" />
                         {uploading ? "Uploading..." : "Click to Change Photo"}
                         <input 
@@ -95,7 +117,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
                         />
                     </label>
                 </div>
-                {/* Hidden input to store the URL string */}
+                {/* Hidden input to ensure image URL is submitted */}
                 <input type="hidden" name="image" value={formData.image || ''} />
             </div>
 
@@ -109,6 +131,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
     );
 };
 
+// --- MAIN ADMIN DASHBOARD ---
 const Admin = () => {
   const { currentUser, questProgress, quests, rewards, users, approveSubmission, rejectSubmission, approveNewQuest, updateQuest, deleteQuest, updateReward, deleteReward } = useSideQuest();
   const [activeTab, setActiveTab] = useState('submissions');
@@ -153,7 +176,7 @@ const Admin = () => {
         </button>
       </div>
 
-      {/* --- PENDING SUBMISSIONS TAB --- */}
+      {/* --- 1. PENDING SUBMISSIONS TAB --- */}
       {activeTab === 'submissions' && (
         <div className="space-y-6">
           {pendingSubmissions.length === 0 ? <p className="text-gray-500">No traveler proof pending review.</p> : (
@@ -197,7 +220,7 @@ const Admin = () => {
         </div>
       )}
 
-      {/* --- PENDING NEW QUESTS TAB --- */}
+      {/* --- 2. PENDING NEW QUESTS TAB --- */}
       {activeTab === 'newQuests' && (
         <div className="space-y-6">
           {pendingNewQuests.length === 0 ? <p className="text-gray-500">No new quests pending review.</p> : (
@@ -222,7 +245,7 @@ const Admin = () => {
         </div>
       )}
 
-      {/* --- QUEST MANAGER TAB --- */}
+      {/* --- 3. QUEST MANAGER TAB --- */}
       {activeTab === 'quests' && (
         <div className="space-y-4">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Total Active Quests ({quests.filter(q => q.status === 'active').length})</h2>
@@ -232,7 +255,7 @@ const Admin = () => {
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
                           <img 
-                           // Add a timestamp to the end of the URL to prevent the old thumbnail from caching
+                           // Cache buster logic for instant updates
                            src={(quest.image ? quest.image + '?t=' + Date.now() : "https://via.placeholder.com/50")} 
                             className="w-12 h-12 rounded object-cover border" 
                             alt="thumbnail" 
@@ -254,7 +277,7 @@ const Admin = () => {
         </div>
       )}
 
-      {/* --- REWARD MANAGER TAB --- */}
+      {/* --- 4. REWARD MANAGER TAB --- */}
       {activeTab === 'rewards' && (
         <div className="space-y-4">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Total Rewards ({rewards.length})</h2>

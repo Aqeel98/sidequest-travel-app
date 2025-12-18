@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-// Included the HeartPulse import
 import { Menu, X, LogOut, Compass, HeartPulse } from 'lucide-react'; 
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -15,7 +14,7 @@ const Navbar = () => {
       : "text-gray-500 hover:text-brand-500 font-medium px-4 py-1.5 transition-all";
 
   return (
-    // Glassmorphism effect: backdrop-blur + white with opacity
+    // Glassmorphism effect
     <header className="fixed top-0 w-full z-50 transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
@@ -78,49 +77,54 @@ const Navbar = () => {
         </button>
       </div>
 
-      
-{isOpen && (
-    <div className="md:hidden bg-white border-t p-4 flex flex-col space-y-2 shadow-xl animate-in slide-in-from-top-5">
-        
-        {/* New: USER INFO AT TOP OF MOBILE MENU */}
-        {currentUser ? (
-            <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border-b mb-2">
-                <div>
-                    <span className="text-xs text-gray-400 font-medium">{currentUser.role}</span>
-                    <p className="text-sm font-bold text-gray-800">{currentUser.full_name || currentUser.email.split('@')[0]}</p>
-                </div>
-                <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full font-bold text-xs shadow-md">
-                    ⭐ {currentUser.xp} XP
-                </div>
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden bg-white border-t p-4 flex flex-col space-y-2 shadow-xl animate-in slide-in-from-top-5">
+            
+            {/* New: USER INFO AT TOP OF MOBILE MENU */}
+            {currentUser ? (
+                <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border-b mb-2">
+                    <div>
+                        <span className="text-xs text-gray-400 font-medium">{currentUser.role}</span>
+                        <p className="text-sm font-bold text-gray-800">{currentUser.full_name || currentUser.email.split('@')[0]}</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full font-bold text-xs shadow-md">
+                        ⭐ {currentUser.xp} XP
+                    </div>
+                </Link>
+            ) : (
+                // Mobile Login Button
+                <button onClick={() => { setShowAuthModal(true); setIsOpen(false); }} className="w-full bg-gray-900 text-white px-6 py-2.5 rounded-full font-bold hover:bg-gray-800 transition-all mb-2">
+                    Login
+                </button>
+            )}
+            
+            {/* Navigation Links */}
+            <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
+            <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
+            <Link to="/my-quests" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>My Quests</Link>
+            <Link to="/rewards" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Rewards</Link>
+            
+            {/* Mobile Emergency Link */}
+            <Link to="/emergency" className="p-3 rounded-lg hover:bg-red-50 text-red-500 font-bold flex items-center" onClick={() => setIsOpen(false)}>
+                <HeartPulse size={18} className="mr-2"/> Emergency & Safety Info
             </Link>
-        ) : (
-            // Mobile Login Button
-            <button onClick={() => { setShowAuthModal(true); setIsOpen(false); }} className="w-full bg-gray-900 text-white px-6 py-2.5 rounded-full font-bold hover:bg-gray-800 transition-all mb-2">
-                Login
-            </button>
-        )}
-        
-        {/* Navigation Links */}
-        <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
-        <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
-        <Link to="/my-quests" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>My Quests</Link>
-        <Link to="/rewards" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Rewards</Link>
-        
-        {currentUser?.role === 'Partner' && (
-             <Link to="/partner" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Partner Dashboard</Link>
-        )}
-        {currentUser?.role === 'Admin' && (
-             <Link to="/admin" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Admin Panel</Link>
-        )}
-        
-        {/* Mobile Logout Button (at the bottom) */}
-        {currentUser && (
-            <button onClick={() => { logout(); setIsOpen(false); }} className="w-full text-red-500 font-bold p-3 rounded-lg hover:bg-red-50 transition-colors mt-2 border-t pt-3">
-                Logout
-            </button>
-        )}
-    </div>
-)}
+
+            {currentUser?.role === 'Partner' && (
+                <Link to="/partner" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Partner Dashboard</Link>
+            )}
+            {currentUser?.role === 'Admin' && (
+                <Link to="/admin" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Admin Panel</Link>
+            )}
+            
+            {/* Mobile Logout Button (at the bottom) */}
+            {currentUser && (
+                <button onClick={() => { logout(); setIsOpen(false); }} className="w-full text-red-500 font-bold p-3 rounded-lg hover:bg-red-50 transition-colors mt-2 border-t pt-3">
+                    Logout
+                </button>
+            )}
+        </div>
+      )}
     </header>
   );
 };

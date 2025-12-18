@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 import { PlusCircle, UploadCloud } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -10,9 +10,16 @@ const PartnerDashboard = () => {
         title: '', description: '', category: 'Environmental', xp_value: 50, 
         location_address: '', lat: '', lng: '', instructions: '', proof_requirements: ''
     });
-    const [imageFile, setImageFile] = useState(null); // Separate state for the file
+    const [imageFile, setImageFile] = useState(null); 
     const [preview, setPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // --- FIX: Memory Cleanup for Image Preview ---
+    useEffect(() => {
+        return () => {
+            if (preview) URL.revokeObjectURL(preview);
+        };
+    }, [preview]);
 
     // Access Check
     if (currentUser?.role !== 'Partner' && currentUser?.role !== 'Admin') {
@@ -36,7 +43,7 @@ const PartnerDashboard = () => {
         const file = e.target.files[0];
         if (file) {
             setImageFile(file);
-            setPreview(URL.createObjectURL(file)); // Show preview instantly
+            setPreview(URL.createObjectURL(file)); 
         }
     };
 
