@@ -55,6 +55,10 @@ export const SideQuestProvider = ({ children }) => {
 
     initializeApp();
 
+    const safetyTimer = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+  }, 5000);
+
     // 3. Listen for Login/Logout events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
@@ -69,6 +73,7 @@ export const SideQuestProvider = ({ children }) => {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
