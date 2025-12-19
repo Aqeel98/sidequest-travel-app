@@ -11,7 +11,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
     // Initialize preview with the existing image or null
     const [previewUrl, setPreviewUrl] = useState(item.image || null);
 
-    // 1. CLEANUP EFFECT: Prevents browser memory leaks
+    // 1. CLEANUP EFFECT: Prevents browser memory leaks from object URLs
     useEffect(() => {
         return () => {
             if (previewUrl && previewUrl.startsWith('blob:')) {
@@ -75,7 +75,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         { name: 'title', label: 'Reward Title', type: 'text' },
         { name: 'xp_cost', label: 'XP Cost', type: 'number' },
         { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending_admin'] },
-        { name: 'description', label: 'Description', type: 'text' },
+        { name: 'description', label: 'Description', type: 'textarea' },
     ];
 
     return (
@@ -87,7 +87,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
                     {field.type === 'textarea' ? (
-                        <textarea name={field.name} value={formData[field.name] || ''} onChange={handleChange} className="mt-1 w-full border p-2 rounded text-sm" rows="2" />
+                        <textarea name={field.name} value={formData[field.name] || ''} onChange={handleChange} className="mt-1 w-full border p-2 rounded text-sm" rows="3" />
                     ) : field.type === 'select' ? (
                         <select name={field.name} value={formData[field.name] || ''} onChange={handleChange} className="mt-1 w-full border p-2 rounded text-sm">
                             {field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -211,8 +211,8 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="flex gap-2 h-fit">
-                    <button onClick={() => approveSubmission(progress.id)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition">Approve</button>
-                    <button onClick={() => rejectSubmission(progress.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition">Reject</button>
+                    <button onClick={() => approveSubmission(progress.id)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 font-medium transition">Approve</button>
+                    <button onClick={() => rejectSubmission(progress.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 font-medium transition">Reject</button>
                   </div>
                 </div>
               </div>
@@ -243,7 +243,7 @@ const Admin = () => {
                             onClick={() => setViewDetailsId(isDetailsOpen ? null : quest.id)} 
                             className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 font-medium transition flex items-center"
                         >
-                            <Info size={18} className="mr-1"/> {isDetailsOpen ? 'Hide Details' : 'View Details'}
+                            <Info size={18} className="mr-1"/> {isDetailsOpen ? 'Hide' : 'Details'}
                         </button>
                         <button onClick={() => approveNewQuest(quest.id)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition flex items-center"><Check size={18} className="mr-1"/> Approve</button>
                         <button onClick={() => deleteQuest(quest.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"><Trash2 size={18} className="mr-1"/> Reject</button>
