@@ -9,13 +9,15 @@ const Rewards = () => {
     ? redemptions.filter(r => r.traveler_id === currentUser.id) 
     : [];
 
+  // --- FIX: Only show Active Rewards to the public ---
+  const activeRewards = rewards.filter(r => r.status === 'active');
+
   const handleRedeem = async (reward) => {
     if (!currentUser) {
       setShowAuthModal(true);
       return;
     }
     
-    // Fix: Wait for the redemption to finish to get the code
     const code = await redeemReward(reward);
     
     if (code) {
@@ -40,38 +42,43 @@ const Rewards = () => {
 
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        {rewards.map(reward => {
-          const canAfford = currentUser && currentUser.xp >= reward.xp_cost;
-          return (
-            <div key={reward.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-              <img 
-                src={reward.image || "https://via.placeholder.com/400x200?text=Reward"} 
-                alt={reward.title} 
-                className="w-full h-40 object-cover" 
-              />
-              <div className="p-5">
-                <h3 className="font-bold text-lg mb-2 text-gray-800">{reward.title}</h3>
-                <p className="text-gray-600 text-sm mb-4 h-10 line-clamp-2">{reward.description}</p>
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-green-600 font-bold flex items-center">
-                    ⭐ {reward.xp_cost} XP
-                  </span>
-                  <button 
-                    onClick={() => handleRedeem(reward)}
-                    disabled={currentUser && !canAfford}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${
-                      !currentUser || canAfford 
-                        ? 'bg-green-500 text-white hover:bg-green-600' 
-                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {canAfford || !currentUser ? 'Redeem' : 'Insufficient XP'}
-                  </button>
+        {/* Render only activeRewards instead of all rewards */}
+        {activeRewards.length === 0 ? (
+            <p className="text-gray-500 col-span-full text-center py-10">No rewards available right now.</p>
+        ) : (
+            activeRewards.map(reward => {
+            const canAfford = currentUser && currentUser.xp >= reward.xp_cost;
+            return (
+                <div key={reward.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                <img 
+                    src={reward.image || "https://via.placeholder.com/400x200?text=Reward"} 
+                    alt={reward.title} 
+                    className="w-full h-40 object-cover" 
+                />
+                <div className="p-5">
+                    <h3 className="font-bold text-lg mb-2 text-gray-800">{reward.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 h-10 line-clamp-2">{reward.description}</p>
+                    <div className="flex items-center justify-between mt-auto">
+                    <span className="text-green-600 font-bold flex items-center">
+                        ⭐ {reward.xp_cost} XP
+                    </span>
+                    <button 
+                        onClick={() => handleRedeem(reward)}
+                        disabled={currentUser && !canAfford}
+                        className={`px-4 py-2 rounded-lg font-medium transition ${
+                        !currentUser || canAfford 
+                            ? 'bg-green-500 text-white hover:bg-green-600' 
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        }`}
+                    >
+                        {canAfford || !currentUser ? 'Redeem' : 'Insufficient XP'}
+                    </button>
+                    </div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
+                </div>
+            );
+            })
+        )}
       </div>
 
       {/* User's Redemptions Section */}
@@ -80,7 +87,6 @@ const Rewards = () => {
           <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Your Redemptions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {myRedemptions.map(redemption => {
-              // --- FIX: Use loose equality (==) to match String ID with Number ID ---
               const reward = rewards.find(r => r.id == redemption.reward_id);
               
               const dateString = redemption.redeemed_at 
