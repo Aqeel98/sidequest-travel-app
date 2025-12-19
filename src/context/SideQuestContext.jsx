@@ -17,13 +17,14 @@ export const SideQuestProvider = ({ children }) => {
   const [users, setUsers] = useState([]); 
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // --- INITIAL LOAD & REALTIME SETUP ---
+  // --- INITIAL LOAD ---
   useEffect(() => {
     let mounted = true;
 
+    // --- 1. DATA LOADING STRATEGY ---
     const initializeApp = async () => {
       try {
-        // 1. Fetch Public Data (Parallel)
+        // Fetch Public Data in Parallel (Fastest method)
         const [questsData, rewardsData, redemptionsData] = await Promise.all([
             supabase.from('quests').select('*'),
             supabase.from('rewards').select('*'),
@@ -36,7 +37,7 @@ export const SideQuestProvider = ({ children }) => {
             setRedemptions(redemptionsData.data || []);
         }
 
-        // 2. Check Session
+        // Check Auth Session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted && session) {
@@ -44,56 +45,62 @@ export const SideQuestProvider = ({ children }) => {
         }
         
       } catch (error) {
-        console.error("Init Error:", error);
+        console.error("Initialization Error:", error);
       } finally {
-        // 3. FORCE APP TO LOAD (Crucial Fix)
         if (mounted) setIsLoading(false);
       }
     };
 
     initializeApp();
 
-    // 4. Listen for Auth Changes
+    // --- 2. SAFETY TIMER ---
+    // If the app gets stuck loading for more than 5 seconds, force it to open
+    const safetyTimer = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+    }, 5000);
+
+    // --- 3. AUTH LISTENER ---
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // Only fetch if we switched users or don't have profile yet
-        if (!currentUser || currentUser.id !== session.user.id) {
-            await fetchProfile(session.user.id, session.user.email);
-        }
+        // If we have a session but no user in state, fetch the profile
+        if (!currentUser) await fetchProfile(session.user.id, session.user.email);
       } else {
         setCurrentUser(null);
         setQuestProgress([]);
+        setIsLoading(false);
       }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
 
-  // --- REALTIME XP LISTENER ---
+  // --- REALTIME SUBSCRIPTION (XP UPDATES) ---
   const subscribeToProfileChanges = (userId) => {
       const channel = supabase
-        .channel(`profile:${userId}`)
+        .channel(`profile-updates-${userId}`)
         .on('postgres_changes', 
             { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
             (payload) => {
-                // Update local XP instantly when DB changes
+                // Instantly update local XP when DB changes
                 setCurrentUser(prev => ({ ...prev, ...payload.new }));
             }
         )
         .subscribe();
-        
+      
       return () => supabase.removeChannel(channel);
   };
 
   // --- DATA FETCHING ---
+  
   const fetchProfile = async (userId, userEmail) => {
     try {
       let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
       
-      // Zombie Fix: Create profile if missing
+      // Zombie User Fix: If Auth exists but Profile missing, create it now
       if (!data) {
           const newProfile = { 
               id: userId, email: userEmail, full_name: userEmail.split('@')[0], 
@@ -101,20 +108,23 @@ export const SideQuestProvider = ({ children }) => {
           };
           const { data: created, error: createError } = await supabase
               .from('profiles').upsert([newProfile]).select().single();
+          
           if (!createError) data = created;
       }
 
       if (data) {
+          // Force Admin role for your specific email
           if (data.email === 'sidequestsrilanka@gmail.com') data.role = 'Admin';
+          
           setCurrentUser(data);
           
-          // Start Realtime Listener for XP
+          // Start listening for XP changes
           subscribeToProfileChanges(userId);
 
           await fetchSubmissions(userId, data.role);
       }
     } catch (err) {
-      console.error("Profile Error", err);
+      console.error("Profile Load Error", err);
     }
   };
 
@@ -157,12 +167,15 @@ export const SideQuestProvider = ({ children }) => {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
 
+        // Create Profile immediately
         if (data.user) {
             const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
             const newProfile = { 
                 id: data.user.id, email, full_name: name, role: finalRole 
             };
             await supabase.from('profiles').upsert([newProfile]);
+            
+            // Set User Locally (Instant UI update)
             setCurrentUser(newProfile);
             setShowAuthModal(false);
             alert("Welcome, " + name + "!");
@@ -183,14 +196,17 @@ export const SideQuestProvider = ({ children }) => {
   const addQuest = async (formData, imageFile) => {
     try {
         let imageUrl = null;
+        // Upload Image
         if (imageFile) {
             const fileName = `quest-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
             const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, imageFile);
             if (uploadError) throw uploadError;
+            
             const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
             imageUrl = data.publicUrl;
         }
 
+        // Insert Quest
         const { error } = await supabase.from('quests').insert([{
             title: formData.title,
             description: formData.description,
@@ -211,6 +227,7 @@ export const SideQuestProvider = ({ children }) => {
         fetchQuests(); 
         return true; 
     } catch (error) {
+        console.error("Add Quest Error:", error);
         alert("Failed to add quest: " + error.message);
         return false;
     }
@@ -218,9 +235,10 @@ export const SideQuestProvider = ({ children }) => {
 
   const updateQuest = async (id, updates) => {
     try {
-        const questId = Number(id); 
+        const questId = Number(id); // Fix: Ensure ID is number
         const { error } = await supabase.from('quests').update(updates).eq('id', questId); 
         if (error) throw error;
+        
         fetchQuests(); 
         alert("Quest Updated"); 
     } catch (error) {
@@ -232,6 +250,8 @@ export const SideQuestProvider = ({ children }) => {
     try {
         const { error } = await supabase.from('quests').delete().eq('id', id);
         if (error) throw error;
+        
+        // Fix: Instant UI update to prevent 404
         setQuests(prevQuests => prevQuests.filter(q => q.id !== id));
         alert("Quest successfully deleted!");
     } catch (error) {
@@ -290,6 +310,7 @@ export const SideQuestProvider = ({ children }) => {
     alert("Proof Submitted!");
   };
 
+  // --- REWARD ACTIONS ---
   const updateReward = async (id, updates) => {
       const { error } = await supabase.from('rewards').update(updates).eq('id', id);
       if (!error) { fetchRewards(); alert("Reward Updated"); }
@@ -331,7 +352,7 @@ export const SideQuestProvider = ({ children }) => {
     const { data: traveler } = await supabase.from('profiles').select('xp').eq('id', sub.traveler_id).single();
     if (!traveler) return;
 
-    // 3. Update XP (Realtime listener will update the Traveler's UI instantly)
+    // 3. Update XP in DB (Realtime listener will update UI)
     const newXp = (traveler.xp || 0) + quest.xp_value;
     await supabase.from('profiles').update({ xp: newXp }).eq('id', sub.traveler_id);
 
@@ -349,9 +370,13 @@ export const SideQuestProvider = ({ children }) => {
       fetchQuests();
   };
 
+  // --- DEMO HELPER (SAFE TO KEEP) ---
   const switchRole = (role) => {
-    if (currentUser) setCurrentUser({ ...currentUser, role: role });
-    else alert("Please log in first!");
+    if (currentUser) {
+        setCurrentUser({ ...currentUser, role: role });
+    } else {
+        alert("Please log in first!");
+    }
   };
 
   return (
