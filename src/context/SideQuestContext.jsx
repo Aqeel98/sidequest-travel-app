@@ -17,63 +17,83 @@ export const SideQuestProvider = ({ children }) => {
   const [users, setUsers] = useState([]); 
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // --- INITIAL LOAD ---
+  // --- INITIAL LOAD & REALTIME SETUP ---
   useEffect(() => {
     let mounted = true;
 
-    const loadData = async () => {
-        // 1. Fetch Public Data Independently (One failure won't stop the app)
-        const fetchPublic = async () => {
-            const { data: qData } = await supabase.from('quests').select('*');
-            if (mounted && qData) setQuests(qData);
+    const initializeApp = async () => {
+      try {
+        // 1. Fetch Public Data (Parallel)
+        const [questsData, rewardsData, redemptionsData] = await Promise.all([
+            supabase.from('quests').select('*'),
+            supabase.from('rewards').select('*'),
+            supabase.from('redemptions').select('*'),
+        ]);
 
-            const { data: rData } = await supabase.from('rewards').select('*');
-            if (mounted && rData) setRewards(rData);
-
-            const { data: redData } = await supabase.from('redemptions').select('*');
-            if (mounted && redData) setRedemptions(redData);
-        };
-
-        await fetchPublic();
+        if (mounted) {
+            setQuests(questsData.data || []);
+            setRewards(rewardsData.data || []);
+            setRedemptions(redemptionsData.data || []);
+        }
 
         // 2. Check Session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted && session) {
-            await fetchProfile(session.user.id, session.user.email);
-        } else {
-            if (mounted) setIsLoading(false); // No user, stop loading
+           await fetchProfile(session.user.id, session.user.email);
         }
+        
+      } catch (error) {
+        console.error("Init Error:", error);
+      } finally {
+        // 3. FORCE APP TO LOAD (Crucial Fix)
+        if (mounted) setIsLoading(false);
+      }
     };
 
-    loadData();
+    initializeApp();
 
-    // 3. Listen for Auth Changes (Login/Logout/Refresh)
+    // 4. Listen for Auth Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session) {
-            // Always refresh profile on auth change to get latest XP
+      if (session) {
+        // Only fetch if we switched users or don't have profile yet
+        if (!currentUser || currentUser.id !== session.user.id) {
             await fetchProfile(session.user.id, session.user.email);
-        } else {
-            setCurrentUser(null);
-            setQuestProgress([]);
-            if (mounted) setIsLoading(false);
         }
+      } else {
+        setCurrentUser(null);
+        setQuestProgress([]);
+      }
     });
 
     return () => {
-        mounted = false;
-        subscription.unsubscribe();
+      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
+  // --- REALTIME XP LISTENER ---
+  const subscribeToProfileChanges = (userId) => {
+      const channel = supabase
+        .channel(`profile:${userId}`)
+        .on('postgres_changes', 
+            { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
+            (payload) => {
+                // Update local XP instantly when DB changes
+                setCurrentUser(prev => ({ ...prev, ...payload.new }));
+            }
+        )
+        .subscribe();
+        
+      return () => supabase.removeChannel(channel);
+  };
+
   // --- DATA FETCHING ---
-  
   const fetchProfile = async (userId, userEmail) => {
     try {
-      // Fetch latest profile data (XP, Name, Role)
       let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
       
-      // FIX: Handle "Zombie User" (Auth exists, but Profile missing in DB)
+      // Zombie Fix: Create profile if missing
       if (!data) {
           const newProfile = { 
               id: userId, email: userEmail, full_name: userEmail.split('@')[0], 
@@ -86,13 +106,15 @@ export const SideQuestProvider = ({ children }) => {
 
       if (data) {
           if (data.email === 'sidequestsrilanka@gmail.com') data.role = 'Admin';
-          setCurrentUser(data); // <--- This updates the XP in the UI
+          setCurrentUser(data);
+          
+          // Start Realtime Listener for XP
+          subscribeToProfileChanges(userId);
+
           await fetchSubmissions(userId, data.role);
       }
     } catch (err) {
-      console.error("Profile Load Error", err);
-    } finally {
-      setIsLoading(false); // Ensure loading stops
+      console.error("Profile Error", err);
     }
   };
 
@@ -127,7 +149,6 @@ export const SideQuestProvider = ({ children }) => {
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error; 
-    // onAuthStateChange will handle the rest
     setShowAuthModal(false);
   };
 
@@ -303,23 +324,16 @@ export const SideQuestProvider = ({ children }) => {
     const quest = quests.find(q => q.id === sub.quest_id);
     if (!quest) return; 
 
+    // 1. Approve
     await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId);
     
-    const { data: traveler, error: xpError } = await supabase
-        .from('profiles').select('xp').eq('id', sub.traveler_id).single();
-    
-    if (xpError) return;
+    // 2. Get User
+    const { data: traveler } = await supabase.from('profiles').select('xp').eq('id', sub.traveler_id).single();
+    if (!traveler) return;
 
+    // 3. Update XP (Realtime listener will update the Traveler's UI instantly)
     const newXp = (traveler.xp || 0) + quest.xp_value;
-    const { error: updateError } = await supabase
-        .from('profiles').update({ xp: newXp }).eq('id', sub.traveler_id);
-
-    if (updateError) return;
-
-    // Force Admin XP update locally if approving own submission
-    if (sub.traveler_id === currentUser.id) {
-        setCurrentUser(prevUser => ({ ...prevUser, xp: newXp }));
-    }
+    await supabase.from('profiles').update({ xp: newXp }).eq('id', sub.traveler_id);
 
     alert("Verified and XP Awarded!");
     fetchSubmissions(currentUser.id, 'Admin'); 
