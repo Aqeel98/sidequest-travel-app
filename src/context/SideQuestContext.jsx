@@ -24,7 +24,7 @@ export const SideQuestProvider = ({ children }) => {
     // --- 1. DATA LOADING STRATEGY ---
     const initializeApp = async () => {
       try {
-        // Fetch Public Data in Parallel (Fastest method)
+        // 1. Fetch Public Data (Quests, Rewards, Redemptions)
         const [questsData, rewardsData, redemptionsData] = await Promise.all([
             supabase.from('quests').select('*'),
             supabase.from('rewards').select('*'),
@@ -37,16 +37,19 @@ export const SideQuestProvider = ({ children }) => {
             setRedemptions(redemptionsData.data || []);
         }
 
-        // Check Auth Session
+        // 2. Check Auth Session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted && session) {
+           // CRITICAL FIX: 'await' the profile fetch so currentUser is NOT null 
+           // when the loading screen disappears.
            await fetchProfile(session.user.id, session.user.email);
         }
         
       } catch (error) {
         console.error("Initialization Error:", error);
       } finally {
+        // 3. Only stop loading once everything (data + auth profile) is confirmed
         if (mounted) setIsLoading(false);
       }
     };
@@ -269,34 +272,51 @@ export const SideQuestProvider = ({ children }) => {
 
   const submitProof = async (questId, note, file) => {
     let proofUrl = null;
-    if (file) {
-        const fileName = `${Date.now()}_${file.name.replace(/\s/g, '')}`;
-        const { error: uploadErr } = await supabase.storage.from('proofs').upload(fileName, file);
-        if (!uploadErr) { alert("Error uploading image"); return; }
-        const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
-        proofUrl = data.publicUrl;
-    }
+    try {
+        if (file) {
+            const fileName = `${Date.now()}_${file.name.replace(/\s/g, '')}`;
+            const { error: uploadErr } = await supabase.storage.from('proofs').upload(fileName, file);
+            
+            // FIX: Change !uploadErr to uploadErr
+            if (uploadErr) { 
+                alert("Image upload failed: " + uploadErr.message); 
+                return; 
+            }
 
-    const existing = questProgress.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
-    
-    if (existing) {
-        const { data } = await supabase.from('submissions').update({
-            status: 'pending', completion_note: note, proof_photo_url: proofUrl, submitted_at: new Date()
-        }).eq('id', existing.id).select();
-        setQuestProgress(questProgress.map(p => p.id === existing.id ? data[0] : p));
-    } else {
-        const { data } = await supabase.from('submissions').insert([{
-            quest_id: questId, traveler_id: currentUser.id, status: 'pending', completion_note: note, proof_photo_url: proofUrl
-        }]).select();
-        setQuestProgress([...questProgress, data[0]]);
+            const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+            proofUrl = data.publicUrl;
+        }
+
+        const existing = questProgress.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
+        
+        if (existing) {
+            const { data, error: updateErr } = await supabase.from('submissions').update({
+                status: 'pending', completion_note: note, proof_photo_url: proofUrl, submitted_at: new Date()
+            }).eq('id', existing.id).select();
+            
+            if (updateErr) throw updateErr;
+            setQuestProgress(questProgress.map(p => p.id === existing.id ? data[0] : p));
+        } else {
+            const { data, error: insertErr } = await supabase.from('submissions').insert([{
+                quest_id: questId, traveler_id: currentUser.id, status: 'pending', completion_note: note, proof_photo_url: proofUrl
+            }]).select();
+            
+            if (insertErr) throw insertErr;
+            setQuestProgress([...questProgress, data[0]]);
+        }
+        alert("Proof Submitted Successfully!");
+    } catch (err) {
+        alert("Submission Error: " + err.message);
     }
-    alert("Proof Submitted!");
   };
 
-  // --- REWARD ACTIONS (Includes NEW Add/Approve) ---
-  
-  // NEW: Add Reward Logic
   const addReward = async (formData, imageFile) => {
+    // Keep your logic, but ensure currentUser exists before trying to access .id
+    if (!currentUser) {
+        alert("Session expired. Please log in again.");
+        return false;
+    }
+
     try {
         let imageUrl = null;
         if (imageFile) {
@@ -312,12 +332,12 @@ export const SideQuestProvider = ({ children }) => {
             description: formData.description,
             xp_cost: Number(formData.xp_cost),
             image: imageUrl,
-            created_by: currentUser.id,
+            created_by: currentUser.id, // Ensure currentUser is loaded (addressed in fix 2)
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         }]);
 
         if (error) throw error;
-        alert("Reward created successfully!");
+        alert("Reward created! Waiting for Admin approval.");
         fetchRewards();
         return true;
     } catch (error) {
