@@ -24,7 +24,7 @@ export const SideQuestProvider = ({ children }) => {
     // --- 1. DATA LOADING STRATEGY ---
     const initializeApp = async () => {
       try {
-        // 1. Fetch Public Data (Quests, Rewards, Redemptions)
+        // Fetch Public Data in Parallel
         const [questsData, rewardsData, redemptionsData] = await Promise.all([
             supabase.from('quests').select('*'),
             supabase.from('rewards').select('*'),
@@ -37,19 +37,17 @@ export const SideQuestProvider = ({ children }) => {
             setRedemptions(redemptionsData.data || []);
         }
 
-        // 2. Check Auth Session
+        // Check Auth Session on startup
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted && session) {
-           // CRITICAL FIX: 'await' the profile fetch so currentUser is NOT null 
-           // when the loading screen disappears.
+           // Wait for profile to be 100% ready before hiding loading screen
            await fetchProfile(session.user.id, session.user.email);
         }
         
       } catch (error) {
         console.error("Initialization Error:", error);
       } finally {
-        // 3. Only stop loading once everything (data + auth profile) is confirmed
         if (mounted) setIsLoading(false);
       }
     };
@@ -59,13 +57,18 @@ export const SideQuestProvider = ({ children }) => {
     // --- 2. SAFETY TIMER ---
     const safetyTimer = setTimeout(() => {
       if (mounted) setIsLoading(false);
-    }, 5000);
+    }, 8000); // Increased slightly for slower network resilience
 
-    // --- 3. AUTH LISTENER ---
+    // --- 3. THE PERMANENT AUTH LISTENER FIX ---
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        if (!currentUser) await fetchProfile(session.user.id, session.user.email);
-      } else {
+        // Only fetch if we don't have a user loaded yet (prevents double-loading)
+        if (!currentUser && mounted) {
+          await fetchProfile(session.user.id, session.user.email);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // ONLY clear the user if they actually clicked Logout
+        // This prevents the "Refresh Logout" bug
         setCurrentUser(null);
         setQuestProgress([]);
         setIsLoading(false);
@@ -97,43 +100,45 @@ export const SideQuestProvider = ({ children }) => {
   // --- DATA FETCHING ---
   
   const fetchProfile = async (userId, userEmail) => {
+    const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
     try {
-      // 1. Use maybeSingle() to prevent the "Missing Row" crash
+      // 1. Get the profile safely
       let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
       
       if (error) {
-          console.error("Database Error:", error.message);
+          console.error("Profile Fetch Error:", error.message);
           return;
       }
 
-      // 2. Zombie User Fix (If user exists in Auth but not in our Profile table)
+      // 2. Zombie User Fix (Previous Update Kept)
       if (!data) {
           const newProfile = { 
               id: userId, 
               email: userEmail, 
               full_name: userEmail.split('@')[0], 
-              // Set Admin role permanently if it's your email
-              role: userEmail === 'sidequestsrilanka@gmail.com' ? 'Admin' : 'Traveler',
+              role: userEmail === ADMIN_EMAIL ? 'Admin' : 'Traveler',
               xp: 0
           };
           
           const { data: created, error: createError } = await supabase
               .from('profiles').upsert([newProfile]).select().single();
           
-          if (createError) throw createError;
-          data = created;
+          if (!createError) data = created;
       }
 
-      // 3. Set the user and load their submissions
+      // 3. Set User and Load Submissions
       if (data) {
+          // ENSURE Role is correct (Permanent Admin Fix)
+          if (data.email === ADMIN_EMAIL) data.role = 'Admin';
+          
           setCurrentUser(data);
           subscribeToProfileChanges(userId);
           await fetchSubmissions(userId, data.role);
       }
     } catch (err) {
-      console.error("Profile Load Error", err);
+      console.error("Critical Profile Load Error", err);
     } finally {
-      // 4. THE PERMANENT FIX: Turn off the "Processing..." screen no matter what
+      // 4. Ensure loading screen always closes
       setIsLoading(false);
     }
   };
