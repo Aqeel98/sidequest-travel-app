@@ -51,28 +51,39 @@ const PartnerDashboard = () => {
         }
 
         setIsSubmitting(true);
-        
-        let success = false;
-        if (mode === 'quest') {
-             if (!form.lat || !form.lng) {
-                 alert("Coordinates required for Quest.");
-                 setIsSubmitting(false); return;
-             }
-             success = await addQuest(form, imageFile);
-        } else {
-             if (!form.xp_cost) {
-                 alert("XP Cost required for Reward.");
-                 setIsSubmitting(false); return;
-             }
-             success = await addReward(form, imageFile);
-        }
-        
-        setIsSubmitting(false);
 
-        if (success) {
-            setForm({});
-            setImageFile(null);
-            setPreview(null);
+        try {
+            let success = false;
+            if (mode === 'quest') {
+                if (!form.lat || !form.lng) {
+                    alert("Coordinates required for Quest.");
+                    setIsSubmitting(false); 
+                    return;
+                }
+                success = await addQuest(form, imageFile);
+            } else {
+                if (!form.xp_cost) {
+                    alert("XP Cost required for Reward.");
+                    setIsSubmitting(false); 
+                    return;
+                }
+                success = await addReward(form, imageFile);
+            }
+
+            // If the context action was successful, clear the form
+            if (success) {
+                setForm({});
+                setImageFile(null);
+                setPreview(null);
+            }
+        } catch (error) {
+            console.error("Submission error:", error);
+            alert("An unexpected error occurred. Check console for details.");
+        } finally {
+            // THIS IS THE FIX: This line runs NO MATTER WHAT. 
+            // Even if the upload fails or the database rejects it, 
+            // the button will stop saying "Uploading..."
+            setIsSubmitting(false);
         }
     };
 

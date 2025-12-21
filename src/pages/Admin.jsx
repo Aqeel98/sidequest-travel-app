@@ -226,7 +226,8 @@ const Admin = () => {
         <div className="space-y-6">
           {pendingNewQuests.length === 0 && <p className="text-gray-500">No new quests pending.</p>}
           {pendingNewQuests.map(quest => {
-            const creator = users.find(u => u.id === quest.created_by_id);
+           
+            const creator = users.find(u => u.id === quest.created_by);
             const isDetailsOpen = viewDetailsId === quest.id;
 
             return (
