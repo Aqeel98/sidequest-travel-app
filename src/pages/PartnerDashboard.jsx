@@ -80,7 +80,7 @@ const PartnerDashboard = () => {
             console.error("Submission error:", error);
             alert("An unexpected error occurred. Check console for details.");
         } finally {
-            // THIS IS THE FIX: This line runs NO MATTER WHAT. 
+            // THIS IS THE FIX
             // Even if the upload fails or the database rejects it, 
             // the button will stop saying "Uploading..."
             setIsSubmitting(false);
