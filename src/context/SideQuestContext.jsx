@@ -98,29 +98,43 @@ export const SideQuestProvider = ({ children }) => {
   
   const fetchProfile = async (userId, userEmail) => {
     try {
-      let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      // 1. Use maybeSingle() to prevent the "Missing Row" crash
+      let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
       
-      // Zombie User Fix
+      if (error) {
+          console.error("Database Error:", error.message);
+          return;
+      }
+
+      // 2. Zombie User Fix (If user exists in Auth but not in our Profile table)
       if (!data) {
           const newProfile = { 
-              id: userId, email: userEmail, full_name: userEmail.split('@')[0], 
-              role: userEmail === 'sidequestsrilanka@gmail.com' ? 'Admin' : 'Traveler'
+              id: userId, 
+              email: userEmail, 
+              full_name: userEmail.split('@')[0], 
+              // Set Admin role permanently if it's your email
+              role: userEmail === 'sidequestsrilanka@gmail.com' ? 'Admin' : 'Traveler',
+              xp: 0
           };
+          
           const { data: created, error: createError } = await supabase
               .from('profiles').upsert([newProfile]).select().single();
           
-          if (!createError) data = created;
+          if (createError) throw createError;
+          data = created;
       }
 
+      // 3. Set the user and load their submissions
       if (data) {
-          if (data.email === 'sidequestsrilanka@gmail.com') data.role = 'Admin';
-          
           setCurrentUser(data);
           subscribeToProfileChanges(userId);
           await fetchSubmissions(userId, data.role);
       }
     } catch (err) {
       console.error("Profile Load Error", err);
+    } finally {
+      // 4. THE PERMANENT FIX: Turn off the "Processing..." screen no matter what
+      setIsLoading(false);
     }
   };
 
