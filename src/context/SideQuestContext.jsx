@@ -19,15 +19,13 @@ export const SideQuestProvider = ({ children }) => {
 
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
-  // --- INITIAL LOAD & AUTH SYNC ---
+  // --- INITIAL LOAD (Runs Once on App Start) ---
   useEffect(() => {
     let mounted = true;
 
     const initializeApp = async () => {
       try {
-        setIsLoading(true);
-
-        // 1. Fetch Public Data (Quests & Rewards)
+        // 1. Fetch Public Data (Parallel for speed)
         const [questsData, rewardsData] = await Promise.all([
             supabase.from('quests').select('*'),
             supabase.from('rewards').select('*'),
@@ -39,57 +37,52 @@ export const SideQuestProvider = ({ children }) => {
         }
 
         // 2. Check for existing Session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (sessionError) throw sessionError;
-
         if (mounted && session) {
-           // AWAIT fetchProfile so the app stays in "Loading" state 
-           // until the user is fully recognized by the database.
+           // Wait for profile to load so state is ready before loader closes
            await fetchProfile(session.user.id, session.user.email);
         }
         
       } catch (error) {
-        console.error("Critical Initialization Error:", error);
+        console.error("Initialization Error:", error);
       } finally {
+        // PERMANENT FIX: This ensures the loading screen closes regardless of errors
         if (mounted) setIsLoading(false);
       }
     };
 
     initializeApp();
 
-    // --- AUTH STATE LISTENER (The Permanent Sync Fix) ---
+    // --- AUTH LISTENER ---
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (mounted) {
         if (session) {
-          // If a session exists, ensure profile is loaded
-          // SIGNED_IN covers login, INITIAL_SESSION covers refresh
-          if (!currentUser) {
-            await fetchProfile(session.user.id, session.user.email);
-          }
-          // PERMANENT FIX: Close modal here to prevent "Processing..." hang
+          // If user logs in or session is restored
+          await fetchProfile(session.user.id, session.user.email);
           setShowAuthModal(false); 
         } else if (event === 'SIGNED_OUT') {
-          // Explicit cleanup on logout
+          // Clear everything on logout
           setCurrentUser(null);
           setQuestProgress([]);
           setRedemptions([]);
+          setUsers([]);
           setIsLoading(false);
         }
       }
     });
 
-    // Safety timer to prevent infinite loading screen on slow networks
+    // Safety timer: Fallback to close loader if database is extremely slow
     const safetyTimer = setTimeout(() => {
       if (mounted) setIsLoading(false);
-    }, 6000); 
+    }, 8000); 
 
     return () => {
       mounted = false;
       clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
-  }, [currentUser]); // Dependencies ensure sync if currentUser is null
+  }, []); // EMPTY ARRAY Fixes the "Loading Hang" infinite loop
 
   // --- REALTIME SUBSCRIPTION (XP UPDATES) ---
   const subscribeToProfileChanges = (userId) => {
@@ -129,20 +122,20 @@ export const SideQuestProvider = ({ children }) => {
       }
 
       if (data) {
-          // Hardcode check for admin email
+          // Role enforcement
           if (data.email === ADMIN_EMAIL) data.role = 'Admin';
           
           setCurrentUser(data);
           subscribeToProfileChanges(userId);
           
-          // Load specific user data (Submissions & Redemptions)
+          // Fetch user-specific data
           await Promise.all([
              fetchSubmissions(userId, data.role),
              fetchRedemptions(userId)
           ]);
       }
     } catch (err) {
-      console.error("Critical Profile Load Error", err);
+      console.error("Profile Load Error", err);
     }
   };
 
@@ -175,7 +168,6 @@ export const SideQuestProvider = ({ children }) => {
 
   // --- AUTH ACTIONS ---
   const login = async (email, password) => {
-    // We don't close the modal here; the Auth Listener handles it when the session is confirmed
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error; 
   };
@@ -191,9 +183,7 @@ export const SideQuestProvider = ({ children }) => {
                 id: data.user.id, email, full_name: name, role: finalRole, xp: 0
             };
             await supabase.from('profiles').upsert([newProfile]);
-            
-            // Note: Listener handles currentUser state update
-            alert("Welcome, " + name + "!");
+            alert("Welcome to SideQuest, " + name + "!");
         }
     } catch (err) {
         console.error("Signup Error:", err);
@@ -203,7 +193,6 @@ export const SideQuestProvider = ({ children }) => {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // State is cleared by the onAuthStateChange SIGNED_OUT event
   };
 
   // --- QUEST ACTIONS ---
