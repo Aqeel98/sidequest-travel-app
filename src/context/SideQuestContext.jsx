@@ -7,7 +7,8 @@ const SideQuestContext = createContext();
 export const useSideQuest = () => useContext(SideQuestContext);
 
 export const SideQuestProvider = ({ children }) => {
-  // --- 1. FULL STATE ARCHITECTURE ---
+  // --- 1. CORE SYSTEM STATE ---
+  // These states manage the entire gamified ecosystem of SideQuest Sri Lanka
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true); 
 
@@ -15,24 +16,26 @@ export const SideQuestProvider = ({ children }) => {
   const [rewards, setRewards] = useState([]); 
   const [questProgress, setQuestProgress] = useState([]); 
   const [redemptions, setRedemptions] = useState([]);
-  const [users, setUsers] = useState([]); 
+  const [users, setUsers] = useState([]); // High-level state for Admin view
   
-  // PERMANENT FIX: Default to false so guests can see the landing page immediately
+  // PERMANENT FIX: Initialized to false. 
+  // System will never trigger this unless an explicit action (Accept Quest) is taken.
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // MASTER SECURITY CONSTANT
+  // MASTER SECURITY LOCK: The only email permitted to use the role-switcher
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
-  // --- 2. THE HARDENED BOOT SEQUENCE (Refresh & Persistence Pillar) ---
+  // --- 2. THE HARDENED BOOT SEQUENCE (The Persistence Pillar) ---
   useEffect(() => {
     let mounted = true;
 
     const initializeApp = async () => {
       try {
-        console.log("SQ-System: System Boot Sequence Started...");
+        console.log("SQ-System: Starting Boot Sequence...");
         if (mounted) setIsLoading(true);
 
-        // A. Parallel Fetch of Public Ecosystem Data (Visible to everyone)
+        // A. Parallel Fetch of Public Ecosystem Data
+        // This allows Guests to see the Home page content even if logged out
         const [questsData, rewardsData] = await Promise.all([
             supabase.from('quests').select('*'),
             supabase.from('rewards').select('*'),
@@ -41,29 +44,34 @@ export const SideQuestProvider = ({ children }) => {
         if (mounted) {
             setQuests(questsData.data || []);
             setRewards(rewardsData.data || []);
-            console.log("SQ-System: Quests & Rewards synced for Guest/User.");
+            console.log("SQ-System: Public data synchronization successful.");
         }
 
-        // B. THE ANCHOR: Manually recover auth session from storage
-        // This is the specific fix for the "Logged out on refresh" bug.
+        // B. THE ANCHOR: Manually recover auth session from browser storage
+        // This is the specific "Special Sauce" fix for the "Logged out on refresh" bug.
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+            console.warn("SQ-System: No saved session found in browser.");
+            throw sessionError;
+        }
 
         if (mounted && session) {
-           console.log("SQ-System: Valid session found for", session.user.email);
-           // We await this so the user doesn't see a "Login" button before profile loads
+           console.log("SQ-System: Valid session recovered for:", session.user.email);
+           // We AWAIT fetchProfile so the app doesn't render guest UI before profile loads
            await fetchProfile(session.user.id, session.user.email);
         } else {
-           console.log("SQ-System: No existing session. Initializing Guest experience.");
+           console.log("SQ-System: Entering Guest Mode (Silent Initialization).");
+           // EXPLICIT GUEST GUARD: Ensure modal is closed
+           if (mounted) setShowAuthModal(false);
         }
         
       } catch (error) {
-        console.error("SQ-System: Critical Boot Error ->", error);
+        console.error("SQ-System: Boot error handled gracefully ->", error.message);
       } finally {
-        // Only remove the loading screen once Auth check is 100% done
+        // Only remove the loading screen once the Auth/Guest state is 100% verified
         if (mounted) {
-            console.log("SQ-System: System ready. Gateway open.");
+            console.log("SQ-System: Boot sequence finalized.");
             setIsLoading(false);
         }
       }
@@ -72,54 +80,54 @@ export const SideQuestProvider = ({ children }) => {
     initializeApp();
 
     // --- 3. THE MASTER AUTH LISTENER ---
+    // This watches for Login/Logout events and handles state synchronization
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (mounted) {
-        console.log("SQ-System: Auth Event Fired ->", event);
+        console.log("SQ-System: Auth Change Detected ->", event);
         
         if (session) {
-          // Sync profile if user logs in or refreshes
+          // If a session exists, handshake with the profiles table
           if (!currentUser) {
-            // Re-trigger loading state briefly while profile data is being "Handshaked"
-            setIsLoading(true);
+            console.log("SQ-System: Syncing user profile data...");
             await fetchProfile(session.user.id, session.user.email);
           }
-          // PERMANENT FIX: Closes the "Processing..." Modal the second the DB confirms user
+          // PERMANENT FIX: Close modal the millisecond the database handshake is confirmed
           setShowAuthModal(false); 
-          setIsLoading(false);
         } else if (event === 'SIGNED_OUT') {
-          console.log("SQ-System: User signed out. Cleaning state.");
+          console.log("SQ-System: Sign-out event. Purging local user state.");
           setCurrentUser(null);
           setQuestProgress([]);
           setRedemptions([]);
           setUsers([]);
+          setShowAuthModal(false); // Ensure modal closes on sign out
           setIsLoading(false);
         }
       }
     });
 
-    // Safety Timer (Protection for slow Sri Lankan 4G connections)
+    // Safety Timer: Guarantees the app opens even if the database is lagging
     const safetyTimer = setTimeout(() => {
-      if (mounted) {
-        console.warn("SQ-System: Network Latency High. Closing Loader.");
+      if (mounted && isLoading) {
+        console.warn("SQ-System: Network latency detected. Closing Gateway via safety timer.");
         setIsLoading(false);
       }
-    }, 10000); 
+    }, 9000); 
 
     return () => {
       mounted = false;
       clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
-  }, []); // EMPTY ARRAY: Critical to prevent the infinite refresh-loop
+  }, []); // EMPTY ARRAY: Critical to prevent the infinite refresh loop
 
-  // --- 4. REALTIME DATA CHANNEL (XP & STATUS) ---
+  // --- 4. REALTIME DATA CHANNEL (CDC - Change Data Capture) ---
   const subscribeToProfileChanges = (userId) => {
       const channel = supabase
         .channel(`profile-updates-${userId}`)
         .on('postgres_changes', 
             { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
             (payload) => {
-                console.log("SQ-System: Realtime DB update detected for Profile.");
+                console.log("SQ-System: Realtime XP/Level update received from Database.");
                 setCurrentUser(prev => ({ ...prev, ...payload.new }));
             }
         )
@@ -128,21 +136,21 @@ export const SideQuestProvider = ({ children }) => {
       return () => supabase.removeChannel(channel);
   };
 
-  // --- 5. DATA FETCHING & ZOMBIE REPAIR ---
+  // --- 5. DATA FETCHING & USER RECOVERY ---
   
   const fetchProfile = async (userId, userEmail) => {
     try {
-      // maybeSingle() prevents app crashes if the user record is missing from Profiles table
+      // maybeSingle() prevents crashes if the user record hasn't been created yet
       let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
       
       if (error) {
-          console.error("SQ-System: Profile Handshake Error:", error.message);
+          console.error("SQ-System: Profile Sync Error:", error.message);
           return;
       }
 
-      // ZOMBIE USER FIX: Auto-repair profiles that exist in Auth but not in Database
+      // ZOMBIE USER FIX: Detect and auto-repair profile records (missing row logic)
       if (!data) {
-          console.log("SQ-System: Repairing database record for Auth account...");
+          console.log("SQ-System: Profile record missing. Triggering auto-repair...");
           const newProfile = { 
               id: userId, email: userEmail, full_name: userEmail.split('@')[0], 
               role: userEmail === ADMIN_EMAIL ? 'Admin' : 'Traveler',
@@ -151,62 +159,74 @@ export const SideQuestProvider = ({ children }) => {
           const { data: created, error: createError } = await supabase
               .from('profiles').upsert([newProfile]).select().single();
           
-          if (!createError) data = created;
+          if (!createError) {
+              data = created;
+              console.log("SQ-System: Profile record repaired successfully.");
+          }
       }
 
       if (data) {
-          // Hardcoded Master Admin Security Logic
+          // Hardcoded Admin Logic: Email master check override
           if (data.email === ADMIN_EMAIL) data.role = 'Admin';
           
           setCurrentUser(data);
           subscribeToProfileChanges(userId);
           
-          // Parallel fetch of private history, redemptions and submissions
+          // Sync history and submissions in parallel for performance
           await Promise.all([
              fetchSubmissions(userId, data.role),
              fetchRedemptions(userId)
           ]);
       }
     } catch (err) {
-      console.error("SQ-System: Critical Handshake Failure.", err);
+      console.error("SQ-System: Critical profile recovery failure.", err);
     }
   };
 
   const fetchQuests = async () => {
-    const { data } = await supabase.from('quests').select('*');
-    setQuests(data || []);
+    const { data, error } = await supabase.from('quests').select('*');
+    if (!error) setQuests(data || []);
   };
 
   const fetchRewards = async () => {
-    const { data } = await supabase.from('rewards').select('*');
-    setRewards(data || []);
+    const { data, error } = await supabase.from('rewards').select('*');
+    if (!error) setRewards(data || []);
   };
 
   const fetchRedemptions = async (userId) => {
-    const { data } = await supabase.from('redemptions').select('*').eq('traveler_id', userId);
-    setRedemptions(data || []);
+    const { data, error } = await supabase.from('redemptions').select('*').eq('traveler_id', userId);
+    if (!error) setRedemptions(data || []);
   };
 
   const fetchSubmissions = async (userId, role) => {
-    if (role === 'Admin') {
-        // Admin View: See all proofs and all user profiles
-        const { data } = await supabase.from('submissions').select('*');
-        setQuestProgress(data || []);
-        const { data: allUsers } = await supabase.from('profiles').select('*');
-        setUsers(allUsers || []);
-    } else {
-        // Traveler View: Restricted to own submissions
-        const { data } = await supabase.from('submissions').select('*').eq('traveler_id', userId);
-        setQuestProgress(data || []);
+    try {
+        if (role === 'Admin') {
+            // Admin omnipotence: Load all traveler proofs and all profiles
+            const { data: subs } = await supabase.from('submissions').select('*');
+            setQuestProgress(subs || []);
+            const { data: allUsers } = await supabase.from('profiles').select('*');
+            setUsers(allUsers || []);
+        } else {
+            // Standard Traveler view: Restricted to own submissions
+            const { data: mySubs } = await supabase.from('submissions').select('*').eq('traveler_id', userId);
+            setQuestProgress(mySubs || []);
+        }
+    } catch (e) {
+        console.error("SQ-System: Submission sync failed.", e);
     }
   };
 
-  // --- 6. AUTHENTICATION ACTIONS ---
+  // --- 6. AUTHENTICATION ENGINE ---
 
   const login = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error; 
-    // Success handling moved to onAuthStateChange for synchronization
+    try {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error; 
+        // Note: Success state is handled by the master listener for better sync
+    } catch (err) {
+        console.error("SQ-System: Login Failure:", err.message);
+        throw err;
+    }
   };
 
   const signup = async (email, password, name, role) => {
@@ -219,31 +239,41 @@ export const SideQuestProvider = ({ children }) => {
             const newProfile = { 
                 id: data.user.id, email, full_name: name, role: finalRole, xp: 0
             };
-            // Create database entry immediately
+            // Upsert creates the database entry immediately after authentication
             await supabase.from('profiles').upsert([newProfile]);
+            console.log("SQ-System: New adventurer registered.");
             alert("Welcome to SideQuest, " + name + "!");
         }
     } catch (err) {
-        console.error("SQ-System: Signup Failure:", err);
+        console.error("SQ-System: Signup Failure:", err.message);
         throw err;
     }
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error("SQ-System: Logout error", error.message);
+    try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        console.log("SQ-System: Manual sign-out performed.");
+    } catch (err) {
+        console.error("SQ-System: Logout error", err.message);
+    }
   };
 
-  // --- 7. QUEST ACTIONS (MANAGEMENT & PARTICIPATION) ---
+  // --- 7. QUEST MANAGEMENT & PARTICIPATION ---
 
   const addQuest = async (formData, imageFile) => {
     try {
         let imageUrl = null;
         if (imageFile) {
-            const fileName = `quest-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
-            const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, imageFile);
-            if (uploadError) throw uploadError;
+            // Speed Optimize: Image compression for Partner uploads
+            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: true };
+            const optimized = await imageCompression(imageFile, options);
             
+            const fileName = `quest-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
+            const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, optimized);
+            
+            if (uploadError) throw uploadError;
             const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
             imageUrl = data.publicUrl;
         }
@@ -264,10 +294,11 @@ export const SideQuestProvider = ({ children }) => {
         }]);
 
         if (error) throw error;
-        alert("Quest created and queued for review!");
+        alert("Impact Quest created and queued for review!");
         fetchQuests(); 
         return true; 
     } catch (error) {
+        console.error("SQ-System: Quest Addition Failure", error);
         alert("Failed to submit quest: " + error.message);
         return false;
     }
@@ -278,8 +309,9 @@ export const SideQuestProvider = ({ children }) => {
         const { error } = await supabase.from('quests').update(updates).eq('id', Number(id)); 
         if (error) throw error;
         fetchQuests(); 
-        alert("Quest updated successfully."); 
+        alert("Impact Quest updated successfully."); 
     } catch (error) {
+        console.error("SQ-System: Update Error", error);
         alert("Update Failed: " + error.message);
     }
   };
@@ -289,13 +321,15 @@ export const SideQuestProvider = ({ children }) => {
         const { error } = await supabase.from('quests').delete().eq('id', id);
         if (error) throw error;
         setQuests(prevQuests => prevQuests.filter(q => q.id !== id));
-        alert("Quest permanently removed.");
+        alert("Quest permanently removed from ecosystem.");
     } catch (error) {
+        console.error("SQ-System: Delete Error", error);
         alert("Deletion failed: " + error.message);
     }
   };
   
   const acceptQuest = async (questId) => {
+    // SECURITY: Guests must login before accepting a quest
     if (!currentUser) {
         setShowAuthModal(true);
         return false;
@@ -308,21 +342,24 @@ export const SideQuestProvider = ({ children }) => {
         if (error) throw error;
         if (data && data.length > 0) {
             setQuestProgress([...questProgress, data[0]]); 
+            console.log("SQ-System: Quest accepted by traveler.");
             return true; 
         }
         return false;
     } catch (error) {
-        alert("Action failed. Try again.");
+        console.error("SQ-System: Acceptance error", error);
+        alert("Unable to join quest. Please try again.");
         return false;
     }
   };
 
-  // --- SUBMIT PROOF (THE ACCURACY FIX: Compression + Handshake Sync) ---
+  // --- SUBMIT PROOF ENGINE (ACCURACY FIX: Compression + Handshake Sync) ---
   const submitProof = async (questId, note, file) => {
     try {
         let proofUrl = null;
         if (file) {
-            // SPEED FIX: Compress local file before upload to beat Sri Lankan 4G latency
+            // ACCURACY FIX: Compression ensures travelers don't hang on 4G
+            console.log("SQ-System: Optimizing proof image...");
             const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
             const compressedFile = await imageCompression(file, options);
             
@@ -330,7 +367,7 @@ export const SideQuestProvider = ({ children }) => {
             const { error: uploadErr } = await supabase.storage.from('proofs').upload(fileName, compressedFile);
             
             if (uploadErr) { 
-                alert("Upload failed. Check signal."); 
+                alert("Mobile data signal weak. Upload failed."); 
                 return false; 
             }
             const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
@@ -338,12 +375,17 @@ export const SideQuestProvider = ({ children }) => {
         }
 
         const existing = questProgress.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
-        const payload = { status: 'pending', completion_note: note, proof_photo_url: proofUrl, submitted_at: new Date() };
+        const payload = { 
+            status: 'pending', 
+            completion_note: note, 
+            proof_photo_url: proofUrl, 
+            submitted_at: new Date() 
+        };
         
         if (existing) {
             const { data, error: updateErr } = await supabase.from('submissions').update(payload).eq('id', existing.id).select();
             if (updateErr) throw updateErr;
-            // Immediate state handshake so UI updates without refresh
+            // Immediate state handshake for UI responsiveness
             setQuestProgress(questProgress.map(p => p.id === existing.id ? data[0] : p));
         } else {
             const { data, error: insertErr } = await supabase.from('submissions').insert([{
@@ -352,23 +394,23 @@ export const SideQuestProvider = ({ children }) => {
             if (insertErr) throw insertErr;
             setQuestProgress([...questProgress, data[0]]);
         }
-        alert("Impact Proof Submitted! Awaiting verification.");
+        alert("Impact Proof Submitted! Verified Travelers will receive XP soon.");
         return true;
     } catch (err) {
-        alert("Submission error. Please retry.");
+        console.error("SQ-System: Submission Critical Error", err);
+        alert("Submission failure. Please retry.");
         return false;
     }
   };
 
-  // --- 8. REWARD ACTIONS (PARTNER & ECONOMY) ---
+  // --- 8. REWARD ECONOMY ACTIONS ---
 
   const addReward = async (formData, imageFile) => {
     try {
         let imageUrl = null;
         if (imageFile) {
             const fileName = `reward-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
-            const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, imageFile);
-            if (uploadError) throw uploadError;
+            await supabase.storage.from('proofs').upload(fileName, imageFile);
             const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
             imageUrl = data.publicUrl;
         }
@@ -383,10 +425,11 @@ export const SideQuestProvider = ({ children }) => {
         }]);
 
         if (error) throw error;
-        alert("Reward submitted and queued for moderation.");
+        alert("New Reward queued for moderation.");
         fetchRewards();
         return true;
     } catch (error) {
+        console.error("SQ-System: Reward Addition Failure", error);
         alert("Failed to submit reward.");
         return false;
     }
@@ -397,8 +440,9 @@ export const SideQuestProvider = ({ children }) => {
         const { error } = await supabase.from('rewards').update(updates).eq('id', Number(id));
         if (error) throw error;
         fetchRewards(); 
-        alert("Reward updated successfully."); 
+        alert("Marketplace Reward updated."); 
       } catch (error) {
+        console.error("SQ-System: Reward Update Failure", error);
         alert("Update failed.");
       }
   };
@@ -408,39 +452,44 @@ export const SideQuestProvider = ({ children }) => {
         const { error } = await supabase.from('rewards').delete().eq('id', id);
         if (error) throw error;
         fetchRewards();
-        alert("Reward deleted.");
+        alert("Reward removed from marketplace.");
       } catch (error) {
+        console.error("SQ-System: Reward Deletion Failure", error);
         alert("Deletion failed.");
       }
   };
 
   const redeemReward = async (reward) => {
       if (currentUser.xp < reward.xp_cost) {
-          alert("Insufficient Impact Points (XP)!");
+          alert("Insufficient Impact Points (XP) for this reward!");
           return null;
       }
       const code = `SQ-${Date.now().toString().slice(-6)}`;
       
-      // Update Traveler balance
+      // Update local wallet first to prevent race condition
       const { error: xpError } = await supabase.from('profiles').update({ xp: currentUser.xp - reward.xp_cost }).eq('id', currentUser.id);
       
       if (!xpError) {
-          // Record record transaction
+          // Record record transaction history
           const { data, error: redError } = await supabase.from('redemptions').insert([{
               traveler_id: currentUser.id, reward_id: reward.id, redemption_code: code
           }]).select();
           
-          if (redError) throw redError;
+          if (redError) {
+              console.error("SQ-System: Redemption record failure.", redError);
+              throw redError;
+          }
 
-          // Sync local wallet
+          // Sync local wallet and redemptions list
           setCurrentUser({...currentUser, xp: currentUser.xp - reward.xp_cost});
           setRedemptions([...redemptions, data[0]]);
+          console.log("SQ-System: Reward successfully redeemed.");
           return code;
       }
       return null;
   };
 
-  // --- 9. ADMIN MODERATION ACTIONS ---
+  // --- 9. ADMIN OVERSIGHT ACTIONS ---
 
   const approveSubmission = async (submissionId) => {
     const sub = questProgress.find(p => p.id === submissionId);
@@ -448,61 +497,73 @@ export const SideQuestProvider = ({ children }) => {
     const quest = quests.find(q => q.id === sub.quest_id);
     if (!quest) return; 
 
-    // 1. Set verified status
-    await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId);
-    
-    // 2. Fetch traveler's current balance safely
-    const { data: traveler } = await supabase.from('profiles').select('xp').eq('id', sub.traveler_id).single();
-    if (!traveler) return;
+    try {
+        // 1. Set verification status to approved
+        await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId);
+        
+        // 2. Safely calculate and award Impact Points
+        const { data: traveler } = await supabase.from('profiles').select('xp').eq('id', sub.traveler_id).single();
+        if (!traveler) throw new Error("Traveler record not found.");
 
-    // 3. Award Impact Points
-    const newXp = (traveler.xp || 0) + quest.xp_value;
-    await supabase.from('profiles').update({ xp: newXp }).eq('id', sub.traveler_id);
+        const newXp = (traveler.xp || 0) + quest.xp_value;
+        await supabase.from('profiles').update({ xp: newXp }).eq('id', sub.traveler_id);
 
-    alert("Proof verified. XP awarded to the adventurer!");
-    fetchSubmissions(currentUser.id, 'Admin'); 
+        console.log("SQ-System: Submission verified. XP points awarded.");
+        alert("Verification Complete! XP has been sent to the adventurer.");
+        fetchSubmissions(currentUser.id, 'Admin'); 
+    } catch (e) {
+        console.error("SQ-System: Oversight error", e);
+        alert("Action failed: " + e.message);
+    }
   };
 
   const rejectSubmission = async (id) => {
-      await supabase.from('submissions').update({ status: 'rejected' }).eq('id', id);
-      alert("Submission rejected.");
-      fetchSubmissions(currentUser.id, 'Admin');
+      try {
+        await supabase.from('submissions').update({ status: 'rejected' }).eq('id', id);
+        alert("Submission Rejected. Traveler notified.");
+        fetchSubmissions(currentUser.id, 'Admin');
+      } catch (e) { console.error(e); }
   };
   
   const approveNewQuest = async (id) => {
-      await supabase.from('quests').update({ status: 'active' }).eq('id', id);
-      alert("Partner quest approved and live on the map.");
-      fetchQuests();
+      try {
+        await supabase.from('quests').update({ status: 'active' }).eq('id', id);
+        alert("Partner Quest approved and published to map.");
+        fetchQuests();
+      } catch (e) { console.error(e); }
   };
 
   const approveNewReward = async (id) => {
-      await supabase.from('rewards').update({ status: 'active' }).eq('id', id);
-      alert("Partner reward approved and live in the marketplace.");
-      fetchRewards();
+      try {
+        await supabase.from('rewards').update({ status: 'active' }).eq('id', id);
+        alert("Partner Reward approved and published to marketplace.");
+        fetchRewards();
+      } catch (e) { console.error(e); }
   };
 
-  // --- 10. THE MASTER ADMIN ROLE SWITCHER (Lock-Down Logic) ---
+  // --- 10. THE MASTER ADMIN DEEPLINK SWITCHER ---
   const switchRole = (role) => {
     if (!currentUser) {
-        alert("Please log in first!");
+        alert("Auth required.");
         return;
     }
 
-    // CRITICAL SECURITY: Only the master master email can perform this action.
+    // MANDATORY SECURITY: Verify identity before allowing view-state manipulation
     if (currentUser.email !== ADMIN_EMAIL) {
-        console.warn("SQ-System: Unauthorized role switch attempt detected.");
+        console.warn("SQ-System: Manual role-switch attempted by non-authorized account.");
         return; 
     }
 
-    console.log(`SQ-System: Admin manual role switch to ${role}`);
+    console.log(`SQ-System: System Admin switching view context to ${role}`);
     
-    // Switch state
+    // Switch local state role context
     setCurrentUser({ ...currentUser, role: role });
     
-    // Instantly refresh data view to match selected role
+    // Immediately refresh data pools to match the new role view
     fetchSubmissions(currentUser.id, role);
   };
 
+  // --- RENDER PROVIDER ---
   return (
     <SideQuestContext.Provider value={{
       currentUser, isLoading, 
