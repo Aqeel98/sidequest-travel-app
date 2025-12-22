@@ -15,6 +15,7 @@ const AuthModal = () => {
   // UI States
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  if (!showAuthModal) return null; 
 
   const handleSubmit = async (e) => {
     e.preventDefault();

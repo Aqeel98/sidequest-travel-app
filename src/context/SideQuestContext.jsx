@@ -86,20 +86,23 @@ export const SideQuestProvider = ({ children }) => {
         console.log("SQ-System: Auth Change Detected ->", event);
         
         if (session) {
-          // If a session exists, handshake with the profiles table
+          // --- ACCURACY FIX: CLOSE MODAL IMMEDIATELY ---
+          // This stops the "Processing..." hang.
+          setShowAuthModal(false); 
+
           if (!currentUser) {
-            console.log("SQ-System: Syncing user profile data...");
+            console.log("SQ-System: Syncing user profile data in background...");
             await fetchProfile(session.user.id, session.user.email);
           }
-          // PERMANENT FIX: Close modal the millisecond the database handshake is confirmed
-          setShowAuthModal(false); 
+
+          setIsLoading(false);
         } else if (event === 'SIGNED_OUT') {
           console.log("SQ-System: Sign-out event. Purging local user state.");
           setCurrentUser(null);
           setQuestProgress([]);
           setRedemptions([]);
           setUsers([]);
-          setShowAuthModal(false); // Ensure modal closes on sign out
+          setShowAuthModal(false); 
           setIsLoading(false);
         }
       }
