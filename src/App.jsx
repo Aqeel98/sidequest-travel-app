@@ -17,16 +17,40 @@ import Profile from './pages/Profile';
 import PartnerDashboard from './pages/PartnerDashboard'; 
 import Emergency from './pages/Emergency';
 
-// --- DEMO BUTTON (Kept for testing) ---
+// --- UPDATED ROLE SWITCHER (Visible ONLY to Admin Email) ---
 const RoleSwitcher = () => {
   const { currentUser, switchRole } = useSideQuest();
-  if (!currentUser) return null;
+  
+  // The master admin email defined in your context
+  const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
+
+  // PERMANENT FIX: Strictly verify email to prevent any non-admin from seeing this
+  if (!currentUser || currentUser.email !== ADMIN_EMAIL) return null;
+
   return (
-    <div className="fixed bottom-4 right-4 bg-white p-2 rounded shadow-xl text-xs z-50 border opacity-80 hover:opacity-100">
-      <div className="font-bold mb-1">Demo Role: {currentUser.role}</div>
-      <button onClick={() => switchRole('Traveler')} className={`block text-left px-3 py-1 rounded w-full transition ${currentUser.role === 'Traveler' ? 'bg-brand-50 text-brand-700 font-bold' : 'hover:bg-gray-100 text-gray-700'}`}>Traveler</button>
-      <button onClick={() => switchRole('Admin')} className={`block text-left px-3 py-1 rounded w-full transition ${currentUser.role === 'Admin' ? 'bg-brand-50 text-brand-700 font-bold' : 'hover:bg-gray-100 text-gray-700'}`}>Admin</button>
-      <button onClick={() => switchRole('Partner')} className={`block text-left px-3 py-1 rounded w-full transition ${currentUser.role === 'Partner' ? 'bg-brand-50 text-brand-700 font-bold' : 'hover:bg-gray-100 text-gray-700'}`}>Partner</button>
+    <div className="fixed bottom-4 right-4 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl z-[100] border border-brand-100 animate-in slide-in-from-bottom-5">
+      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+        <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>
+        <span className="font-bold text-[10px] text-gray-500 uppercase tracking-widest">Debug Mode</span>
+      </div>
+      
+      <div className="space-y-1">
+        {['Traveler', 'Partner', 'Admin'].map((role) => (
+          <button 
+            key={role}
+            onClick={() => switchRole(role)} 
+            className={`block text-left px-3 py-1.5 rounded-lg w-full text-xs transition-all ${
+              currentUser.role === role 
+                ? 'bg-brand-600 text-white font-bold shadow-md shadow-brand-200' 
+                : 'hover:bg-gray-100 text-gray-600 font-medium'
+            }`}
+          >
+            Switch to {role}
+          </button>
+        ))}
+      </div>
+      
+      <p className="text-[9px] text-gray-400 mt-2 text-center italic">Admin: {ADMIN_EMAIL}</p>
     </div>
   );
 };
@@ -43,7 +67,8 @@ const LoadingScreen = () => (
 const MainLayout = () => {
     const { isLoading } = useSideQuest();
 
-    // Prevent "Logout Flash" by showing loader until Auth is checked
+    // ACCURACY FIX: This prevents "Logout Flash" on refresh 
+    // by keeping the user on the LoadingScreen until fetchProfile is done.
     if (isLoading) return <LoadingScreen />;
 
     return (
@@ -51,6 +76,7 @@ const MainLayout = () => {
             <Navbar />
             <AuthModal />
             <Outlet />
+            {/* Only renders for sidequestsrilanka@gmail.com */}
             <RoleSwitcher />
         </div>
     );
