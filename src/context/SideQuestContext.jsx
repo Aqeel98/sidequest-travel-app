@@ -20,69 +20,71 @@ export const SideQuestProvider = ({ children }) => {
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
   // --- INITIAL LOAD (Runs Once on App Start) ---
-  useEffect(() => {
-    let mounted = true;
+  // --- UPDATED AUTH SYNC LOGIC ---
+useEffect(() => {
+  let mounted = true;
 
-    const initializeApp = async () => {
-      try {
-        // 1. Fetch Public Data (Parallel for speed)
-        const [questsData, rewardsData] = await Promise.all([
-            supabase.from('quests').select('*'),
-            supabase.from('rewards').select('*'),
-        ]);
+  const initializeApp = async () => {
+    try {
+      // 1. Fetch Public Data Immediately
+      const [questsData, rewardsData] = await Promise.all([
+          supabase.from('quests').select('*'),
+          supabase.from('rewards').select('*'),
+      ]);
 
-        if (mounted) {
-            setQuests(questsData.data || []);
-            setRewards(rewardsData.data || []);
-        }
-
-        // 2. Check for existing Session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (mounted && session) {
-           // Wait for profile to load so state is ready before loader closes
-           await fetchProfile(session.user.id, session.user.email);
-        }
-        
-      } catch (error) {
-        console.error("Initialization Error:", error);
-      } finally {
-        // PERMANENT FIX: This ensures the loading screen closes regardless of errors
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    initializeApp();
-
-    // --- AUTH LISTENER ---
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (mounted) {
-        if (session) {
-          // If user logs in or session is restored
-          await fetchProfile(session.user.id, session.user.email);
-          setShowAuthModal(false); 
-        } else if (event === 'SIGNED_OUT') {
-          // Clear everything on logout
-          setCurrentUser(null);
-          setQuestProgress([]);
-          setRedemptions([]);
-          setUsers([]);
-          setIsLoading(false);
-        }
+          setQuests(questsData.data || []);
+          setRewards(rewardsData.data || []);
       }
-    });
 
-    // Safety timer: Fallback to close loader if database is extremely slow
-    const safetyTimer = setTimeout(() => {
+      // 2. FETCH SESSION MANUALLY FIRST
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (mounted && session) {
+         // This is the "Anchor": the app waits for the profile 
+         // BEFORE it ever sets isLoading to false.
+         await fetchProfile(session.user.id, session.user.email);
+      }
+    } catch (error) {
+      console.error("Initialization Error:", error);
+    } finally {
+      // ONLY close the loading screen once profile logic is finished
       if (mounted) setIsLoading(false);
-    }, 8000); 
+    }
+  };
 
-    return () => {
-      mounted = false;
-      clearTimeout(safetyTimer);
-      subscription.unsubscribe();
-    };
-  }, []); // EMPTY ARRAY Fixes the "Loading Hang" infinite loop
+  initializeApp();
+
+  // 3. LISTEN FOR STATE CHANGES
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (!mounted) return;
+
+    if (session) {
+      // If we have a session but NO user in state, fetch it.
+      // This handles the "Refresh" and "Login" events perfectly.
+      if (!currentUser) {
+        await fetchProfile(session.user.id, session.user.email);
+      }
+      setShowAuthModal(false);
+    } else if (event === 'SIGNED_OUT') {
+      setCurrentUser(null);
+      setQuestProgress([]);
+      setRedemptions([]);
+      setIsLoading(false);
+    }
+  });
+
+  // Safety Timer: If after 8 seconds we are still loading, force it open.
+  const safetyTimer = setTimeout(() => {
+    if (mounted) setIsLoading(false);
+  }, 8000);
+
+  return () => {
+    mounted = false;
+    clearTimeout(safetyTimer);
+    subscription.unsubscribe();
+  };
+}, []); // NO currentUser dependency. It must be empty [] to prevent loops.
 
   // --- REALTIME SUBSCRIPTION (XP UPDATES) ---
   const subscribeToProfileChanges = (userId) => {

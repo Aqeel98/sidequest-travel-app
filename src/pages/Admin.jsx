@@ -289,32 +289,61 @@ const Admin = () => {
       )}
 
       {/* --- 3. PENDING NEW REWARDS TAB --- */}
-      {activeTab === 'newRewards' && (
-        <div className="space-y-4">
-          {pendingNewRewards.length === 0 && <p className="text-gray-500">No new rewards pending.</p>}
-          {pendingNewRewards.map(reward => {
-             const creator = users.find(u => u.id === reward.created_by);
-             return (
-                <div key={reward.id} className="border p-4 rounded-lg bg-orange-50 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        {reward.image && <img src={reward.image} alt="Reward" className="w-16 h-16 object-cover rounded-lg border"/>}
+      {/* --- 3. PENDING NEW REWARDS TAB (UPDATED WITH DETAILS) --- */}
+{activeTab === 'newRewards' && (
+  <div className="space-y-4">
+    {pendingNewRewards.length === 0 && <p className="text-gray-500 text-center py-10">No new rewards pending review.</p>}
+    {pendingNewRewards.map(reward => {
+       const creator = users.find(u => u.id === reward.created_by);
+       const isDetailsOpen = viewDetailsId === reward.id;
+
+       return (
+          <div key={reward.id} className="border border-gray-200 rounded-xl bg-orange-50 overflow-hidden">
+              <div className="p-4 flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                      {reward.image && <img src={reward.image} alt="Reward" className="w-16 h-16 object-cover rounded-lg border shadow-sm"/>}
+                      <div>
+                          <div className="flex items-center gap-2">
+                              <Gift size={20} className="text-orange-600"/>
+                              <h3 className="font-bold text-gray-800">{reward.title}</h3>
+                          </div>
+                          <p className="text-sm text-gray-600">Cost: {reward.xp_cost} XP | By: {creator?.email || 'Partner'}</p>
+                      </div>
+                  </div>
+                  <div className="flex gap-2">
+                      <button 
+                        onClick={() => setViewDetailsId(isDetailsOpen ? null : reward.id)}
+                        className="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-medium hover:bg-orange-200"
+                      >
+                        {isDetailsOpen ? 'Hide' : 'View Details'}
+                      </button>
+                      <button onClick={() => approveNewReward(reward.id)} className="bg-green-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-green-600 shadow-sm"><Check size={16} className="mr-1"/> Approve</button>
+                      <button onClick={() => deleteReward(reward.id)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-red-600 shadow-sm"><Trash2 size={16} className="mr-1"/> Reject</button>
+                  </div>
+              </div>
+
+              {/* EXPANDABLE REWARD DETAILS */}
+              {isDetailsOpen && (
+                <div className="p-5 bg-white border-t border-orange-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Reward Description</h4>
+                    <p className="text-gray-700 leading-relaxed">{reward.description}</p>
+                    <div className="mt-4 pt-4 border-t flex gap-6">
                         <div>
-                            <div className="flex items-center gap-2">
-                                <Gift size={20} className="text-orange-600"/>
-                                <h3 className="font-bold text-gray-800">{reward.title}</h3>
-                            </div>
-                            <p className="text-sm text-gray-600">Cost: {reward.xp_cost} XP | By: {creator?.email || 'Unknown'}</p>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase">Partner Email</span>
+                            <p className="text-sm font-medium">{creator?.email || 'Not available'}</p>
+                        </div>
+                        <div>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase">XP Requirement</span>
+                            <p className="text-sm font-bold text-orange-600">{reward.xp_cost} XP</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <button onClick={() => approveNewReward(reward.id)} className="bg-green-500 text-white px-3 py-1 rounded flex items-center hover:bg-green-600"><Check size={16} className="mr-1"/> Approve</button>
-                        <button onClick={() => deleteReward(reward.id)} className="bg-red-500 text-white px-3 py-1 rounded flex items-center hover:bg-red-600"><Trash2 size={16} className="mr-1"/> Reject</button>
-                    </div>
                 </div>
-             );
-          })}
-        </div>
-      )}
+              )}
+          </div>
+       );
+    })}
+  </div>
+)}
 
       {/* --- 4. QUEST MANAGER TAB --- */}
       {activeTab === 'quests' && (
