@@ -19,72 +19,85 @@ export const SideQuestProvider = ({ children }) => {
 
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
-  // --- INITIAL LOAD (Runs Once on App Start) ---
-  // --- UPDATED AUTH SYNC LOGIC ---
-useEffect(() => {
-  let mounted = true;
+  // --- HARDENED INITIALIZATION (The Permanent Fix for Refresh & Persistence) ---
+  useEffect(() => {
+    let mounted = true;
 
-  const initializeApp = async () => {
-    try {
-      // 1. Fetch Public Data Immediately
-      const [questsData, rewardsData] = await Promise.all([
-          supabase.from('quests').select('*'),
-          supabase.from('rewards').select('*'),
-      ]);
+    const initializeApp = async () => {
+      try {
+        console.log("SQ-System: Booting... Checking for existing session.");
+        setIsLoading(true);
 
+        // 1. Fetch Public Data (Parallel for speed)
+        const [questsData, rewardsData] = await Promise.all([
+            supabase.from('quests').select('*'),
+            supabase.from('rewards').select('*'),
+        ]);
+
+        if (mounted) {
+            setQuests(questsData.data || []);
+            setRewards(rewardsData.data || []);
+        }
+
+        // 2. THE ANCHOR: Manually recover the session before closing the loader
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+
+        if (mounted && session) {
+           console.log("SQ-System: Session found for", session.user.email);
+           // We await this so the state is 100% ready before the app renders
+           await fetchProfile(session.user.id, session.user.email);
+        } else {
+           console.log("SQ-System: No session found. Entering as guest.");
+        }
+        
+      } catch (error) {
+        console.error("SQ-System: Critical Initialization Error:", error);
+      } finally {
+        // Only stop loading once everything (data + auth profile) is confirmed
+        if (mounted) {
+            console.log("SQ-System: Boot complete. App is ready.");
+            setIsLoading(false);
+        }
+      }
+    };
+
+    initializeApp();
+
+    // --- AUTH STATE LISTENER (Handles Real-time Login/Logout) ---
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (mounted) {
-          setQuests(questsData.data || []);
-          setRewards(rewardsData.data || []);
+        console.log("SQ-System: Auth Event Fired ->", event);
+        
+        if (session) {
+          // If a session exists, ensure profile is loaded into state
+          if (!currentUser) {
+            await fetchProfile(session.user.id, session.user.email);
+          }
+          // Close modal immediately once Supabase confirms session
+          setShowAuthModal(false); 
+        } else if (event === 'SIGNED_OUT') {
+          // Explicit cleanup
+          setCurrentUser(null);
+          setQuestProgress([]);
+          setRedemptions([]);
+          setIsLoading(false);
+        }
       }
+    });
 
-      // 2. FETCH SESSION MANUALLY FIRST
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (mounted && session) {
-         // This is the "Anchor": the app waits for the profile 
-         // BEFORE it ever sets isLoading to false.
-         await fetchProfile(session.user.id, session.user.email);
-      }
-    } catch (error) {
-      console.error("Initialization Error:", error);
-    } finally {
-      // ONLY close the loading screen once profile logic is finished
+    // Safety timer: Prevent infinite spin on ultra-slow 3G
+    const safetyTimer = setTimeout(() => {
       if (mounted) setIsLoading(false);
-    }
-  };
+    }, 8000); 
 
-  initializeApp();
-
-  // 3. LISTEN FOR STATE CHANGES
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-    if (!mounted) return;
-
-    if (session) {
-      // If we have a session but NO user in state, fetch it.
-      // This handles the "Refresh" and "Login" events perfectly.
-      if (!currentUser) {
-        await fetchProfile(session.user.id, session.user.email);
-      }
-      setShowAuthModal(false);
-    } else if (event === 'SIGNED_OUT') {
-      setCurrentUser(null);
-      setQuestProgress([]);
-      setRedemptions([]);
-      setIsLoading(false);
-    }
-  });
-
-  // Safety Timer: If after 8 seconds we are still loading, force it open.
-  const safetyTimer = setTimeout(() => {
-    if (mounted) setIsLoading(false);
-  }, 8000);
-
-  return () => {
-    mounted = false;
-    clearTimeout(safetyTimer);
-    subscription.unsubscribe();
-  };
-}, []); // NO currentUser dependency. It must be empty [] to prevent loops.
+    return () => {
+      mounted = false;
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
+  }, []); // EMPTY ARRAY: Critical to prevent the "Login Loop"
 
   // --- REALTIME SUBSCRIPTION (XP UPDATES) ---
   const subscribeToProfileChanges = (userId) => {
@@ -93,6 +106,7 @@ useEffect(() => {
         .on('postgres_changes', 
             { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, 
             (payload) => {
+                console.log("SQ-System: Realtime XP Update Received.");
                 setCurrentUser(prev => ({ ...prev, ...payload.new }));
             }
         )
@@ -112,6 +126,7 @@ useEffect(() => {
 
       // 2. Zombie User Fix (Auto-create missing profile row)
       if (!data) {
+          console.log("SQ-System: Missing profile row. Repairing...");
           const newProfile = { 
               id: userId, email: userEmail, full_name: userEmail.split('@')[0], 
               role: userEmail === ADMIN_EMAIL ? 'Admin' : 'Traveler',
@@ -124,20 +139,20 @@ useEffect(() => {
       }
 
       if (data) {
-          // Role enforcement
+          // Admin Email Override
           if (data.email === ADMIN_EMAIL) data.role = 'Admin';
           
           setCurrentUser(data);
           subscribeToProfileChanges(userId);
           
-          // Fetch user-specific data
+          // Parallel fetch of private user data
           await Promise.all([
              fetchSubmissions(userId, data.role),
              fetchRedemptions(userId)
           ]);
       }
     } catch (err) {
-      console.error("Profile Load Error", err);
+      console.error("SQ-System: Profile fetch failed", err);
     }
   };
 
@@ -172,6 +187,7 @@ useEffect(() => {
   const login = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error; 
+    // Modal closure and state update are handled by the onAuthStateChange listener
   };
 
   const signup = async (email, password, name, role) => {
@@ -184,17 +200,19 @@ useEffect(() => {
             const newProfile = { 
                 id: data.user.id, email, full_name: name, role: finalRole, xp: 0
             };
+            // Upsert the new profile immediately
             await supabase.from('profiles').upsert([newProfile]);
             alert("Welcome to SideQuest, " + name + "!");
         }
     } catch (err) {
-        console.error("Signup Error:", err);
+        console.error("SQ-System: Signup Error:", err);
         throw err;
     }
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Logout Error:", error.message);
   };
 
   // --- QUEST ACTIONS ---
@@ -285,7 +303,7 @@ useEffect(() => {
     try {
         let proofUrl = null;
         if (file) {
-            const fileName = `${Date.now()}_${file.name.replace(/\s/g, '')}`;
+            const fileName = `proofs/${Date.now()}_${file.name.replace(/\s/g, '')}`;
             const { error: uploadErr } = await supabase.storage.from('proofs').upload(fileName, file);
             
             if (uploadErr) { 
