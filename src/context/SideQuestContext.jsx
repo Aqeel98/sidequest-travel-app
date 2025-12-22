@@ -27,6 +27,7 @@ export const SideQuestProvider = ({ children }) => {
 
   // --- 2. THE HARDENED BOOT SEQUENCE (The Persistence Pillar) ---
   // --- HARDENED SEQUENTIAL BOOT (The Permanent Refresh Fix) ---
+  // --- HARDENED SEQUENTIAL BOOT (Handshake Priority) ---
   useEffect(() => {
     let mounted = true;
 
@@ -35,68 +36,66 @@ export const SideQuestProvider = ({ children }) => {
         console.log("SQ-System: Sequential Boot Started...");
         if (mounted) setIsLoading(true);
 
-        // 1. Fetch public data first
-        const [questsData, rewardsData] = await Promise.all([
+        // A. THE ANCHOR: Check for session IMMEDIATELY
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        if (session && mounted) {
+           console.log("SQ-System: Session detected. Handshaking with Database...");
+           // Priority 1: Load the Admin/Traveler Profile
+           await fetchProfile(session.user.id, session.user.email);
+        } else {
+           console.log("SQ-System: No session. Guest Handshake.");
+           if (mounted) setShowAuthModal(false);
+        }
+
+        // B. SYNC ECOSYSTEM: Load Quests/Rewards only AFTER auth is established
+        console.log("SQ-System: Syncing Quests & Rewards...");
+        const [qData, rData] = await Promise.all([
           supabase.from('quests').select('*'),
           supabase.from('rewards').select('*'),
         ]);
 
         if (mounted) {
-          setQuests(questsData.data || []);
-          setRewards(rewardsData.data || []);
-          console.log("SQ-System: Public data synchronized.");
+            setQuests(qData.data || []);
+            setRewards(rData.data || []);
         }
-
-        // 2. THE ANCHOR: Manually check for session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (sessionError) throw sessionError;
-
-        if (mounted && session) {
-          console.log("SQ-System: Session detected. Awaiting profile sync...");
-          // CRITICAL: We await this fully before proceeding to finally block
-          await fetchProfile(session.user.id, session.user.email);
-        } else {
-          console.log("SQ-System: No session found. Initializing Guest.");
-          if (mounted) setShowAuthModal(false);
-        }
       } catch (error) {
-        console.error("SQ-System: Boot Error ->", error.message);
+        console.error("SQ-System: Boot Failure ->", error.message);
       } finally {
-        // 3. FINAL GATE: Only open the app once EVERYTHING above is finished
         if (mounted) {
-          setIsLoading(false);
-          console.log("SQ-System: Boot Sequence Complete. App Unlocked.");
+            console.log("SQ-System: Boot Complete. App Unlocked.");
+            setIsLoading(false);
         }
       }
     };
 
     initializeApp();
 
-    // --- SILENT AUTH LISTENER (Handles subsequent Logins/Logouts) ---
+    // --- AUTH LISTENER (Handles manual login clicks) ---
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-      console.log("SQ-System: Auth Event ->", event);
-
-      if (event === 'SIGNED_IN') {
-        // Close modal immediately on login
-        setShowAuthModal(false); 
-        if (!currentUser) {
-          await fetchProfile(session.user.id, session.user.email);
-        }
+      
+      // We only react to SIGNED_IN here (Initial session is handled by initializeApp)
+      if (event === 'SIGNED_IN' && session) {
+          console.log("SQ-System: Manual Login Detected.");
+          setShowAuthModal(false); 
+          if (!currentUser) {
+            await fetchProfile(session.user.id, session.user.email);
+          }
+          setIsLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
         setQuestProgress([]);
         setRedemptions([]);
-        setUsers([]);
         setIsLoading(false);
       }
     });
 
-    // Safety Timer: Guarantees the app opens even if the database is lagging
     const safetyTimer = setTimeout(() => {
       if (mounted && isLoading) {
-        console.warn("SQ-System: Safety timer triggered.");
+        console.warn("SQ-System: Forced loading shut-off.");
         setIsLoading(false);
       }
     }, 10000); 
@@ -106,9 +105,8 @@ export const SideQuestProvider = ({ children }) => {
       subscription.unsubscribe();
       clearTimeout(safetyTimer);
     };
-  }, []); // Dependencies remain empty to prevent refresh-loops
+  }, []);
 
-  
   // --- 4. REALTIME DATA CHANNEL (CDC - Change Data Capture) ---
   const subscribeToProfileChanges = (userId) => {
       const channel = supabase
