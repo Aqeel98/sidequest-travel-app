@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Lock, Eye, EyeOff } from 'lucide-react'; 
 import { useSideQuest } from '../context/SideQuestContext';
 
 const AuthModal = () => {
   const { showAuthModal, setShowAuthModal, login, signup } = useSideQuest();
-  const [mode, setMode] = useState('login'); 
   
+  // --- INTERNAL STATE ---
+  const [mode, setMode] = useState('login'); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState(''); 
   const [name, setName] = useState('');
@@ -13,32 +14,48 @@ const AuthModal = () => {
   
   // UI States
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // Toggle state
+  const [showPassword, setShowPassword] = useState(false);
+
+  // --- RESET STATE ON TOGGLE ---
+  // This ensures that if the modal is closed and reopened, 
+  // the "Processing..." state is cleared.
+  useEffect(() => {
+    if (!showAuthModal) {
+      setLoading(false);
+      setPassword(''); // Security: clear password on close
+    }
+  }, [showAuthModal]);
 
   if (!showAuthModal) return null;
 
-  // --- ACCURATE FIX: THE SAFETY NET ---
+  // --- THE ACCURATE SUBMISSION HANDLER ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Start "Processing..."
+    
+    // 1. Prevent multiple clicks
+    if (loading) return;
+    
+    setLoading(true); 
 
     try {
         if (mode === 'login') {
+            // We call login and WAIT. 
+            // If Supabase throws an error (wrong pass), it goes to catch.
+            // If it succeeds, the Context Auth Listener will close this modal.
             await login(email, password);
         } else {
-            // Context signup handles the Admin email check automatically
             await signup(email, password, name, role);
         }
-        // If successful, the modal is closed by the Context actions
     } catch (err) {
-        // ACCURACY: Give user feedback on wrong password / existing email
+        // ACCURACY: Only reset loading if there is a failure.
+        // This gives the user the chance to fix their password.
         console.error("Auth Error:", err);
         alert(err.message || "Authentication failed. Please check your credentials.");
-    } finally {
-        // PERMANENT FIX: This runs regardless of database 500 errors 
-        // or incorrect passwords. The button will always reset.
-        setLoading(false);
+        setLoading(false); 
     }
+    // NOTICE: No "finally" block here. 
+    // If successful, the SideQuestProvider's onAuthStateChange fires, 
+    // sets showAuthModal to false, and this whole component disappears.
   };
 
   return (
@@ -50,6 +67,7 @@ const AuthModal = () => {
             <button 
                 onClick={() => setShowAuthModal(false)} 
                 className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+                disabled={loading}
             >
                 <X size={24} />
             </button>
@@ -66,12 +84,13 @@ const AuthModal = () => {
                 
                 {mode === 'signup' && (
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Adventurer</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Adventurer Name</label>
                         <input 
                             className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-brand-500 focus:ring-0 outline-none transition-all font-medium" 
-                            placeholder="Username" 
+                            placeholder="Your Name" 
                             value={name} 
                             onChange={e => setName(e.target.value)} 
+                            required={mode === 'signup'}
                         />
                     </div>
                 )}
@@ -93,14 +112,13 @@ const AuthModal = () => {
                     <div className="relative">
                         <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
                         <input 
-                            type={showPassword ? "text" : "password"} // Toggle type
+                            type={showPassword ? "text" : "password"} 
                             className="w-full border-2 border-gray-200 p-3 pl-10 pr-10 rounded-xl focus:border-brand-500 focus:ring-0 outline-none transition-all" 
                             placeholder="••••••••" 
                             value={password} 
                             onChange={e => setPassword(e.target.value)} 
                             required 
                         />
-                        {/* Eye Icon Button */}
                         <button 
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
@@ -129,9 +147,19 @@ const AuthModal = () => {
                 <button 
                     type="submit" 
                     disabled={loading} 
-                    className="w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-brand-700 active:scale-95 transition-all mt-4 shadow-lg shadow-brand-200"
+                    className={`w-full text-white py-3.5 rounded-xl font-bold text-lg transition-all mt-4 shadow-lg flex items-center justify-center ${
+                        loading ? 'bg-brand-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700 active:scale-95 shadow-brand-200'
+                    }`}
                 >
-                    {loading ? 'Processing...' : (mode === 'login' ? 'Log In' : 'Start Adventure')}
+                    {loading ? (
+                        <>
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                        </>
+                    ) : (mode === 'login' ? 'Log In' : 'Start Adventure')}
                 </button>
             </form>
             
@@ -140,6 +168,7 @@ const AuthModal = () => {
                 <button 
                     onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} 
                     className="text-brand-600 font-bold hover:underline"
+                    disabled={loading}
                 >
                     {mode === 'login' ? 'Create Account' : 'Log in'}
                 </button>
