@@ -7,16 +7,13 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // --- INITIALIZATION ---
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: 'sidequest-auth-token', // Unique key for SideQuest
-    storage: window.localStorage // Explicitly use localStorage
+    persistSession: true,   // Keeps you logged in
+    autoRefreshToken: true, // Renews the session automatically
+    detectSessionInUrl: true 
   }
 })
 
 // --- DEBUG ACCESS ---
-// This allows you to run "await supabase.from..." in the browser console
 if (typeof window !== 'undefined') {
   window.supabase = supabase
 }

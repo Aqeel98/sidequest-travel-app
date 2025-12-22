@@ -26,103 +26,89 @@ export const SideQuestProvider = ({ children }) => {
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
   // --- 2. THE HARDENED BOOT SEQUENCE (The Persistence Pillar) ---
+  // --- HARDENED SEQUENTIAL BOOT (The Permanent Refresh Fix) ---
   useEffect(() => {
     let mounted = true;
 
     const initializeApp = async () => {
       try {
-        console.log("SQ-System: Starting Boot Sequence...");
+        console.log("SQ-System: Sequential Boot Started...");
         if (mounted) setIsLoading(true);
 
-        // A. Parallel Fetch of Public Ecosystem Data
-        // This allows Guests to see the Home page content even if logged out
+        // 1. Fetch public data first
         const [questsData, rewardsData] = await Promise.all([
-            supabase.from('quests').select('*'),
-            supabase.from('rewards').select('*'),
+          supabase.from('quests').select('*'),
+          supabase.from('rewards').select('*'),
         ]);
 
         if (mounted) {
-            setQuests(questsData.data || []);
-            setRewards(rewardsData.data || []);
-            console.log("SQ-System: Public data synchronization successful.");
+          setQuests(questsData.data || []);
+          setRewards(rewardsData.data || []);
+          console.log("SQ-System: Public data synchronized.");
         }
 
-        // B. THE ANCHOR: Manually recover auth session from browser storage
-        // This is the specific "Special Sauce" fix for the "Logged out on refresh" bug.
+        // 2. THE ANCHOR: Manually check for session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (sessionError) {
-            console.warn("SQ-System: No saved session found in browser.");
-            throw sessionError;
-        }
+        if (sessionError) throw sessionError;
 
         if (mounted && session) {
-           console.log("SQ-System: Valid session recovered for:", session.user.email);
-           // We AWAIT fetchProfile so the app doesn't render guest UI before profile loads
-           await fetchProfile(session.user.id, session.user.email);
+          console.log("SQ-System: Session detected. Awaiting profile sync...");
+          // CRITICAL: We await this fully before proceeding to finally block
+          await fetchProfile(session.user.id, session.user.email);
         } else {
-           console.log("SQ-System: Entering Guest Mode (Silent Initialization).");
-           // EXPLICIT GUEST GUARD: Ensure modal is closed
-           if (mounted) setShowAuthModal(false);
+          console.log("SQ-System: No session found. Initializing Guest.");
+          if (mounted) setShowAuthModal(false);
         }
-        
       } catch (error) {
-        console.error("SQ-System: Boot error handled gracefully ->", error.message);
+        console.error("SQ-System: Boot Error ->", error.message);
       } finally {
-        // Only remove the loading screen once the Auth/Guest state is 100% verified
+        // 3. FINAL GATE: Only open the app once EVERYTHING above is finished
         if (mounted) {
-            console.log("SQ-System: Boot sequence finalized.");
-            setIsLoading(false);
+          setIsLoading(false);
+          console.log("SQ-System: Boot Sequence Complete. App Unlocked.");
         }
       }
     };
 
     initializeApp();
 
-    // --- 3. THE MASTER AUTH LISTENER ---
-    // This watches for Login/Logout events and handles state synchronization
+    // --- SILENT AUTH LISTENER (Handles subsequent Logins/Logouts) ---
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (mounted) {
-        console.log("SQ-System: Auth Change Detected ->", event);
-        
-        if (session) {
-          // --- ACCURACY FIX: CLOSE MODAL IMMEDIATELY ---
-          // This stops the "Processing..." hang.
-          setShowAuthModal(false); 
+      if (!mounted) return;
+      console.log("SQ-System: Auth Event ->", event);
 
-          if (!currentUser) {
-            console.log("SQ-System: Syncing user profile data in background...");
-            await fetchProfile(session.user.id, session.user.email);
-          }
-
-          setIsLoading(false);
-        } else if (event === 'SIGNED_OUT') {
-          console.log("SQ-System: Sign-out event. Purging local user state.");
-          setCurrentUser(null);
-          setQuestProgress([]);
-          setRedemptions([]);
-          setUsers([]);
-          setShowAuthModal(false); 
-          setIsLoading(false);
+      if (event === 'SIGNED_IN') {
+        // Close modal immediately on login
+        setShowAuthModal(false); 
+        if (!currentUser) {
+          await fetchProfile(session.user.id, session.user.email);
         }
+      } else if (event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        setQuestProgress([]);
+        setRedemptions([]);
+        setUsers([]);
+        setIsLoading(false);
       }
     });
 
     // Safety Timer: Guarantees the app opens even if the database is lagging
     const safetyTimer = setTimeout(() => {
       if (mounted && isLoading) {
-        console.warn("SQ-System: Network latency detected. Closing Gateway via safety timer.");
+        console.warn("SQ-System: Safety timer triggered.");
         setIsLoading(false);
       }
-    }, 9000); 
+    }, 10000); 
 
     return () => {
       mounted = false;
-      clearTimeout(safetyTimer);
       subscription.unsubscribe();
+      clearTimeout(safetyTimer);
     };
-  }, []); // EMPTY ARRAY: Critical to prevent the infinite refresh loop
+  }, []); // Dependencies remain empty to prevent refresh-loops
 
+  
   // --- 4. REALTIME DATA CHANNEL (CDC - Change Data Capture) ---
   const subscribeToProfileChanges = (userId) => {
       const channel = supabase
