@@ -7,9 +7,11 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // --- INITIALIZATION ---
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: true, // Crucial for your refresh-logout issue
+    persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storageKey: 'sidequest-auth-token', // Unique key for SideQuest
+    storage: window.localStorage // Explicitly use localStorage
   }
 })
 

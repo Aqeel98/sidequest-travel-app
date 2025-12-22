@@ -16,48 +16,30 @@ const AuthModal = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // --- RESET STATE ON TOGGLE ---
-  // This ensures that if the modal is closed and reopened, 
-  // the "Processing..." state is cleared.
-  useEffect(() => {
-    if (!showAuthModal) {
-      setLoading(false);
-      setPassword(''); // Security: clear password on close
-    }
-  }, [showAuthModal]);
-
-  if (!showAuthModal) return null;
-
-  // --- THE ACCURATE SUBMISSION HANDLER ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // 1. Prevent multiple clicks
-    if (loading) return;
+    if (loading) return; // Prevent double-submission
     
     setLoading(true); 
 
     try {
         if (mode === 'login') {
-            // We call login and WAIT. 
-            // If Supabase throws an error (wrong pass), it goes to catch.
-            // If it succeeds, the Context Auth Listener will close this modal.
+            // Context login only triggers the Supabase Auth.
+            // The Auth Listener in the Context handles the rest.
             await login(email, password);
         } else {
             await signup(email, password, name, role);
         }
+        // NOTE: We do NOT set setShowAuthModal(false) here.
+        // The Context Listener (Step 1) detects the session and closes it.
     } catch (err) {
-        // ACCURACY: Only reset loading if there is a failure.
-        // This gives the user the chance to fix their password.
         console.error("Auth Error:", err);
-        alert(err.message || "Authentication failed. Please check your credentials.");
+        alert(err.message || "Authentication failed. Check your credentials.");
+        // ONLY reset loading on error so the user can try again.
         setLoading(false); 
     }
-    // NOTICE: No "finally" block here. 
-    // If successful, the SideQuestProvider's onAuthStateChange fires, 
-    // sets showAuthModal to false, and this whole component disappears.
   };
-
+  
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md relative shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
