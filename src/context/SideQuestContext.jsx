@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef  } from 'react';
 import { supabase } from '../supabaseClient';
 import imageCompression from 'browser-image-compression';
 
@@ -26,31 +26,33 @@ export const SideQuestProvider = ({ children }) => {
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
   // --- 2. THE HARDENED BOOT SEQUENCE (The Persistence Pillar) ---
-  // --- HARDENED SEQUENTIAL BOOT (The Permanent Refresh Fix) ---
-  // --- HARDENED SEQUENTIAL BOOT (Handshake Priority) ---
+ 
+  // --- 2. THE SEQUENTIAL BOOT SEQUENCE (Handshake Lock Version) ---
+  const isInitialBoot = useRef(true); // THE LOCK
+
   useEffect(() => {
     let mounted = true;
 
-    const initializeApp = async () => {
+    const bootSequence = async () => {
       try {
-        console.log("SQ-System: Sequential Boot Started...");
+        console.log("SQ-Step 1: Sequential Boot Started.");
         if (mounted) setIsLoading(true);
 
-        // A. THE ANCHOR: Check for session IMMEDIATELY
+        // 1. Recover Auth Session FIRST
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
-
+        
         if (session && mounted) {
-           console.log("SQ-System: Session detected. Handshaking with Database...");
-           // Priority 1: Load the Admin/Traveler Profile
+           console.log("SQ-Step 2: Session recovered for", session.user.email);
+           // Wait fully for profile to load before moving to step 3
            await fetchProfile(session.user.id, session.user.email);
+           console.log("SQ-Step 3: Profile handshake complete.");
         } else {
-           console.log("SQ-System: No session. Guest Handshake.");
-           if (mounted) setShowAuthModal(false);
+           console.log("SQ-Step 2: No session found. Entering Guest mode.");
         }
 
-        // B. SYNC ECOSYSTEM: Load Quests/Rewards only AFTER auth is established
-        console.log("SQ-System: Syncing Quests & Rewards...");
+        // 2. Load Public Ecosystem Data
+        console.log("SQ-Step 4: Syncing Quests & Rewards...");
         const [qData, rData] = await Promise.all([
           supabase.from('quests').select('*'),
           supabase.from('rewards').select('*'),
@@ -62,28 +64,35 @@ export const SideQuestProvider = ({ children }) => {
         }
         
       } catch (error) {
-        console.error("SQ-System: Boot Failure ->", error.message);
+        console.error("SQ-Boot-Failure:", error.message);
       } finally {
         if (mounted) {
-            console.log("SQ-System: Boot Complete. App Unlocked.");
+            // RELEASE THE LOCK: The Auth Listener is now allowed to react
+            isInitialBoot.current = false; 
             setIsLoading(false);
+            console.log("SQ-Step 5: Boot Sequence Finalized. Interface Unlocked.");
         }
       }
     };
 
-    initializeApp();
+    bootSequence();
 
-    // --- AUTH LISTENER (Handles manual login clicks) ---
+    // --- AUTH STATE LISTENER (Sequential Protection) ---
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
-      // We only react to SIGNED_IN here (Initial session is handled by initializeApp)
+      // CRITICAL: If the boot sequence above is still running, ignore this event.
+      // This prevents the "Manual Login Detected" race condition during refresh.
+      if (isInitialBoot.current) {
+          console.log("SQ-System: Ignoring event during boot sequence:", event);
+          return;
+      }
+
+      console.log("SQ-System: Post-Boot Auth Event ->", event);
+
       if (event === 'SIGNED_IN' && session) {
-          console.log("SQ-System: Manual Login Detected.");
           setShowAuthModal(false); 
-          if (!currentUser) {
-            await fetchProfile(session.user.id, session.user.email);
-          }
+          await fetchProfile(session.user.id, session.user.email);
           setIsLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
@@ -93,19 +102,21 @@ export const SideQuestProvider = ({ children }) => {
       }
     });
 
+    // Safety Timer: Guarantees the loader closes after 12 seconds
     const safetyTimer = setTimeout(() => {
       if (mounted && isLoading) {
-        console.warn("SQ-System: Forced loading shut-off.");
+        console.warn("SQ-System: Safety Override Triggered.");
         setIsLoading(false);
+        isInitialBoot.current = false;
       }
-    }, 10000); 
+    }, 12000); 
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
       clearTimeout(safetyTimer);
     };
-  }, []);
+  }, []); // MUST REMAIN EMPTY
 
   // --- 4. REALTIME DATA CHANNEL (CDC - Change Data Capture) ---
   const subscribeToProfileChanges = (userId) => {
