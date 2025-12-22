@@ -17,14 +17,15 @@ export const SideQuestProvider = ({ children }) => {
   const [users, setUsers] = useState([]); 
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
+
   // --- INITIAL LOAD ---
   useEffect(() => {
     let mounted = true;
 
-    // --- 1. DATA LOADING STRATEGY ---
     const initializeApp = async () => {
       try {
-        // Fetch Public Data in Parallel
+        // 1. Fetch Public Data in Parallel (Best Performance)
         const [questsData, rewardsData, redemptionsData] = await Promise.all([
             supabase.from('quests').select('*'),
             supabase.from('rewards').select('*'),
@@ -37,38 +38,39 @@ export const SideQuestProvider = ({ children }) => {
             setRedemptions(redemptionsData.data || []);
         }
 
-        // Check Auth Session on startup
+        // 2. Check Auth Session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted && session) {
-           // Wait for profile to be 100% ready before hiding loading screen
+           // We await this so currentUser is loaded BEFORE the loading screen disappears
            await fetchProfile(session.user.id, session.user.email);
         }
         
       } catch (error) {
         console.error("Initialization Error:", error);
       } finally {
+        // Only stop loading once everything (data + auth profile) is confirmed
         if (mounted) setIsLoading(false);
       }
     };
 
     initializeApp();
 
-    // --- 2. SAFETY TIMER ---
+    // --- SAFETY TIMER (Protection against network hangs) ---
     const safetyTimer = setTimeout(() => {
       if (mounted) setIsLoading(false);
-    }, 8000); // Increased slightly for slower network resilience
+    }, 8000); 
 
-    // --- 3. THE PERMANENT AUTH LISTENER FIX ---
+    // --- AUTH LISTENER (FIXED FOR REFRESH LOGOUT BUG) ---
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // Only fetch if we don't have a user loaded yet (prevents double-loading)
+        // Only fetch if we don't have a user loaded yet
         if (!currentUser && mounted) {
           await fetchProfile(session.user.id, session.user.email);
         }
       } else if (event === 'SIGNED_OUT') {
-        // ONLY clear the user if they actually clicked Logout
-        // This prevents the "Refresh Logout" bug
+        // PERMANENT FIX: Only clear if it is a real logout. 
+        // Prevents the "Refreshed and got logged out" bug.
         setCurrentUser(null);
         setQuestProgress([]);
         setIsLoading(false);
@@ -100,9 +102,8 @@ export const SideQuestProvider = ({ children }) => {
   // --- DATA FETCHING ---
   
   const fetchProfile = async (userId, userEmail) => {
-    const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
     try {
-      // 1. Get the profile safely
+      // 1. Get the profile safely (maybeSingle prevents crash on new user)
       let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
       
       if (error) {
@@ -110,25 +111,21 @@ export const SideQuestProvider = ({ children }) => {
           return;
       }
 
-      // 2. Zombie User Fix (Previous Update Kept)
+      // 2. Zombie User Fix (Auto-create missing profile row)
       if (!data) {
           const newProfile = { 
-              id: userId, 
-              email: userEmail, 
-              full_name: userEmail.split('@')[0], 
+              id: userId, email: userEmail, full_name: userEmail.split('@')[0], 
               role: userEmail === ADMIN_EMAIL ? 'Admin' : 'Traveler',
               xp: 0
           };
-          
           const { data: created, error: createError } = await supabase
               .from('profiles').upsert([newProfile]).select().single();
           
           if (!createError) data = created;
       }
 
-      // 3. Set User and Load Submissions
       if (data) {
-          // ENSURE Role is correct (Permanent Admin Fix)
+          // Hardcode check for admin email
           if (data.email === ADMIN_EMAIL) data.role = 'Admin';
           
           setCurrentUser(data);
@@ -138,7 +135,7 @@ export const SideQuestProvider = ({ children }) => {
     } catch (err) {
       console.error("Critical Profile Load Error", err);
     } finally {
-      // 4. Ensure loading screen always closes
+      // PERMANENT FIX: Ensure the loading screen always closes
       setIsLoading(false);
     }
   };
@@ -165,14 +162,9 @@ export const SideQuestProvider = ({ children }) => {
     }
   };
 
-  const fetchRedemptions = async () => {
-      const { data } = await supabase.from('redemptions').select('*');
-      setRedemptions(data || []);
-  };
-
   // --- AUTH ACTIONS ---
   const login = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error; 
     setShowAuthModal(false);
   };
@@ -183,9 +175,9 @@ export const SideQuestProvider = ({ children }) => {
         if (error) throw error;
 
         if (data.user) {
-            const finalRole = email === 'sidequestsrilanka@gmail.com' ? 'Admin' : role;
+            const finalRole = email === ADMIN_EMAIL ? 'Admin' : role;
             const newProfile = { 
-                id: data.user.id, email, full_name: name, role: finalRole 
+                id: data.user.id, email, full_name: name, role: finalRole, xp: 0
             };
             await supabase.from('profiles').upsert([newProfile]);
             
@@ -290,13 +282,13 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   const submitProof = async (questId, note, file) => {
-    let proofUrl = null;
     try {
+        let proofUrl = null;
         if (file) {
             const fileName = `${Date.now()}_${file.name.replace(/\s/g, '')}`;
             const { error: uploadErr } = await supabase.storage.from('proofs').upload(fileName, file);
             
-            // FIX: Change !uploadErr to uploadErr
+            // FIX: Correct logic flip. uploadErr = bad.
             if (uploadErr) { 
                 alert("Image upload failed: " + uploadErr.message); 
                 return; 
@@ -329,8 +321,8 @@ export const SideQuestProvider = ({ children }) => {
     }
   };
 
+  // --- REWARD ACTIONS ---
   const addReward = async (formData, imageFile) => {
-    // Keep your logic, but ensure currentUser exists before trying to access .id
     if (!currentUser) {
         alert("Session expired. Please log in again.");
         return false;
@@ -351,12 +343,12 @@ export const SideQuestProvider = ({ children }) => {
             description: formData.description,
             xp_cost: Number(formData.xp_cost),
             image: imageUrl,
-            created_by: currentUser.id, // Ensure currentUser is loaded (addressed in fix 2)
+            created_by: currentUser.id,
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         }]);
 
         if (error) throw error;
-        alert("Reward created! Waiting for Admin approval.");
+        alert("Reward created successfully!");
         fetchRewards();
         return true;
     } catch (error) {
@@ -366,18 +358,33 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   const updateReward = async (id, updates) => {
-      const rewardId = Number(id); // ID Fix
-      const { error } = await supabase.from('rewards').update(updates).eq('id', rewardId);
-      if (!error) { fetchRewards(); alert("Reward Updated"); }
+      try {
+        const rewardId = Number(id); 
+        const { error } = await supabase.from('rewards').update(updates).eq('id', rewardId);
+        if (error) throw error;
+        fetchRewards(); 
+        alert("Reward Updated"); 
+      } catch (error) {
+        alert("Update Failed: " + error.message);
+      }
   };
 
   const deleteReward = async (id) => {
-      const { error } = await supabase.from('rewards').delete().eq('id', id);
-      if (!error) fetchRewards();
+      try {
+        const { error } = await supabase.from('rewards').delete().eq('id', id);
+        if (error) throw error;
+        fetchRewards();
+        alert("Reward Deleted");
+      } catch (error) {
+        alert("Delete Failed: " + error.message);
+      }
   };
 
   const redeemReward = async (reward) => {
-      if (currentUser.xp < reward.xp_cost) return null;
+      if (currentUser.xp < reward.xp_cost) {
+          alert("Not enough XP!");
+          return null;
+      }
       const code = `SQ-${Date.now().toString().slice(-6)}`;
       
       const { error } = await supabase.from('profiles').update({ xp: currentUser.xp - reward.xp_cost }).eq('id', currentUser.id);
@@ -425,7 +432,6 @@ export const SideQuestProvider = ({ children }) => {
       fetchQuests();
   };
 
-  // NEW: Approve Reward Logic
   const approveNewReward = async (id) => {
       await supabase.from('rewards').update({ status: 'active' }).eq('id', id);
       fetchRewards();
@@ -443,7 +449,7 @@ export const SideQuestProvider = ({ children }) => {
       showAuthModal, setShowAuthModal,
       login, signup, logout,
       addQuest, updateQuest, deleteQuest, approveNewQuest,
-      addReward, updateReward, deleteReward, approveNewReward, // <-- NEW EXPORTS ADDED
+      addReward, updateReward, deleteReward, approveNewReward, 
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
       redeemReward, switchRole 
     }}>

@@ -36,17 +36,36 @@ const QuestDetails = () => {
         setShowAuthModal(true);
         return;
     }
-    await acceptQuest(quest.id);
+    // Added a small local try/catch for the "Accept" flow
+    try {
+        await acceptQuest(quest.id);
+    } catch (error) {
+        alert("Could not join quest. Please try again.");
+    }
   };
 
+  // --- PERMANENT FIX: THE SAFETY NET ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedFile) return alert("Please upload a photo!");
     
-    setIsSubmitting(true);
-    await submitProof(quest.id, description, selectedFile);
-    setIsSubmitting(false);
-    navigate('/my-quests');
+    setIsSubmitting(true); // Button changes to "Uploading..."
+
+    try {
+        // 1. Call the Context function
+        await submitProof(quest.id, description, selectedFile);
+        
+        // 2. If it reaches this line, it succeeded. Navigate away.
+        navigate('/my-quests');
+    } catch (error) {
+        // 3. If there is a network error or DB error, it hits here.
+        console.error("Submit Error:", error);
+        alert("Submission failed. Please check your internet and try again.");
+    } finally {
+        // 4. ACCURACY FIX: This line runs NO MATTER WHAT.
+        // It resets the button so the user is never stuck.
+        setIsSubmitting(false);
+    }
   };
 
   return (

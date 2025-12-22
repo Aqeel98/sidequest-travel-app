@@ -8,8 +8,9 @@ const PartnerDashboard = () => {
     // Toggle Mode: 'quest' or 'reward'
     const [mode, setMode] = useState('quest');
 
-    // States
-    const [form, setForm] = useState({});
+    // ACCURACY UPDATE: Initializing category as 'Environmental' 
+    // to prevent null values if the user doesn't touch the dropdown.
+    const [form, setForm] = useState({ category: 'Environmental' });
     const [imageFile, setImageFile] = useState(null); 
     const [preview, setPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,27 +53,27 @@ const PartnerDashboard = () => {
 
         setIsSubmitting(true);
 
+        // --- PERMANENT FIX: THE SAFETY NET ---
         try {
             let success = false;
             if (mode === 'quest') {
                 if (!form.lat || !form.lng) {
                     alert("Coordinates required for Quest.");
-                    setIsSubmitting(false); 
-                    return;
+                    // No need to set isSubmitting(false) here because finally handles it
+                    return; 
                 }
                 success = await addQuest(form, imageFile);
             } else {
                 if (!form.xp_cost) {
                     alert("XP Cost required for Reward.");
-                    setIsSubmitting(false); 
-                    return;
+                    return; 
                 }
                 success = await addReward(form, imageFile);
             }
 
             // If the context action was successful, clear the form
             if (success) {
-                setForm({});
+                setForm({ category: 'Environmental' }); // Reset with default category
                 setImageFile(null);
                 setPreview(null);
             }
@@ -80,9 +81,8 @@ const PartnerDashboard = () => {
             console.error("Submission error:", error);
             alert("An unexpected error occurred. Check console for details.");
         } finally {
-            // THIS IS THE FIX
-            // Even if the upload fails or the database rejects it, 
-            // the button will stop saying "Uploading..."
+            // ACCURACY FIX: This line runs regardless of success or database crash.
+            // This prevents the button from staying stuck on "Uploading..."
             setIsSubmitting(false);
         }
     };
@@ -116,11 +116,11 @@ const PartnerDashboard = () => {
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-1">Category</label>
                             <select name="category" value={form.category || 'Environmental'} onChange={handleChange} className="w-full border p-3 rounded-lg">
-                                <option>Environmental</option>
-                                <option>Social</option>
-                                <option>Cultural</option>
-                                <option>Animal Welfare</option>
-                                <option>Education</option>
+                                <option value="Environmental">Environmental</option>
+                                <option value="Social">Social</option>
+                                <option value="Cultural">Cultural</option>
+                                <option value="Animal Welfare">Animal Welfare</option>
+                                <option value="Education">Education</option>
                             </select>
                         </div>
                     )}

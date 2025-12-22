@@ -17,19 +17,27 @@ const AuthModal = () => {
 
   if (!showAuthModal) return null;
 
+  // --- ACCURATE FIX: THE SAFETY NET ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setLoading(true); // Start "Processing..."
+
     try {
         if (mode === 'login') {
             await login(email, password);
         } else {
+            // Context signup handles the Admin email check automatically
             await signup(email, password, name, role);
         }
-    } catch (e) {
-        console.error(e);
+        // If successful, the modal is closed by the Context actions
+    } catch (err) {
+        // ACCURACY: Give user feedback on wrong password / existing email
+        console.error("Auth Error:", err);
+        alert(err.message || "Authentication failed. Please check your credentials.");
     } finally {
-        setLoading(false); // Always stop loading, even if error
+        // PERMANENT FIX: This runs regardless of database 500 errors 
+        // or incorrect passwords. The button will always reset.
+        setLoading(false);
     }
   };
 
@@ -39,7 +47,10 @@ const AuthModal = () => {
         
         {/* Header */}
         <div className="bg-brand-600 p-6 text-center relative">
-            <button onClick={() => setShowAuthModal(false)} className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors">
+            <button 
+                onClick={() => setShowAuthModal(false)} 
+                className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+            >
                 <X size={24} />
             </button>
             <h2 className="text-3xl font-extrabold text-white mb-1 tracking-tight">
@@ -103,22 +114,33 @@ const AuthModal = () => {
                 {mode === 'signup' && (
                     <div className="grid grid-cols-2 gap-3 pt-2">
                         {['Traveler', 'Partner'].map((r) => (
-                             <button type="button" key={r} onClick={() => setRole(r)}
-                                className={`p-2 rounded-xl border-2 text-sm font-bold transition-all ${role === r ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-100 hover:border-gray-200 text-gray-400'}`}>
+                             <button 
+                                type="button" 
+                                key={r} 
+                                onClick={() => setRole(r)}
+                                className={`p-2 rounded-xl border-2 text-sm font-bold transition-all ${role === r ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-100 hover:border-gray-200 text-gray-400'}`}
+                             >
                                 {r}
                              </button>
                         ))}
                     </div>
                 )}
 
-                <button type="submit" disabled={loading} className="w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-brand-700 active:scale-95 transition-all mt-4 shadow-lg shadow-brand-200">
+                <button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="w-full bg-brand-600 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-brand-700 active:scale-95 transition-all mt-4 shadow-lg shadow-brand-200"
+                >
                     {loading ? 'Processing...' : (mode === 'login' ? 'Log In' : 'Start Adventure')}
                 </button>
             </form>
             
             <p className="mt-6 text-center text-sm text-gray-600 font-medium">
                 {mode === 'login' ? "New to SideQuest? " : "Already have an account? "}
-                <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="text-brand-600 font-bold hover:underline">
+                <button 
+                    onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} 
+                    className="text-brand-600 font-bold hover:underline"
+                >
                     {mode === 'login' ? 'Create Account' : 'Log in'}
                 </button>
             </p>
