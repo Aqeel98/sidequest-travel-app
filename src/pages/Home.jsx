@@ -12,7 +12,10 @@ const Home = () => {
   return (
     <div className="pb-12 bg-slate-50 min-h-screen">
       
+      
       {/* --- AESTHETIC HEADER START --- */}
+
+
       <div className="relative bg-brand-600 overflow-hidden shadow-2xl shadow-brand-200/50">
         
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
@@ -35,10 +38,15 @@ const Home = () => {
           </span>
             </h1>
           
-          <p className="text-lg md:text-xl text-teal-50 mb-10 max-w-2xl mx-auto font-light leading-relaxed">
-                 Don't just visit. Connect. <br className="hidden md:block" /> 
-                 Complete impact quests, earn rewards, and leave Sri Lanka better than you found it.
-            </p>
+            <p className="text-lg md:text-xl text-teal-50 mb-10 max-w-xl mx-auto font-light leading-relaxed">
+ 
+               <span className="block mb-2 md:inline md:mb-0 font-bold md:font-light">
+                              Don't just visit. Connect.
+                 </span>
+                     <span className="block md:inline">
+                         {" "}Complete impact quests, earn rewards, and leave the island better than you found it.
+                        </span>
+                    </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
@@ -56,28 +64,30 @@ const Home = () => {
           </div>
         </div>
 
-        {/* --- 3. THE NEW WAVE SVG ADDED HERE --- */}
-        <div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
-          <svg 
-            className="relative block w-[200%] h-[60px] md:h-[100px]" 
-            viewBox="0 0 1200 120" 
-            preserveAspectRatio="none"
-          >
-            {/* Back Wave */}
-            <path 
-              d="M0,0 C300,0 300,80 600,80 C900,80 900,0 1200,0 L1200,120 L0,120 Z" 
-              className="fill-slate-50 opacity-30 animate-wave-slow"
-            ></path>
-            
-            {/* Front Wave (Matches Site BG) */}
-            <path 
-              d="M0,0 C300,0 300,40 600,40 C900,40 900,0 1200,0 L1200,120 L0,120 Z" 
-              className="fill-slate-50 animate-wave"
-            ></path>
+        {/* --- THE REALISTIC WAVES --- */}
+<div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
+  <svg 
+    className="relative block w-[210%] h-[70px] md:h-[110px]" 
+    viewBox="0 0 1200 120" 
+    preserveAspectRatio="none"
+  >
+    {/* Layer 1: The "Foam" (Highest, most transparent) */}
+    <path 
+      d="M0,0 C300,0 400,100 600,100 C800,100 900,0 1200,0 L1200,120 L0,120 Z" 
+      className="fill-white opacity-20 animate-foam"></path>
+    
+    {/* Layer 2: Mid Wave (Depth) */}
+    <path 
+      d="M0,0 C200,0 400,60 600,60 C800,60 1000,0 1200,0 L1200,120 L0,120 Z" 
+      className="fill-slate-50 opacity-40 animate-wave-mid"></path>
+    
+    {/* Layer 3: Front Wave (Solid Foam/Base) */}
+    <path d="M0,0 C300,0 300,40 600,40 C900,40 900,0 1200,0 L1200,120 L0,120 Z" 
+      className="fill-slate-50 animate-wave-front">     </path>
           </svg>
-        </div>
+          </div>
+          </div>
 
-      </div>
       {/* --- AESTHETIC HEADER END --- */}
 
       {/* Quest Grid */}

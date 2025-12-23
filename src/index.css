@@ -1,51 +1,39 @@
-/* --- 1. FONTS & TAILWIND DIRECTIVES --- */
-
-/* Import modern font for aesthetic appeal */
+/* --- 1. ALL IMPORTS MUST BE AT THE TOP --- */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "leaflet/dist/leaflet.css";
 
+/* --- 2. TAILWIND DIRECTIVES --- */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Import Leaflet CSS */
-@import "leaflet/dist/leaflet.css";
-
-
-/* --- 2. GLOBAL BASE STYLES --- */
-
+/* --- 3. GLOBAL BASE STYLES --- */
 :root {
-  /* Apply the new font globally */
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  /* Default color schemes */
   color-scheme: light;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #F8FAFC; /* Matches Tailwind slate-50 */
+  background-color: #F8FAFC; 
   min-height: 100vh;
+  /* Pro-tip: prevents rubber-banding on mobile */
+  overscroll-behavior-y: none; 
 }
 
-/* --- 3. LEAFLET/MAP SPECIFIC FIXES --- */
-
-/* Ensure the map container takes full space */
+/* --- 4. LEAFLET/MAP SPECIFIC FIXES --- */
 .leaflet-container {
   width: 100%;
   height: 100%;
   z-index: 1;
 }
 
-/* Base style for custom markers */
 .gamified-marker {
     background: transparent;
     border: none;
 }
 
-
-/* --- 4. MAP TOOLTIP FIX & STYLING (The Hover Fix) --- */
-
-/* Targets the Leaflet wrapper element for the tooltip */
 .leaflet-tooltip.map-tooltip-content {
     background: transparent !important;
     border: none !important;
@@ -55,7 +43,6 @@ body {
     opacity: 1 !important; 
 }
 
-/* Style the actual content div inside the tooltip */
 .map-tooltip-content > div {
     background-color: #1F2937; 
     color: white;
@@ -66,9 +53,7 @@ body {
     margin-bottom: 20px; 
 }
 
-
 /* --- 5. PLAYER AVATAR PULSE EFFECT --- */
-
 @keyframes pulse-animation {
     0% { transform: scale(0.1); opacity: 0.0; }
     50% { transform: scale(1.1); opacity: 0.5; }
@@ -94,20 +79,24 @@ body {
     z-index: -1;
 }
 
-/* --- 6. SOUTH COAST WAVE ANIMATIONS (NEW) --- */
-
-@keyframes wave-move {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(-25%); }
-  100% { transform: translateX(0); }
+/* --- 6. SOUTH COAST WAVE ANIMATIONS --- */
+@keyframes wave-drift {
+  0% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-20%) translateY(2px); }
+  100% { transform: translateX(0) translateY(0); }
 }
 
-/* Gentle swaying for the hero waves */
-.animate-wave {
-  animation: wave-move 12s ease-in-out infinite;
+/* The Foam layer moves slightly faster to simulate bubbles */
+.animate-foam {
+  animation: wave-drift 8s ease-in-out infinite;
 }
 
-.animate-wave-slow {
-  animation: wave-move 18s ease-in-out infinite;
-  animation-delay: -2s;
+.animate-wave-mid {
+  animation: wave-drift 14s ease-in-out infinite;
+  animation-delay: -3s;
+}
+
+.animate-wave-front {
+  animation: wave-drift 18s ease-in-out infinite;
+  animation-delay: -5s;
 }
