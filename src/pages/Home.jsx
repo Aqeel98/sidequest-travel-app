@@ -111,7 +111,7 @@ const Home = () => {
       {/* --- AESTHETIC HEADER END --- */}
 
       {/* Quest Grid */}
-      <div id="quests-grid" className="max-w-7xl mx-auto px-4 mt-20 bg-[#F9F6F0] rounded-3xl p-8">
+      <div id="quests-grid" className="max-w-7xl mx-auto px-4 mt-20 bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-gray-100">
         <div className="flex items-end justify-between mb-10">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Available Quests</h2>
