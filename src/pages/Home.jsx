@@ -25,7 +25,7 @@ const Home = () => {
         </div>
 
         {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
-        <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-40 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-64 md:pb-80 lg:pb-96 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium mb-6 animate-fade-in-up">
             <Sparkles size={16} className="text-yellow-300" />
             <span>Discover the unseen Sri Lanka</span>
@@ -65,12 +65,12 @@ const Home = () => {
         </div>
 
         {/* --- THE REALISTIC WAVES --- */}
-          <div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
+        <div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
            <svg 
-                className="relative block w-[210%] h-[100px] md:h-[160px] lg:h-[220px]" 
-                  viewBox="0 0 1200 120" 
-                  preserveAspectRatio="none"
-             >
+               className="relative block w-[210%] h-[120px] md:h-[160px] lg:h-[200px]" 
+               viewBox="0 0 1200 120" 
+                preserveAspectRatio="none"
+            >
             {/* Layer 1: THE SAND (The Shoreline) */}
            {/* This creates the warm beach feeling without making the whole site beige */}
                 <path 
