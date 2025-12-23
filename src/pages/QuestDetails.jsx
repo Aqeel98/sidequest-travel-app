@@ -164,20 +164,40 @@ const QuestDetails = () => {
                     <div className="flex items-center justify-center w-full">
                         <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl cursor-pointer transition-all ${selectedFile ? 'border-brand-500 bg-brand-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                {selectedFile ? (
-                                    <>
-                                        <CheckCircle className="w-10 h-10 mb-2 text-brand-600" />
-                                        <p className="text-sm text-brand-700 font-bold">{selectedFile.name}</p>
-                                        <p className="text-xs text-gray-500">Click to change</p>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Camera className="w-10 h-10 mb-3 text-gray-400" />
-                                        <p className="text-sm text-gray-500 font-medium">Click to upload photo evidence</p>
-                                    </>
-                                )}
+                            {selectedFile ? (
+            <div className="flex flex-col items-center justify-center">
+                <div className="relative w-24 h-24 mb-2">
+                    <img 
+                        src={URL.createObjectURL(selectedFile)} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover rounded-xl border-2 border-brand-500 shadow-md"
+                    />
+                    <div className="absolute -top-2 -right-2 bg-brand-600 text-white rounded-full p-1 shadow-lg">
+                        <CheckCircle size={16} />
+                    </div>
+                </div>
+                <p className="text-sm text-brand-700 font-bold truncate max-w-[200px]">
+                    {selectedFile.name}
+                </p>
+                <p className="text-xs text-gray-500">Click to change photo</p>
+            </div>
+        ) : (
+            <div className="flex flex-col items-center">
+                <Camera className="w-10 h-10 mb-3 text-gray-400" />
+                <p className="text-sm text-gray-500 font-medium">Click to upload photo evidence</p>
+                <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
+            </div>
+        )}
                             </div>
-                            <input type="file" className="hidden" accept="image/*" onChange={(e) => setSelectedFile(e.target.files[0])} />
+                            <input 
+                                  type="file" 
+                                  className="hidden" 
+                                  accept="image/*" 
+                                  onChange={(e) => {
+                                 if (selectedFile) URL.revokeObjectURL(selectedFile); // Clean up old preview memory
+                                  setSelectedFile(e.target.files[0]);
+                              }} 
+                            />  
                         </label>
                     </div>
                 </div>

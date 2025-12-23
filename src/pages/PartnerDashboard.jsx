@@ -236,6 +236,9 @@ const PartnerDashboard = () => {
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
+                                        <p className="col-span-full text-[10px] text-brand-400 italic text-center mt-2">
+                                                Tip: Long-press your location in Google Maps to find these numbers.
+                                        </p>
                                         <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="80.2" required />
                                     </div>
                                 </div>

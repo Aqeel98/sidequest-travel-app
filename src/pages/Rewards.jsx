@@ -21,7 +21,8 @@ const Rewards = () => {
     const code = await redeemReward(reward);
     
     if (code) {
-      alert(`Success! Your redemption code is: ${code}`);
+      alert(`Success! Your redemption code is: ${code}. It has also been saved to 'Your Redemptions' at the bottom of this page.`);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
   };
 

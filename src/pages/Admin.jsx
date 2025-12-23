@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
+import imageCompression from 'browser-image-compression';
 import { supabase } from '../supabaseClient'; 
 import { 
   PlusCircle, Edit, Trash2, Check, MapPin, Award, 
@@ -45,26 +46,41 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
     };
 
     const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const localPreview = URL.createObjectURL(file);
-        setPreviewUrl(localPreview); 
-        setUploading(true);
-        try {
-            const fileName = `admin-uploads/${Date.now()}_${file.name.replace(/\s/g, '')}`;
-            const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, file);
-            if (uploadError) throw uploadError;
-            const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
-            setFormData(prev => ({ ...prev, image: data.publicUrl }));
-            alert("Image uploaded successfully!");
-        } catch (error) {
-            console.error(error);
-            setPreviewUrl(item.image || null);
-            alert("Upload failed: " + error.message);
-        } finally {
-            setUploading(false);
-        }
-    };
+      const file = e.target.files[0];
+      if (!file) return;
+  
+      setUploading(true);
+      try {
+          // --- 1. COMPRESSION LOGIC (Same as Traveler) ---
+          const options = { 
+              maxSizeMB: 1,           // Max 1MB
+              maxWidthOrHeight: 1600, // Good for Hero images
+              useWebWorker: true 
+          };
+          const compressedFile = await imageCompression(file, options);
+          
+          // --- 2. PREVIEW ---
+          const localPreview = URL.createObjectURL(compressedFile);
+          setPreviewUrl(localPreview); 
+  
+          // --- 3. UPLOAD ---
+          const fileName = `admin-uploads/${Date.now()}_${file.name.replace(/\s/g, '')}`;
+          const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, compressedFile);
+          
+          if (uploadError) throw uploadError;
+  
+          const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+          setFormData(prev => ({ ...prev, image: data.publicUrl }));
+          
+          alert("Image optimized and staged! Click 'Save Changes' to push live.");
+      } catch (error) {
+          console.error(error);
+          setPreviewUrl(item.image || null);
+          alert("Upload failed: " + error.message);
+      } finally {
+          setUploading(false);
+      }
+  };
 
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
@@ -157,7 +173,7 @@ const Admin = () => {
   const pendingNewQuests = quests.filter(q => q.status === 'pending_admin');
   const pendingNewRewards = rewards.filter(r => r.status === 'pending_admin');
 
-  const activeQuests = quests.filter(q => q.status === 'active');
+  const manageableQuests = quests.filter(q => q.status !== 'pending_admin');
   const activeRewards = rewards.filter(r => r.status === 'active');  
 
   // Handlers
@@ -361,13 +377,14 @@ const Admin = () => {
 
       {/* --- 4. QUEST MANAGER TAB --- */}
       {activeTab === 'quests' && (
-        <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Total Live Quests ({activeQuests.length})</h2>
-            <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-            {activeQuests.length === 0 ? (
-                <p className="text-gray-400 italic">No live quests currently on the map.</p>
-            ) : (
-                activeQuests.map(quest => (
+  <div className="space-y-4">
+      {/* Title now reflects "Manageable" instead of just "Live" */}
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">Quest Database ({manageableQuests.length})</h2>
+      <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+      {manageableQuests.length === 0 ? (
+          <p className="text-gray-400 italic">No quests found in database.</p>
+      ) : (
+          manageableQuests.map(quest => (
                     <div key={quest.id} className="border-b pb-4 last:border-0">
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-4">

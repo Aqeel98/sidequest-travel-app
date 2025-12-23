@@ -13,29 +13,32 @@ const Home = () => {
     <div className="pb-12 bg-slate-50 min-h-screen">
       
       {/* --- AESTHETIC HEADER START --- */}
-      <div className="relative bg-brand-600 overflow-hidden rounded-b-[3rem] shadow-2xl shadow-brand-200/50">
+      <div className="relative bg-brand-600 overflow-hidden shadow-2xl shadow-brand-200/50">
         
-        {/* Abstract Background Shapes */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
             <div className="absolute -top-20 -right-20 w-[600px] h-[600px] rounded-full bg-brand-400 opacity-20 blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-transparent via-white/5 to-transparent rotate-12"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-24 text-center">
+        {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-32 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium mb-6 animate-fade-in-up">
             <Sparkles size={16} className="text-yellow-300" />
             <span>Discover the unseen Sri Lanka</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight leading-tight">
-            Travel with <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-100 to-white">Purpose</span>
-          </h1>
+              Adventure with <br/>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-100 to-white">
+               Impact
+          </span>
+            </h1>
           
           <p className="text-lg md:text-xl text-teal-50 mb-10 max-w-2xl mx-auto font-light leading-relaxed">
-            Don't just visit. Connect. Complete micro-impact quests, earn rewards, and leave every place better than you found it.
-          </p>
+                 Don't just visit. Connect. <br className="hidden md:block" /> 
+                 Complete impact quests, earn rewards, and leave Sri Lanka better than you found it.
+            </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
@@ -52,6 +55,28 @@ const Home = () => {
             </button>
           </div>
         </div>
+
+        {/* --- 3. THE NEW WAVE SVG ADDED HERE --- */}
+        <div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
+          <svg 
+            className="relative block w-[200%] h-[60px] md:h-[100px]" 
+            viewBox="0 0 1200 120" 
+            preserveAspectRatio="none"
+          >
+            {/* Back Wave */}
+            <path 
+              d="M0,0 C300,0 300,80 600,80 C900,80 900,0 1200,0 L1200,120 L0,120 Z" 
+              className="fill-slate-50 opacity-30 animate-wave-slow"
+            ></path>
+            
+            {/* Front Wave (Matches Site BG) */}
+            <path 
+              d="M0,0 C300,0 300,40 600,40 C900,40 900,0 1200,0 L1200,120 L0,120 Z" 
+              className="fill-slate-50 animate-wave"
+            ></path>
+          </svg>
+        </div>
+
       </div>
       {/* --- AESTHETIC HEADER END --- */}
 

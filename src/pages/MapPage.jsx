@@ -23,13 +23,36 @@ const MapPage = () => {
 
   // 2. EFFECT: Get Real GPS Location
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
+    if (!navigator.geolocation) {
+      console.log("Geolocation is not supported by this browser.");
+      return;
+    }
+  
+    const options = {
+      enableHighAccuracy: true, // Triggers the "Exact Location" prompt
+      timeout: 15000,           // 15 seconds (giving extra time for jungle/thick walls)
+      maximumAge: 0             // Always get fresh data
+    };
+  
+    // watchPosition handles the first 'get' AND all future updates
+    const id = navigator.geolocation.watchPosition(
       (pos) => {
+        console.log("GPS update received:", pos.coords.accuracy, "meters accuracy");
         setUserLocation([pos.coords.latitude, pos.coords.longitude]);
       },
-      (err) => console.log("Geolocation denied or error:", err)
+      (err) => {
+        // Error code 1 means the user clicked 'Deny'
+        if (err.code === 1) {
+          console.warn("User denied Geolocation.");
+        } else {
+          console.error("GPS Error:", err.message);
+        }
+      },
+      options
     );
+  
+    // Cleanup: Stop the GPS hardware when the user leaves the Map page
+    return () => navigator.geolocation.clearWatch(id);
   }, []);
 
   // 3. MEMO: Sort Quests based on REAL userLocation

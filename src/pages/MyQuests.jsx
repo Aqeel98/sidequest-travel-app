@@ -57,8 +57,14 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
       </div>
 
       {/* --- FORM: Only show if In Progress --- */}
-      {progress.status === 'in_progress' && (
-        <div className="mt-4 border-t pt-4 space-y-4">
+      {(progress.status === 'in_progress' || progress.status === 'rejected') && (
+          <div className="mt-4 border-t pt-4 space-y-4">
+      {/* If it was rejected, show them why or tell them to try again */}
+      {progress.status === 'rejected' && (
+          <div className="p-3 bg-red-50 text-red-700 text-[10px] font-bold uppercase rounded-lg border border-red-100">
+             Previous proof rejected. Please upload a clearer photo to resubmit!
+          </div>
+      )}
           
           {/* 1. Image Upload Area */}
           <div className="flex items-center gap-4">
