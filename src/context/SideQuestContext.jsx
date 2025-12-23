@@ -347,18 +347,17 @@ export const SideQuestProvider = ({ children }) => {
         // 1. Strip all metadata and protected fields
         const { id: _id, created_at, created_by, ...payload } = updates;
 
-        // 2. FORCE correct data types
+        // 2. Force correct data types
         const xp_value = payload.xp_value ? Number(payload.xp_value) : 0;
         const lat = payload.lat ? parseFloat(payload.lat) : 0;
         const lng = payload.lng ? parseFloat(payload.lng) : 0;
 
-        // 3. SECURE STATUS OVERRIDE
-        // We delete any status coming from the form so it cannot override us.
+        // 3. Secure Status Override
         delete payload.status; 
-        
         const finalStatus = currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin';
 
-        const { data, error } = await supabase
+        // 4. Database Call
+        const { error } = await supabase
             .from('quests')
             .update({
                 ...payload,
@@ -367,27 +366,26 @@ export const SideQuestProvider = ({ children }) => {
                 lng,
                 status: finalStatus
             })
-            .eq('id', Number(id))
-            .select(); // Select back to verify
+            .eq('id', Number(id));
 
         if (error) throw error;
         
-        console.log("SQ-System: Database confirmed update to status:", data[0].status);
+        console.log("SQ-System: Update accepted by Database.");
 
-        // 4. Refresh global quests state
+        // 5. Refresh global quests state
         await fetchQuests(); 
 
         if (currentUser?.role === 'Partner') {
-            alert("Success! Your changes are saved. The quest is now 'In Review' and hidden from the map until Admin approval.");
+            alert("Success! Changes saved. Your quest is now 'In Review' and hidden from the map until Admin approval.");
         } else {
-            alert("Quest updated successfully.");
+            alert("Impact Quest updated successfully.");
         }
 
     } catch (error) {
         console.error("SQ-System: Update Logic Failure", error);
         alert("Update Failed: " + error.message);
     }
-  }; 
+  };  
   
   const deleteQuest = async (id) => {
     try {
