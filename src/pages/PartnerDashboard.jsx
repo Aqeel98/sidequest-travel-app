@@ -120,12 +120,12 @@ const PartnerDashboard = () => {
             console.error("SQ-System: Submission Error ->", err.message);
             alert("Submission Error: " + err.message);
         } finally {
-            setIsLoading(false);
+            
             setIsSubmitting(false);
         }
     };
 
-    
+
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">

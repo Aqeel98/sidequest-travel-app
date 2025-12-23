@@ -344,42 +344,47 @@ export const SideQuestProvider = ({ children }) => {
     try {
         console.log("SQ-System: Hardening Quest Update Payload...");
 
-        // 1. DATA INTEGRITY: Strip primary keys and metadata
+        // 1. Strip all metadata and protected fields
         const { id: _id, created_at, created_by, ...payload } = updates;
 
-        // 2. CONFLICT RESOLUTION: 
-        // If 'status' exists in the form (updates), we remove it so our 
-        // manual override below is the ONLY status being sent.
+        // 2. FORCE correct data types
+        const xp_value = payload.xp_value ? Number(payload.xp_value) : 0;
+        const lat = payload.lat ? parseFloat(payload.lat) : 0;
+        const lng = payload.lng ? parseFloat(payload.lng) : 0;
+
+        // 3. SECURE STATUS OVERRIDE
+        // We delete any status coming from the form so it cannot override us.
         delete payload.status; 
-
-        const databasePayload = {
-            ...payload,
-            xp_value: Number(payload.xp_value),
-            lat: parseFloat(payload.lat),
-            lng: parseFloat(payload.lng),
-            // FORCE moderation: 
-            // Admin can save as 'active', Partners are forced to 'pending_admin'
-            status: currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin'
-        };
-
-        const { error } = await supabase
-            .from('quests')
-            .update(databasePayload)
-            .eq('id', Number(id)); 
         
+        const finalStatus = currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin';
+
+        const { data, error } = await supabase
+            .from('quests')
+            .update({
+                ...payload,
+                xp_value,
+                lat,
+                lng,
+                status: finalStatus
+            })
+            .eq('id', Number(id))
+            .select(); // Select back to verify
+
         if (error) throw error;
         
-        // 3. SYNC: Wait for the database to confirm the refresh
+        console.log("SQ-System: Database confirmed update to status:", data[0].status);
+
+        // 4. Refresh global quests state
         await fetchQuests(); 
 
         if (currentUser?.role === 'Partner') {
-            alert("Success! Your quest has been sent for re-approval and is now 'In Review'.");
+            alert("Success! Your changes are saved. The quest is now 'In Review' and hidden from the map until Admin approval.");
         } else {
             alert("Quest updated successfully.");
         }
 
     } catch (error) {
-        console.error("SQ-System: Update Failed", error);
+        console.error("SQ-System: Update Logic Failure", error);
         alert("Update Failed: " + error.message);
     }
   }; 
