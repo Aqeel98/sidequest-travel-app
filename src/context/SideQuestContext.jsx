@@ -342,21 +342,22 @@ export const SideQuestProvider = ({ children }) => {
 
   const updateQuest = async (id, updates) => {
     try {
-        console.log("SQ-System: Hardening Quest Update Payload...");
+        console.log(`SQ-System: Hardening Update for Quest ID: ${id}`);
 
-        // 1. Strip all metadata and protected fields
+        // 1. DATA INTEGRITY: Clean the object
         const { id: _id, created_at, created_by, ...payload } = updates;
 
-        // 2. Force correct data types
+        // 2. EXPLICIT TYPE CASTING
         const xp_value = payload.xp_value ? Number(payload.xp_value) : 0;
         const lat = payload.lat ? parseFloat(payload.lat) : 0;
         const lng = payload.lng ? parseFloat(payload.lng) : 0;
 
-        // 3. Secure Status Override
+        // 3. SECURE STATUS OVERRIDE
+        // We delete status from payload to ensure our override below is the absolute truth
         delete payload.status; 
         const finalStatus = currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin';
 
-        // 4. Database Call
+        // 4. DATABASE CALL
         const { error } = await supabase
             .from('quests')
             .update({
@@ -370,22 +371,27 @@ export const SideQuestProvider = ({ children }) => {
 
         if (error) throw error;
         
-        console.log("SQ-System: Update accepted by Database.");
+        console.log("SQ-System: Database Update Successful. Syncing Local State...");
 
-        // 5. Refresh global quests state
-        await fetchQuests(); 
+        // --- THE ACCURACY FIX: IMMEDIATE LOCAL STATE SYNC ---
+        // Instead of waiting for a re-fetch, we update the local array manually.
+        // This ensures the "LIVE" badge flips to "IN REVIEW" the millisecond you click OK.
+        setQuests(prevQuests => prevQuests.map(q => 
+            q.id === Number(id) ? { ...q, ...payload, xp_value, lat, lng, status: finalStatus } : q
+        ));
 
         if (currentUser?.role === 'Partner') {
             alert("Success! Changes saved. Your quest is now 'In Review' and hidden from the map until Admin approval.");
         } else {
-            alert("Impact Quest updated successfully.");
+            alert("Quest updated successfully.");
         }
 
     } catch (error) {
-        console.error("SQ-System: Update Logic Failure", error);
+        console.error("SQ-System: Update Failure ->", error.message);
         alert("Update Failed: " + error.message);
     }
-  };  
+  };
+
   
   const deleteQuest = async (id) => {
     try {
@@ -508,49 +514,34 @@ export const SideQuestProvider = ({ children }) => {
 
   const updateReward = async (id, updates) => {
     try {
-        console.log(`SQ-System: Processing update for Reward ID: ${id}`);
+        const { id: _id, created_at, created_by, ...payload } = updates;
+        delete payload.status;
 
-        // 1. DATA INTEGRITY CLEANUP:
-        // We strip 'id', 'created_at', and 'created_by' from the updates object.
-        // This ensures Supabase doesn't throw a "cannot update primary key" error.
-        const { id: _id, created_at, created_by, ...cleanUpdates } = updates;
+        const xp_cost = payload.xp_cost ? Number(payload.xp_cost) : 0;
+        const finalStatus = currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin';
 
-        // 2. MODERATION LOGIC:
-        // If a Partner edits, the reward is set to 'pending_admin' (removed from market).
-        // If an Admin edits, they can keep it 'active'.
-        const finalUpdates = {
-            ...cleanUpdates,
-            status: currentUser?.role === 'Admin' ? (cleanUpdates.status || 'active') : 'pending_admin'
-        };
-
-        // 3. DATABASE UPDATE:
-        // Casting the ID to a Number ensures it matches the PostgreSQL integer schema.
         const { error } = await supabase
             .from('rewards')
-            .update(finalUpdates)
+            .update({ ...payload, xp_cost, status: finalStatus })
             .eq('id', Number(id));
 
-        if (error) {
-            console.error("SQ-System: Reward Update DB Error:", error.message);
-            throw error;
-        }
-        
-        // 4. LOCAL STATE SYNC:
-        // Refresh the rewards marketplace so everyone sees the latest (or removal).
-        await fetchRewards(); 
+        if (error) throw error;
 
-        // 5. ACCURATE FEEDBACK:
+        // IMMEDIATE LOCAL STATE SYNC
+        setRewards(prevRewards => prevRewards.map(r => 
+            r.id === Number(id) ? { ...r, ...payload, xp_cost, status: finalStatus } : r
+        ));
+
         if (currentUser?.role === 'Partner') {
-            alert("Marketplace reward updated and sent to Admin for re-approval. It will be hidden until reviewed.");
+            alert("Reward updated and sent for Admin re-approval.");
         } else {
-            alert("Marketplace Reward updated successfully.");
+            alert("Reward updated successfully.");
         }
-
     } catch (error) {
-        console.error("SQ-System: Reward Update Failure", error);
         alert("Update Failed: " + error.message);
     }
   };
+  
 
 
   const deleteReward = async (id) => {
