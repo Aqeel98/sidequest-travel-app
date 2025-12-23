@@ -1,39 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, UploadCloud, Gift, Map } from 'lucide-react';
+import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import { supabase } from '../supabaseClient';
+import imageCompression from 'browser-image-compression';
 
 const PartnerDashboard = () => {
-    const { currentUser, addQuest, addReward, switchRole } = useSideQuest();
+    const { currentUser, quests, rewards, addQuest, addReward, updateQuest, updateReward } = useSideQuest();
     
-    // Toggle Mode: 'quest' or 'reward'
+    // UI State
+    const [view, setView] = useState('manage'); // Default to seeing their content first
     const [mode, setMode] = useState('quest');
+    const [editingId, setEditingId] = useState(null);
 
-    // ACCURACY UPDATE: Initializing category as 'Environmental' 
-    // to prevent null values if the user doesn't touch the dropdown.
+    // Form State
     const [form, setForm] = useState({ category: 'Environmental' });
     const [imageFile, setImageFile] = useState(null); 
     const [preview, setPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Cleanup memory for image previews
     useEffect(() => {
-        return () => { if (preview) URL.revokeObjectURL(preview); };
+        return () => { if (preview && preview.startsWith('blob:')) URL.revokeObjectURL(preview); };
     }, [preview]);
 
-    // Access Check
+    // FILTER: Only show what THIS Partner created
+    const myQuests = quests.filter(q => q.created_by === currentUser?.id);
+    const myRewards = rewards.filter(r => r.created_by === currentUser?.id);
+
     if (currentUser?.role !== 'Partner' && currentUser?.role !== 'Admin') {
-        return (
-            <div className="p-12 text-center">
-                <h2 className="text-2xl font-bold text-red-500 mb-4">Partner Access Required</h2>
-                <button onClick={() => switchRole('Partner')} className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
-                    (Demo) Switch to Partner Role
-                </button>
-            </div>
-        );
+        return <div className="p-20 text-center font-bold text-red-500">Partner Access Required</div>;
     }
 
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
+    const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -43,155 +41,232 @@ const PartnerDashboard = () => {
         }
     };
 
+    // --- TRIGGER EDIT MODE ---
+    const startEdit = (item, itemMode) => {
+        setMode(itemMode);
+        setForm(item);
+        setEditingId(item.id);
+        setPreview(item.image);
+        setView('create');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!form.title || !imageFile) {
-            alert("Please fill in title and upload an image.");
-            return;
-        }
-
         setIsSubmitting(true);
 
-        // --- PERMANENT FIX: THE SAFETY NET ---
         try {
-            let success = false;
-            if (mode === 'quest') {
-                if (!form.lat || !form.lng) {
-                    alert("Coordinates required for Quest.");
-                    // No need to set isSubmitting(false) here because finally handles it
-                    return; 
-                }
-                success = await addQuest(form, imageFile);
-            } else {
-                if (!form.xp_cost) {
-                    alert("XP Cost required for Reward.");
-                    return; 
-                }
-                success = await addReward(form, imageFile);
+            let finalImageUrl = form.image || null;
+
+            // 1. Handle Image Upload (If a new file was picked)
+            if (imageFile) {
+                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
+                const compressed = await imageCompression(imageFile, options);
+                const fileName = `${mode}-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
+                const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, compressed);
+                if (uploadError) throw uploadError;
+                const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+                finalImageUrl = data.publicUrl;
             }
 
-            // If the context action was successful, clear the form
-            if (success) {
-                setForm({ category: 'Environmental' }); // Reset with default category
-                setImageFile(null);
-                setPreview(null);
+            const payload = { ...form, image: finalImageUrl };
+
+            if (editingId) {
+                // EDIT EXISTING
+                if (mode === 'quest') await updateQuest(editingId, payload);
+                else await updateReward(editingId, payload);
+            } else {
+                // CREATE NEW (addQuest handles its own upload, so we send imageFile)
+                if (mode === 'quest') await addQuest(form, imageFile);
+                else await addReward(form, imageFile);
             }
-        } catch (error) {
-            console.error("Submission error:", error);
-            alert("An unexpected error occurred. Check console for details.");
+
+            // SUCCESS CLEANUP
+            setEditingId(null);
+            setForm({ category: 'Environmental' });
+            setImageFile(null);
+            setPreview(null);
+            setView('manage');
+        } catch (err) {
+            alert("Error: " + err.message);
         } finally {
-            // ACCURACY FIX: This line runs regardless of success or database crash.
-            // This prevents the button from staying stuck on "Uploading..."
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-8 text-gray-900 flex items-center">
-                <PlusCircle className="text-brand-600 mr-3" size={32} />
-                Partner Dashboard
-            </h1>
-
-            {/* TOGGLE TABS */}
-            <div className="flex gap-4 mb-8">
-                <button onClick={() => setMode('quest')} className={`flex-1 py-4 rounded-xl border-2 flex items-center justify-center font-bold text-lg transition ${mode === 'quest' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                    <Map className="mr-2" /> Add Quest
-                </button>
-                <button onClick={() => setMode('reward')} className={`flex-1 py-4 rounded-xl border-2 flex items-center justify-center font-bold text-lg transition ${mode === 'reward' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                    <Gift className="mr-2" /> Add Reward
-                </button>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+                <h1 className="text-3xl font-black text-gray-900 flex items-center tracking-tight">
+                    <LayoutDashboard className="text-brand-600 mr-3" size={32} />
+                    Partner Portal
+                </h1>
+                
+                <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+                    <button 
+                        onClick={() => setView('manage')} 
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'manage' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
+                    >
+                        My Content
+                    </button>
+                    <button 
+                        onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental'}); setPreview(null);}} 
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'create' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
+                    >
+                        {editingId ? 'Edit Mode' : 'Add New'}
+                    </button>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-lg space-y-6">
-                
-                {/* 1. Common Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">{mode === 'quest' ? 'Quest Title' : 'Reward Title'}</label>
-                        <input type="text" name="title" value={form.title || ''} onChange={handleChange} className="w-full border p-3 rounded-lg" required />
-                    </div>
-                    {mode === 'quest' && (
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Category</label>
-                            <select name="category" value={form.category || 'Environmental'} onChange={handleChange} className="w-full border p-3 rounded-lg">
-                                <option value="Environmental">Environmental</option>
-                                <option value="Social">Social</option>
-                                <option value="Cultural">Cultural</option>
-                                <option value="Animal Welfare">Animal Welfare</option>
-                                <option value="Education">Education</option>
-                            </select>
+            {view === 'create' ? (
+                /* --- FORM VIEW (CREATE & EDIT) --- */
+                <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <button onClick={() => setView('manage')} className="flex items-center text-sm font-bold text-gray-400 hover:text-brand-600 mb-6 transition-colors">
+                        <ArrowLeft size={16} className="mr-1"/> Back to My Content
+                    </button>
+
+                    {!editingId && (
+                        <div className="flex gap-4 mb-8">
+                            <button onClick={() => setMode('quest')} className={`flex-1 py-4 rounded-2xl border-2 flex items-center justify-center font-bold text-lg transition-all ${mode === 'quest' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}>
+                                <Map className="mr-2" /> Impact Quest
+                            </button>
+                            <button onClick={() => setMode('reward')} className={`flex-1 py-4 rounded-2xl border-2 flex items-center justify-center font-bold text-lg transition-all ${mode === 'reward' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}>
+                                <Gift className="mr-2" /> Marketplace Reward
+                            </button>
                         </div>
                     )}
-                    {mode === 'reward' && (
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">XP Cost</label>
-                            <input type="number" name="xp_cost" value={form.xp_cost || ''} onChange={handleChange} className="w-full border p-3 rounded-lg" required />
+
+                    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 space-y-6">
+                        <h2 className="text-2xl font-black text-gray-800">{editingId ? 'Edit Information' : `New ${mode === 'quest' ? 'Quest' : 'Reward'}`}</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="col-span-full md:col-span-1">
+                                <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Title</label>
+                                <input type="text" name="title" value={form.title || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                            </div>
+                            {mode === 'quest' ? (
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Category</label>
+                                    <select name="category" value={form.category || 'Environmental'} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none">
+                                        <option value="Environmental">Environmental</option>
+                                        <option value="Social">Social</option>
+                                        <option value="Animal Welfare">Animal Welfare</option>
+                                        <option value="Education">Education</option>
+                                        <option value="Cultural">Cultural</option>
+                                    </select>
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">XP Cost</label>
+                                    <input type="number" name="xp_cost" value={form.xp_cost || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
 
-                <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Description</label>
-                    <textarea name="description" value={form.description || ''} onChange={handleChange} rows="3" className="w-full border p-3 rounded-lg" required />
-                </div>
+                        <div>
+                            <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Description</label>
+                            <textarea name="description" value={form.description || ''} onChange={handleChange} rows="3" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                        </div>
 
-                {/* Image Upload */}
-                <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Cover Image</label>
-                    <div className="flex items-center gap-4">
-                        <label className="cursor-pointer bg-gray-50 border-2 border-dashed border-gray-300 px-6 py-4 rounded-lg hover:bg-gray-100 flex flex-col items-center">
-                            <UploadCloud className="text-gray-400 mb-1" />
-                            <span className="text-sm text-gray-500">Click to Upload</span>
-                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                        </label>
-                        {preview && (
-                            <img src={preview} alt="Preview" className="h-20 w-20 object-cover rounded-lg border shadow-sm" />
+                        {/* Image Upload Area */}
+                        <div className="bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-200">
+                            <label className="block text-xs font-black text-gray-400 uppercase mb-3 tracking-widest">Item Photo</label>
+                            <div className="flex items-center gap-6">
+                                <label className="cursor-pointer bg-white border border-gray-300 px-6 py-3 rounded-xl hover:bg-gray-100 flex items-center shadow-sm transition-all">
+                                    <UploadCloud className="text-brand-600 mr-2" size={20} />
+                                    <span className="text-sm font-bold text-gray-600">Choose Image</span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                </label>
+                                {preview && <img src={preview} alt="Preview" className="h-20 w-20 object-cover rounded-xl border-2 border-white shadow-lg" />}
+                            </div>
+                        </div>
+                        
+                        {mode === 'quest' && (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">XP Reward Value</label>
+                                        <input type="number" name="xp_value" value={form.xp_value || 50} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Location Name</label>
+                                        <input type="text" name="location_address" value={form.location_address || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 bg-brand-50 p-6 rounded-2xl border border-brand-100">
+                                    <div className="col-span-full mb-2"><h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest text-center">GPS Coordinates</h4></div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
+                                        <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="6.0" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
+                                        <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="80.2" required />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Instructions for Travelers</label>
+                                    <textarea name="instructions" value={form.instructions || ''} onChange={handleChange} rows="2" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                                </div>
+                            </div>
                         )}
+
+                        <button type="submit" disabled={isSubmitting} className={`w-full text-white py-4 rounded-2xl font-black text-lg shadow-xl transition-all transform active:scale-95 flex items-center justify-center ${mode === 'quest' ? 'bg-brand-600 hover:bg-brand-700 shadow-brand-200' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'}`}>
+                            {isSubmitting ? 'Processing...' : (editingId ? 'Save & Resubmit for Approval' : 'Publish to SideQuest')}
+                        </button>
+                    </form>
+                </div>
+            ) : (
+                /* --- MANAGE VIEW --- */
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in duration-500">
+                    {/* MY QUESTS */}
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-black text-gray-900 flex items-center border-b pb-4"><Map size={24} className="mr-3 text-brand-600"/> My Active Quests</h2>
+                        {myQuests.length === 0 ? <p className="text-gray-400 py-10 text-center bg-white rounded-3xl border border-dashed">No quests yet.</p> :
+                        myQuests.map(q => (
+                            <div key={q.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center transition-all hover:shadow-md">
+                                <div className="flex items-center gap-4">
+                                    <img src={q.image || "https://via.placeholder.com/60"} className="w-16 h-16 rounded-2xl object-cover border shadow-sm" />
+                                    <div>
+                                        <p className="font-bold text-gray-900 leading-tight">{q.title}</p>
+                                        <div className="mt-1 flex items-center gap-2">
+                                            {q.status === 'active' ? 
+                                                <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">LIVE</span> :
+                                                <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">IN REVIEW</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onClick={() => startEdit(q, 'quest')} className="p-3 text-gray-300 hover:text-brand-600 hover:bg-brand-50 rounded-2xl transition-all"><Edit size={24} /></button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* MY REWARDS */}
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-black text-gray-900 flex items-center border-b pb-4"><Gift size={24} className="mr-3 text-orange-600"/> My Rewards</h2>
+                        {myRewards.length === 0 ? <p className="text-gray-400 py-10 text-center bg-white rounded-3xl border border-dashed">No rewards yet.</p> :
+                        myRewards.map(r => (
+                            <div key={r.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center transition-all hover:shadow-md">
+                                <div className="flex items-center gap-4">
+                                    <img src={r.image || "https://via.placeholder.com/60"} className="w-16 h-16 rounded-2xl object-cover border shadow-sm" />
+                                    <div>
+                                        <p className="font-bold text-gray-900 leading-tight">{r.title}</p>
+                                        <div className="mt-1 flex items-center gap-3">
+                                            {r.status === 'active' ? 
+                                                <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">ACTIVE</span> :
+                                                <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">REVIEWING</span>
+                                            }
+                                            <span className="text-[10px] text-orange-500 font-black">{r.xp_cost} XP</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onClick={() => startEdit(r, 'reward')} className="p-3 text-gray-300 hover:text-orange-600 hover:bg-orange-50 rounded-2xl transition-all"><Edit size={24} /></button>
+                            </div>
+                        ))}
                     </div>
                 </div>
-                
-                {/* QUEST SPECIFIC FIELDS */}
-                {mode === 'quest' && (
-                    <>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">XP Value</label>
-                                <input type="number" name="xp_value" value={form.xp_value || 50} onChange={handleChange} className="w-full border p-3 rounded-lg" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Display Address</label>
-                                <input type="text" name="location_address" value={form.location_address || ''} onChange={handleChange} className="w-full border p-3 rounded-lg" required />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Latitude</label>
-                                <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border p-2 rounded" placeholder="e.g. 6.0535" required />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 mb-1">Longitude</label>
-                                <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border p-2 rounded" placeholder="e.g. 80.2084" required />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Instructions</label>
-                            <textarea name="instructions" value={form.instructions || ''} onChange={handleChange} rows="2" className="w-full border p-3 rounded-lg" required />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Proof Requirements</label>
-                            <input type="text" name="proof_requirements" value={form.proof_requirements || ''} onChange={handleChange} className="w-full border p-3 rounded-lg" required />
-                        </div>
-                    </>
-                )}
-
-                <button type="submit" disabled={isSubmitting} className={`w-full text-white py-4 rounded-lg font-bold text-lg transition flex items-center justify-center shadow-lg ${mode === 'quest' ? 'bg-brand-600 hover:bg-brand-700' : 'bg-orange-500 hover:bg-orange-600'}`}>
-                    {isSubmitting ? 'Uploading...' : <><PlusCircle size={20} className="mr-2" /> {mode === 'quest' ? 'Create Quest' : 'Create Reward'}</>}
-                </button>
-            </form>
+            )}
         </div>
     );
 };

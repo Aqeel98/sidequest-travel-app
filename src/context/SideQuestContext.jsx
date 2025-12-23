@@ -342,12 +342,47 @@ export const SideQuestProvider = ({ children }) => {
 
   const updateQuest = async (id, updates) => {
     try {
-        const { error } = await supabase.from('quests').update(updates).eq('id', Number(id)); 
-        if (error) throw error;
-        fetchQuests(); 
-        alert("Impact Quest updated successfully."); 
+        console.log(`SQ-System: Processing update for Quest ID: ${id}`);
+
+        // 1. DATA INTEGRITY FIX: Clean the updates object.
+        // We strip out internal fields like 'id' or 'created_at' so the 
+        // database doesn't reject the update for trying to change the primary key.
+        const { id: _id, created_at, created_by, ...cleanUpdates } = updates;
+
+        // 2. MODERATION LOGIC:
+        // If the user is a Partner, the status MUST go to 'pending_admin'.
+        // If the user is an Admin, they can keep the status as is (or 'active').
+        const finalUpdates = {
+            ...cleanUpdates,
+            status: currentUser?.role === 'Admin' ? (cleanUpdates.status || 'active') : 'pending_admin'
+        };
+
+        // 3. DATABASE CALL:
+        // We ensure the ID is treated as a Number to match the PostgreSQL schema.
+        const { error } = await supabase
+            .from('quests')
+            .update(finalUpdates)
+            .eq('id', Number(id)); 
+        
+        if (error) {
+            console.error("SQ-System: Supabase Update Error:", error.message);
+            throw error;
+        }
+        
+        // 4. STATE REFRESH:
+        // Update the global quests list so the changes appear everywhere instantly.
+        await fetchQuests(); 
+
+        // 5. ACCURATE FEEDBACK:
+        // Differentiated messages so the user knows exactly what happened.
+        if (currentUser?.role === 'Partner') {
+            alert("Changes saved and sent to Admin for re-approval. The quest will be hidden until reviewed.");
+        } else {
+            alert("Impact Quest updated successfully.");
+        }
+
     } catch (error) {
-        console.error("SQ-System: Update Error", error);
+        console.error("SQ-System: Update Process Failed", error);
         alert("Update Failed: " + error.message);
     }
   };
@@ -472,16 +507,51 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   const updateReward = async (id, updates) => {
-      try {
-        const { error } = await supabase.from('rewards').update(updates).eq('id', Number(id));
-        if (error) throw error;
-        fetchRewards(); 
-        alert("Marketplace Reward updated."); 
-      } catch (error) {
+    try {
+        console.log(`SQ-System: Processing update for Reward ID: ${id}`);
+
+        // 1. DATA INTEGRITY CLEANUP:
+        // We strip 'id', 'created_at', and 'created_by' from the updates object.
+        // This ensures Supabase doesn't throw a "cannot update primary key" error.
+        const { id: _id, created_at, created_by, ...cleanUpdates } = updates;
+
+        // 2. MODERATION LOGIC:
+        // If a Partner edits, the reward is set to 'pending_admin' (removed from market).
+        // If an Admin edits, they can keep it 'active'.
+        const finalUpdates = {
+            ...cleanUpdates,
+            status: currentUser?.role === 'Admin' ? (cleanUpdates.status || 'active') : 'pending_admin'
+        };
+
+        // 3. DATABASE UPDATE:
+        // Casting the ID to a Number ensures it matches the PostgreSQL integer schema.
+        const { error } = await supabase
+            .from('rewards')
+            .update(finalUpdates)
+            .eq('id', Number(id));
+
+        if (error) {
+            console.error("SQ-System: Reward Update DB Error:", error.message);
+            throw error;
+        }
+        
+        // 4. LOCAL STATE SYNC:
+        // Refresh the rewards marketplace so everyone sees the latest (or removal).
+        await fetchRewards(); 
+
+        // 5. ACCURATE FEEDBACK:
+        if (currentUser?.role === 'Partner') {
+            alert("Marketplace reward updated and sent to Admin for re-approval. It will be hidden until reviewed.");
+        } else {
+            alert("Marketplace Reward updated successfully.");
+        }
+
+    } catch (error) {
         console.error("SQ-System: Reward Update Failure", error);
-        alert("Update failed.");
-      }
+        alert("Update Failed: " + error.message);
+    }
   };
+
 
   const deleteReward = async (id) => {
       try {
