@@ -66,40 +66,49 @@ const Home = () => {
 
         {/* --- THE REALISTIC WAVES --- */}
         <div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
-           <svg 
-               className="relative block w-[210%] h-[120px] md:h-[160px] lg:h-[200px]" 
-               viewBox="0 0 1200 120" 
-                preserveAspectRatio="none"
-            >
-            {/* Layer 1: THE SAND (The Shoreline) */}
-           {/* This creates the warm beach feeling without making the whole site beige */}
-                <path 
-                 d="M0,0 C400,0 500,120 700,120 C900,120 1000,0 1200,0 L1200,120 L0,120 Z" 
-                fill="#F2E8CF" 
-                className="opacity-40"></path>
+  
+  {/* This div fills the "gap" with Turquoise before the waves start */}
+  <div className="absolute inset-0 bg-brand-600 opacity-90"></div>
 
-               {/* Layer 2: Deep Water (Teal tint) */}
-                 <path 
-                     d="M0,0 C300,0 400,100 600,100 C800,100 900,0 1200,0 L1200,120 L0,120 Z" 
-                        className="fill-brand-400 opacity-20 animate-wave-roll-slow"></path>
+  <svg 
+    className="relative block w-[210%] h-[120px] md:h-[180px] lg:h-[240px]" 
+    viewBox="0 0 1200 120" 
+    preserveAspectRatio="none"
+  >
+    {/* Layer 1: THE SAND (The base floor) */}
+    {/* This fills the bottom with a beautiful Sri Lankan sand color */}
+    <path 
+      d="M0,0 C400,0 500,120 700,120 C900,120 1000,0 1200,0 L1200,120 L0,120 Z" 
+      fill="#E6D5B8" 
+    ></path>
+
+    {/* Layer 2: Mid Water (Teal) */}
+    <path 
+      d="M0,0 C300,0 400,100 600,100 C800,100 900,0 1200,0 L1200,120 L0,120 Z" 
+      className="fill-brand-500 opacity-60 animate-wave-roll"
+      style={{ animationDelay: '-2s' }}
+    ></path>
     
-              {/* Layer 3: The Main Wave (Matches your BG) */}
-                 <path 
-                   d="M0,0 C200,0 400,80 600,80 C800,80 1000,0 1200,0 L1200,120 L0,120 Z" 
-                     className="fill-slate-50 opacity-60 animate-wave-roll"></path>
+    {/* Layer 3: The Main Wave (Light Water) */}
+    <path 
+      d="M0,0 C200,0 400,80 600,80 C800,80 1000,0 1200,0 L1200,120 L0,120 Z" 
+      className="fill-teal-200 opacity-40 animate-wave-roll"
+      style={{ animationDelay: '-5s' }}
+    ></path>
     
-                         {/* Layer 4: THE FOAM (Pure White, very noticeable) */}
-                <path 
-                  d="M0,0 C300,0 300,50 600,50 C900,50 900,0 1200,0 L1200,120 L0,120 Z" 
-                     className="fill-white animate-wave-roll-fast"></path>
-                 </svg>
-            </div>
+    {/* Layer 4: THE WHITE FOAM (This will now be VERY visible) */}
+    <path 
+      d="M0,0 C300,0 300,40 600,40 C900,40 900,0 1200,0 L1200,120 L0,120 Z" 
+      className="fill-white animate-wave-roll"
+    ></path>
+  </svg>
+</div>
             </div>
 
       {/* --- AESTHETIC HEADER END --- */}
 
       {/* Quest Grid */}
-      <div id="quests-grid" className="max-w-7xl mx-auto px-4 mt-20">
+      <div id="quests-grid" className="max-w-7xl mx-auto px-4 mt-20 bg-[#F9F6F0] rounded-3xl p-8">
         <div className="flex items-end justify-between mb-10">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Available Quests</h2>
