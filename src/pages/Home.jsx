@@ -16,11 +16,11 @@ const Home = () => {
       {/* --- AESTHETIC HEADER START --- */}
 
 
-      <div className="relative bg-brand-600 overflow-hidden shadow-2xl shadow-brand-200/50">
+      <div className="relative bg-brand-600 overflow-hidden">
         
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
             <div className="absolute -top-20 -right-20 w-[600px] h-[600px] rounded-full bg-brand-400 opacity-20 blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
+            <div className="absolute top-1/4 left-[10%] w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-transparent via-white/5 to-transparent rotate-12"></div>
         </div>
 

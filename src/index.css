@@ -16,7 +16,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #F8FAFC; 
+  background-color: #ffffff; 
   min-height: 100vh;
   /* Pro-tip: prevents rubber-banding on mobile */
   overscroll-behavior-y: none; 
