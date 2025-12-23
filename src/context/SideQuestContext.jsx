@@ -258,7 +258,7 @@ export const SideQuestProvider = ({ children }) => {
                 throw profileError;
             }
 
-            // --- THE ACCURACY FIX: FORCED UI HYDRATION ---
+            // --- FORCED UI HYDRATION ---
             // We set the React State NOW instead of waiting for the background listener.
             // This ensures the "Partner Dashboard" or "Traveler Profile" appears instantly.
             setCurrentUser(createdProfile);
