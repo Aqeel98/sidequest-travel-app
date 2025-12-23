@@ -103,18 +103,21 @@ const PartnerDashboard = () => {
                 </h1>
                 
                 <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
-                    <button 
-                        onClick={() => setView('manage')} 
-                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'manage' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
-                    >
-                        My Content
-                    </button>
+                    
                     <button 
                         onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental'}); setPreview(null);}} 
                         className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'create' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
                     >
                         {editingId ? 'Edit Mode' : 'Add New'}
                     </button>
+
+                    <button 
+                        onClick={() => setView('manage')} 
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'manage' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
+                    >
+                        My Content
+                    </button>
+
                 </div>
             </div>
 
