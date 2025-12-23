@@ -229,22 +229,60 @@ export const SideQuestProvider = ({ children }) => {
 
   const signup = async (email, password, name, role) => {
     try {
+        console.log(`SQ-System: Initiating registration for role: ${role}`);
         const { data, error } = await supabase.auth.signUp({ email, password });
+        
         if (error) throw error;
 
         if (data.user) {
+            // 1. Assign Role Logic (Priority: Master Admin Email > Selected UI Role)
             const finalRole = email === ADMIN_EMAIL ? 'Admin' : role;
+            
             const newProfile = { 
-                id: data.user.id, email, full_name: name, role: finalRole, xp: 0
+                id: data.user.id, 
+                email: email, 
+                full_name: name, 
+                role: finalRole, // This is either 'Traveler' or 'Partner'
+                xp: 0 
             };
-            // Upsert creates the database entry immediately after authentication
-            await supabase.from('profiles').upsert([newProfile]);
-            console.log("SQ-System: New adventurer registered.");
-            alert("Welcome to SideQuest, " + name + "!");
+
+            // 2. Create the profile and SELECT it back immediately
+            const { data: createdProfile, error: profileError } = await supabase
+                .from('profiles')
+                .upsert([newProfile])
+                .select()
+                .single();
+            
+            if (profileError) {
+                console.error("SQ-System: Profile record failed to save.");
+                throw profileError;
+            }
+
+            // --- THE ACCURACY FIX: FORCED UI HYDRATION ---
+            // We set the React State NOW instead of waiting for the background listener.
+            // This ensures the "Partner Dashboard" or "Traveler Profile" appears instantly.
+            setCurrentUser(createdProfile);
+            
+            // 3. Initialize the user's ecosystem immediately
+            subscribeToProfileChanges(data.user.id);
+            
+            // Pre-fetch submissions specific to their new role
+            await fetchSubmissions(data.user.id, createdProfile.role);
+
+            console.log(`SQ-System: ${createdProfile.role} registered successfully.`);
+            
+            // Personalized welcome message based on role
+            if (createdProfile.role === 'Partner') {
+                alert(`Welcome ${name}! Your Partner Dashboard is now active.`);
+            } else if (createdProfile.role === 'Admin') {
+                alert(`System Administrator Access Granted.`);
+            } else {
+                alert(`Welcome Adventurer ${name}! Your journey begins now.`);
+            }
         }
     } catch (err) {
-        console.error("SQ-System: Signup Failure:", err.message);
-        throw err;
+        console.error("SQ-System: Signup Process Halted:", err.message);
+        throw err; // Re-throw so AuthModal can show the error
     }
   };
 
