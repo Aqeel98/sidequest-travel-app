@@ -65,28 +65,36 @@ const Home = () => {
         </div>
 
         {/* --- THE REALISTIC WAVES --- */}
-<div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
-  <svg 
-    className="relative block w-[210%] h-[70px] md:h-[110px]" 
-    viewBox="0 0 1200 120" 
-    preserveAspectRatio="none"
-  >
-    {/* Layer 1: The "Foam" (Highest, most transparent) */}
-    <path 
-      d="M0,0 C300,0 400,100 600,100 C800,100 900,0 1200,0 L1200,120 L0,120 Z" 
-      className="fill-white opacity-20 animate-foam"></path>
+          <div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
+           <svg 
+                className="relative block w-[210%] h-[100px] md:h-[160px] lg:h-[220px]" 
+                  viewBox="0 0 1200 120" 
+                  preserveAspectRatio="none"
+             >
+            {/* Layer 1: THE SAND (The Shoreline) */}
+           {/* This creates the warm beach feeling without making the whole site beige */}
+                <path 
+                 d="M0,0 C400,0 500,120 700,120 C900,120 1000,0 1200,0 L1200,120 L0,120 Z" 
+                fill="#F2E8CF" 
+                className="opacity-40"></path>
+
+               {/* Layer 2: Deep Water (Teal tint) */}
+                 <path 
+                     d="M0,0 C300,0 400,100 600,100 C800,100 900,0 1200,0 L1200,120 L0,120 Z" 
+                        className="fill-brand-400 opacity-20 animate-wave-roll-slow"></path>
     
-    {/* Layer 2: Mid Wave (Depth) */}
-    <path 
-      d="M0,0 C200,0 400,60 600,60 C800,60 1000,0 1200,0 L1200,120 L0,120 Z" 
-      className="fill-slate-50 opacity-40 animate-wave-mid"></path>
+              {/* Layer 3: The Main Wave (Matches your BG) */}
+                 <path 
+                   d="M0,0 C200,0 400,80 600,80 C800,80 1000,0 1200,0 L1200,120 L0,120 Z" 
+                     className="fill-slate-50 opacity-60 animate-wave-roll"></path>
     
-    {/* Layer 3: Front Wave (Solid Foam/Base) */}
-    <path d="M0,0 C300,0 300,40 600,40 C900,40 900,0 1200,0 L1200,120 L0,120 Z" 
-      className="fill-slate-50 animate-wave-front">     </path>
-          </svg>
-          </div>
-          </div>
+                         {/* Layer 4: THE FOAM (Pure White, very noticeable) */}
+                <path 
+                  d="M0,0 C300,0 300,50 600,50 C900,50 900,0 1200,0 L1200,120 L0,120 Z" 
+                     className="fill-white animate-wave-roll-fast"></path>
+                 </svg>
+            </div>
+            </div>
 
       {/* --- AESTHETIC HEADER END --- */}
 

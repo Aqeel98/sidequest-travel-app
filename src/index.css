@@ -80,23 +80,22 @@ body {
 }
 
 /* --- 6. SOUTH COAST WAVE ANIMATIONS --- */
-@keyframes wave-drift {
-  0% { transform: translateX(0) translateY(0); }
-  50% { transform: translateX(-20%) translateY(2px); }
-  100% { transform: translateX(0) translateY(0); }
+@keyframes wave-roll {
+  0% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(-15%) scaleY(1.1); } /* Makes the wave "grow" taller in the middle */
+  100% { transform: translateX(0) scaleY(1); }
 }
 
-/* The Foam layer moves slightly faster to simulate bubbles */
-.animate-foam {
-  animation: wave-drift 8s ease-in-out infinite;
+.animate-wave-roll {
+  animation: wave-roll 10s ease-in-out infinite;
 }
 
-.animate-wave-mid {
-  animation: wave-drift 14s ease-in-out infinite;
-  animation-delay: -3s;
+.animate-wave-roll-slow {
+  animation: wave-roll 15s ease-in-out infinite;
+  animation-delay: -2s;
 }
 
-.animate-wave-front {
-  animation: wave-drift 18s ease-in-out infinite;
-  animation-delay: -5s;
+.animate-wave-roll-fast {
+  animation: wave-roll 7s ease-in-out infinite;
+  animation-delay: -4s;
 }
