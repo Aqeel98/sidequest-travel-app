@@ -32,7 +32,7 @@ export const SideQuestProvider = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
-
+    const unsubscribeEcosystem = subscribeToEcosystemChanges();
     const bootSequence = async () => {
       try {
         console.log("SQ-Step 1: Sequential Boot Started.");
@@ -113,6 +113,7 @@ export const SideQuestProvider = ({ children }) => {
 
     return () => {
       mounted = false;
+      unsubscribeEcosystem();
       subscription.unsubscribe();
       clearTimeout(safetyTimer);
     };
@@ -133,6 +134,49 @@ export const SideQuestProvider = ({ children }) => {
       
       return () => supabase.removeChannel(channel);
   };
+
+    // --- REALTIME ECOSYSTEM LISTENER ---
+  // This watches the Database and updates the UI for everyone instantly
+  const subscribeToEcosystemChanges = () => {
+    // 1. Watch Quests Table
+    const questChannel = supabase
+      .channel('public-quests-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, (payload) => {
+          console.log("SQ-System: Global Quest sync triggered.");
+          if (payload.eventType === 'INSERT') {
+              setQuests(prev => [...prev, payload.new]);
+          } else if (payload.eventType === 'UPDATE') {
+              setQuests(prev => prev.map(q => q.id === payload.new.id ? payload.new : q));
+          } else if (payload.eventType === 'DELETE') {
+              setQuests(prev => prev.filter(q => q.id !== payload.old.id));
+          }
+      })
+      .subscribe();
+
+    // 2. Watch Rewards Table
+    const rewardChannel = supabase
+      .channel('public-rewards-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, (payload) => {
+          console.log("SQ-System: Global Reward sync triggered.");
+          if (payload.eventType === 'INSERT') {
+              setRewards(prev => [...prev, payload.new]);
+          } else if (payload.eventType === 'UPDATE') {
+              setRewards(prev => prev.map(r => r.id === payload.new.id ? payload.new : r));
+          } else if (payload.eventType === 'DELETE') {
+              setRewards(prev => prev.filter(r => r.id !== payload.old.id));
+          }
+      })
+      .subscribe();
+
+    // Return cleanup function
+    return () => {
+        supabase.removeChannel(questChannel);
+        supabase.removeChannel(rewardChannel);
+    };
+};
+
+
+
 
   // --- 5. DATA FETCHING & USER RECOVERY ---
   
@@ -541,7 +585,7 @@ export const SideQuestProvider = ({ children }) => {
         alert("Update Failed: " + error.message);
     }
   };
-  
+
 
 
   const deleteReward = async (id) => {

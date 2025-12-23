@@ -157,6 +157,9 @@ const Admin = () => {
   const pendingNewQuests = quests.filter(q => q.status === 'pending_admin');
   const pendingNewRewards = rewards.filter(r => r.status === 'pending_admin');
 
+  const activeQuests = quests.filter(q => q.status === 'active');
+  const activeRewards = rewards.filter(r => r.status === 'active');  
+
   // Handlers
   const handleSaveQuest = (id, fields) => { updateQuest(id, fields); setEditingId(null); };
   const handleSaveReward = (id, fields) => { updateReward(id, fields); setEditingId(null); };
@@ -358,23 +361,36 @@ const Admin = () => {
 
       {/* --- 4. QUEST MANAGER TAB --- */}
       {activeTab === 'quests' && (
-        <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Database: Quests ({quests.length})</h2>
-            {quests.map(quest => (
-                <div key={quest.id} className="border-b pb-4">
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-4">
-                          <img src={(quest.image ? quest.image + '?t=' + Date.now() : "https://via.placeholder.com/50")} className="w-12 h-12 rounded object-cover border" alt="thumbnail" />
-                          <div><h3 className="font-bold text-lg text-gray-900">{quest.title}</h3><p className="text-xs text-gray-500 flex items-center"><MapPin size={12} className="mr-1"/> {quest.location_address}</p></div>
+        <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Total Live Quests ({activeQuests.length})</h2>
+            <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+            {activeQuests.length === 0 ? (
+                <p className="text-gray-400 italic">No live quests currently on the map.</p>
+            ) : (
+                activeQuests.map(quest => (
+                    <div key={quest.id} className="border-b pb-4 last:border-0">
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-4">
+                              <img 
+                               src={(quest.image ? quest.image + '?t=' + Date.now() : "https://via.placeholder.com/50")} 
+                                className="w-12 h-12 rounded object-cover border" 
+                                alt="thumbnail" 
+                              />
+                                <div>
+                                    <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
+                                    <p className="text-xs text-gray-500 flex items-center"><MapPin size={12} className="mr-1"/> {quest.location_address}</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => setEditingId(editingId === quest.id ? null : quest.id)} className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50 transition-colors"><Edit size={18} /></button>
+                                <button onClick={() => handleDeleteQuest(quest.id)} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors"><Trash2 size={18} /></button>
+                            </div>
                         </div>
-                        <div className="flex gap-2">
-                            <button onClick={() => setEditingId(editingId === quest.id ? null : quest.id)} className="text-blue-500 hover:text-blue-700 p-2 rounded-full hover:bg-blue-50"><Edit size={18} /></button>
-                            <button onClick={() => handleDeleteQuest(quest.id)} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50"><Trash2 size={18} /></button>
-                        </div>
+                        {editingId === quest.id && <EditForm item={quest} onSave={handleSaveQuest} onCancel={() => setEditingId(null)} type="quest" />}
                     </div>
-                    {editingId === quest.id && <EditForm item={quest} onSave={handleSaveQuest} onCancel={() => setEditingId(null)} type="quest" />}
-                </div>
-            ))}
+                ))
+            )}
+            </div>
         </div>
       )}
 

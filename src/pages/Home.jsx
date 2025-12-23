@@ -6,9 +6,8 @@ import { useSideQuest } from '../context/SideQuestContext';
 const Home = () => {
   const { quests } = useSideQuest();
   const navigate = useNavigate();
-
-  // Filter for active quests once
   const activeQuests = quests.filter(quest => quest.status === 'active');
+  
 
   return (
     <div className="pb-12 bg-slate-50 min-h-screen">
