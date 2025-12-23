@@ -25,28 +25,28 @@ const Home = () => {
         </div>
 
         {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-32 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-40 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium mb-6 animate-fade-in-up">
             <Sparkles size={16} className="text-yellow-300" />
             <span>Discover the unseen Sri Lanka</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight leading-tight">
-              Adventure with <br/>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-100 to-white">
-               Impact
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-white mb-8 tracking-tight leading-[1.1]">
+                               Adventure with <br/>
+             <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-100 to-white">
+                                Impact
           </span>
             </h1>
-          
-            <p className="text-lg md:text-xl text-teal-50 mb-10 max-w-xl mx-auto font-light leading-relaxed">
- 
-               <span className="block mb-2 md:inline md:mb-0 font-bold md:font-light">
-                              Don't just visit. Connect.
-                 </span>
-                     <span className="block md:inline">
-                         {" "}Complete impact quests, earn rewards, and leave the island better than you found it.
-                        </span>
-                    </p>
+
+             {/* Limit width of paragraph to max-w-2xl on desktop */}
+       <p className="text-lg md:text-xl lg:text-2xl text-teal-50 mb-12 max-w-2xl mx-auto font-light leading-relaxed opacity-90">
+           <span className="block mb-2 font-bold">
+                     Don't just visit. Connect.
+             </span>
+              <span className="block">
+                        Complete impact quests, earn rewards, and leave the island better than you found it.
+               </span>
+            </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
