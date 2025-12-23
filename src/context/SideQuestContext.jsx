@@ -342,47 +342,42 @@ export const SideQuestProvider = ({ children }) => {
 
   const updateQuest = async (id, updates) => {
     try {
-        console.log(`SQ-System: Processing update for Quest ID: ${id}`);
+        console.log("SQ-System: Hardening data for Quest Update...");
 
-        // 1. DATA INTEGRITY FIX: Clean the updates object.
-        // We strip out internal fields like 'id' or 'created_at' so the 
-        // database doesn't reject the update for trying to change the primary key.
+        // 1. DATA INTEGRITY: Strip primary keys and metadata
+        // This prevents "cannot update primary key" errors
         const { id: _id, created_at, created_by, ...cleanUpdates } = updates;
 
-        // 2. MODERATION LOGIC:
-        // If the user is a Partner, the status MUST go to 'pending_admin'.
-        // If the user is an Admin, they can keep the status as is (or 'active').
-        const finalUpdates = {
+        // 2. TYPE CASTING: Ensure numbers are actually numbers
+        // Quests often fail here because Lat/Lng/XP come from forms as strings
+        const formattedUpdates = {
             ...cleanUpdates,
+            xp_value: cleanUpdates.xp_value ? Number(cleanUpdates.xp_value) : 0,
+            lat: cleanUpdates.lat ? parseFloat(cleanUpdates.lat) : null,
+            lng: cleanUpdates.lng ? parseFloat(cleanUpdates.lng) : null,
+            // 3. MODERATION: Force 'pending_admin' if a Partner edited it
             status: currentUser?.role === 'Admin' ? (cleanUpdates.status || 'active') : 'pending_admin'
         };
 
-        // 3. DATABASE CALL:
-        // We ensure the ID is treated as a Number to match the PostgreSQL schema.
         const { error } = await supabase
             .from('quests')
-            .update(finalUpdates)
+            .update(formattedUpdates)
             .eq('id', Number(id)); 
         
         if (error) {
-            console.error("SQ-System: Supabase Update Error:", error.message);
+            console.error("SQ-System: Quest Update DB Error:", error.message);
             throw error;
         }
         
-        // 4. STATE REFRESH:
-        // Update the global quests list so the changes appear everywhere instantly.
         await fetchQuests(); 
 
-        // 5. ACCURATE FEEDBACK:
-        // Differentiated messages so the user knows exactly what happened.
         if (currentUser?.role === 'Partner') {
-            alert("Changes saved and sent to Admin for re-approval. The quest will be hidden until reviewed.");
+            alert("Changes saved! Your quest has been sent to the Admin for re-approval and is temporarily hidden.");
         } else {
             alert("Impact Quest updated successfully.");
         }
-
     } catch (error) {
-        console.error("SQ-System: Update Process Failed", error);
+        console.error("SQ-System: Update Failed", error);
         alert("Update Failed: " + error.message);
     }
   };
