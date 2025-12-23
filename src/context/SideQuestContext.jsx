@@ -32,7 +32,7 @@ export const SideQuestProvider = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
-    const unsubscribeEcosystem = subscribeToEcosystemChanges();
+    const ecosystemSub = subscribeToEcosystemChanges();
     const bootSequence = async () => {
       try {
         console.log("SQ-Step 1: Sequential Boot Started.");
@@ -113,7 +113,7 @@ export const SideQuestProvider = ({ children }) => {
 
     return () => {
       mounted = false;
-      unsubscribeEcosystem();
+      if (ecosystemSub) ecosystemSub.unsubscribe(); 
       subscription.unsubscribe();
       clearTimeout(safetyTimer);
     };
@@ -136,22 +136,21 @@ export const SideQuestProvider = ({ children }) => {
   };
 
     // --- REALTIME ECOSYSTEM LISTENER ---
-  // This watches the Database and updates the UI for everyone instantly
-  const subscribeToEcosystemChanges = () => {
-    // 1. Watch Quests Table
-    const questChannel = supabase
-      .channel('public-quests-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, (payload) => {
-          console.log("SQ-System: Global Quest sync triggered.");
-          if (payload.eventType === 'INSERT') {
-              setQuests(prev => [...prev, payload.new]);
-          } else if (payload.eventType === 'UPDATE') {
-              setQuests(prev => prev.map(q => q.id === payload.new.id ? payload.new : q));
-          } else if (payload.eventType === 'DELETE') {
-              setQuests(prev => prev.filter(q => q.id !== payload.old.id));
-          }
-      })
-      .subscribe();
+    const subscribeToEcosystemChanges = () => {
+      return supabase
+        .channel('ecosystem-sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, (payload) => {
+            console.log("SQ-System: Realtime Quest Sync", payload);
+            
+            if (payload.eventType === 'UPDATE') {
+                setQuests(current => current.map(q => q.id === payload.new.id ? payload.new : q));
+            } else if (payload.eventType === 'INSERT') {
+                setQuests(current => [...current, payload.new]);
+            } else if (payload.eventType === 'DELETE') {
+                setQuests(current => current.filter(q => q.id !== payload.old.id));
+            }
+        })
+        .subscribe();
 
     // 2. Watch Rewards Table
     const rewardChannel = supabase
