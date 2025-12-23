@@ -25,7 +25,7 @@ const Home = () => {
         </div>
 
         {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
-        <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-64 md:pb-80 lg:pb-96 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-48 md:pb-64 lg:pb-80 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium mb-6 animate-fade-in-up">
             <Sparkles size={16} className="text-yellow-300" />
             <span>Discover the unseen Sri Lanka</span>
@@ -64,45 +64,48 @@ const Home = () => {
           </div>
         </div>
 
-        {/* --- THE REALISTIC WAVES --- */}
-        <div className="absolute bottom-0 left-0 w-full leading-[0] z-20 pointer-events-none">
+       {/* --- THE REALISTIC COASTAL WAVES (GAP FILLED WITH SAND) --- */}
+<div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
   
-  {/* This div fills the "gap" with Turquoise before the waves start */}
-  <div className="absolute inset-0 bg-brand-600 opacity-90"></div>
+  {/* 
+      1. THIS IS THE "GAP" FILLER 
+      We set a height here (e.g., 150px) that is solid Sand color. 
+      This fills the space you drew with an 'X' 
+  */}
+  <div className="absolute bottom-0 left-0 w-full h-[100px] md:h-[150px] lg:h-[200px] bg-[#E6D5B8]"></div>
 
+  {/* 2. THE SVG WAVES 
+      These sit RIGHT ABOVE the solid sand div 
+  */}
   <svg 
     className="relative block w-[210%] h-[120px] md:h-[180px] lg:h-[240px]" 
     viewBox="0 0 1200 120" 
     preserveAspectRatio="none"
   >
-    {/* Layer 1: THE SAND (The base floor) */}
-    {/* This fills the bottom with a beautiful Sri Lankan sand color */}
+    {/* Mid Water (Deep Teal) */}
     <path 
-      d="M0,0 C400,0 500,120 700,120 C900,120 1000,0 1200,0 L1200,120 L0,120 Z" 
-      fill="#E6D5B8" 
-    ></path>
-
-    {/* Layer 2: Mid Water (Teal) */}
-    <path 
-      d="M0,0 C300,0 400,100 600,100 C800,100 900,0 1200,0 L1200,120 L0,120 Z" 
-      className="fill-brand-500 opacity-60 animate-wave-roll"
+      d="M0,0 C300,0 400,120 600,120 C800,120 900,0 1200,0 L1200,120 L0,120 Z" 
+      className="fill-brand-600 opacity-80 animate-wave-roll"
       style={{ animationDelay: '-2s' }}
     ></path>
     
-    {/* Layer 3: The Main Wave (Light Water) */}
+    {/* Light Water (Teal 200) */}
     <path 
-      d="M0,0 C200,0 400,80 600,80 C800,80 1000,0 1200,0 L1200,120 L0,120 Z" 
+      d="M0,0 C200,0 400,100 600,100 C800,100 1000,0 1200,0 L1200,120 L0,120 Z" 
       className="fill-teal-200 opacity-40 animate-wave-roll"
       style={{ animationDelay: '-5s' }}
     ></path>
     
-    {/* Layer 4: THE WHITE FOAM (This will now be VERY visible) */}
+    {/* THE WHITE FOAM 
+        This is the star of the show. It will be very visible 
+        crashing onto the sand background.
+    */}
     <path 
-      d="M0,0 C300,0 300,40 600,40 C900,40 900,0 1200,0 L1200,120 L0,120 Z" 
+      d="M0,0 C300,0 300,60 600,60 C900,60 900,0 1200,0 L1200,120 L0,120 Z" 
       className="fill-white animate-wave-roll"
     ></path>
-  </svg>
-</div>
+          </svg>
+          </div>
             </div>
 
       {/* --- AESTHETIC HEADER END --- */}
