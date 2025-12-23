@@ -342,45 +342,47 @@ export const SideQuestProvider = ({ children }) => {
 
   const updateQuest = async (id, updates) => {
     try {
-        console.log("SQ-System: Hardening data for Quest Update...");
+        console.log("SQ-System: Hardening Quest Update Payload...");
 
         // 1. DATA INTEGRITY: Strip primary keys and metadata
-        // This prevents "cannot update primary key" errors
-        const { id: _id, created_at, created_by, ...cleanUpdates } = updates;
+        const { id: _id, created_at, created_by, ...payload } = updates;
 
-        // 2. TYPE CASTING: Ensure numbers are actually numbers
-        // Quests often fail here because Lat/Lng/XP come from forms as strings
-        const formattedUpdates = {
-            ...cleanUpdates,
-            xp_value: cleanUpdates.xp_value ? Number(cleanUpdates.xp_value) : 0,
-            lat: cleanUpdates.lat ? parseFloat(cleanUpdates.lat) : null,
-            lng: cleanUpdates.lng ? parseFloat(cleanUpdates.lng) : null,
-            // 3. MODERATION: Force 'pending_admin' if a Partner edited it
-            status: currentUser?.role === 'Admin' ? (cleanUpdates.status || 'active') : 'pending_admin'
+        // 2. CONFLICT RESOLUTION: 
+        // If 'status' exists in the form (updates), we remove it so our 
+        // manual override below is the ONLY status being sent.
+        delete payload.status; 
+
+        const databasePayload = {
+            ...payload,
+            xp_value: Number(payload.xp_value),
+            lat: parseFloat(payload.lat),
+            lng: parseFloat(payload.lng),
+            // FORCE moderation: 
+            // Admin can save as 'active', Partners are forced to 'pending_admin'
+            status: currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin'
         };
 
         const { error } = await supabase
             .from('quests')
-            .update(formattedUpdates)
+            .update(databasePayload)
             .eq('id', Number(id)); 
         
-        if (error) {
-            console.error("SQ-System: Quest Update DB Error:", error.message);
-            throw error;
-        }
+        if (error) throw error;
         
+        // 3. SYNC: Wait for the database to confirm the refresh
         await fetchQuests(); 
 
         if (currentUser?.role === 'Partner') {
-            alert("Changes saved! Your quest has been sent to the Admin for re-approval and is temporarily hidden.");
+            alert("Success! Your quest has been sent for re-approval and is now 'In Review'.");
         } else {
-            alert("Impact Quest updated successfully.");
+            alert("Quest updated successfully.");
         }
+
     } catch (error) {
         console.error("SQ-System: Update Failed", error);
         alert("Update Failed: " + error.message);
     }
-  };
+  }; 
   
   const deleteQuest = async (id) => {
     try {
