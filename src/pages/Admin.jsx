@@ -240,15 +240,56 @@ const Admin = () => {
                         ))}
                     </div>
                 </div>
-                <div className="bg-brand-900 text-white p-8 rounded-3xl relative overflow-hidden">
-                    <div className="relative z-10">
-                        <h3 className="font-bold text-xl mb-4">Quick Insights</h3>
-                        <p className="text-brand-100 text-sm leading-relaxed mb-4">Verify proofs quickly to keep traveler engagement high. Ensure partner coordinates are verified before publishing new quests to the South Coast map.</p>
-                        <div className="flex items-center gap-2 text-brand-400 text-xs font-bold">
-                            <Check size={14}/> SYSTEM STABLE
-                        </div>
+                {/* --- NEW LEADERBOARD COMPONENT --- */}
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col h-96">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-xl flex items-center gap-2 text-gray-800">
+                            <UsersIcon className="text-brand-600" /> Top Adventurers
+                        </h3>
+                        <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                            {users.length} Users
+                        </span>
                     </div>
-                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-brand-500 opacity-20 rounded-full blur-3xl"></div>
+                    
+                    <div className="overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                        {users
+                            // 1. Sort users by XP (Highest to Lowest)
+                            .sort((a, b) => (b.xp || 0) - (a.xp || 0))
+                            .map((user, index) => (
+                            
+                            <div key={user.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 hover:border-brand-200 transition-colors group">
+                                <div className="flex items-center gap-3">
+                                    {/* Rank Badge */}
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${
+                                        index === 0 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 
+                                        index === 1 ? 'bg-gray-200 text-gray-700 border border-gray-300' : 
+                                        index === 2 ? 'bg-orange-100 text-orange-800 border border-orange-200' : 'bg-white border text-gray-400'
+                                    }`}>
+                                        {index + 1}
+                                    </div>
+                                    
+                                    {/* User Info */}
+                                    <div>
+                                        <p className="font-bold text-sm text-gray-900 leading-tight">
+                                            {user.full_name || user.email.split('@')[0]}
+                                        </p>
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                                            {user.role}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* XP Badge */}
+                                <div className="font-mono font-bold text-brand-600 bg-white px-2 py-1 rounded-lg border border-gray-100 text-xs shadow-sm group-hover:bg-brand-50 group-hover:border-brand-100 transition-colors">
+                                    {user.xp || 0} XP
+                                </div>
+                            </div>
+                        ))}
+                        
+                        {users.length === 0 && (
+                            <p className="text-center text-gray-400 text-sm py-10">No users found.</p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

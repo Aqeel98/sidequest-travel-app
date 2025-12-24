@@ -746,69 +746,87 @@ export const SideQuestProvider = ({ children }) => {
   // --- 9. ADMIN MODERATION ENGINE ---
 
   const approveSubmission = async (submissionId) => {
-    console.log(`SQ-Admin: Verification starting for Submission ID: ${submissionId}`);
-    
+    // 1. OPTIMISTIC UPDATE: Update UI instantly (don't wait for DB)
+    setQuestProgress(prev => prev.map(p => 
+        p.id === submissionId ? { ...p, status: 'approved' } : p
+    ));
+
+    // 2. Logic & DB Call
     const sub = questProgress.find(p => p.id === submissionId);
     if (!sub) return; 
     const quest = quests.find(q => q.id === sub.quest_id);
-    if (!quest) return; 
-
+    
     try {
-        // Step 1: Update Verification Status
         const { error: sErr } = await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId);
         if (sErr) throw sErr;
         
-        // Step 2: Calculate and award XP securely
-        const { data: traveler, error: pErr } = await supabase.from('profiles').select('xp').eq('id', sub.traveler_id).single();
-        if (pErr) throw pErr;
+        // Award XP
+        const { data: traveler } = await supabase.from('profiles').select('xp').eq('id', sub.traveler_id).single();
+        if (traveler && quest) {
+            await supabase.from('profiles').update({ xp: (traveler.xp || 0) + quest.xp_value }).eq('id', sub.traveler_id);
+        }
 
-        const newXp = (traveler.xp || 0) + quest.xp_value;
-        const { error: awardErr } = await supabase.from('profiles').update({ xp: newXp }).eq('id', sub.traveler_id);
-        if (awardErr) throw awardErr;
-
-        console.log("SQ-Admin: Points successfully awarded to adventurer.");
-        alert("Verification Success! XP rewards have been sent.");
+        // 3. Notify nicely (No blocking alert)
+        showToast("Verified! XP Awarded.", 'success');
         
-        // Refresh oversight data
-        fetchSubmissions(currentUser.id, 'Admin'); 
     } catch (e) {
-        console.error("SQ-Admin: Oversite engine failure ->", e.message);
-        alert("Action failed: " + e.message);
+        console.error("SQ-Admin Error:", e);
+        showToast("Error: " + e.message, 'error');
+        // Revert UI if failed
+        fetchSubmissions(currentUser.id, 'Admin');
     }
   };
 
   const rejectSubmission = async (id) => {
-      try {
-        console.log(`SQ-Admin: Rejecting proof submission: ${id}`);
-        const { error } = await supabase.from('submissions').update({ status: 'rejected' }).eq('id', id);
-        if (error) throw error;
-        
-        alert("Submission Rejected. Traveler will see the retry option.");
-        fetchSubmissions(currentUser.id, 'Admin');
-      } catch (e) { console.error(e); }
-  };
-  
-  const approveNewQuest = async (id) => {
-      try {
-        console.log(`SQ-Admin: Activating partner quest: ${id}`);
-        const { error } = await supabase.from('quests').update({ status: 'active' }).eq('id', id);
-        if (error) throw error;
-        
-        alert("Success! The Quest is now LIVE on the map.");
-        fetchQuests();
-      } catch (e) { console.error(e); }
-  };
+    // 1. OPTIMISTIC UPDATE
+    setQuestProgress(prev => prev.map(p => 
+        p.id === id ? { ...p, status: 'rejected' } : p
+    ));
 
-  const approveNewReward = async (id) => {
-      try {
-        console.log(`SQ-Admin: Activating marketplace reward: ${id}`);
-        const { error } = await supabase.from('rewards').update({ status: 'active' }).eq('id', id);
-        if (error) throw error;
-        
-        alert("Success! The Reward is now LIVE in the marketplace.");
-        fetchRewards();
-      } catch (e) { console.error(e); }
-  };
+    try {
+      const { error } = await supabase.from('submissions').update({ status: 'rejected' }).eq('id', id);
+      if (error) throw error;
+      
+      showToast("Submission Rejected.", 'info');
+    } catch (e) { 
+        console.error(e);
+        fetchSubmissions(currentUser.id, 'Admin'); // Revert on error
+    }
+};
+  
+const approveNewQuest = async (id) => {
+    // 1. OPTIMISTIC UPDATE
+    setQuests(prev => prev.map(q => 
+        q.id === id ? { ...q, status: 'active' } : q
+    ));
+
+    try {
+      const { error } = await supabase.from('quests').update({ status: 'active' }).eq('id', id);
+      if (error) throw error;
+      
+      showToast("Quest is now LIVE on map.", 'success');
+    } catch (e) { 
+        console.error(e);
+        fetchQuests(); // Revert
+    }
+};
+
+const approveNewReward = async (id) => {
+    // 1. OPTIMISTIC UPDATE
+    setRewards(prev => prev.map(r => 
+        r.id === id ? { ...r, status: 'active' } : r
+    ));
+
+    try {
+      const { error } = await supabase.from('rewards').update({ status: 'active' }).eq('id', id);
+      if (error) throw error;
+      
+      showToast("Reward is now LIVE in market.", 'success');
+    } catch (e) { 
+        console.error(e);
+        fetchRewards(); // Revert
+    }
+};
 
   // --- 10. SYSTEM MASTER ROLE OVERRIDE ---
   const switchRole = (role) => {
