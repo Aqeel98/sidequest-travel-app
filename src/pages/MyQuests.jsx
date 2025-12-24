@@ -140,7 +140,7 @@ const MyQuests = () => {
 
   // Sort: In Progress first, then Pending, then Approved
   const sortedProgress = [...myProgress].sort((a, b) => {
-      const order = { 'in_progress': 1, 'pending': 2, 'approved': 3, 'rejected': 4 };
+    const order = { 'rejected': 1, 'in_progress': 2, 'pending': 3, 'approved': 4 };
       return order[a.status] - order[b.status];
   });
 

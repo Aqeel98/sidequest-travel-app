@@ -29,6 +29,14 @@ export const SideQuestProvider = ({ children }) => {
   // Initialized to FALSE to ensure Guests never see a login-wall on Home Page
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+    // --- NEW: NOTIFICATION SYSTEM ---
+  const [toast, setToast] = useState(null); 
+
+  const showToast = (message, type = 'success') => {
+      setToast({ message, type });
+      setTimeout(() => setToast(null), 4000); // Auto-hide after 4 seconds
+  };
+    
   // LOGIC LOCK: THE RACE CONDITION SHIELD
   // This ref prevents Auth Listeners from interrupting the Sequential Boot Sequence
   const isInitialBoot = useRef(true);
@@ -166,27 +174,53 @@ export const SideQuestProvider = ({ children }) => {
    * Ecosystem Listener: Ensures the Admin sees Partner edits instantly
    * and the Home Page updates as soon as a Quest becomes active.
    */
+  /**
+   * Ecosystem Listener: Listens to Quests, Rewards, AND Proofs.
+   * Updates state immediately + Triggers Notifications.
+   */
   const subscribeToEcosystemChanges = () => {
     return supabase
       .channel('ecosystem-sync')
+      
+      // 1. QUESTS (Partner/Admin Updates)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, (payload) => {
-          console.log("SQ-Realtime: Quest table change detected.", payload.eventType);
           if (payload.eventType === 'UPDATE') {
               setQuests(current => current.map(q => q.id === payload.new.id ? payload.new : q));
+              // Notify if a quest goes LIVE
+              if (payload.new.status === 'active') showToast(`Quest "${payload.new.title}" is now LIVE!`, 'success');
           } else if (payload.eventType === 'INSERT') {
               setQuests(current => [...current, payload.new]);
           } else if (payload.eventType === 'DELETE') {
               setQuests(current => current.filter(q => q.id !== payload.old.id));
           }
       })
+      
+      // 2. REWARDS (Marketplace Updates)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, (payload) => {
-          console.log("SQ-Realtime: Rewards table change detected.", payload.eventType);
           if (payload.eventType === 'UPDATE') {
               setRewards(current => current.map(r => r.id === payload.new.id ? payload.new : r));
           } else if (payload.eventType === 'INSERT') {
               setRewards(current => [...current, payload.new]);
           } else if (payload.eventType === 'DELETE') {
               setRewards(current => current.filter(r => r.id !== payload.old.id));
+          }
+      })
+
+      // 3. SUBMISSIONS (The "No Refresh" Fix for Proofs)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, (payload) => {
+          console.log("SQ-Realtime: Submission change detected ->", payload.eventType);
+          
+          if (payload.eventType === 'INSERT') {
+              // Admin sees new proof instantly without refresh
+              setQuestProgress(prev => [...prev, payload.new]);
+              showToast("New Proof Submitted!", 'info'); 
+          } 
+          else if (payload.eventType === 'UPDATE') {
+              // Traveler sees Approved/Rejected status instantly
+              setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+              
+              if (payload.new.status === 'approved') showToast("Quest Approved! +XP Awarded", 'success');
+              if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
           }
       })
       .subscribe();
@@ -468,7 +502,7 @@ export const SideQuestProvider = ({ children }) => {
         alert("Update Failed: " + error.message); 
     }
   };
-  
+
   
   const deleteQuest = async (id) => {
     try {
@@ -781,7 +815,8 @@ export const SideQuestProvider = ({ children }) => {
       addQuest, updateQuest, deleteQuest, approveNewQuest,
       addReward, updateReward, deleteReward, approveNewReward, 
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
-      redeemReward, switchRole 
+      redeemReward, switchRole, 
+      toast 
     }}>
       {children}
     </SideQuestContext.Provider>

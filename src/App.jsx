@@ -63,6 +63,28 @@ const LoadingScreen = () => (
     </div>
 );
 
+// --- TOAST NOTIFICATION COMPONENT ---
+const Toast = () => {
+  const { toast } = useSideQuest(); // Reads the state we just added to Context
+  
+  if (!toast) return null; // If no message, render nothing
+
+  // Define colors based on the type of message
+  const colors = {
+      success: 'bg-green-600', // Green for Approvals/Live
+      error: 'bg-red-500',     // Red for Rejections
+      info: 'bg-blue-600'      // Blue for New Submissions
+  };
+
+  return (
+      <div className={`fixed top-24 right-4 z-[2000] ${colors[toast.type]} text-white px-6 py-4 rounded-xl shadow-2xl animate-in slide-in-from-right duration-300 flex items-center`}>
+          <div className="font-bold text-sm md:text-base shadow-sm">
+              {toast.message}
+          </div>
+      </div>
+  );
+};
+
 // --- MAIN LAYOUT WRAPPER (Handles Global Loading) ---
 const MainLayout = () => {
     const { isLoading } = useSideQuest();
@@ -74,6 +96,7 @@ const MainLayout = () => {
     return (
         <div className="min-h-screen bg-gray-50 pt-20 font-sans text-gray-900">
             <Navbar />
+            <Toast />
             <AuthModal />
             <Outlet />
             {/* Only renders for sidequestsrilanka@gmail.com */}
