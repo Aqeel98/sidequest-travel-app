@@ -11,6 +11,8 @@ const QuestDetails = () => {
   const [description, setDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+
 
   // 1. Find the Quest (Loose equality for ID matching)
   const quest = quests.find(q => q.id == id); 
@@ -32,15 +34,23 @@ const QuestDetails = () => {
   };
 
   const handleAccept = async () => {
+    // 1. Auth Guard
     if (!currentUser) {
         setShowAuthModal(true);
         return;
     }
-    // Added a small local try/catch for the "Accept" flow
+
+    // 2. Double-Click Guard
+    if (isAccepting) return;
+    setIsAccepting(true); // Start loading
+
     try {
         await acceptQuest(quest.id);
+        // We don't navigate away; the UI will simply update to show the upload form
     } catch (error) {
         alert("Could not join quest. Please try again.");
+    } finally {
+        setIsAccepting(false); // Stop loading
     }
   };
 
@@ -123,8 +133,20 @@ const QuestDetails = () => {
 
           {/* 2. Logged In, Not Started */}
           {currentUser && !isStarted && (
-            <button onClick={handleAccept} className="w-full bg-brand-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-brand-700 shadow-lg shadow-brand-200 transition-all flex items-center justify-center gap-2">
-              Accept Quest <span className="bg-white/20 px-2 py-0.5 rounded text-sm">+ {quest.xp_value} XP</span>
+            <button 
+                onClick={handleAccept} 
+                disabled={isAccepting} // Disable while loading
+                className={`w-full text-white py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 shadow-lg ${
+                    isAccepting 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-brand-600 hover:bg-brand-700 shadow-brand-200'
+                }`}
+            >
+                {isAccepting ? (
+                    'Processing...' 
+                ) : (
+                    <>Accept Quest <span className="bg-white/20 px-2 py-0.5 rounded text-sm">+ {quest.xp_value} XP</span></>
+                )}
             </button>
           )}
 

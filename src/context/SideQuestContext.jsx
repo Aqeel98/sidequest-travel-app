@@ -226,28 +226,36 @@ export const SideQuestProvider = ({ children }) => {
       // --- 3. SUBMISSIONS (Traveler Proofs & Admin Review) ---
       .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, (payload) => {
           
-          if (payload.eventType === 'INSERT') {
-              // A. Prevent Duplicates (Fixes the "2 Quests" bug)
-              setQuestProgress(prev => {
-                  if (prev.find(p => p.id === payload.new.id)) return prev;
-                  return [...prev, payload.new];
-              });
-              // Note: No toast here because this is just "Accepting" the quest.
-          } 
-          else if (payload.eventType === 'UPDATE') {
-              setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
-              
-              // NOTIFY: Proof Submitted (Admin sees this)
-              if (payload.new.status === 'pending') {
-                  showToast("New Proof Submitted for Review!", 'info');
-              }
-              
-              // NOTIFY: Verification Result (Traveler sees this)
-              if (payload.new.status === 'approved') showToast("Quest Approved! +XP Awarded", 'success');
-              if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
-          }
-      })
-      .subscribe();
+        if (payload.eventType === 'INSERT') {
+            // A. Prevent Duplicates (Safety Check)
+            setQuestProgress(prev => {
+                if (prev.find(p => p.id === payload.new.id)) return prev;
+                return [...prev, payload.new];
+            });
+
+            // B. NOTIFY: Quest Accepted
+            // When a user clicks accept, status is 'in_progress'. We show the toast here.
+            if (payload.new.status === 'in_progress') {
+                showToast("Quest Accepted! Check My Quests.", 'info');
+            }
+            
+            // C. NOTIFY: Direct Submission (Safety Catch)
+            if (payload.new.status === 'pending') {
+                showToast("New Proof Submitted!", 'info');
+            }
+        } 
+        else if (payload.eventType === 'UPDATE') {
+            setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+            
+            // NOTIFY: Proof Submitted (Update from In Progress -> Pending)
+            if (payload.new.status === 'pending') showToast("New Proof Submitted for Review!", 'info');
+            
+            // NOTIFY: Verification Result
+            if (payload.new.status === 'approved') showToast("Quest Approved! +XP Awarded", 'success');
+            if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
+        }
+    })
+    .subscribe();
   };
 
   /**
@@ -553,7 +561,8 @@ export const SideQuestProvider = ({ children }) => {
     try {
         console.log(`SQ-Quest: Traveler accepting quest: ${questId}`);
         
-        // 2. Insert into DB (Don't need .select() anymore)
+        // 2. Insert into DB (Standard Insert)
+        // We DO NOT need .select() here because we aren't using the data immediately
         const { error } = await supabase.from('submissions').insert([{
             quest_id: questId, 
             traveler_id: currentUser.id, 
@@ -562,8 +571,9 @@ export const SideQuestProvider = ({ children }) => {
         
         if (error) throw error;
         
-        // 3. DO NOT update local state here. 
+        // 3. SUCCESS: Do NOT update local state here. 
         // The Realtime Listener will catch the INSERT and update the UI automatically.
+        // This prevents the "Double Quest" bug.
         
         console.log("SQ-Quest: Quest join successful.");
         return true; 

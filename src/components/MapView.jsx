@@ -35,13 +35,17 @@ const createAvatarIcon = () => {
 // --- COMPONENT TO RE-CENTER MAP ---
 // This handles the "Zoom" when location is found
 function RecenterMap({ location }) {
-    const map = useMap();
-    useEffect(() => {
-        if (location) {
-            map.flyTo(location, 13, { duration: 2 });
-        }
-    }, [location, map]);
-    return null;
+  const map = useMap();
+  const hasCentered = React.useRef(false);
+
+  useEffect(() => {
+      // Change 13 to 11. This gives a wider view (District level) instead of Street level.
+      if (location && !hasCentered.current) {
+          map.flyTo(location, 11, { duration: 2 }); 
+          hasCentered.current = true;
+      }
+  }, [location, map]);
+  return null;
 }
 
 // --- MAIN COMPONENT ---
@@ -63,10 +67,14 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {/* Floating CTA */}
       {currentUser && (
         <button
-          onClick={() => {
-             if (!userLocation) alert("Waiting for GPS...");
-             else setShowClosest(true);
-          }}
+        onClick={() => {
+          if (userLocation) {
+              setShowClosest(true);
+          } else {
+              // THIS COMMAND forces the browser to show the "Allow Location" popup
+              onManualLocate(); 
+          }
+       }}
           className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]
                      bg-brand-500 text-white px-6 py-3 rounded-full
                      font-bold shadow-xl hover:bg-brand-600 transition flex items-center"
@@ -75,12 +83,16 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
         </button>
       )}
 
-      <MapContainer
-        center={mapCenter}
-        zoom={9} 
-        className="h-full w-full"
-        scrollWheelZoom
-      >
+<MapContainer
+  center={mapCenter}
+  zoom={9} 
+  className="h-full w-full"
+  scrollWheelZoom={true} // Allow mouse scroll
+  touchZoom={true}       // Allow pinch-to-zoom on mobile
+  dragging={true}        // Allow panning
+  minZoom={7}            // FIX: Allows zooming out to see the whole island
+  maxZoom={18}           // Allows zooming in closely
+>
         <TileLayer
            // Switched to a reliable, free dark tile from CARTO
            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
