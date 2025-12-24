@@ -11,7 +11,7 @@ const Home = () => {
 
   return (
     
-    <div className="pb-12 bg-white min-h-screen">
+    <div className="pb-12 bg-[#E6D5B8] min-h-screen">
       
       {/* --- AESTHETIC HEADER START --- */}
 
@@ -125,8 +125,8 @@ const Home = () => {
                     <div 
                         key={quest.id} 
                         onClick={() => navigate(`/quest/${quest.id}`)} 
-                        className="group bg-white rounded-3xl shadow-sm hover:shadow-xl hover:shadow-brand-100/50 transition-all duration-300 overflow-hidden cursor-pointer border border-gray-100"
-                    >
+                        className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-brand-900/10 transition-all duration-300 overflow-hidden cursor-pointer"
+                      >
                         <div className="relative h-64 overflow-hidden">
                             <img 
                                 src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
