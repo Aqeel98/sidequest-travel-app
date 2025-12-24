@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
-import ScrollToTop from './components/ScrollToTop';
 import { Compass } from 'lucide-react'; 
 
 // Pages
@@ -109,7 +108,7 @@ export default function App() {
   return (
     <SideQuestProvider>
       <BrowserRouter>
-        <ScrollToTop />
+        
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />

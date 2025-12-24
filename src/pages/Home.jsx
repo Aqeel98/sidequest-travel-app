@@ -64,46 +64,38 @@ const Home = () => {
           </div>
         </div>
 
-       {/* --- THE REALISTIC COASTAL WAVES (GAP FILLED WITH SAND) --- */}
+       {/* --- THE REALISTIC COASTAL WAVES --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
   
-  {/* 
-      1. THIS IS THE "GAP" FILLER 
-      We set a height here (e.g., 150px) that is solid Sand color. 
-      This fills the space you drew with an 'X' 
-  */}
+  {/* 1. THE SAND BASE (The Beach) */}
+  {/* This fills the gap with solid sand color */}
   <div className="absolute bottom-0 left-0 w-full h-[100px] md:h-[150px] lg:h-[200px] bg-[#E6D5B8]"></div>
 
-  {/* 2. THE SVG WAVES 
-      These sit RIGHT ABOVE the solid sand div 
-  */}
   <svg 
     className="relative block w-[210%] h-[120px] md:h-[180px] lg:h-[240px]" 
     viewBox="0 0 1200 120" 
     preserveAspectRatio="none"
   >
-    {/* Mid Water (Deep Teal) */}
-    <path 
-      d="M0,0 C300,0 400,120 600,120 C800,120 900,0 1200,0 L1200,120 L0,120 Z" 
-      className="fill-brand-600 opacity-80 animate-wave-roll"
-      style={{ animationDelay: '-2s' }}
-    ></path>
-    
-    {/* Light Water (Teal 200) */}
-    <path 
-      d="M0,0 C200,0 400,100 600,100 C800,100 1000,0 1200,0 L1200,120 L0,120 Z" 
-      className="fill-teal-200 opacity-40 animate-wave-roll"
-      style={{ animationDelay: '-5s' }}
-    ></path>
-    
-    {/* THE WHITE FOAM 
-        This is the star of the show. It will be very visible 
-        crashing onto the sand background.
+    {/* 
+       LAYER 2: THE WHITE FOAM
+       This is slightly wider/lower than the water, creating a white border 
+       where the water hits the sand.
     */}
     <path 
-      d="M0,0 C300,0 300,60 600,60 C900,60 900,0 1200,0 L1200,120 L0,120 Z" 
+      d="M0,0 L1200,0 L1200,110 C900,130 600,90 300,130 L0,110 Z" 
       className="fill-white animate-wave-roll"
+      style={{ animationDelay: '-0.5s' }} // Slight delay makes foam look alive
     ></path>
+
+    {/* 
+       LAYER 3: THE TURQUOISE WATER
+       This sits ON TOP of the foam. It matches your header color.
+       It creates the effect of the "Turquoise Side" extending down.
+    */}
+         <path 
+      d="M0,0 L1200,0 L1200,100 C900,120 600,80 300,120 L0,100 Z" 
+            className="fill-brand-600 animate-wave-roll"
+           ></path>
           </svg>
           </div>
             </div>
