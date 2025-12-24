@@ -64,12 +64,15 @@ const Home = () => {
           </div>
         </div>
 
-       {/* --- THE REALISTIC COASTAL WAVES --- */}
+      {/* --- THE REALISTIC SHORELINE (No White Gap) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
   
-  {/* 1. THE SAND BASE (The Beach) */}
-  {/* This fills the gap with solid sand color */}
-  <div className="absolute bottom-0 left-0 w-full h-[100px] md:h-[150px] lg:h-[200px] bg-[#E6D5B8]"></div>
+  {/* 
+      1. THE BASE LAYER = SAND 
+      This completely fills the white gap you saw. 
+      It acts as the "Beach" waiting for the water.
+  */}
+  <div className="absolute bottom-0 left-0 w-full h-[120px] md:h-[180px] lg:h-[240px] bg-[#E6D5B8]"></div>
 
   <svg 
     className="relative block w-[210%] h-[120px] md:h-[180px] lg:h-[240px]" 
@@ -77,27 +80,26 @@ const Home = () => {
     preserveAspectRatio="none"
   >
     {/* 
-       LAYER 2: THE WHITE FOAM
-       This is slightly wider/lower than the water, creating a white border 
-       where the water hits the sand.
+       2. THE WHITE FOAM
+       This sits behind the water but slightly lower, creating the white edge.
     */}
     <path 
-      d="M0,0 L1200,0 L1200,110 C900,130 600,90 300,130 L0,110 Z" 
+      d="M0,0 L1200,0 L1200,100 C900,130 600,70 300,110 L0,90 Z" 
       className="fill-white animate-wave-roll"
-      style={{ animationDelay: '-0.5s' }} // Slight delay makes foam look alive
+      style={{ animationDelay: '-2s' }}
     ></path>
 
     {/* 
-       LAYER 3: THE TURQUOISE WATER
-       This sits ON TOP of the foam. It matches your header color.
-       It creates the effect of the "Turquoise Side" extending down.
+       3. THE TURQUOISE WATER (Your Header Color)
+       This draws the water coming DOWN from the top (0,0).
+       It covers the sand, leaving only the curvy bottom edge visible.
     */}
-         <path 
-      d="M0,0 L1200,0 L1200,100 C900,120 600,80 300,120 L0,100 Z" 
-            className="fill-brand-600 animate-wave-roll"
-           ></path>
-          </svg>
-          </div>
+    <path 
+      d="M0,0 L1200,0 L1200,90 C900,120 600,60 300,100 L0,80 Z" 
+      className="fill-brand-600 animate-wave-roll"
+    ></path>
+  </svg>
+</div>
             </div>
 
       {/* --- AESTHETIC HEADER END --- */}

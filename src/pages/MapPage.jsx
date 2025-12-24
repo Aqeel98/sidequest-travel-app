@@ -29,19 +29,19 @@ const MapPage = () => {
     }
   
     const options = {
-      enableHighAccuracy: true, // Triggers the "Exact Location" prompt
-      timeout: 15000,           // 15 seconds (giving extra time for jungle/thick walls)
-      maximumAge: 0             // Always get fresh data
+      enableHighAccuracy: true,
+      timeout: 15000,
+      // SPEED FIX: Allow a cached position from the last 5 minutes (300,000ms).
+      // This makes the blue dot appear INSTANTLY if the phone has moved recently.
+      maximumAge: 300000 
     };
   
-    // watchPosition handles the first 'get' AND all future updates
     const id = navigator.geolocation.watchPosition(
       (pos) => {
         console.log("GPS update received:", pos.coords.accuracy, "meters accuracy");
         setUserLocation([pos.coords.latitude, pos.coords.longitude]);
       },
       (err) => {
-        // Error code 1 means the user clicked 'Deny'
         if (err.code === 1) {
           console.warn("User denied Geolocation.");
         } else {
@@ -51,7 +51,6 @@ const MapPage = () => {
       options
     );
   
-    // Cleanup: Stop the GPS hardware when the user leaves the Map page
     return () => navigator.geolocation.clearWatch(id);
   }, []);
 
