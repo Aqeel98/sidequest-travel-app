@@ -428,36 +428,39 @@ export const SideQuestProvider = ({ children }) => {
   const updateQuest = async (id, updates) => {
     try {
         console.log(`SQ-System: Hardening Update Logic for Quest ID: ${id}`);
-        // DATA CLEANING: Remove immutable system fields
-        const { id: _id, created_at, created_by, ...payload } = updates;
         
-        // Force the deletion of the old status to allow the override to win
+        const { id: _id, created_at, created_by, ...payload } = updates;
         delete payload.status; 
         
-        // MODERATION OVERRIDE: Partners are forced into re-review on every edit
         const finalStatus = currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin';
 
-        const { error } = await supabase.from('quests').update({
+        // CHANGE HERE: Added .select() to the end
+        const { data, error } = await supabase.from('quests').update({
             ...payload, 
             xp_value: Number(payload.xp_value), 
             lat: parseFloat(payload.lat), 
             lng: parseFloat(payload.lng), 
             status: finalStatus
-        }).eq('id', Number(id));
+        }).eq('id', Number(id)).select(); // <--- CRITICAL ADDITION
 
         if (error) {
             console.error("SQ-Quest: Update rejected by Database.");
             throw error;
         }
+
+        // CHECK IF DATA WAS ACTUALLY UPDATED
+        if (!data || data.length === 0) {
+            console.error("SQ-Quest: RLS Policy blocked this update! No rows changed.");
+            alert("Error: You do not have permission to edit this quest.");
+            return;
+        }
         
-        // --- ACCURACY FIX: IMMEDIATE LOCAL STATE SYNC ---
-        // This ensures the Partner dashboard flips to 'IN REVIEW' instantly
+        // Update Local State
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...payload, status: finalStatus } : q));
         
         if (currentUser?.role === 'Partner') {
-            alert("Changes saved. Your quest is now 'In Review' and hidden from the map until Admin re-approval.");
+            alert("Changes saved. Your quest is now 'In Review'.");
         } else {
-            console.log("SQ-Admin: Quest updated successfully.");
             alert("Updated.");
         }
     } catch (error) { 
@@ -465,6 +468,7 @@ export const SideQuestProvider = ({ children }) => {
         alert("Update Failed: " + error.message); 
     }
   };
+  
   
   const deleteQuest = async (id) => {
     try {
