@@ -182,57 +182,72 @@ export const SideQuestProvider = ({ children }) => {
     return supabase
       .channel('ecosystem-sync')
       
-      // 1. QUESTS (Partner/Admin Updates)
+      // --- 1. QUESTS (Partner Creation & Admin Approval) ---
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, (payload) => {
           if (payload.eventType === 'UPDATE') {
-              setQuests(current => current.map(q => q.id === payload.new.id ? payload.new : q));
-              // Notify if a quest goes LIVE
-              if (payload.new.status === 'active') showToast(`Quest "${payload.new.title}" is now LIVE!`, 'success');
-          } else if (payload.eventType === 'INSERT') {
-              setQuests(current => [...current, payload.new]);
-          } else if (payload.eventType === 'DELETE') {
-              setQuests(current => current.filter(q => q.id !== payload.old.id));
+              setQuests(prev => prev.map(q => q.id === payload.new.id ? payload.new : q));
+              
+              // NOTIFY: Quest goes LIVE (Partner sees this)
+              if (payload.new.status === 'active') {
+                  showToast(`Quest "${payload.new.title}" is now LIVE!`, 'success');
+              }
+          } 
+          else if (payload.eventType === 'INSERT') {
+              setQuests(prev => [...prev, payload.new]);
+              
+              // NOTIFY: New Quest Request (Admin sees this)
+              if (payload.new.status === 'pending_admin') {
+                  showToast("New Partner Quest awaiting approval.", 'info');
+              }
+          } 
+          else if (payload.eventType === 'DELETE') {
+              setQuests(prev => prev.filter(q => q.id !== payload.old.id));
           }
       })
       
-      // 2. REWARDS (Marketplace Updates)
+      // --- 2. REWARDS (Partner Creation & Admin Approval) ---
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, (payload) => {
           if (payload.eventType === 'UPDATE') {
-              setRewards(current => current.map(r => r.id === payload.new.id ? payload.new : r));
-          } else if (payload.eventType === 'INSERT') {
-              setRewards(current => [...current, payload.new]);
-          } else if (payload.eventType === 'DELETE') {
-              setRewards(current => current.filter(r => r.id !== payload.old.id));
+              setRewards(prev => prev.map(r => r.id === payload.new.id ? payload.new : r));
+          } 
+          else if (payload.eventType === 'INSERT') {
+              setRewards(prev => [...prev, payload.new]);
+              
+              // NOTIFY: New Reward Request (Admin sees this)
+              if (payload.new.status === 'pending_admin') {
+                  showToast("New Partner Reward awaiting approval.", 'info');
+              }
+          } 
+          else if (payload.eventType === 'DELETE') {
+              setRewards(prev => prev.filter(r => r.id !== payload.old.id));
           }
       })
 
-      // 3. SUBMISSIONS (Smart Logic)
+      // --- 3. SUBMISSIONS (Traveler Proofs & Admin Review) ---
       .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, (payload) => {
           
-        if (payload.eventType === 'INSERT') {
-            // A. FIX DUPLICATES: Only add if it doesn't exist yet
-            setQuestProgress(prev => {
-                if (prev.find(p => p.id === payload.new.id)) return prev;
-                return [...prev, payload.new];
-            });
-
-            // B. FIX NOTIFICATION: Only notify if it's actually a submission (status='pending')
-            // When a user just accepts a quest, status is 'in_progress', so we do nothing.
-            if (payload.new.status === 'pending') {
-                showToast("New Proof Submitted!", 'info');
-            }
-        } 
-        else if (payload.eventType === 'UPDATE') {
-            setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
-            
-            // C. DETECT SUBMISSION HERE (Status changed from in_progress -> pending)
-            if (payload.new.status === 'pending') showToast("Proof Submitted for Review!", 'info');
-            
-            if (payload.new.status === 'approved') showToast("Quest Approved! +XP Awarded", 'success');
-            if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
-        }
-    })
-    .subscribe();
+          if (payload.eventType === 'INSERT') {
+              // A. Prevent Duplicates (Fixes the "2 Quests" bug)
+              setQuestProgress(prev => {
+                  if (prev.find(p => p.id === payload.new.id)) return prev;
+                  return [...prev, payload.new];
+              });
+              // Note: No toast here because this is just "Accepting" the quest.
+          } 
+          else if (payload.eventType === 'UPDATE') {
+              setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+              
+              // NOTIFY: Proof Submitted (Admin sees this)
+              if (payload.new.status === 'pending') {
+                  showToast("New Proof Submitted for Review!", 'info');
+              }
+              
+              // NOTIFY: Verification Result (Traveler sees this)
+              if (payload.new.status === 'approved') showToast("Quest Approved! +XP Awarded", 'success');
+              if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
+          }
+      })
+      .subscribe();
   };
 
   /**
