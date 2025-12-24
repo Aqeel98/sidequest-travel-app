@@ -17,49 +17,54 @@ const MapPage = () => {
   const { quests, questProgress, currentUser } = useSideQuest(); 
   const navigate = useNavigate();
   const [showClosest, setShowClosest] = useState(false); 
-  
-  // 1. STATE: Track User Location HERE
   const [userLocation, setUserLocation] = useState(null);
 
-  // 2. EFFECT: Get Real GPS Location
+  // 1. AUTO-LOCATE (The background engine)
   useEffect(() => {
-    if (!navigator.geolocation) {
-      console.log("Geolocation is not supported by this browser.");
-      return;
-    }
+    if (!navigator.geolocation) return;
   
     const options = {
       enableHighAccuracy: true,
       timeout: 15000,
-      // SPEED FIX: Allow a cached position from the last 5 minutes (300,000ms).
-      // This makes the blue dot appear INSTANTLY if the phone has moved recently.
-      maximumAge: 300000 
+      maximumAge: 300000 // Use cache for speed
     };
   
     const id = navigator.geolocation.watchPosition(
       (pos) => {
-        console.log("GPS update received:", pos.coords.accuracy, "meters accuracy");
         setUserLocation([pos.coords.latitude, pos.coords.longitude]);
       },
-      (err) => {
-        if (err.code === 1) {
-          console.warn("User denied Geolocation.");
-        } else {
-          console.error("GPS Error:", err.message);
-        }
-      },
+      (err) => console.log("Auto-locate waiting for user interaction..."),
       options
     );
   
     return () => navigator.geolocation.clearWatch(id);
   }, []);
 
-  // 3. MEMO: Sort Quests based on REAL userLocation
+  // 2. MANUAL LOCATE (Forces the browser permission popup)
+  const handleManualLocate = () => {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by this browser.");
+        return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+            setShowClosest(true); // Open the list immediately after finding them
+        },
+        (err) => {
+            alert("Location access denied. Please enable GPS in your browser settings to find quests near you.");
+        },
+        { enableHighAccuracy: true }
+    );
+  };
+
+  // 3. SORTING LOGIC
   const sortedQuests = useMemo(() => {
-    if (!userLocation) return []; // Return empty if no location yet
+    if (!userLocation) return [];
     
     return quests
-      .filter(q => q.lat && q.lng)
+      .filter(q => q.lat && q.lng && q.status === 'active') // Only show active quests in nearest list
       .map(q => ({
         ...q,
         distance: getDistanceKm(userLocation[0], userLocation[1], q.lat, q.lng),
@@ -84,10 +89,10 @@ const MapPage = () => {
         currentUser={currentUser}     
         onSelectQuest={handleSelectQuest} 
         setShowClosest={setShowClosest}
-        userLocation={userLocation} // <--- PASS LOCATION TO MAP
+        userLocation={userLocation}
+        onManualLocate={handleManualLocate} // <--- PASS THE FIX HERE
       />
 
-      {/* RENDER OVERLAY HERE */}
       {showClosest && (
         <ClosestQuestsOverlay 
             sortedQuests={sortedQuests} 

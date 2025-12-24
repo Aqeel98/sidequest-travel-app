@@ -4,18 +4,27 @@ import L from "leaflet";
 import { Compass, ExternalLink } from 'lucide-react';
 import "leaflet/dist/leaflet.css";
 
-// --- LEAFLET ICON FIXES ---
-// This is required because Webpack/Vite sometimes breaks default Leaflet markers
+// --- LEAFLET ICON FIXES (Required for Vite/Webpack) ---
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({ iconRetinaUrl: markerIcon2x, iconUrl: markerIcon, shadowUrl: markerShadow });
+L.Icon.Default.mergeOptions({ 
+    iconRetinaUrl: markerIcon2x, 
+    iconUrl: markerIcon, 
+    shadowUrl: markerShadow 
+});
 
 // --- CUSTOM ICONS ---
 const createQuestIcon = (status) => {
-  const colors = { 'available': '#14b8a6', 'in_progress': '#3B82F6', 'pending': '#F59E0B', 'approved': '#10B981', 'default': '#737373' };
+  const colors = { 
+    'available': '#14b8a6', 
+    'in_progress': '#3B82F6', 
+    'pending': '#F59E0B', 
+    'approved': '#10B981', 
+    'default': '#737373' 
+  };
   const color = colors[status] || colors.default;
   const iconHtml = status === 'pending' ? '⏳' : status === 'approved' ? '🏆' : '🎯';
   
@@ -34,13 +43,13 @@ const createAvatarIcon = () => {
     });
 };
 
-// --- HELPER COMPONENT TO RE-CENTER MAP ---
+// --- HELPER TO RE-CENTER MAP ---
 function RecenterMap({ location }) {
   const map = useMap();
   const hasCentered = useRef(false); 
 
   useEffect(() => {
-      // Zoom 11 = District View (Perfect for finding quests nearby without being too close)
+      // Zoom 11 = District View
       if (location && !hasCentered.current) {
           map.flyTo(location, 11, { duration: 2 }); 
           hasCentered.current = true;
@@ -52,14 +61,12 @@ function RecenterMap({ location }) {
 // --- MAIN COMPONENT ---
 export function MapView({ quests, questProgress, currentUser, onSelectQuest, setShowClosest, userLocation, onManualLocate }) { 
   
-  // Default center (Central Sri Lanka)
   const mapCenter = userLocation || [7.8731, 80.7718];
 
   const getQuestStatus = (questId) => {
     if (!currentUser) return 'available';
     const progress = questProgress.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
-    if (progress) return progress.status;
-    return 'available';
+    return progress ? progress.status : 'available';
   };
 
   return (
@@ -69,22 +76,14 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {currentUser && (
         <button
           onClick={() => {
-             // Logic remains smart:
-             if (userLocation) {
-                 // If we have GPS -> Show the list
-                 setShowClosest(true);
-             } else {
-                 // If NO GPS -> Ask for permission (then the list will open automatically)
-                 onManualLocate(); 
-             }
+             if (userLocation) setShowClosest(true);
+             else onManualLocate();
           }}
           className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]
                      bg-brand-500 text-white px-6 py-3 rounded-full
                      font-bold shadow-xl hover:bg-brand-600 transition flex items-center whitespace-nowrap"
         >
           <Compass size={20} className={`mr-2 ${!userLocation ? 'animate-pulse' : ''}`} /> 
-          
-          {/* CHANGE: Always show this text. No more "Enable GPS" text. */}
           Find Nearest Quests
         </button>
       )}
@@ -96,7 +95,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
         scrollWheelZoom={true}
         touchZoom={true}
         dragging={true}
-        minZoom={7} // FIX: Allows users to see the whole island
+        minZoom={7}
         maxZoom={18}
       >
         <TileLayer
@@ -117,7 +116,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
         )}
 
         {/* 2. QUEST MARKERS */}
-        {quests.map((quest) => {
+        {quests.filter(q => q.status === 'active').map((quest) => {
           if (!quest.lat || !quest.lng) return null;
           const status = getQuestStatus(quest.id);
 
@@ -127,39 +126,40 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
               position={[quest.lat, quest.lng]}
               icon={createQuestIcon(status)}
             >
-              {/* autoPan={true} ensures the popup isn't cut off on mobile screens */}
               <Popup maxWidth={280} autoPan={true}>
-                <div className="p-1 flex flex-col items-start">
+                <div className="p-1 flex flex-col items-start text-left">
                   
                   {/* Category & XP Badge */}
                   <div className="flex justify-between items-center w-full mb-2 pb-2 border-b border-gray-100">
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                      quest.category === 'Environmental' ? 'bg-emerald-100 text-emerald-700' :
-                      quest.category === 'Social' ? 'bg-blue-100 text-blue-700' :
-                      quest.category === 'Education' ? 'bg-indigo-100 text-indigo-700' :
-                      quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
-                      'bg-orange-100 text-orange-700'
-                    }`}>
+                    <span className="bg-brand-100 text-brand-700 px-2 py-1 rounded text-[10px] font-bold uppercase whitespace-nowrap">
                       {quest.category}
                     </span>
-                    <span className="text-sm font-extrabold text-brand-600">
+                    <span className="text-sm font-extrabold text-brand-600 ml-2">
                       ⭐ {quest.xp_value} XP
                     </span>
                   </div>
 
                   {/* Title & Address */}
-                  <h3 className="font-bold text-lg mb-1 text-gray-900">{quest.title}</h3>
-                  <div className="text-xs text-gray-500 mb-3">{quest.location_address}</div>
+                  <h3 className="font-bold text-lg mb-1 text-gray-900 leading-tight">
+                    {quest.title}
+                  </h3>
+                  <div className="text-xs text-gray-500 mb-3">
+                    {quest.location_address}
+                  </div>
 
                   {/* Status Badge */}
-                  <div className={`text-xs font-bold mb-3 p-1 rounded ${status === 'approved' ? 'text-emerald-600 bg-emerald-50' : status === 'in_progress' ? 'text-blue-600 bg-blue-50' : 'text-brand-600 bg-brand-50'}`}>
-                     STATUS: {status.replace('_', ' ').toUpperCase()} 
+                  <div className={`text-xs font-bold mb-3 px-2 py-1 rounded-full ${
+                    status === 'approved' ? 'text-emerald-600 bg-emerald-50' : 
+                    status === 'in_progress' ? 'text-blue-600 bg-blue-50' : 
+                    'text-brand-600 bg-brand-50'
+                  }`}>
+                     {status.replace('_', ' ').toUpperCase()} 
                   </div>
 
                   {/* Main Action Button */}
                   <button
                       onClick={() => onSelectQuest(quest)}
-                      className="mt-2 w-full bg-brand-500 text-white px-3 py-2 rounded text-sm font-bold flex items-center justify-center hover:bg-brand-600 transition-colors"
+                      className="mt-2 w-full bg-brand-500 text-white px-3 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center hover:bg-brand-600 transition-colors shadow-sm"
                     >
                       View Quest Details →
                     </button>
@@ -170,7 +170,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                         e.stopPropagation(); 
                         window.open(`https://www.google.com/maps/dir/?api=1&destination=${quest.lat},${quest.lng}`, '_blank');
                       }}
-                      className="w-full mb-2 bg-blue-50 text-blue-600 px-3 py-2 rounded text-sm font-bold flex items-center justify-center hover:bg-blue-100 transition-colors border border-blue-200 mt-2"
+                      className="w-full mt-2 bg-blue-50 text-blue-600 px-3 py-2 rounded-xl text-sm font-bold flex items-center justify-center hover:bg-blue-100 transition-colors border border-blue-200 shadow-sm"
                     >
                       <ExternalLink size={14} className="mr-2" /> Open in Google Maps
                   </button>
