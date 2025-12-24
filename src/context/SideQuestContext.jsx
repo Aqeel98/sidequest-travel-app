@@ -206,24 +206,33 @@ export const SideQuestProvider = ({ children }) => {
           }
       })
 
-      // 3. SUBMISSIONS (The "No Refresh" Fix for Proofs)
+      // 3. SUBMISSIONS (Smart Logic)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, (payload) => {
-          console.log("SQ-Realtime: Submission change detected ->", payload.eventType);
           
-          if (payload.eventType === 'INSERT') {
-              // Admin sees new proof instantly without refresh
-              setQuestProgress(prev => [...prev, payload.new]);
-              showToast("New Proof Submitted!", 'info'); 
-          } 
-          else if (payload.eventType === 'UPDATE') {
-              // Traveler sees Approved/Rejected status instantly
-              setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
-              
-              if (payload.new.status === 'approved') showToast("Quest Approved! +XP Awarded", 'success');
-              if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
-          }
-      })
-      .subscribe();
+        if (payload.eventType === 'INSERT') {
+            // A. FIX DUPLICATES: Only add if it doesn't exist yet
+            setQuestProgress(prev => {
+                if (prev.find(p => p.id === payload.new.id)) return prev;
+                return [...prev, payload.new];
+            });
+
+            // B. FIX NOTIFICATION: Only notify if it's actually a submission (status='pending')
+            // When a user just accepts a quest, status is 'in_progress', so we do nothing.
+            if (payload.new.status === 'pending') {
+                showToast("New Proof Submitted!", 'info');
+            }
+        } 
+        else if (payload.eventType === 'UPDATE') {
+            setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+            
+            // C. DETECT SUBMISSION HERE (Status changed from in_progress -> pending)
+            if (payload.new.status === 'pending') showToast("Proof Submitted for Review!", 'info');
+            
+            if (payload.new.status === 'approved') showToast("Quest Approved! +XP Awarded", 'success');
+            if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
+        }
+    })
+    .subscribe();
   };
 
   /**
@@ -520,27 +529,30 @@ export const SideQuestProvider = ({ children }) => {
   };
   
   const acceptQuest = async (questId) => {
-    // SECURITY: Guests must login before accepting a quest
+    // 1. Check Login
     if (!currentUser) {
-        console.log("SQ-System: Unauthorized acceptance attempt. Opening Login Portal.");
         setShowAuthModal(true);
         return false;
     }
+    
     try {
         console.log(`SQ-Quest: Traveler accepting quest: ${questId}`);
-        const { data, error } = await supabase.from('submissions').insert([{
+        
+        // 2. Insert into DB (Don't need .select() anymore)
+        const { error } = await supabase.from('submissions').insert([{
             quest_id: questId, 
             traveler_id: currentUser.id, 
             status: 'in_progress'
-        }]).select();
+        }]);
         
         if (error) throw error;
-        if (data && data.length > 0) {
-            setQuestProgress(prev => [...prev, data[0]]); 
-            console.log("SQ-Quest: Quest join handshake successful.");
-            return true; 
-        }
-        return false;
+        
+        // 3. DO NOT update local state here. 
+        // The Realtime Listener will catch the INSERT and update the UI automatically.
+        
+        console.log("SQ-Quest: Quest join successful.");
+        return true; 
+        
     } catch (error) {
         console.error("SQ-Quest: Acceptance error ->", error.message);
         alert("Action failed. Please check your connection.");
