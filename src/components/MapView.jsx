@@ -69,11 +69,12 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {currentUser && (
         <button
           onClick={() => {
+             // Logic remains smart:
              if (userLocation) {
-                 // If we have GPS, show the "Closest Quests" list overlay
+                 // If we have GPS -> Show the list
                  setShowClosest(true);
              } else {
-                 // If NO GPS, trigger the browser permission popup
+                 // If NO GPS -> Ask for permission (then the list will open automatically)
                  onManualLocate(); 
              }
           }}
@@ -81,9 +82,10 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                      bg-brand-500 text-white px-6 py-3 rounded-full
                      font-bold shadow-xl hover:bg-brand-600 transition flex items-center whitespace-nowrap"
         >
-          <Compass size={20} className={`mr-2 ${!userLocation ? 'animate-spin' : ''}`} /> 
-          {/* Change text based on state */}
-          {userLocation ? "Find Nearest Quests" : "Enable GPS to Play"}
+          <Compass size={20} className={`mr-2 ${!userLocation ? 'animate-pulse' : ''}`} /> 
+          
+          {/* CHANGE: Always show this text. No more "Enable GPS" text. */}
+          Find Nearest Quests
         </button>
       )}
 
