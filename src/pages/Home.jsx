@@ -25,7 +25,7 @@ const Home = () => {
         </div>
 
         {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
-        <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-48 md:pb-64 lg:pb-80 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-64 md:pb-80 lg:pb-96 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium mb-6 animate-fade-in-up">
             <Sparkles size={16} className="text-yellow-300" />
             <span>Discover the unseen Sri Lanka</span>
@@ -64,38 +64,39 @@ const Home = () => {
           </div>
         </div>
 
-      {/* --- THE REALISTIC SHORELINE (No White Gap) --- */}
+     {/* --- THE EXPANDED BEACH (High Water Line, Lots of Sand) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
   
   {/* 
-      1. THE BASE LAYER = SAND 
-      This completely fills the white gap you saw. 
-      It acts as the "Beach" waiting for the water.
+      1. TALLER SAND BASE 
+      I increased the height to 320px on laptops. 
+      This creates the big "SAND" area you drew.
   */}
-  <div className="absolute bottom-0 left-0 w-full h-[120px] md:h-[180px] lg:h-[240px] bg-[#E6D5B8]"></div>
+  <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
 
   <svg 
-    className="relative block w-[210%] h-[120px] md:h-[180px] lg:h-[240px]" 
-    viewBox="0 0 1200 120" 
+    className="relative block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]" 
+    viewBox="0 0 1200 320" 
     preserveAspectRatio="none"
   >
     {/* 
-       2. THE WHITE FOAM
-       This sits behind the water but slightly lower, creating the white edge.
+       2. WHITE FOAM
+       Notice the path ends around '100' on the Y-axis. 
+       Since the total height is 320, this leaves 220 units of SAND below it.
     */}
     <path 
-      d="M0,0 L1200,0 L1200,100 C900,130 600,70 300,110 L0,90 Z" 
+      d="M0,0 L1200,0 L1200,120 C900,160 600,80 300,140 L0,100 Z" 
       className="fill-white animate-wave-roll"
       style={{ animationDelay: '-2s' }}
     ></path>
 
     {/* 
-       3. THE TURQUOISE WATER (Your Header Color)
-       This draws the water coming DOWN from the top (0,0).
-       It covers the sand, leaving only the curvy bottom edge visible.
+       3. TURQUOISE WATER
+       This connects to the header and stops high up, 
+       revealing the massive beach below.
     */}
     <path 
-      d="M0,0 L1200,0 L1200,90 C900,120 600,60 300,100 L0,80 Z" 
+      d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z" 
       className="fill-brand-600 animate-wave-roll"
     ></path>
   </svg>
