@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react'; 
+import React, { useState, useEffect, useMemo, useCallback } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { MapView } from '../components/MapView';
 import { useSideQuest } from '../context/SideQuestContext';
 import ClosestQuestsOverlay from '../components/ClosestQuestsOverlay'; 
 
-// Distance calculation helper
+// --- 1. SMOOTH CONFIGURATION ---
+// Default Center (Colombo) ensures the map is never empty/gray
+const SRI_LANKA_CENTER = [6.9271, 79.8612];
+
+// Accurate Haversine Distance Calculator
 const getDistanceKm = (lat1, lng1, lat2, lng2) => {
-  const R = 6371;
+  if (!lat1 || !lng1 || !lat2 || !lng2) return Infinity;
+  const R = 6371; // Earth Radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
@@ -16,82 +21,78 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 const MapPage = () => {
   const { quests, questProgress, currentUser } = useSideQuest(); 
   const navigate = useNavigate();
+  
+  // State for Smooth UI
   const [showClosest, setShowClosest] = useState(false); 
   const [userLocation, setUserLocation] = useState(null);
+  const [isLocating, setIsLocating] = useState(false); // Controls the button spinner
 
-  // --- FIX 1: AUTO-LOCATE TIMEOUT INCREASED ---
-  // Increased timeout to 30s to prevent "Timeout expired" error on slow networks/devices
+  // --- 2. SMOOTH AUTO-LOCATE ENGINE ---
   useEffect(() => {
     if (!navigator.geolocation) return;
   
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 30000, // FIX: Increased from 15000 to 30000
-      maximumAge: 300000 
-    };
-  
-    const id = navigator.geolocation.watchPosition(
+    // Phase 1: Fast (Low Accuracy) Fix immediately
+    navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
+        null,
+        { enableHighAccuracy: false, timeout: 4000 }
+    );
+
+    // Phase 2: Background High Accuracy Watch
+    const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        // console.log("SQ-GPS: Auto-location updated."); // Optional debug
         setUserLocation([pos.coords.latitude, pos.coords.longitude]);
       },
-      (err) => console.warn(`SQ-GPS Background Warning: ${err.message}`),
-      options
+      (err) => console.warn(`GPS Background Update Warning: ${err.message}`),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
     );
   
-    return () => navigator.geolocation.clearWatch(id);
+    return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // --- FIX 2: ROBUST MANUAL LOCATE FUNCTION ---
-  // This function is now guaranteed to exist and handle errors gracefully
-  const handleManualLocate = () => {
-    console.log("SQ-System: Manual locate triggered by user."); // DEBUG LOG
+  // --- 3. ZERO-LAG MANUAL LOCATE ---
+  const handleManualLocate = useCallback(() => {
+    if (isLocating) return; // Prevent spam clicking
+    setIsLocating(true); // START SPINNER
 
     if (!navigator.geolocation) {
-        alert("Geolocation is not supported by this browser.");
+        setIsLocating(false);
         return;
     }
     
-    // Explicit options for the manual click
-    const manualOptions = {
-        enableHighAccuracy: true,
-        timeout: 20000, // FIX: Force a 20s wait before failing
-        maximumAge: 0   // FIX: Force a fresh reading (don't use cache)
-    };
-
     navigator.geolocation.getCurrentPosition(
         (pos) => {
-            console.log("SQ-System: Location found manually.");
+            // Success: Precise location found
             setUserLocation([pos.coords.latitude, pos.coords.longitude]);
-            setShowClosest(true); 
+            setIsLocating(false); // STOP SPINNER
+            setShowClosest(true); // Open List
         },
         (err) => {
-            console.error("SQ-GPS Error:", err.message);
-            alert("Could not get your location. Please ensure GPS is enabled.");
+            // Error: Fail gracefully (No Alerts!)
+            console.error("GPS Error:", err.message);
+            setIsLocating(false); // STOP SPINNER
+            setShowClosest(true); // Open List anyway (using default location)
         },
-        manualOptions // Pass the fixed options
+        { enableHighAccuracy: true, timeout: 15000 }
     );
-  };
+  }, [isLocating]);
 
-  // 3. SORTING LOGIC
+  // --- 4. PERFORMANCE SORTING ---
   const sortedQuests = useMemo(() => {
-    if (!userLocation) return [];
+    // If we don't have a user location yet, calculate from Colombo
+    const center = userLocation || SRI_LANKA_CENTER;
     
     return quests
       .filter(q => q.lat && q.lng && q.status === 'active') 
       .map(q => ({
         ...q,
-        distance: getDistanceKm(userLocation[0], userLocation[1], q.lat, q.lng),
+        distance: getDistanceKm(center[0], center[1], q.lat, q.lng),
       }))
-      .sort((a, b) => a.distance - b.distance);
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 10); // Performance: Only render closest 10 to keep scrolling smooth
   }, [quests, userLocation]);
 
   const handleSelectQuest = (quest) => {
-      navigate(`/quest/${quest.id}`);
-  };
-
-  const handleClosestQuestSelect = (quest) => {
-      setShowClosest(false);
       navigate(`/quest/${quest.id}`);
   };
 
@@ -104,14 +105,16 @@ const MapPage = () => {
         onSelectQuest={handleSelectQuest} 
         setShowClosest={setShowClosest}
         userLocation={userLocation}
-        onManualLocate={handleManualLocate} // This is the prop that was causing "f is not a function"
+        onManualLocate={handleManualLocate}
+        isLocating={isLocating} // Connects to the floating button spinner
       />
 
       {showClosest && (
         <ClosestQuestsOverlay 
             sortedQuests={sortedQuests} 
-            onSelectQuest={handleClosestQuestSelect} 
+            onSelectQuest={(q) => { setShowClosest(false); navigate(`/quest/${q.id}`); }} 
             onClose={() => setShowClosest(false)} 
+            locationReady={!!userLocation} // Tells user if distances are Real or Default
         />
       )}
     </div>

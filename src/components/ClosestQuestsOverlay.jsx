@@ -1,45 +1,89 @@
-// src/components/ClosestQuestsOverlay.jsx
-
 import React from 'react';
-import { List, X, MapPin } from 'lucide-react';
+import { List, X, MapPin, Compass } from 'lucide-react';
 
-// This component replaces the previous ClosestQuestsList inside MapView.jsx
-const ClosestQuestsOverlay = ({ sortedQuests, onSelectQuest, onClose }) => {
+const ClosestQuestsOverlay = ({ sortedQuests, onSelectQuest, onClose, locationReady }) => {
   return (
-    // Fixed position overlay that covers the entire map area
-    <div className="fixed inset-0 top-16 bg-black/50 backdrop-blur-sm z-[1000] flex justify-end">
+    // Overlay with Blur
+    <div className="fixed inset-0 top-16 bg-black/40 backdrop-blur-sm z-[1000] flex justify-end transition-opacity duration-300">
       
-      {/* Slide-out List Panel */}
-      <div className="w-full max-w-md bg-white p-6 shadow-2xl overflow-y-auto">
+      {/* Slide-out Panel with Animation */}
+      <div className="w-full max-w-md bg-white/95 h-full shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300 border-l border-white/20">
         
-        <div className="flex justify-between items-center mb-6 border-b pb-4">
-          <h3 className="font-extrabold text-xl text-gray-900 flex items-center">
-            <List size={24} className="mr-3 text-brand-600" />
-            5 Closest Quests
-          </h3>
-          <button onClick={onClose} className="p-2 text-gray-500 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors">
-            <X size={24} />
-          </button>
+        {/* Header Section */}
+        <div className="sticky top-0 bg-white/95 backdrop-blur-md z-10 border-b border-slate-100 p-6 pb-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-extrabold text-xl text-slate-900 flex items-center gap-2">
+                <List size={22} className="text-teal-600" />
+                Nearby Quests
+              </h3>
+              
+              {/* SMART STATUS: Tells user if GPS is working or using default */}
+              <div className="mt-1.5 flex items-center">
+                 {locationReady ? (
+                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-wide">
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse mr-1.5"></span>
+                      Live GPS Active
+                   </span>
+                 ) : (
+                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-wide">
+                      <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5"></span>
+                      Using Default Center
+                   </span>
+                 )}
+              </div>
+            </div>
+
+            <button 
+              onClick={onClose} 
+              className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
         
-        <div className="space-y-4">
+        {/* List Content */}
+        <div className="p-6 space-y-4 pb-24">
           {sortedQuests.slice(0, 5).map((q, index) => (
             <div 
               key={q.id} 
               onClick={() => onSelectQuest(q)} 
-              className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md cursor-pointer hover:border-brand-300 transition-all"
+              className="group relative p-4 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-lg hover:scale-[1.01] hover:border-teal-300 cursor-pointer transition-all duration-200"
             >
-              <p className="text-xs font-semibold text-brand-600 mb-1">
-                {index + 1}. {q.distance.toFixed(1)} km Away
-              </p>
-              <p className="font-bold text-lg text-gray-900">{q.title}</p>
-              <div className="flex justify-between items-center text-sm mt-2">
-                 <span className="text-gray-500 flex items-center"><MapPin size={14} className="mr-1" /> {q.location_address}</span>
-                 <span className="text-orange-500 font-bold">⭐ {q.xp_value} XP</span>
+              {/* Distance Badge */}
+              <div className="absolute top-4 right-4 text-xs font-black text-slate-400 group-hover:text-teal-600 transition-colors">
+                {q.distance.toFixed(1)} km
+              </div>
+
+              {/* Number Badge */}
+              <div className="inline-block bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-md mb-2 group-hover:bg-teal-50 group-hover:text-teal-700 transition-colors">
+                #{index + 1} CLOSEST
+              </div>
+
+              <h4 className="font-bold text-lg text-slate-800 leading-tight mb-2 group-hover:text-teal-800 transition-colors">
+                {q.title}
+              </h4>
+
+              <div className="flex justify-between items-center border-t border-slate-50 pt-3 mt-2">
+                 <span className="text-slate-500 text-xs font-medium flex items-center truncate max-w-[60%]">
+                    <MapPin size={12} className="mr-1 text-slate-400" /> 
+                    {q.location_address || "Sri Lanka"}
+                 </span>
+                 <span className="text-amber-600 text-xs font-extrabold bg-amber-50 px-2 py-1 rounded-lg">
+                    ⭐ {q.xp_value} XP
+                 </span>
               </div>
             </div>
           ))}
-          {sortedQuests.length === 0 && <p className="text-sm text-gray-500 pt-4">No geolocated quests found.</p>}
+
+          {/* Empty State */}
+          {sortedQuests.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center opacity-60">
+                <Compass size={40} className="text-slate-300 mb-2 animate-spin-slow" />
+                <p className="text-sm font-medium text-slate-500">No quests found nearby.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

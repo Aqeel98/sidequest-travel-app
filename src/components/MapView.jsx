@@ -16,13 +16,13 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow 
 });
 
-// --- CUSTOM ICONS ---
+// --- CUSTOM ICONS (Your Original Colors) ---
 const createQuestIcon = (status) => {
   const colors = { 
-    'available': '#14b8a6', 
-    'in_progress': '#3B82F6', 
-    'pending': '#F59E0B', 
-    'approved': '#10B981', 
+    'available': '#14b8a6', // Teal
+    'in_progress': '#3B82F6', // Blue
+    'pending': '#F59E0B', // Amber
+    'approved': '#10B981', // Emerald
     'default': '#737373' 
   };
   const color = colors[status] || colors.default;
@@ -38,6 +38,7 @@ const createQuestIcon = (status) => {
 const createAvatarIcon = () => {
     return L.divIcon({
         className: "player-avatar-marker",
+        // Your Original Red Avatar
         html: `<div style="background-color: #EF4444; width: 40px; height: 40px; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 12px rgba(239, 68, 68, 0.7); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white;">YOU</div><div class="pulse-ring"></div>`,
         iconSize: [40, 40], iconAnchor: [20, 20],
     });
@@ -71,21 +72,24 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
 
   return (
     <div className="relative h-full w-full overflow-hidden z-0">
+      
+      {/* --- FIX: STYLED FLOATING BUTTON --- */}
       {currentUser && (
         <button
           onClick={() => {
              if (userLocation && typeof setShowClosest === 'function') {
                  setShowClosest(true);
              } else if (typeof onManualLocate === 'function') {
-                 onManualLocate(); // <--- 2. ADD SAFETY CHECK
+                 onManualLocate(); 
              } else {
                  console.error("Map Error: Locate function is missing.");
              }
           }}
-          className="..."
+          // Replaced '...' with actual floating styles
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur-sm text-slate-800 px-6 py-2.5 rounded-full shadow-lg font-bold flex items-center gap-2 border border-white/40 hover:scale-105 active:scale-95 transition-all"
         >
-          <Compass size={20} className={!userLocation ? 'animate-pulse' : ''} /> 
-          Find Nearest Quests
+          <Compass size={18} className={`text-teal-600 ${!userLocation ? 'animate-pulse' : ''}`} /> 
+          <span className="text-sm">Find Nearest Quests</span>
         </button>
       )}
 
@@ -184,4 +188,4 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       </MapContainer>
     </div>
   );
-} 
+}
