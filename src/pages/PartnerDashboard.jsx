@@ -232,14 +232,15 @@ const PartnerDashboard = () => {
                                     <div className="col-span-full mb-2"><h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest text-center">GPS Coordinates</h4></div>
                                     <div>
                                         <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
-                                        <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="6.0" required />
+                                        <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="6.6969" required />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
+                                        
+                                        <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="8.6767" required />
                                         <p className="col-span-full text-[10px] text-brand-400 italic text-center mt-2">
                                                 Tip: Long-press your location in Google Maps to find these numbers.
                                         </p>
-                                        <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="80.2" required />
                                     </div>
                                 </div>
                                 <div>
