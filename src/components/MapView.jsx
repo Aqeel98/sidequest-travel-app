@@ -71,19 +71,20 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
 
   return (
     <div className="relative h-full w-full overflow-hidden z-0">
-      
-      {/* FLOATING ACTION BUTTON */}
       {currentUser && (
         <button
           onClick={() => {
-             if (userLocation) setShowClosest(true);
-             else onManualLocate();
+             if (userLocation && typeof setShowClosest === 'function') {
+                 setShowClosest(true);
+             } else if (typeof onManualLocate === 'function') {
+                 onManualLocate(); // <--- 2. ADD SAFETY CHECK
+             } else {
+                 console.error("Map Error: Locate function is missing.");
+             }
           }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]
-                     bg-brand-500 text-white px-6 py-3 rounded-full
-                     font-bold shadow-xl hover:bg-brand-600 transition flex items-center whitespace-nowrap"
+          className="..."
         >
-          <Compass size={20} className={`mr-2 ${!userLocation ? 'animate-pulse' : ''}`} /> 
+          <Compass size={20} className={!userLocation ? 'animate-pulse' : ''} /> 
           Find Nearest Quests
         </button>
       )}
@@ -183,4 +184,4 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       </MapContainer>
     </div>
   );
-}
+} 

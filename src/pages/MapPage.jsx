@@ -19,43 +19,57 @@ const MapPage = () => {
   const [showClosest, setShowClosest] = useState(false); 
   const [userLocation, setUserLocation] = useState(null);
 
-  // 1. AUTO-LOCATE (The background engine)
+  // --- FIX 1: AUTO-LOCATE TIMEOUT INCREASED ---
+  // Increased timeout to 30s to prevent "Timeout expired" error on slow networks/devices
   useEffect(() => {
     if (!navigator.geolocation) return;
   
     const options = {
       enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 300000 // Use cache for speed
+      timeout: 30000, // FIX: Increased from 15000 to 30000
+      maximumAge: 300000 
     };
   
     const id = navigator.geolocation.watchPosition(
       (pos) => {
+        // console.log("SQ-GPS: Auto-location updated."); // Optional debug
         setUserLocation([pos.coords.latitude, pos.coords.longitude]);
       },
-      (err) => console.log("Auto-locate waiting for user interaction..."),
+      (err) => console.warn(`SQ-GPS Background Warning: ${err.message}`),
       options
     );
   
     return () => navigator.geolocation.clearWatch(id);
   }, []);
 
-  // 2. MANUAL LOCATE (Forces the browser permission popup)
+  // --- FIX 2: ROBUST MANUAL LOCATE FUNCTION ---
+  // This function is now guaranteed to exist and handle errors gracefully
   const handleManualLocate = () => {
+    console.log("SQ-System: Manual locate triggered by user."); // DEBUG LOG
+
     if (!navigator.geolocation) {
         alert("Geolocation is not supported by this browser.");
         return;
     }
     
+    // Explicit options for the manual click
+    const manualOptions = {
+        enableHighAccuracy: true,
+        timeout: 20000, // FIX: Force a 20s wait before failing
+        maximumAge: 0   // FIX: Force a fresh reading (don't use cache)
+    };
+
     navigator.geolocation.getCurrentPosition(
         (pos) => {
+            console.log("SQ-System: Location found manually.");
             setUserLocation([pos.coords.latitude, pos.coords.longitude]);
-            setShowClosest(true); // Open the list immediately after finding them
+            setShowClosest(true); 
         },
         (err) => {
-            alert("Location access denied. Please enable GPS in your browser settings to find quests near you.");
+            console.error("SQ-GPS Error:", err.message);
+            alert("Could not get your location. Please ensure GPS is enabled.");
         },
-        { enableHighAccuracy: true }
+        manualOptions // Pass the fixed options
     );
   };
 
@@ -64,7 +78,7 @@ const MapPage = () => {
     if (!userLocation) return [];
     
     return quests
-      .filter(q => q.lat && q.lng && q.status === 'active') // Only show active quests in nearest list
+      .filter(q => q.lat && q.lng && q.status === 'active') 
       .map(q => ({
         ...q,
         distance: getDistanceKm(userLocation[0], userLocation[1], q.lat, q.lng),
@@ -90,7 +104,7 @@ const MapPage = () => {
         onSelectQuest={handleSelectQuest} 
         setShowClosest={setShowClosest}
         userLocation={userLocation}
-        onManualLocate={handleManualLocate} // <--- PASS THE FIX HERE
+        onManualLocate={handleManualLocate} // This is the prop that was causing "f is not a function"
       />
 
       {showClosest && (
