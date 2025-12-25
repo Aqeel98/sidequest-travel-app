@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
-import { Compass } from 'lucide-react'; 
+import { Compass, CheckCircle, AlertCircle, Info } from 'lucide-react'; 
 
 // Pages
 import Home from './pages/Home';
@@ -16,18 +16,16 @@ import Profile from './pages/Profile';
 import PartnerDashboard from './pages/PartnerDashboard'; 
 import Emergency from './pages/Emergency';
 
-// --- UPDATED ROLE SWITCHER (Visible ONLY to Admin Email) ---
+// --- ROLE SWITCHER (Debug Tool) ---
 const RoleSwitcher = () => {
   const { currentUser, switchRole } = useSideQuest();
-  
-  // The master admin email defined in your context
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
-  // PERMANENT FIX: Strictly verify email to prevent any non-admin from seeing this
   if (!currentUser || currentUser.email !== ADMIN_EMAIL) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl z-[100] border border-brand-100 animate-in slide-in-from-bottom-5">
+    // FIX: z-[3000] ensures this is ALWAYS clickable, even over modals
+    <div className="fixed bottom-4 right-4 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl z-[3000] border border-brand-100 animate-in slide-in-from-bottom-5">
       <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
         <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>
         <span className="font-bold text-[10px] text-gray-500 uppercase tracking-widest">Debug Mode</span>
@@ -54,7 +52,7 @@ const RoleSwitcher = () => {
   );
 };
 
-// --- LOADING SCREEN COMPONENT ---
+// --- LOADING SCREEN ---
 const LoadingScreen = () => (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
         <Compass size={48} className="animate-spin mb-4" />
@@ -62,34 +60,41 @@ const LoadingScreen = () => (
     </div>
 );
 
-// --- TOAST NOTIFICATION COMPONENT ---
+// --- TOAST NOTIFICATION RENDERER ---
 const Toast = () => {
-  const { toast } = useSideQuest(); // Reads the state we just added to Context
+  const { toast } = useSideQuest(); 
   
-  if (!toast) return null; // If no message, render nothing
+  if (!toast) return null; 
 
-  // Define colors based on the type of message
-  const colors = {
-      success: 'bg-green-600', // Green for Approvals/Live
-      error: 'bg-red-500',     // Red for Rejections
-      info: 'bg-blue-600'      // Blue for New Submissions
+  const styles = {
+      success: 'bg-emerald-900/90 border-emerald-500/50 text-white',
+      error: 'bg-red-900/90 border-red-500/50 text-white',
+      info: 'bg-slate-900/90 border-slate-500/50 text-white'
+  };
+
+  const icons = {
+      success: <CheckCircle size={20} className="text-emerald-400" />,
+      error: <AlertCircle size={20} className="text-red-400" />,
+      info: <Info size={20} className="text-blue-400" />
   };
 
   return (
-      <div className={`fixed top-24 right-4 z-[2000] ${colors[toast.type]} text-white px-6 py-4 rounded-xl shadow-2xl animate-in slide-in-from-right duration-300 flex items-center`}>
-          <div className="font-bold text-sm md:text-base shadow-sm">
-              {toast.message}
+      // FIX: z-[2000] ensures notifications float above everything (including Login Modal)
+      <div className="fixed top-24 right-4 z-[2000] animate-in slide-in-from-right duration-300">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-md border ${styles[toast.type] || styles.info}`}>
+              {icons[toast.type]}
+              <div className="font-bold text-sm tracking-wide shadow-sm">
+                  {toast.message}
+              </div>
           </div>
       </div>
   );
 };
 
-// --- MAIN LAYOUT WRAPPER (Handles Global Loading) ---
+// --- MAIN LAYOUT WRAPPER ---
 const MainLayout = () => {
     const { isLoading } = useSideQuest();
 
-    // ACCURACY FIX: This prevents "Logout Flash" on refresh 
-    // by keeping the user on the LoadingScreen until fetchProfile is done.
     if (isLoading) return <LoadingScreen />;
 
     return (
@@ -98,7 +103,6 @@ const MainLayout = () => {
             <Toast />
             <AuthModal />
             <Outlet />
-            {/* Only renders for sidequestsrilanka@gmail.com */}
             <RoleSwitcher />
         </div>
     );
@@ -108,7 +112,6 @@ export default function App() {
   return (
     <SideQuestProvider>
       <BrowserRouter>
-        
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />

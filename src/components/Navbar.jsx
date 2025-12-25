@@ -14,8 +14,8 @@ const Navbar = () => {
       : "text-gray-500 hover:text-brand-500 font-medium px-4 py-1.5 transition-all";
 
   return (
-    // Glassmorphism effect
-    <header className="fixed top-0 w-full z-50 transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
+    // FIX: z-[1100] ensures Navbar is above Map Button (800) but below AuthModal (1200)
+    <header className="fixed top-0 w-full z-[1100] transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
         {/* Logo Area */}
@@ -43,7 +43,7 @@ const Navbar = () => {
             <Link to="/admin" className={isActive('/admin')}>Admin</Link>
           )}
 
-          {/* Emergency Link with Red Color Scheme */}
+          {/* Emergency Link */}
           <Link to="/emergency" title="Emergency Info" className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors">
             <HeartPulse size={20} />
           </Link>
@@ -52,7 +52,6 @@ const Navbar = () => {
 
           {currentUser ? (
             <div className="flex items-center space-x-4 pl-2">
-            {/* Wrap the user info in a Link */}
             <Link to="/profile" className="flex flex-col items-end cursor-pointer hover:opacity-80 transition-opacity">
               <span className="text-xs text-gray-400 font-medium">{currentUser.role}</span>
               <span className="text-sm font-bold text-gray-800">{currentUser.full_name || currentUser.email.split('@')[0]}</span>
@@ -80,8 +79,6 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden bg-white border-t p-4 flex flex-col space-y-2 shadow-xl animate-in slide-in-from-top-5">
-            
-            {/* New: USER INFO AT TOP OF MOBILE MENU */}
             {currentUser ? (
                 <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border-b mb-2">
                     <div>
@@ -93,19 +90,16 @@ const Navbar = () => {
                     </div>
                 </Link>
             ) : (
-                // Mobile Login Button
                 <button onClick={() => { setShowAuthModal(true); setIsOpen(false); }} className="w-full bg-gray-900 text-white px-6 py-2.5 rounded-full font-bold hover:bg-gray-800 transition-all mb-2">
                     Login
                 </button>
             )}
             
-            {/* Navigation Links */}
             <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
             <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
             <Link to="/my-quests" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>My Quests</Link>
             <Link to="/rewards" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Rewards</Link>
             
-            {/* Mobile Emergency Link */}
             <Link to="/emergency" className="p-3 rounded-lg hover:bg-red-50 text-red-500 font-bold flex items-center" onClick={() => setIsOpen(false)}>
                 <HeartPulse size={18} className="mr-2"/> Emergency & Safety Info
             </Link>
@@ -117,7 +111,6 @@ const Navbar = () => {
                 <Link to="/admin" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Admin Panel</Link>
             )}
             
-            {/* Mobile Logout Button (at the bottom) */}
             {currentUser && (
                 <button onClick={() => { logout(); setIsOpen(false); }} className="w-full text-red-500 font-bold p-3 rounded-lg hover:bg-red-50 transition-colors mt-2 border-t pt-3">
                     Logout

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react"; 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
-import { Compass, ExternalLink } from 'lucide-react';
+import { Compass, ExternalLink, Loader2 } from 'lucide-react';
 import "leaflet/dist/leaflet.css";
 
 // --- LEAFLET ICON FIXES (Required for Vite/Webpack) ---
@@ -38,21 +38,21 @@ const createQuestIcon = (status) => {
 const createAvatarIcon = () => {
     return L.divIcon({
         className: "player-avatar-marker",
-        // Your Original Red Avatar
+        // Your Original Red Pulse Avatar
         html: `<div style="background-color: #EF4444; width: 40px; height: 40px; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 12px rgba(239, 68, 68, 0.7); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white;">YOU</div><div class="pulse-ring"></div>`,
         iconSize: [40, 40], iconAnchor: [20, 20],
     });
 };
 
-// --- HELPER TO RE-CENTER MAP ---
+// --- HELPER TO RE-CENTER MAP (Smooth FlyTo) ---
 function RecenterMap({ location }) {
   const map = useMap();
   const hasCentered = useRef(false); 
 
   useEffect(() => {
-      // Zoom 11 = District View
+      // Only fly to location if we haven't already (prevents jarring jumps)
       if (location && !hasCentered.current) {
-          map.flyTo(location, 11, { duration: 2 }); 
+          map.flyTo(location, 13, { duration: 2.5, easeLinearity: 0.25 }); 
           hasCentered.current = true;
       }
   }, [location, map]);
@@ -60,9 +60,9 @@ function RecenterMap({ location }) {
 }
 
 // --- MAIN COMPONENT ---
-export function MapView({ quests, questProgress, currentUser, onSelectQuest, setShowClosest, userLocation, onManualLocate }) { 
+export function MapView({ quests, questProgress, currentUser, onSelectQuest, setShowClosest, userLocation, onManualLocate, isLocating }) { 
   
-  const mapCenter = userLocation || [7.8731, 80.7718];
+  const mapCenter = userLocation || [7.8731, 80.7718]; // Default Center of Sri Lanka
 
   const getQuestStatus = (questId) => {
     if (!currentUser) return 'available';
@@ -73,40 +73,48 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
   return (
     <div className="relative h-full w-full overflow-hidden z-0">
       
-      {/* --- FIX: STYLED FLOATING BUTTON --- */}
+      {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
       {currentUser && (
-        <button
-          onClick={() => {
-             if (userLocation && typeof setShowClosest === 'function') {
-                 setShowClosest(true);
-             } else if (typeof onManualLocate === 'function') {
-                 onManualLocate(); 
-             } else {
-                 console.error("Map Error: Locate function is missing.");
-             }
-          }}
-          // Replaced '...' with actual floating styles
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur-sm text-slate-800 px-6 py-2.5 rounded-full shadow-lg font-bold flex items-center gap-2 border border-white/40 hover:scale-105 active:scale-95 transition-all"
-        >
-          <Compass size={18} className={`text-teal-600 ${!userLocation ? 'animate-pulse' : ''}`} /> 
-          <span className="text-sm">Find Nearest Quests</span>
-        </button>
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[800] w-full max-w-[280px] px-4 pointer-events-none">
+          <button
+            onClick={() => {
+               if (userLocation) {
+                   setShowClosest(true);
+               } else {
+                   onManualLocate(); 
+               }
+            }}
+            // Added pointer-events-auto so clicks work
+            className="pointer-events-auto w-full flex items-center justify-center gap-3 bg-white/90 backdrop-blur-md border border-white/20 px-6 py-3.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 group"
+          >
+            {isLocating ? (
+              <Loader2 size={20} className="text-cyan-600 animate-spin" />
+            ) : (
+              <Compass size={20} className={`text-cyan-600 group-hover:rotate-45 transition-transform duration-500 ${!userLocation ? 'animate-pulse' : ''}`} />
+            )}
+            <span className="font-bold text-slate-800 text-sm tracking-tight">
+              {isLocating ? "Locating..." : "Find Nearest Quests"}
+            </span>
+          </button>
+        </div>
       )}
 
       <MapContainer
         center={mapCenter}
-        zoom={9} 
-        className="h-full w-full"
+        zoom={8} 
+        className="h-full w-full z-0"
+        zoomControl={false} // We add custom control below
         scrollWheelZoom={true}
-        touchZoom={true}
-        dragging={true}
-        minZoom={7}
-        maxZoom={18}
+        minZoom={7} // Country Level
+        maxZoom={18} // Street Level
       >
         <TileLayer
            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
            attribution='&copy; CARTO'
         />
+        
+        {/* Custom Positioned Zoom Control */}
+        <ZoomControl position="bottomright" />
 
         <RecenterMap location={userLocation} />
 
@@ -114,8 +122,8 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
         {userLocation && (
           <Marker position={userLocation} icon={createAvatarIcon()}>
             <Popup>
-              <div className="font-bold text-red-500">Your Current Location</div>
-              <div className="text-sm">⭐ {currentUser?.xp || 0} XP</div>
+              <div className="font-bold text-red-500 text-center">Current Location</div>
+              <div className="text-xs text-center text-gray-500 mt-1">lat: {userLocation[0].toFixed(4)}, lng: {userLocation[1].toFixed(4)}</div>
             </Popup>
           </Marker>
         )}

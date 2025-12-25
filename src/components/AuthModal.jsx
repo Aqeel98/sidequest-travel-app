@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Lock, Eye, EyeOff } from 'lucide-react'; 
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -15,34 +15,32 @@ const AuthModal = () => {
   // UI States
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
   if (!showAuthModal) return null; 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (loading) return; // Prevent double-submission
+    if (loading) return; 
     
     setLoading(true); 
 
     try {
         if (mode === 'login') {
-            // Context login only triggers the Supabase Auth.
-            // The Auth Listener in the Context handles the rest.
             await login(email, password);
         } else {
             await signup(email, password, name, role);
         }
-        // NOTE: We do NOT set setShowAuthModal(false) here.
-        // The Context Listener (Step 1) detects the session and closes it.
+        // Context handles closing via Auth Listener
     } catch (err) {
         console.error("Auth Error:", err);
-        alert(err.message || "Authentication failed. Check your credentials.");
-        // ONLY reset loading on error so the user can try again.
+        alert(err.message || "Authentication failed.");
         setLoading(false); 
     }
   };
   
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    // FIX: z-[1200] ensures this sits on top of Navbar (1100) and Map (800)
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1200] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md relative shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         
         {/* Header */}

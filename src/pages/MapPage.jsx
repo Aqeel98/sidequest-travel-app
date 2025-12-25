@@ -4,8 +4,7 @@ import { MapView } from '../components/MapView';
 import { useSideQuest } from '../context/SideQuestContext';
 import ClosestQuestsOverlay from '../components/ClosestQuestsOverlay'; 
 
-// --- 1. SMOOTH CONFIGURATION ---
-// Default Center (Colombo) ensures the map is never empty/gray
+// Default Center (Colombo) ensures the map is never empty
 const SRI_LANKA_CENTER = [6.9271, 79.8612];
 
 // Accurate Haversine Distance Calculator
@@ -22,21 +21,42 @@ const MapPage = () => {
   const { quests, questProgress, currentUser } = useSideQuest(); 
   const navigate = useNavigate();
   
-  // State for Smooth UI
+  // --- STATE ---
   const [showClosest, setShowClosest] = useState(false); 
   const [userLocation, setUserLocation] = useState(null);
-  const [isLocating, setIsLocating] = useState(false); // Controls the button spinner
+  const [isLocating, setIsLocating] = useState(false); 
+
+  // --- 1. SESSION RESTORE LOGIC (Preserve state on "Back") ---
+  useEffect(() => {
+      const savedLoc = sessionStorage.getItem('sq_last_location');
+      if (savedLoc) {
+          try {
+              const parsed = JSON.parse(savedLoc);
+              setUserLocation(parsed);
+              console.log("SQ-Map: Restored last known location.");
+          } catch (e) { sessionStorage.removeItem('sq_last_location'); }
+      }
+  }, []);
+
+  // Update session storage whenever location changes
+  useEffect(() => {
+      if (userLocation) {
+          sessionStorage.setItem('sq_last_location', JSON.stringify(userLocation));
+      }
+  }, [userLocation]);
 
   // --- 2. SMOOTH AUTO-LOCATE ENGINE ---
   useEffect(() => {
     if (!navigator.geolocation) return;
   
-    // Phase 1: Fast (Low Accuracy) Fix immediately
-    navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-        null,
-        { enableHighAccuracy: false, timeout: 4000 }
-    );
+    // Phase 1: Fast (Low Accuracy) Fix immediately (only if we don't have a saved location)
+    if (!userLocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
+            null,
+            { enableHighAccuracy: false, timeout: 4000 }
+        );
+    }
 
     // Phase 2: Background High Accuracy Watch
     const watchId = navigator.geolocation.watchPosition(
@@ -52,8 +72,8 @@ const MapPage = () => {
 
   // --- 3. ZERO-LAG MANUAL LOCATE ---
   const handleManualLocate = useCallback(() => {
-    if (isLocating) return; // Prevent spam clicking
-    setIsLocating(true); // START SPINNER
+    if (isLocating) return; 
+    setIsLocating(true); 
 
     if (!navigator.geolocation) {
         setIsLocating(false);
@@ -62,15 +82,13 @@ const MapPage = () => {
     
     navigator.geolocation.getCurrentPosition(
         (pos) => {
-            // Success: Precise location found
             setUserLocation([pos.coords.latitude, pos.coords.longitude]);
-            setIsLocating(false); // STOP SPINNER
-            setShowClosest(true); // Open List
+            setIsLocating(false); 
+            setShowClosest(true); 
         },
         (err) => {
-            // Error: Fail gracefully (No Alerts!)
             console.error("GPS Error:", err.message);
-            setIsLocating(false); // STOP SPINNER
+            setIsLocating(false); 
             setShowClosest(true); // Open List anyway (using default location)
         },
         { enableHighAccuracy: true, timeout: 15000 }
@@ -79,7 +97,6 @@ const MapPage = () => {
 
   // --- 4. PERFORMANCE SORTING ---
   const sortedQuests = useMemo(() => {
-    // If we don't have a user location yet, calculate from Colombo
     const center = userLocation || SRI_LANKA_CENTER;
     
     return quests
@@ -89,10 +106,12 @@ const MapPage = () => {
         distance: getDistanceKm(center[0], center[1], q.lat, q.lng),
       }))
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 10); // Performance: Only render closest 10 to keep scrolling smooth
+      .slice(0, 10); // Calculate top 10 for speed
   }, [quests, userLocation]);
 
   const handleSelectQuest = (quest) => {
+      // Save location before navigating away so "Back" works perfectly
+      if (userLocation) sessionStorage.setItem('sq_last_location', JSON.stringify(userLocation));
       navigate(`/quest/${quest.id}`);
   };
 
@@ -106,15 +125,15 @@ const MapPage = () => {
         setShowClosest={setShowClosest}
         userLocation={userLocation}
         onManualLocate={handleManualLocate}
-        isLocating={isLocating} // Connects to the floating button spinner
+        isLocating={isLocating} 
       />
 
       {showClosest && (
         <ClosestQuestsOverlay 
             sortedQuests={sortedQuests} 
-            onSelectQuest={(q) => { setShowClosest(false); navigate(`/quest/${q.id}`); }} 
+            onSelectQuest={(q) => { setShowClosest(false); handleSelectQuest(q); }} 
             onClose={() => setShowClosest(false)} 
-            locationReady={!!userLocation} // Tells user if distances are Real or Default
+            locationReady={!!userLocation} 
         />
       )}
     </div>

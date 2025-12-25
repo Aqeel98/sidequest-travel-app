@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, UploadCloud, MapPin, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Camera, UploadCloud, MapPin, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import imageCompression from 'browser-image-compression'; // FIX: Added Compression
 
 // --- SUB-COMPONENT: Individual Quest Card ---
-// Handles the state for one specific quest (File, Note, Loading)
 const QuestCard = ({ progress, quest, onSubmitProof }) => {
   const [note, setNote] = useState('');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false); // FIX: New State
 
   // Cleanup memory for image preview
   useEffect(() => {
@@ -17,11 +18,30 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
     };
   }, [preview]);
 
-  const handleFileChange = (e) => {
+  // FIX: Compression Logic Added Here
+  const handleFileChange = async (e) => {
     const selected = e.target.files[0];
-    if (selected) {
-      setFile(selected);
-      setPreview(URL.createObjectURL(selected));
+    if (!selected) return;
+
+    setIsCompressing(true);
+
+    try {
+        const options = {
+            maxSizeMB: 0.8,
+            maxWidthOrHeight: 1280,
+            useWebWorker: true
+        };
+        
+        const compressedFile = await imageCompression(selected, options);
+        const url = URL.createObjectURL(compressedFile);
+        
+        setFile(compressedFile);
+        setPreview(url);
+    } catch (error) {
+        console.error("Compression error:", error);
+        alert("Could not process image.");
+    } finally {
+        setIsCompressing(false);
     }
   };
 
@@ -34,7 +54,6 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
     setIsSubmitting(false);
   };
 
-  // Determine Status Colors/Icons
   const getStatusBadge = (status) => {
     switch (status) {
       case 'approved': return <span className="flex items-center text-green-600 bg-green-50 px-3 py-1 rounded-full text-xs font-bold uppercase"><CheckCircle size={14} className="mr-1"/> Completed</span>;
@@ -59,16 +78,19 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
       {/* --- FORM: Only show if In Progress --- */}
       {(progress.status === 'in_progress' || progress.status === 'rejected') && (
           <div className="mt-4 border-t pt-4 space-y-4">
-      {/* If it was rejected, show them why or tell them to try again */}
-      {progress.status === 'rejected' && (
-          <div className="p-3 bg-red-50 text-red-700 text-[10px] font-bold uppercase rounded-lg border border-red-100">
-             Previous proof rejected. Please upload a clearer photo to resubmit!
-          </div>
-      )}
+            {progress.status === 'rejected' && (
+                <div className="p-3 bg-red-50 text-red-700 text-[10px] font-bold uppercase rounded-lg border border-red-100">
+                  Previous proof rejected. Please upload a clearer photo to resubmit!
+                </div>
+            )}
           
           {/* 1. Image Upload Area */}
           <div className="flex items-center gap-4">
-            {preview ? (
+            {isCompressing ? (
+                <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center border">
+                    <Loader2 className="animate-spin text-brand-500" size={20} />
+                </div>
+            ) : preview ? (
               <img src={preview} alt="Preview" className="w-16 h-16 object-cover rounded-lg border" />
             ) : (
               <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
@@ -76,7 +98,7 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
               </div>
             )}
             
-            <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center transition-all">
+            <label className={`cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center transition-all ${isCompressing ? 'opacity-50 pointer-events-none' : ''}`}>
               <UploadCloud size={16} className="mr-2" />
               {file ? "Change Photo" : "Upload Proof"}
               <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
@@ -95,15 +117,15 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
           {/* 3. Submit Button */}
           <button 
             onClick={handleSubmit} 
-            disabled={isSubmitting}
-            className="w-full bg-brand-600 text-white py-3 rounded-xl font-bold hover:bg-brand-700 transition flex items-center justify-center shadow-lg shadow-brand-100"
+            disabled={isSubmitting || isCompressing || !file}
+            className="w-full bg-brand-600 text-white py-3 rounded-xl font-bold hover:bg-brand-700 transition flex items-center justify-center shadow-lg shadow-brand-100 disabled:opacity-50 disabled:shadow-none"
           >
             {isSubmitting ? 'Uploading...' : 'Submit for Verification'}
           </button>
         </div>
       )}
 
-      {/* --- VIEW MODE: Show what was submitted if Pending/Approved --- */}
+      {/* --- VIEW MODE --- */}
       {(progress.status === 'pending' || progress.status === 'approved') && (
         <div className="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
             <p className="text-xs font-bold text-gray-500 uppercase mb-2">Your Submission</p>
@@ -157,8 +179,6 @@ const MyQuests = () => {
           <div className="space-y-6">
             {sortedProgress.map(progress => {
               const quest = quests.find(q => q.id === progress.quest_id);
-              
-              // Handle edge case where quest might have been deleted by admin
               if (!quest) return null; 
 
               return (
