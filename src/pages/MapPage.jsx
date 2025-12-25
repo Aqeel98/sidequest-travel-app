@@ -4,13 +4,12 @@ import { MapView } from '../components/MapView';
 import { useSideQuest } from '../context/SideQuestContext';
 import ClosestQuestsOverlay from '../components/ClosestQuestsOverlay'; 
 
-// Default Center (Colombo) ensures the map is never empty
+// Default Center (Colombo)
 const SRI_LANKA_CENTER = [6.9271, 79.8612];
 
-// Accurate Haversine Distance Calculator
 const getDistanceKm = (lat1, lng1, lat2, lng2) => {
   if (!lat1 || !lng1 || !lat2 || !lng2) return Infinity;
-  const R = 6371; // Earth Radius in km
+  const R = 6371; 
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
@@ -21,65 +20,70 @@ const MapPage = () => {
   const { quests, questProgress, currentUser } = useSideQuest(); 
   const navigate = useNavigate();
   
-  // --- STATE ---
   const [showClosest, setShowClosest] = useState(false); 
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false); 
 
-  // --- 1. SESSION RESTORE LOGIC (Preserve state on "Back") ---
+  // --- 1. SESSION RESTORE ---
   useEffect(() => {
       const savedLoc = sessionStorage.getItem('sq_last_location');
       if (savedLoc) {
-          try {
-              const parsed = JSON.parse(savedLoc);
-              setUserLocation(parsed);
-              console.log("SQ-Map: Restored last known location.");
-          } catch (e) { sessionStorage.removeItem('sq_last_location'); }
+          try { setUserLocation(JSON.parse(savedLoc)); } catch (e) {}
       }
   }, []);
 
-  // Update session storage whenever location changes
   useEffect(() => {
-      if (userLocation) {
-          sessionStorage.setItem('sq_last_location', JSON.stringify(userLocation));
-      }
+      if (userLocation) sessionStorage.setItem('sq_last_location', JSON.stringify(userLocation));
   }, [userLocation]);
 
-  // --- 2. SMOOTH AUTO-LOCATE ENGINE ---
+  // --- 2. ROBUST AUTO-LOCATE (THE FIX) ---
   useEffect(() => {
     if (!navigator.geolocation) return;
-  
-    // Phase 1: Fast (Low Accuracy) Fix immediately (only if we don't have a saved location)
-    if (!userLocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-            null,
-            { enableHighAccuracy: false, timeout: 4000 }
+    
+    // Only auto-locate if we don't have a saved location
+    if (userLocation) return;
+
+    let watchId;
+
+    const startWatching = (highAccuracy) => {
+        const options = {
+            enableHighAccuracy: highAccuracy,
+            timeout: highAccuracy ? 10000 : 20000, // 10s for High, 20s for Low
+            maximumAge: 30000 // Accept positions up to 30s old
+        };
+
+        watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+                console.log(`SQ-GPS: Location locked (${highAccuracy ? 'High' : 'Low'} Accuracy)`);
+                setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+            },
+            (err) => {
+                console.warn(`SQ-GPS: ${highAccuracy ? 'High' : 'Low'} accuracy failed.`, err.message);
+                // IF HIGH ACCURACY FAILS -> FALLBACK TO LOW ACCURACY
+                if (highAccuracy) {
+                    console.log("SQ-GPS: Switching to Low Accuracy Mode...");
+                    navigator.geolocation.clearWatch(watchId);
+                    startWatching(false); // <--- RECURSIVE FALLBACK
+                }
+            },
+            options
         );
-    }
+    };
 
-    // Phase 2: Background High Accuracy Watch
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        setUserLocation([pos.coords.latitude, pos.coords.longitude]);
-      },
-      (err) => console.warn(`GPS Background Update Warning: ${err.message}`),
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
-    );
-  
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+    // Start by trying High Accuracy
+    startWatching(true);
 
-  // --- 3. ZERO-LAG MANUAL LOCATE ---
+    return () => { if (watchId) navigator.geolocation.clearWatch(watchId); };
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  // --- 3. MANUAL LOCATE BUTTON ---
   const handleManualLocate = useCallback(() => {
     if (isLocating) return; 
     setIsLocating(true); 
 
-    if (!navigator.geolocation) {
-        setIsLocating(false);
-        return;
-    }
+    if (!navigator.geolocation) { setIsLocating(false); return; }
     
+    // Try High Accuracy First
     navigator.geolocation.getCurrentPosition(
         (pos) => {
             setUserLocation([pos.coords.latitude, pos.coords.longitude]);
@@ -87,18 +91,28 @@ const MapPage = () => {
             setShowClosest(true); 
         },
         (err) => {
-            console.error("GPS Error:", err.message);
-            setIsLocating(false); 
-            setShowClosest(true); // Open List anyway (using default location)
+            console.warn("SQ-GPS: Manual High Accuracy failed, trying Low Accuracy...");
+            // FALLBACK TO LOW ACCURACY
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+                    setIsLocating(false); 
+                    setShowClosest(true);
+                },
+                (finalErr) => {
+                    console.error("SQ-GPS: All attempts failed.");
+                    setIsLocating(false); 
+                    setShowClosest(true); // Show list based on default center
+                },
+                { enableHighAccuracy: false, timeout: 10000 }
+            );
         },
-        { enableHighAccuracy: true, timeout: 15000 }
+        { enableHighAccuracy: true, timeout: 5000 }
     );
   }, [isLocating]);
 
-  // --- 4. PERFORMANCE SORTING ---
   const sortedQuests = useMemo(() => {
     const center = userLocation || SRI_LANKA_CENTER;
-    
     return quests
       .filter(q => q.lat && q.lng && q.status === 'active') 
       .map(q => ({
@@ -106,11 +120,10 @@ const MapPage = () => {
         distance: getDistanceKm(center[0], center[1], q.lat, q.lng),
       }))
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 10); // Calculate top 10 for speed
+      .slice(0, 10); 
   }, [quests, userLocation]);
 
   const handleSelectQuest = (quest) => {
-      // Save location before navigating away so "Back" works perfectly
       if (userLocation) sessionStorage.setItem('sq_last_location', JSON.stringify(userLocation));
       navigate(`/quest/${quest.id}`);
   };
