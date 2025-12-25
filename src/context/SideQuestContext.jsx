@@ -17,7 +17,12 @@ export const SideQuestProvider = ({ children }) => {
   // Core user identity and session persistence
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true); 
+  const userRef = useRef(null);
+  useEffect(() => {
+      userRef.current = currentUser;
+  }, [currentUser]);
 
+    
   // Ecosystem content pools
   const [quests, setQuests] = useState([]);
   const [rewards, setRewards] = useState([]); 
@@ -44,6 +49,11 @@ export const SideQuestProvider = ({ children }) => {
 
   // MASTER SECURITY CONSTANT
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
+
+
+
+  
+
 
   // --- 2. THE HARDENED SEQUENTIAL BOOT (Persistence & Guest Logic) ---
   useEffect(() => {
