@@ -536,31 +536,53 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   const submitProof = async (questId, note, file) => {
-    // 1. OPTIMISTIC UPDATE: Update UI state instantly so the user sees "Pending"
+    // 1. GET CURRENT STATE
     const existing = questProgress.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
+    
+    if (!existing) {
+        alert("Error: Could not find this quest in your history.");
+        return false;
+    }
+
+    // SAFETY CHECK: If the ID is still temporary, we can't update the DB yet.
+    if (existing.id.toString().startsWith('temp-')) {
+        alert("Please wait a moment for the network to sync your quest acceptance, then try again.");
+        return false;
+    }
+
+    // 2. OPTIMISTIC UPDATE (Instant Feedback)
+    // We create a visual placeholder immediately
     const tempUpdate = { 
         ...existing, 
         status: 'pending', 
         completion_note: note,
-        // Show a local preview immediately if available
-        proof_photo_url: file ? URL.createObjectURL(file) : existing.proof_photo_url 
+        proof_photo_url: file ? URL.createObjectURL(file) : existing.proof_photo_url,
+        submitted_at: new Date().toISOString()
     };
     
-    // Update local state immediately
     setQuestProgress(prev => prev.map(p => p.id === existing.id ? tempUpdate : p));
     
-    // 2. BACKGROUND UPLOAD: Define the heavy work but don't await it here
+    // 3. BACKGROUND UPLOAD & DB SAVE
+    // We run this without 'await' so the UI doesn't freeze
     const performBackgroundUpload = async () => {
         try {
-            console.log(`SQ-Impact: Starting background upload for Quest: ${questId}`);
+            console.log(`SQ-Impact: Starting background upload for Quest ID: ${existing.id}`);
             let proofUrl = null;
             
             if (file) {
-                const fileName = `proofs/${Date.now()}_proof`;
+                // Generate a clean filename to avoid special character issues
+                const fileExt = file.name.split('.').pop();
+                const fileName = `proofs/${currentUser.id}_${Date.now()}.${fileExt}`;
+                
                 const { error: uploadErr } = await supabase.storage.from('proofs').upload(fileName, file);
                 
-                if (uploadErr) throw uploadErr;
-                proofUrl = supabase.storage.from('proofs').getPublicUrl(fileName).data.publicUrl;
+                if (uploadErr) {
+                    console.error("SQ-Error: Storage Upload Failed:", uploadErr);
+                    throw uploadErr;
+                }
+                
+                const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+                proofUrl = data.publicUrl;
             }
 
             // Update DB with final URL
@@ -568,30 +590,33 @@ export const SideQuestProvider = ({ children }) => {
                 status: 'pending', 
                 completion_note: note, 
                 proof_photo_url: proofUrl, 
-                submitted_at: new Date() 
+                submitted_at: new Date().toISOString() // FIX: Force ISO String
             };
             
             const { error: dbError } = await supabase.from('submissions').update(payload).eq('id', existing.id);
-            if (dbError) throw dbError;
+            
+            if (dbError) {
+                console.error("SQ-Error: Database Update Failed:", dbError);
+                throw dbError;
+            }
 
-            console.log("SQ-Impact: Background upload complete.");
-            showToast("Proof uploaded successfully!", 'success');
+            console.log("SQ-Impact: DB Sync Complete.");
+            showToast("Proof saved to server!", 'success');
 
         } catch (err) {
-            console.error("SQ-Impact: Upload failed ->", err.message);
-            showToast("Upload failed. Please try again.", 'error');
-            // Revert state by fetching real data
+            console.error("SQ-Impact: Critical Failure ->", err.message);
+            showToast("Upload failed. Please check your connection and retry.", 'error');
+            
+            // ROLLBACK: Revert the UI to show the truth from the DB
+            // This stops the user from thinking it worked when it didn't.
             fetchSubmissions(currentUser.id, 'Traveler');
         }
     };
 
-    // 3. EXECUTE BACKGROUND WORK
     performBackgroundUpload();
 
-    // 4. RETURN TRUE INSTANTLY (Unblocks the UI)
     return true; 
   };
-
   // --- 8. REWARD ECONOMY ACTIONS ---
 
   const addReward = async (formData, imageFile) => {
