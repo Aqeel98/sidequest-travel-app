@@ -167,7 +167,7 @@ const QuestDetails = () => {
                 disabled={isAccepting} 
                 className="w-full bg-brand-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-brand-700 transition-all flex items-center justify-center gap-2 shadow-lg"
             >
-                {isAccepting ? <Loader2 className="animate-spin"/> : 'Accept Challenge'}
+                {isAccepting ? <Loader2 className="animate-spin"/> : 'Accept Quest '}
             </button>
           )}
 
