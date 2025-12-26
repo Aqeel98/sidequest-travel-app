@@ -74,17 +74,21 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
     <div className="relative h-full w-full overflow-hidden z-0">
       
       {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
+      {/* --- FIX: MOBILE FLOATING BUTTON --- */}
       {currentUser && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[800] w-full max-w-[280px] px-4 pointer-events-none">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1050] w-full max-w-[280px] px-4 pointer-events-none">
           <button
-            onClick={() => {
+            onClick={(e) => {
+               // CHANGE 1: Stop the map from stealing the click
+               e.stopPropagation(); 
+               
                if (userLocation) {
                    setShowClosest(true);
                } else {
                    onManualLocate(); 
                }
             }}
-            // Added pointer-events-auto so clicks work
+            // CHANGE 2: Z-Index above was increased to 1050
             className="pointer-events-auto w-full flex items-center justify-center gap-3 bg-white/90 backdrop-blur-md border border-white/20 px-6 py-3.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 group"
           >
             {isLocating ? (

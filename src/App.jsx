@@ -15,6 +15,8 @@ import Rewards from './pages/Rewards';
 import Profile from './pages/Profile';
 import PartnerDashboard from './pages/PartnerDashboard'; 
 import Emergency from './pages/Emergency';
+import HowItWorks from './pages/HowItWorks'; 
+
 
 // --- ROLE SWITCHER (Debug Tool) ---
 const RoleSwitcher = () => {
@@ -116,6 +118,7 @@ export default function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="map" element={<MapPage />} />
+            <Route path="how-it-works" element={<HowItWorks />} />
             <Route path="quest/:id" element={<QuestDetails />} />
             <Route path="my-quests" element={<MyQuests />} />
             <Route path="rewards" element={<Rewards />} />
@@ -123,6 +126,7 @@ export default function App() {
             <Route path="partner" element={<PartnerDashboard />} />
             <Route path="admin" element={<Admin />} />
             <Route path="emergency" element={<Emergency />} />
+
           </Route>
         </Routes>
       </BrowserRouter>

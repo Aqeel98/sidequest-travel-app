@@ -207,6 +207,11 @@ export const SideQuestProvider = ({ children }) => {
       // SUBMISSIONS
       .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, (payload) => {
         
+        const myId = userRef.current?.id;
+        const myRole = userRef.current?.role;
+        // SECURITY: Only process if it's MY submission or I am ADMIN
+        if (myRole !== 'Admin' && payload.new.traveler_id !== myId) return;
+
         if (payload.eventType === 'INSERT') {
             setQuestProgress(prev => {
                 // 1. Check if we already have this EXACT Real ID (Safety check)
@@ -579,8 +584,8 @@ export const SideQuestProvider = ({ children }) => {
             if (!realSubmissionId) {
                 console.log("SQ-System: ID is temporary. Waiting for DB sync...");
                 
-                // Retry loop: Check DB every 500ms (max 6 times = 3 seconds)
-                for (let i = 0; i < 6; i++) {
+                // Wait 10 seconds (20 x 500ms) for rural connections
+                for (let i = 0; i < 20; i++) {
                     const { data } = await supabase.from('submissions')
                         .select('id')
                         .eq('quest_id', questId)

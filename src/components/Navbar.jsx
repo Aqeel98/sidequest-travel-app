@@ -32,6 +32,7 @@ const Navbar = () => {
         <nav className="hidden md:flex items-center space-x-2">
           <Link to="/" className={isActive('/')}>Quests</Link>
           <Link to="/map" className={isActive('/map')}>Map</Link>
+          <Link to="/how-it-works" className={isActive('/how-it-works')}>Guide</Link>
           <Link to="/my-quests" className={isActive('/my-quests')}>My Quests</Link>
           <Link to="/rewards" className={isActive('/rewards')}>Rewards</Link>
           
@@ -97,6 +98,7 @@ const Navbar = () => {
             
             <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
             <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
+            <Link to="/how-it-works" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>How it Works</Link>
             <Link to="/my-quests" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>My Quests</Link>
             <Link to="/rewards" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Rewards</Link>
             

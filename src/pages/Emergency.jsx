@@ -10,6 +10,7 @@ const Emergency = () => {
     const emergencyContacts = [
         { name: "Police Emergency", number: "119 / 118", icon: <Shield size={20} />, color: 'text-red-600' },
         { name: "Ambulance / Fire", number: "110", icon: <Siren size={20} />, color: 'text-red-600' }, 
+        { name: "Ambulance", number: "1990 ", icon: <Siren size={20} />, color: 'text-red-600' }, 
         { name: "Tourist Police ", number: "1912 / +94 11 242 1052", icon: <MapPin size={20} />, color: 'text-blue-600' },
     ];
 
