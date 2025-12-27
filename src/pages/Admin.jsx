@@ -348,14 +348,26 @@ const Admin = () => {
                         <p className="text-sm text-gray-600 mt-1">Submitted by: {creator?.email || 'Partner'}</p>
                         <p className="text-xs text-brand-700 font-medium mt-1">{quest.location_address}</p>
                     </div>
-                    <div className="flex gap-2 mt-3 md:mt-0">
-                        <button onClick={() => setViewDetailsId(isDetailsOpen ? null : quest.id)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 font-medium transition flex items-center">
+                    <div className="flex gap-2 mt-3 md:mt-0"><button onClick={() => setViewDetailsId(isDetailsOpen ? null : quest.id)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 font-medium transition flex items-center">
                             <Info size={18} className="mr-1"/> {isDetailsOpen ? 'Hide' : 'Details'}
+                        </button>
+                        {/* NEW EDIT BUTTON */}
+                        <button onClick={() => setEditingId(editingId === quest.id ? null : quest.id)} className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg hover:bg-yellow-200 font-medium transition flex items-center">
+                            <Edit size={18} className="mr-1"/> Edit
                         </button>
                         <button onClick={() => approveNewQuest(quest.id)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition flex items-center"><Check size={18} className="mr-1"/> Approve</button>
                         <button onClick={() => deleteQuest(quest.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"><Trash2 size={18} className="mr-1"/> Reject</button>
                     </div>
                 </div>
+
+                    {/* NEW EDIT FORM LOGIC */}
+                {editingId === quest.id && (
+                    <div className="mt-4">
+                        <EditForm item={quest} onSave={handleSaveQuest} onCancel={() => setEditingId(null)} type="quest" />
+                    </div>
+                )}
+                
+
                 {isDetailsOpen && (
                     <div className="mt-4 pt-4 border-t border-gray-200 bg-white p-4 rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -400,10 +412,21 @@ const Admin = () => {
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => setViewDetailsId(isDetailsOpen ? null : reward.id)} className="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-medium hover:bg-orange-200">{isDetailsOpen ? 'Hide' : 'View Details'}</button>
+                            {/* EDIT BUTTON */}
+                            <button onClick={() => setEditingId(editingId === reward.id ? null : reward.id)} className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg flex items-center hover:bg-blue-200"><Edit size={16} /></button>
                             <button onClick={() => approveNewReward(reward.id)} className="bg-green-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-green-600 shadow-sm"><Check size={16} className="mr-1"/> Approve</button>
                             <button onClick={() => deleteReward(reward.id)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-red-600 shadow-sm"><Trash2 size={16} className="mr-1"/> Reject</button>
                         </div>
                     </div>
+
+                    {/* EDIT FORM (Shows when Edit button is clicked) */}
+                    {editingId === reward.id && (
+                        <div className="p-4 bg-white border-t border-blue-200">
+                            <EditForm item={reward} onSave={handleSaveReward} onCancel={() => setEditingId(null)} type="reward" />
+                        </div>
+                    )}
+
+                    {/* DETAILS VIEW (Shows when View Details is clicked) */}
                     {isDetailsOpen && (
                         <div className="p-5 bg-white border-t border-orange-100 animate-in fade-in slide-in-from-top-2 duration-200">
                             <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Reward Description</h4>

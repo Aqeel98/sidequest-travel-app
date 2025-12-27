@@ -13,7 +13,7 @@ const PartnerDashboard = () => {
     const [editingId, setEditingId] = useState(null);
 
     // Form State
-    const [form, setForm] = useState({ category: 'Environmental' });
+    const [form, setForm] = useState({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
     const [imageFile, setImageFile] = useState(null); 
     const [preview, setPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -221,7 +221,7 @@ const PartnerDashboard = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">XP Reward Value</label>
-                                        <input type="number" name="xp_value" value={form.xp_value || 50} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" />
+                                        <input type="number" name="xp_value" value={form.xp_value} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Location Name</label>
