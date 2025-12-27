@@ -57,20 +57,38 @@ const PartnerDashboard = () => {
     
         try {
             let finalImageUrl = preview; // Default to existing image
-    
-            // 1. Handle New Image Upload (Only if user picked a new file)
-            if (imageFile) {
-                console.log("SQ-System: Uploading new item photo...");
-                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
-                const compressed = await imageCompression(imageFile, options);
-                const fileName = `${mode}-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
-                
-                const { error: uploadError } = await supabase.storage.from('proofs').upload(fileName, compressed);
-                if (uploadError) throw uploadError;
-                
-                const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
-                finalImageUrl = data.publicUrl;
-            }
+    // 1. Handle New Image Upload (Only if user picked a new file)
+    if (imageFile) {
+        console.log("SQ-System: Uploading new item photo...");
+        
+        // COMPRESSION
+        const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
+        const compressedBlob = await imageCompression(imageFile, options);
+        
+        // FORCE FILE CONVERSION (Crucial fix for Supabase)
+        const compressedFile = new File([compressedBlob], imageFile.name, { 
+            type: imageFile.type 
+        });
+
+        const fileName = `${mode}-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
+        
+        // UPLOAD
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('proofs')
+            .upload(fileName, compressedFile, {
+                cacheControl: '3600',
+                upsert: false
+            });
+        
+        if (uploadError) {
+            console.error("SQ-Upload Error Details:", uploadError); // Check Console if this hits!
+            throw uploadError;
+        }
+        
+        const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+        finalImageUrl = data.publicUrl;
+        console.log("SQ-System: Upload Success!", finalImageUrl);
+    }
     
             // 2. Prepare Data & Clean Types
             // We cast numeric fields to ensure the database doesn't reject the update
