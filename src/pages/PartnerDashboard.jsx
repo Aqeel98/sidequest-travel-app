@@ -8,7 +8,8 @@ const PartnerDashboard = () => {
     const { currentUser, quests, rewards, addQuest, addReward, updateQuest, updateReward } = useSideQuest();
     
     // UI State
-    const [view, setView] = useState('create'); // Default to Add New Page
+    const [view, setView] = useState('create'); 
+    const [mode, setMode] = useState('quest');
     const [editingId, setEditingId] = useState(null);
 
     // Form State
