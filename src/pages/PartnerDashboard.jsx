@@ -56,80 +56,59 @@ const PartnerDashboard = () => {
         setIsSubmitting(true);
     
         try {
-            let finalImageUrl = preview; // Default to existing image
-    // 1. Handle New Image Upload (Only if user picked a new file)
-    if (imageFile) {
-        console.log("SQ-System: Uploading new item photo...");
-        
-        // COMPRESSION
-        const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
-        const compressedBlob = await imageCompression(imageFile, options);
-        
-        // FORCE FILE CONVERSION (Crucial fix for Supabase)
-        const compressedFile = new File([compressedBlob], imageFile.name, { 
-            type: imageFile.type 
-        });
-
-        const fileName = `${mode}-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
-        
-        // UPLOAD
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('proofs')
-            .upload(fileName, compressedFile, {
-                cacheControl: '3600',
-                upsert: false
-            });
-        
-        if (uploadError) {
-            console.error("SQ-Upload Error Details:", uploadError); // Check Console if this hits!
-            throw uploadError;
-        }
-        
-        const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
-        finalImageUrl = data.publicUrl;
-        console.log("SQ-System: Upload Success!", finalImageUrl);
-    }
+            let finalImageUrl = preview; 
     
-            // 2. Prepare Data & Clean Types
-            // We cast numeric fields to ensure the database doesn't reject the update
+            // 1. UPLOAD LOGIC (Correctly converts Blob to File)
+            if (imageFile) {
+                console.log("SQ-System: Uploading new item photo...");
+                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
+                const compressedBlob = await imageCompression(imageFile, options);
+                
+                const compressedFile = new File([compressedBlob], imageFile.name, { 
+                    type: imageFile.type 
+                });
+
+                const fileName = `${mode}-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('proofs')
+                    .upload(fileName, compressedFile, { cacheControl: '3600', upsert: false });
+                
+                if (uploadError) throw uploadError;
+                
+                const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+                finalImageUrl = data.publicUrl;
+                console.log("SQ-System: Upload Success!", finalImageUrl);
+            }
+    
+            // 2. PREPARE DATA (Correctly formats numbers)
             const payload = { 
                 ...form, 
                 image: finalImageUrl,
-                // Cast Quest-specific numeric fields
                 ...(mode === 'quest' && {
                     xp_value: Number(form.xp_value),
                     lat: parseFloat(form.lat),
                     lng: parseFloat(form.lng)
                 }),
-                // Cast Reward-specific numeric fields
                 ...(mode === 'reward' && {
                     xp_cost: Number(form.xp_cost)
                 })
             };
     
-            // 3. ROUTE TO CONTEXT ACTIONS
+            // 3. SUBMIT TO DATABASE (Correctly passes 'null' to avoid double upload)
             if (editingId) {
-                console.log(`SQ-System: Updating existing ${mode}...`);
-                if (mode === 'quest') {
-                    await updateQuest(editingId, payload);
-                } else {
-                    await updateReward(editingId, payload);
-                }
+                if (mode === 'quest') await updateQuest(editingId, payload);
+                else await updateReward(editingId, payload);
             } else {
-                console.log(`SQ-System: Creating new ${mode}...`);
-                if (mode === 'quest') {
-                    // For NEW quests, we pass the raw imageFile to addQuest 
-                    // because it has its own internal upload logic.
-                    await addQuest(form, imageFile);
-                } else {
-                    await addReward(form, imageFile);
-                }
+                // FIX: Send 'payload' and 'null' (because image is already inside payload)
+                if (mode === 'quest') await addQuest(payload, null);
+                else await addReward(payload, null);
             }
     
-            // 4. SUCCESS CLEANUP
+            // 4. CLEANUP
             console.log("SQ-System: Submission successful.");
             setEditingId(null);
-            setForm({ category: 'Environmental' });
+            setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
             setImageFile(null);
             setPreview(null);
             setView('manage');
@@ -138,7 +117,6 @@ const PartnerDashboard = () => {
             console.error("SQ-System: Submission Error ->", err.message);
             alert("Submission Error: " + err.message);
         } finally {
-            
             setIsSubmitting(false);
         }
     };
