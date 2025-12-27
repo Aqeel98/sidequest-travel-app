@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { X, Lock, Eye, EyeOff } from 'lucide-react'; 
+import { X, Lock, Eye, EyeOff, Mail, ArrowLeft } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import { supabase } from '../supabaseClient';
+
 
 const AuthModal = () => {
   const { showAuthModal, setShowAuthModal, login, signup } = useSideQuest();
@@ -26,14 +28,30 @@ const AuthModal = () => {
 
     try {
         if (mode === 'login') {
+            // 1. Existing Login Logic
             await login(email, password);
-        } else {
+        } 
+        else if (mode === 'signup') {
+            // 2. Existing Signup Logic (Changed 'else' to 'else if')
             await signup(email, password, name, role);
+        } 
+        else if (mode === 'reset') {
+            // 3. NEW: Password Reset Logic
+            // This sends a "Magic Link" to their inbox.
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                // This automatically detects if you are on localhost or Vercel
+                redirectTo: window.location.origin, 
+            });
+            
+            if (error) throw error;
+            
+            alert("Check your email! We sent you a password reset link.");
+            setMode('login'); // Send them back to login screen
         }
-        // Context handles closing via Auth Listener
     } catch (err) {
         console.error("Auth Error:", err);
         alert(err.message || "Authentication failed.");
+    } finally {
         setLoading(false); 
     }
   };
@@ -53,10 +71,10 @@ const AuthModal = () => {
                 <X size={24} />
             </button>
             <h2 className="text-3xl font-extrabold text-white mb-1 tracking-tight">
-                {mode === 'login' ? 'Welcome Back' : 'Join the Quest'}
+                {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Join the Quest' : 'Reset Password'}
             </h2>
             <p className="text-brand-100 text-sm font-medium">
-                {mode === 'login' ? 'Ready for your next adventure?' : 'Start your journey of impact.'}
+                {mode === 'login' ? 'Ready for your next adventure?' : mode === 'signup' ? 'Start your journey of impact.' : 'We will email you a recovery link.'}
             </p>
         </div>
         
@@ -88,27 +106,43 @@ const AuthModal = () => {
                     />
                 </div>
 
-                <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Password</label>
-                    <div className="relative">
-                        <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
-                        <input 
-                            type={showPassword ? "text" : "password"} 
-                            className="w-full border-2 border-gray-200 p-3 pl-10 pr-10 rounded-xl focus:border-brand-500 focus:ring-0 outline-none transition-all" 
-                            placeholder="••••••••" 
-                            value={password} 
-                            onChange={e => setPassword(e.target.value)} 
-                            required 
-                        />
+                {/* 1. HIDE PASSWORD IF RESETTING */}
+                {mode !== 'reset' && (
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Password</label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                            <input 
+                                type={showPassword ? "text" : "password"} 
+                                className="w-full border-2 border-gray-200 p-3 pl-10 pr-10 rounded-xl focus:border-brand-500 focus:ring-0 outline-none transition-all" 
+                                placeholder="••••••••" 
+                                value={password} 
+                                onChange={e => setPassword(e.target.value)} 
+                                required={mode !== 'reset'}
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-3.5 text-gray-400 hover:text-brand-600 focus:outline-none"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* 2. ADD FORGOT PASSWORD LINK */}
+                {mode === 'login' && (
+                    <div className="flex justify-end pt-1">
                         <button 
                             type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3.5 text-gray-400 hover:text-brand-600 focus:outline-none"
+                            onClick={() => setMode('reset')}
+                            className="text-xs font-bold text-brand-600 hover:text-brand-700"
                         >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            Forgot Password?
                         </button>
                     </div>
-                </div>
+                )}
 
                 {mode === 'signup' && (
                     <div className="grid grid-cols-2 gap-3 pt-2">
@@ -140,20 +174,34 @@ const AuthModal = () => {
                             </svg>
                             Processing...
                         </>
-                    ) : (mode === 'login' ? 'Log In' : 'Start Adventure')}
+                    ) : (mode === 'login' ? 'Log In' : mode === 'signup' ? 'Start Adventure' : 'Send Reset Link')}
                 </button>
             </form>
             
-            <p className="mt-6 text-center text-sm text-gray-600 font-medium">
-                {mode === 'login' ? "New to SideQuest? " : "Already have an account? "}
-                <button 
-                    onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} 
-                    className="text-brand-600 font-bold hover:underline"
-                    disabled={loading}
-                >
-                    {mode === 'login' ? 'Create Account' : 'Log in'}
-                </button>
-            </p>
+            {/* 3. UPDATE FOOTER FOR RESET MODE */}
+            <div className="mt-6 text-center text-sm text-gray-600 font-medium">
+                {mode === 'reset' ? (
+                    <button 
+                        type="button"
+                        onClick={() => setMode('login')} 
+                        className="flex items-center justify-center w-full text-gray-500 hover:text-brand-600"
+                    >
+                        <ArrowLeft size={16} className="mr-1" /> Back to Login
+                    </button>
+                ) : (
+                    <>
+                        {mode === 'login' ? "New to SideQuest? " : "Already have an account? "}
+                        <button 
+                            type="button"
+                            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} 
+                            className="text-brand-600 font-bold hover:underline"
+                            disabled={loading}
+                        >
+                            {mode === 'login' ? 'Create Account' : 'Log in'}
+                        </button>
+                    </>
+                )}
+            </div>
         </div>
       </div>
     </div>
