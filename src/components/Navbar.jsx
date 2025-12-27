@@ -36,7 +36,7 @@ const Navbar = () => {
           <Link to="/my-quests" className={isActive('/my-quests')}>My Quests</Link>
           <Link to="/rewards" className={isActive('/rewards')}>Rewards</Link>
           
-          {currentUser?.role === 'Partner' && (
+          {(currentUser?.role === 'Partner' || currentUser?.role === 'Admin') && (
             <Link to="/partner" className={isActive('/partner')}>Partner</Link>
           )}
 
