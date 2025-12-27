@@ -18,42 +18,6 @@ import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
 
 
-// --- ROLE SWITCHER (Debug Tool) ---
-const RoleSwitcher = () => {
-  const { currentUser, switchRole } = useSideQuest();
-  const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
-
-  if (!currentUser || currentUser.email !== ADMIN_EMAIL) return null;
-
-  return (
-    // FIX: z-[3000] ensures this is ALWAYS clickable, even over modals
-    <div className="fixed bottom-4 right-4 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-2xl z-[3000] border border-brand-100 animate-in slide-in-from-bottom-5">
-      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-        <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>
-        <span className="font-bold text-[10px] text-gray-500 uppercase tracking-widest">Debug Mode</span>
-      </div>
-      
-      <div className="space-y-1">
-        {['Traveler', 'Partner', 'Admin'].map((role) => (
-          <button 
-            key={role}
-            onClick={() => switchRole(role)} 
-            className={`block text-left px-3 py-1.5 rounded-lg w-full text-xs transition-all ${
-              currentUser.role === role 
-                ? 'bg-brand-600 text-white font-bold shadow-md shadow-brand-200' 
-                : 'hover:bg-gray-100 text-gray-600 font-medium'
-            }`}
-          >
-            Switch to {role}
-          </button>
-        ))}
-      </div>
-      
-      <p className="text-[9px] text-gray-400 mt-2 text-center italic">Admin: {ADMIN_EMAIL}</p>
-    </div>
-  );
-};
-
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
@@ -105,7 +69,7 @@ const MainLayout = () => {
             <Toast />
             <AuthModal />
             <Outlet />
-            <RoleSwitcher />
+            
         </div>
     );
 };
