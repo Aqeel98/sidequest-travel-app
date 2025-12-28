@@ -15,7 +15,7 @@ const HowItWorks = () => {
   const travelerSteps = [
     {
       title: "Discover Impact Quests",
-      // UPDATED: General description covering all categories
+      // UPDATED: Generalized description
       desc: "Browse the map to find curated activities that matter. Whether it's Conservation, Cultural Exchange, or Animal Welfare, find a quest that matches your vibe nearby.",
       icon: <Map className="text-brand-600" size={32} />,
       color: "bg-brand-50 border-brand-200"
@@ -43,8 +43,8 @@ const HowItWorks = () => {
   const partnerSteps = [
     {
       title: "Create an Experience",
-      // UPDATED: Detailed examples for Partners
-      desc: "Turn your business into a destination for conscious travelers. Create quests like 'Zero-Waste Dining Challenges', 'On-site Tree Planting', or 'Cultural Craft Workshops' that drive footfall while creating real impact.",
+      // UPDATED: Generalized description for any business type
+      desc: "Turn your business into a destination for conscious travelers. Design any type of challenge, activity, or cultural experience that brings people to your location and creates positive impact.",
       icon: <Users className="text-purple-600" size={32} />,
       color: "bg-purple-50 border-purple-200"
     },
