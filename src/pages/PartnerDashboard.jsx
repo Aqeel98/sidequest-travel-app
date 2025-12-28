@@ -5,12 +5,14 @@ import { supabase } from '../supabaseClient';
 import imageCompression from 'browser-image-compression';
 
 const PartnerDashboard = () => {
-    const { currentUser, quests, rewards, addQuest, addReward, updateQuest, updateReward } = useSideQuest();
+    // 1. Updated Destructuring
+    const { currentUser, quests, rewards, questProgress, redemptions, users, addQuest, addReward, updateQuest, updateReward } = useSideQuest();
     
     // UI State
     const [view, setView] = useState('create'); 
     const [mode, setMode] = useState('quest');
     const [editingId, setEditingId] = useState(null);
+    const [viewClaimsId, setViewClaimsId] = useState(null); // State for toggling claim list
 
     // Form State
     const [form, setForm] = useState({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
@@ -58,7 +60,7 @@ const PartnerDashboard = () => {
         try {
             let finalImageUrl = preview; 
     
-            // 1. UPLOAD LOGIC (Correctly converts Blob to File)
+            // 1. UPLOAD LOGIC
             if (imageFile) {
                 console.log("SQ-System: Uploading new item photo...");
                 const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
@@ -81,7 +83,7 @@ const PartnerDashboard = () => {
                 console.log("SQ-System: Upload Success!", finalImageUrl);
             }
     
-            // 2. PREPARE DATA (Correctly formats numbers)
+            // 2. PREPARE DATA
             const payload = { 
                 ...form, 
                 image: finalImageUrl,
@@ -95,12 +97,11 @@ const PartnerDashboard = () => {
                 })
             };
     
-            // 3. SUBMIT TO DATABASE (Correctly passes 'null' to avoid double upload)
+            // 3. SUBMIT TO DATABASE
             if (editingId) {
                 if (mode === 'quest') await updateQuest(editingId, payload);
                 else await updateReward(editingId, payload);
             } else {
-                // FIX: Send 'payload' and 'null' (because image is already inside payload)
                 if (mode === 'quest') await addQuest(payload, null);
                 else await addReward(payload, null);
             }
@@ -131,9 +132,8 @@ const PartnerDashboard = () => {
                 </h1>
                 
                 <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
-                    
                     <button 
-                        onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental'}); setPreview(null);}} 
+                        onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental', xp_value: 50, xp_cost: 50}); setPreview(null);}} 
                         className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'create' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
                     >
                         {editingId ? 'Edit Mode' : 'Add New'}
@@ -145,7 +145,6 @@ const PartnerDashboard = () => {
                     >
                         My Content
                     </button>
-
                 </div>
             </div>
 
@@ -189,7 +188,7 @@ const PartnerDashboard = () => {
                             ) : (
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">XP Cost</label>
-                                    <input type="number" name="xp_cost" value={form.xp_cost || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                                    <input type="number" name="xp_cost" value={form.xp_cost} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
                                 </div>
                             )}
                         </div>
@@ -199,7 +198,6 @@ const PartnerDashboard = () => {
                             <textarea name="description" value={form.description || ''} onChange={handleChange} rows="3" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
                         </div>
 
-                        {/* Image Upload Area */}
                         <div className="bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-200">
                             <label className="block text-xs font-black text-gray-400 uppercase mb-3 tracking-widest">Item Photo</label>
                             <div className="flex items-center gap-6">
@@ -254,51 +252,109 @@ const PartnerDashboard = () => {
             ) : (
                 /* --- MANAGE VIEW --- */
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in duration-500">
-                    {/* MY QUESTS */}
+                    
+                    {/* MY QUESTS SECTION */}
                     <div className="space-y-6">
-                        <h2 className="text-2xl font-black text-gray-900 flex items-center border-b pb-4"><Map size={24} className="mr-3 text-brand-600"/> My Active Quests</h2>
+                        <h2 className="text-2xl font-black text-gray-900 flex items-center border-b pb-4">
+                            <Map size={24} className="mr-3 text-brand-600"/> My Active Quests
+                        </h2>
+                        
                         {myQuests.length === 0 ? <p className="text-gray-400 py-10 text-center bg-white rounded-3xl border border-dashed">No quests yet.</p> :
-                        myQuests.map(q => (
-                            <div key={q.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center transition-all hover:shadow-md">
-                                <div className="flex items-center gap-4">
-                                    <img src={q.image || "https://via.placeholder.com/60"} className="w-16 h-16 rounded-2xl object-cover border shadow-sm" />
-                                    <div>
-                                        <p className="font-bold text-gray-900 leading-tight">{q.title}</p>
-                                        <div className="mt-1 flex items-center gap-2">
-                                            {q.status === 'active' ? 
-                                                <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">LIVE</span> :
-                                                <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">IN REVIEW</span>
-                                            }
+                        myQuests.map(q => {
+                            // CALCULATE COMPLETIONS
+                            const completedCount = questProgress.filter(p => p.quest_id === q.id && p.status === 'approved').length;
+                            
+                            return (
+                                <div key={q.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-4">
+                                            <img src={q.image || "https://via.placeholder.com/60"} className="w-16 h-16 rounded-2xl object-cover border shadow-sm" />
+                                            <div>
+                                                <p className="font-bold text-gray-900 leading-tight">{q.title}</p>
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    {q.status === 'active' ? 
+                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">LIVE</span> :
+                                                        <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">IN REVIEW</span>
+                                                    }
+                                                    {/* SHOW COMPLETION STATS */}
+                                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-black border border-blue-100 flex items-center">
+                                                        <CheckCircle size={10} className="mr-1"/> {completedCount} Completed
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
+                                        <button onClick={() => startEdit(q, 'quest')} className="p-2 text-gray-300 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all"><Edit size={20} /></button>
                                     </div>
                                 </div>
-                                <button onClick={() => startEdit(q, 'quest')} className="p-3 text-gray-300 hover:text-brand-600 hover:bg-brand-50 rounded-2xl transition-all"><Edit size={24} /></button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
-                    {/* MY REWARDS */}
+                    {/* MY REWARDS SECTION */}
                     <div className="space-y-6">
-                        <h2 className="text-2xl font-black text-gray-900 flex items-center border-b pb-4"><Gift size={24} className="mr-3 text-orange-600"/> My Rewards</h2>
+                        <h2 className="text-2xl font-black text-gray-900 flex items-center border-b pb-4">
+                            <Gift size={24} className="mr-3 text-orange-600"/> My Rewards
+                        </h2>
+                        
                         {myRewards.length === 0 ? <p className="text-gray-400 py-10 text-center bg-white rounded-3xl border border-dashed">No rewards yet.</p> :
-                        myRewards.map(r => (
-                            <div key={r.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center transition-all hover:shadow-md">
-                                <div className="flex items-center gap-4">
-                                    <img src={r.image || "https://via.placeholder.com/60"} className="w-16 h-16 rounded-2xl object-cover border shadow-sm" />
-                                    <div>
-                                        <p className="font-bold text-gray-900 leading-tight">{r.title}</p>
-                                        <div className="mt-1 flex items-center gap-3">
-                                            {r.status === 'active' ? 
-                                                <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">ACTIVE</span> :
-                                                <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">REVIEWING</span>
-                                            }
-                                            <span className="text-[10px] text-orange-500 font-black">{r.xp_cost} XP</span>
+                        myRewards.map(r => {
+                            // CALCULATE CLAIMS
+                            const claims = redemptions.filter(red => red.reward_id === r.id);
+                            const isExpanded = viewClaimsId === r.id;
+
+                            return (
+                                <div key={r.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                                    <div className="p-5 flex justify-between items-center">
+                                        <div className="flex items-center gap-4">
+                                            <img src={r.image || "https://via.placeholder.com/60"} className="w-16 h-16 rounded-2xl object-cover border shadow-sm" />
+                                            <div>
+                                                <p className="font-bold text-gray-900 leading-tight">{r.title}</p>
+                                                <div className="mt-1 flex items-center gap-3">
+                                                    {r.status === 'active' ? 
+                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">ACTIVE</span> :
+                                                        <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">REVIEWING</span>
+                                                    }
+                                                    {/* SHOW CLAIM STATS */}
+                                                    <button 
+                                                        onClick={() => setViewClaimsId(isExpanded ? null : r.id)}
+                                                        className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-black border border-orange-100 hover:bg-orange-100 transition-colors cursor-pointer"
+                                                    >
+                                                        🎁 {claims.length} Claimed {isExpanded ? '▲' : '▼'}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
+                                        <button onClick={() => startEdit(r, 'reward')} className="p-2 text-gray-300 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"><Edit size={20} /></button>
                                     </div>
+
+                                    {/* EXPANDED CLAIM LIST */}
+                                    {isExpanded && (
+                                        <div className="bg-orange-50/50 p-4 border-t border-orange-100 animate-in slide-in-from-top-2 duration-200">
+                                            <h4 className="text-xs font-bold text-orange-800 uppercase mb-2 ml-1">Recent Claims</h4>
+                                            {claims.length === 0 ? (
+                                                <p className="text-xs text-gray-500 italic ml-1">No claims yet.</p>
+                                            ) : (
+                                                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                                                    {claims.map(claim => {
+                                                        const traveler = users.find(u => u.id === claim.traveler_id);
+                                                        return (
+                                                            <div key={claim.id} className="flex justify-between items-center bg-white p-2 rounded-lg border border-orange-100 shadow-sm">
+                                                                <span className="text-xs font-bold text-gray-700">
+                                                                    {traveler?.full_name || traveler?.email || 'Unknown Traveler'}
+                                                                </span>
+                                                                <span className="text-[10px] font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-200">
+                                                                    {claim.redemption_code}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                                <button onClick={() => startEdit(r, 'reward')} className="p-3 text-gray-300 hover:text-orange-600 hover:bg-orange-50 rounded-2xl transition-all"><Edit size={24} /></button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
