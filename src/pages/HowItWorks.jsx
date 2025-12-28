@@ -2,26 +2,27 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Map, Camera, Award, Gift, CheckCircle, Shield, 
-  Users, HeartHandshake, ArrowRight, UploadCloud, LogIn 
+  Users, HeartHandshake, ArrowRight, Lock, EyeOff, Zap 
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const HowItWorks = () => {
   const navigate = useNavigate();
-  const { setShowAuthModal, currentUser } = useSideQuest(); // FIX: Access Context
+  const { setShowAuthModal, currentUser } = useSideQuest(); 
   const [activeTab, setActiveTab] = useState('traveler');
 
   // --- CONTENT DATA ---
   const travelerSteps = [
     {
       title: "Discover Impact Quests",
-      desc: "Browse the map or grid to find environmental and social tasks nearby. From beach cleanups to supporting local artisans.",
+      // UPDATED: General description covering all categories
+      desc: "Browse the map to find curated activities that matter. Whether it's Conservation, Cultural Exchange, or Animal Welfare, find a quest that matches your vibe nearby.",
       icon: <Map className="text-brand-600" size={32} />,
       color: "bg-brand-50 border-brand-200"
     },
     {
-      title: "Go & Do Good",
-      desc: "Travel to the location. Follow the instructions to complete the task. Enjoy the experience of giving back to Sri Lanka.",
+      title: "Journey with Purpose", 
+      desc: "Travel to the location and immerse yourself in the task. It's not just volunteering; it's experiencing the island deeper than any tourist.",
       icon: <HeartHandshake className="text-red-500" size={32} />,
       color: "bg-red-50 border-red-200"
     },
@@ -42,7 +43,8 @@ const HowItWorks = () => {
   const partnerSteps = [
     {
       title: "Create an Experience",
-      desc: "Design a Quest that drives footfall to your location while helping the environment or community.",
+      // UPDATED: Detailed examples for Partners
+      desc: "Turn your business into a destination for conscious travelers. Create quests like 'Zero-Waste Dining Challenges', 'On-site Tree Planting', or 'Cultural Craft Workshops' that drive footfall while creating real impact.",
       icon: <Users className="text-purple-600" size={32} />,
       color: "bg-purple-50 border-purple-200"
     },
@@ -126,8 +128,51 @@ const HowItWorks = () => {
           ))}
         </div>
 
+        {/* --- THE SIDEQUEST PROMISE (Privacy & Trust) --- */}
+        {activeTab === 'traveler' && (
+            <div className="mt-12 bg-slate-50 border border-slate-200 rounded-3xl p-8">
+                <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">The SideQuest Promise</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    
+                    {/* Privacy */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                            <EyeOff size={24} />
+                        </div>
+                        <h4 className="font-bold text-slate-900 mb-1">No Tracking</h4>
+                        <p className="text-sm text-slate-500">
+                            We value your freedom. We do not track your live location unless you actively click "Find Nearest Quests".
+                        </p>
+                    </div>
+
+                    {/* Anonymity */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                            <Shield size={24} />
+                        </div>
+                        <h4 className="font-bold text-slate-900 mb-1">Stay Anonymous</h4>
+                        <p className="text-sm text-slate-500">
+                            You can sign up with any nickname. We only need an email to save your XP and badges.
+                        </p>
+                    </div>
+
+                    {/* Recovery */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                            <Zap size={24} />
+                        </div>
+                        <h4 className="font-bold text-slate-900 mb-1">Instant Recovery</h4>
+                        <p className="text-sm text-slate-500">
+                            Forget your password? No problem. We send a secure Magic Link to your email to log you back in instantly.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        )}
+
         {/* --- GUIDELINES SECTION --- */}
-        <div className="mt-16 bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100">
+        <div className="mt-12 bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             {activeTab === 'traveler' ? 'Submission Guidelines' : 'Partner Rules'}
           </h2>
