@@ -52,7 +52,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         setUploading(true);
         try {
             // 1. Compress
-            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: true };
+            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false  };
             const compressedBlob = await imageCompression(file, options);
             
             // 2. FIX: Convert Blob to File (Critical for Supabase stability)

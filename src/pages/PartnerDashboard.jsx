@@ -63,7 +63,7 @@ const PartnerDashboard = () => {
             // 1. UPLOAD LOGIC
             if (imageFile) {
                 console.log("SQ-System: Uploading new item photo...");
-                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: true };
+                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: false };
                 const compressedBlob = await imageCompression(imageFile, options);
                 
                 const compressedFile = new File([compressedBlob], imageFile.name, { 
