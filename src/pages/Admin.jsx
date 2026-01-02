@@ -51,34 +51,40 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
     
         setUploading(true);
         try {
-            // 1. Compress
-            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false  };
-            const compressedBlob = await imageCompression(file, options);
+            let fileToUpload = file; // Default to original
+
+            // 1. Attempt Safe Compression
+            try {
+                const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
+                const compressedBlob = await imageCompression(file, options);
+                
+                // Convert Blob to File
+                fileToUpload = new File([compressedBlob], file.name, { 
+                    type: file.type 
+                });
+            } catch (compressionError) {
+                console.warn("Admin: Compression skipped, using original.", compressionError);
+            }
             
-            // 2. FIX: Convert Blob to File (Critical for Supabase stability)
-            const compressedFile = new File([compressedBlob], file.name, { 
-                type: file.type 
-            });
-            
-            // 3. Local Preview
-            const localPreview = URL.createObjectURL(compressedFile);
+            // 2. Local Preview
+            const localPreview = URL.createObjectURL(fileToUpload);
             setPreviewUrl(localPreview); 
     
-            // 4. Upload
+            // 3. Upload
             const fileName = `admin-uploads/${Date.now()}_${file.name.replace(/\s/g, '')}`;
             const { error: uploadError } = await supabase.storage
               .from('proofs')
-              .upload(fileName, compressedFile, { cacheControl: '3600', upsert: false });
+              .upload(fileName, fileToUpload, { cacheControl: '3600', upsert: false });
             
             if (uploadError) throw uploadError;
     
             const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
             setFormData(prev => ({ ...prev, image: data.publicUrl }));
             
-            alert("Image optimized and staged! Click 'Save Changes' to push live.");
+            alert("Image uploaded! Click 'Save Changes' to confirm.");
         } catch (error) {
             console.error("Admin Upload Error:", error);
-            setPreviewUrl(item.image || null);
+            setPreviewUrl(item.image || null); // Revert preview on failure
             alert("Upload failed: " + error.message);
         } finally {
             setUploading(false);

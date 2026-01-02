@@ -55,26 +55,39 @@ const PartnerDashboard = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // 1. VALIDATION: Check if image exists (either new file or existing preview)
+        if (!imageFile && !preview) {
+            alert(`Please select an image for your ${mode}.`);
+            return;
+        }
+
         setIsSubmitting(true);
     
         try {
             let finalImageUrl = preview; 
     
-            // 1. UPLOAD LOGIC
+            // 2. UPLOAD LOGIC
             if (imageFile) {
-                console.log("SQ-System: Uploading new item photo...");
-                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1280, useWebWorker: false };
-                const compressedBlob = await imageCompression(imageFile, options);
+                console.log("SQ-System: Processing image...");
                 
-                const compressedFile = new File([compressedBlob], imageFile.name, { 
-                    type: imageFile.type 
-                });
+                let fileToUpload = imageFile;
 
+                // Attempt Compression (Safe Mode)
+                try {
+                    const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
+                    const compressedBlob = await imageCompression(imageFile, options);
+                    fileToUpload = new File([compressedBlob], imageFile.name, { type: imageFile.type });
+                } catch (cErr) {
+                    console.warn("Compression skipped, uploading original.", cErr);
+                }
+
+                console.log("SQ-System: Uploading...");
                 const fileName = `${mode}-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
                 
                 const { error: uploadError } = await supabase.storage
                     .from('proofs')
-                    .upload(fileName, compressedFile, { cacheControl: '3600', upsert: false });
+                    .upload(fileName, fileToUpload, { cacheControl: '3600', upsert: false });
                 
                 if (uploadError) throw uploadError;
                 
@@ -83,7 +96,7 @@ const PartnerDashboard = () => {
                 console.log("SQ-System: Upload Success!", finalImageUrl);
             }
     
-            // 2. PREPARE DATA
+            // 3. PREPARE DATA
             const payload = { 
                 ...form, 
                 image: finalImageUrl,
@@ -97,7 +110,7 @@ const PartnerDashboard = () => {
                 })
             };
     
-            // 3. SUBMIT TO DATABASE
+            // 4. SUBMIT TO DATABASE
             if (editingId) {
                 if (mode === 'quest') await updateQuest(editingId, payload);
                 else await updateReward(editingId, payload);
@@ -106,7 +119,7 @@ const PartnerDashboard = () => {
                 else await addReward(payload, null);
             }
     
-            // 4. CLEANUP
+            // 5. CLEANUP
             console.log("SQ-System: Submission successful.");
             setEditingId(null);
             setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
@@ -115,8 +128,8 @@ const PartnerDashboard = () => {
             setView('manage');
             
         } catch (err) {
-            console.error("SQ-System: Submission Error ->", err.message);
-            alert("Submission Error: " + err.message);
+            console.error("SQ-System: Error ->", err);
+            alert("Error: " + (err.message || "Something went wrong"));
         } finally {
             setIsSubmitting(false);
         }
