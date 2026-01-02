@@ -29,10 +29,16 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
         const options = {
             maxSizeMB: 0.8,
             maxWidthOrHeight: 1280,
-            useWebWorker: true
+            useWebWorker: false // ✅ FIX: Must be false for Vercel/Mobile
         };
         
-        const compressedFile = await imageCompression(selected, options);
+        const compressedBlob = await imageCompression(selected, options);
+        
+        // ✅ FIX: Convert Blob to File so SideQuestContext accepts it
+        const compressedFile = new File([compressedBlob], selected.name, { 
+            type: selected.type 
+        });
+
         const url = URL.createObjectURL(compressedFile);
         
         setFile(compressedFile);

@@ -418,21 +418,27 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   // --- 7. QUEST & IMPACT ACTIONS ---
-
-  // Partner creation (Still needs compression here as Partners create from Dashboard)
-  const addQuest = async (formData, imageFile) => {
+// Partner creation (Fixed: Public Bucket + Mobile Safety)
+const addQuest = async (formData, imageFile) => {
     try {
         console.log("SQ-Quest: Initiating new quest creation...");
         let imageUrl = null;
         if (imageFile) {
-            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: true };
+            // ✅ FIX 1: Disable WebWorker to prevent mobile/Vercel crashes
+            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
             const optimized = await imageCompression(imageFile, options);
             
-            const fileName = `quest-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
-            const { error: uploadErr } = await supabase.storage.from('proofs').upload(fileName, optimized);
+            // ✅ FIX 2: Convert Blob to File for Supabase
+            const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
+
+            // ✅ FIX 3: Upload to 'quest-images' (Public) instead of 'proofs'
+            const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
+            const { error: uploadErr } = await supabase.storage.from('quest-images').upload(fileName, fileToUpload);
             
             if (uploadErr) throw uploadErr;
-            imageUrl = supabase.storage.from('proofs').getPublicUrl(fileName).data.publicUrl;
+            
+            // Get URL from the correct bucket
+            imageUrl = supabase.storage.from('quest-images').getPublicUrl(fileName).data.publicUrl;
         }
 
         const { error } = await supabase.from('quests').insert([{
@@ -461,6 +467,7 @@ export const SideQuestProvider = ({ children }) => {
     }
   };
 
+  
   const updateQuest = async (id, updates) => {
     try {
         console.log(`SQ-System: Hardening Update Logic for Quest ID: ${id}`);
@@ -644,19 +651,27 @@ export const SideQuestProvider = ({ children }) => {
     
     return true; // Unblocks the UI immediately
   };
-  // --- 8. REWARD ECONOMY ACTIONS ---
+  // // --- 8. REWARD ECONOMY ACTIONS ---
 
   const addReward = async (formData, imageFile) => {
     try {
         console.log("SQ-Market: Adding new reward to marketplace...");
         let imageUrl = null;
         if (imageFile) {
-            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: true };
+            // ✅ FIX 1: Disable WebWorker
+            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
             const optimized = await imageCompression(imageFile, options);
-            const fileName = `reward-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
-            const { error: uploadErr } = await supabase.storage.from('proofs').upload(fileName, optimized);
+            
+            // ✅ FIX 2: Convert Blob to File
+            const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
+
+            // ✅ FIX 3: Upload to 'quest-images' (Public)
+            const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
+            const { error: uploadErr } = await supabase.storage.from('quest-images').upload(fileName, fileToUpload);
+            
             if (uploadErr) throw uploadErr;
-            imageUrl = supabase.storage.from('proofs').getPublicUrl(fileName).data.publicUrl;
+            
+            imageUrl = supabase.storage.from('quest-images').getPublicUrl(fileName).data.publicUrl;
         }
 
         const { error } = await supabase.from('rewards').insert([{

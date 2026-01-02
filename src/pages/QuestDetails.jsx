@@ -55,10 +55,16 @@ const QuestDetails = () => {
         const options = {
             maxSizeMB: 0.8,          
             maxWidthOrHeight: 1280,  
-            useWebWorker: true       
+            useWebWorker: false // ✅ FIX: Must be false for Mobile stability
         };
 
-        const compressedFile = await imageCompression(file, options);
+        const compressedBlob = await imageCompression(file, options);
+        
+        // ✅ FIX: Convert Blob to File (Supabase strict mode)
+        const compressedFile = new File([compressedBlob], file.name, { 
+            type: file.type 
+        });
+
         const url = URL.createObjectURL(compressedFile);
         
         setPreviewUrl(url);
