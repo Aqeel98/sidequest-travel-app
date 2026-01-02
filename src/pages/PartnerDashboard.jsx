@@ -56,7 +56,7 @@ const PartnerDashboard = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 1. VALIDATION: Check if image exists (either new file or existing preview)
+        // 1. VALIDATION: Check if image exists
         if (!imageFile && !preview) {
             alert(`Please select an image for your ${mode}.`);
             return;
@@ -77,21 +77,26 @@ const PartnerDashboard = () => {
                 try {
                     const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
                     const compressedBlob = await imageCompression(imageFile, options);
+                    // FORCE the blob to be a File object (Critical for Supabase)
                     fileToUpload = new File([compressedBlob], imageFile.name, { type: imageFile.type });
                 } catch (cErr) {
                     console.warn("Compression skipped, uploading original.", cErr);
                 }
 
                 console.log("SQ-System: Uploading...");
-                const fileName = `${mode}-images/${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
                 
+                // ✅ CHANGE 1: Simple filename, no folders needed for this dedicated bucket
+                const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
+                
+                // ✅ CHANGE 2: Upload to 'quest-images' (Public) instead of 'proofs' (Private)
                 const { error: uploadError } = await supabase.storage
-                    .from('proofs')
+                    .from('quest-images') 
                     .upload(fileName, fileToUpload, { cacheControl: '3600', upsert: false });
                 
                 if (uploadError) throw uploadError;
                 
-                const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+                // ✅ CHANGE 3: Get the URL from the correct bucket
+                const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
                 finalImageUrl = data.publicUrl;
                 console.log("SQ-System: Upload Success!", finalImageUrl);
             }
@@ -100,6 +105,11 @@ const PartnerDashboard = () => {
             const payload = { 
                 ...form, 
                 image: finalImageUrl,
+                // ✅ CHANGE 4: Logic for Approvals
+                // Admin -> Active immediately (No approval needed)
+                // Partner -> Pending (Needs approval)
+                status: currentUser?.role === 'Admin' ? 'active' : 'pending',
+                
                 ...(mode === 'quest' && {
                     xp_value: Number(form.xp_value),
                     lat: parseFloat(form.lat),
@@ -134,7 +144,6 @@ const PartnerDashboard = () => {
             setIsSubmitting(false);
         }
     };
-
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">

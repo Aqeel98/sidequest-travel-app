@@ -21,7 +21,7 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass }) => (
     </div>
 );
 
-// --- EDIT FORM COMPONENT (Existing logic preserved accurately) ---
+// --- EDIT FORM COMPONENT (Fixed: Uploads to 'quest-images' Public Bucket) ---
 const EditForm = ({ item, onSave, onCancel, type }) => {
     const [formData, setFormData] = useState(item);
     const [uploading, setUploading] = useState(false);
@@ -51,14 +51,14 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
     
         setUploading(true);
         try {
-            let fileToUpload = file; // Default to original
+            let fileToUpload = file; 
 
-            // 1. Attempt Safe Compression
+            // 1. Attempt Safe Compression (Technical Bible Standard)
             try {
                 const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
                 const compressedBlob = await imageCompression(file, options);
                 
-                // Convert Blob to File
+                // Convert Blob to File to prevent Supabase upload errors
                 fileToUpload = new File([compressedBlob], file.name, { 
                     type: file.type 
                 });
@@ -70,15 +70,21 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
             const localPreview = URL.createObjectURL(fileToUpload);
             setPreviewUrl(localPreview); 
     
-            // 3. Upload
-            const fileName = `admin-uploads/${Date.now()}_${file.name.replace(/\s/g, '')}`;
+            // 3. Upload Logic (Corrected)
+            console.log("SQ-Admin: Uploading to quest-images...");
+            
+            // ✅ FIX 1: Remove folder prefix to match Partner structure
+            const fileName = `${Date.now()}_${file.name.replace(/\s/g, '')}`;
+            
+            // ✅ FIX 2: Upload to 'quest-images' (Public) instead of 'proofs' (Private)
             const { error: uploadError } = await supabase.storage
-              .from('proofs')
+              .from('quest-images')
               .upload(fileName, fileToUpload, { cacheControl: '3600', upsert: false });
             
             if (uploadError) throw uploadError;
     
-            const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
+            // ✅ FIX 3: Get the public URL from the correct bucket
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
             setFormData(prev => ({ ...prev, image: data.publicUrl }));
             
             alert("Image uploaded! Click 'Save Changes' to confirm.");
