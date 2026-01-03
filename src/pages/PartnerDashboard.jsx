@@ -52,11 +52,10 @@ const PartnerDashboard = () => {
         setView('create');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 1. VALIDATION: Check if image exists
+        // 1. VALIDATION: Check if image exists (via new file or existing preview)
         if (!imageFile && !preview) {
             alert(`Please select an image for your ${mode}.`);
             return;
@@ -70,33 +69,30 @@ const PartnerDashboard = () => {
             // 2. UPLOAD LOGIC
             if (imageFile) {
                 console.log("SQ-System: Processing image...");
-                
                 let fileToUpload = imageFile;
 
-                // Attempt Compression (Safe Mode)
+                // Attempt Compression (Safe Mode: useWebWorker: false)
                 try {
                     const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
                     const compressedBlob = await imageCompression(imageFile, options);
-                    // FORCE the blob to be a File object (Critical for Supabase)
+                    // FORCE the blob to be a File object for Supabase compatibility
                     fileToUpload = new File([compressedBlob], imageFile.name, { type: imageFile.type });
                 } catch (cErr) {
                     console.warn("Compression skipped, uploading original.", cErr);
                 }
 
-                console.log("SQ-System: Uploading...");
+                console.log("SQ-System: Uploading to Supabase Storage...");
                 
-                // ✅ CHANGE 1: Simple filename, no folders needed for this dedicated bucket
-                const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
+                // ✅ ACCURACY FIX: Sanitize filename to prevent storage path errors
+                const safeName = `${Date.now()}_${imageFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
                 
-                // ✅ CHANGE 2: Upload to 'quest-images' (Public) instead of 'proofs' (Private)
                 const { error: uploadError } = await supabase.storage
                     .from('quest-images') 
-                    .upload(fileName, fileToUpload, { cacheControl: '3600', upsert: false });
+                    .upload(safeName, fileToUpload, { cacheControl: '3600', upsert: false });
                 
                 if (uploadError) throw uploadError;
                 
-                // ✅ CHANGE 3: Get the URL from the correct bucket
-                const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
+                const { data } = supabase.storage.from('quest-images').getPublicUrl(safeName);
                 finalImageUrl = data.publicUrl;
                 console.log("SQ-System: Upload Success!", finalImageUrl);
             }
@@ -105,42 +101,46 @@ const PartnerDashboard = () => {
             const payload = { 
                 ...form, 
                 image: finalImageUrl,
-                // ✅ CHANGE 4: Logic for Approvals
-                // Admin -> Active immediately (No approval needed)
-                // Partner -> Pending (Needs approval)
-                status: currentUser?.role === 'Admin' ? 'active' : 'pending',
+                // ✅ ACCURACY FIX: Correct status naming for Admin Oversight
+                status: currentUser?.role === 'Admin' ? 'active' : 'pending_admin',
                 
                 ...(mode === 'quest' && {
-                    xp_value: Number(form.xp_value),
-                    lat: parseFloat(form.lat),
-                    lng: parseFloat(form.lng)
+                    // ✅ ACCURACY FIX: Sanitization prevents "NaN" Database Crashes
+                    xp_value: parseInt(form.xp_value) || 0,
+                    lat: parseFloat(form.lat) || 0,
+                    lng: parseFloat(form.lng) || 0
                 }),
                 ...(mode === 'reward' && {
-                    xp_cost: Number(form.xp_cost)
+                    // ✅ ACCURACY FIX: Sanitization prevents "NaN" Database Crashes
+                    xp_cost: parseInt(form.xp_cost) || 0
                 })
             };
     
-            // 4. SUBMIT TO DATABASE
+            // 4. SUBMIT TO DATABASE (Capture boolean from Context)
+            let success = false;
             if (editingId) {
-                if (mode === 'quest') await updateQuest(editingId, payload);
-                else await updateReward(editingId, payload);
+                if (mode === 'quest') success = await updateQuest(editingId, payload);
+                else success = await updateReward(editingId, payload);
             } else {
-                if (mode === 'quest') await addQuest(payload, null);
-                else await addReward(payload, null);
+                if (mode === 'quest') success = await addQuest(payload, null);
+                else success = await addReward(payload, null);
             }
     
-            // 5. CLEANUP
-            console.log("SQ-System: Submission successful.");
-            setEditingId(null);
-            setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
-            setImageFile(null);
-            setPreview(null);
-            setView('manage');
+            // 5. CLEANUP (Only runs if the database actually saved)
+            if (success) {
+                console.log("SQ-System: Submission successful.");
+                setEditingId(null);
+                setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
+                setImageFile(null);
+                setPreview(null);
+                setView('manage');
+            }
             
         } catch (err) {
             console.error("SQ-System: Error ->", err);
             alert("Error: " + (err.message || "Something went wrong"));
         } finally {
+            // ✅ ACCURACY FIX: Button always unsticks from "Processing" regardless of success/fail
             setIsSubmitting(false);
         }
     };
