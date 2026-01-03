@@ -418,45 +418,56 @@ export const SideQuestProvider = ({ children }) => {
   };
 
   // --- 7. QUEST & IMPACT ACTIONS ---
-// Partner creation (Fixed: Public Bucket + Mobile Safety)
+// Partner creation (Hardened for: Image URLs, 4G Latency, and NaN Sanitization)
 const addQuest = async (formData, imageFile) => {
     try {
         console.log("SQ-Quest: Initiating new quest creation...");
-        let imageUrl = null;
+        
+        // ✅ FIX 1: Capture the URL if the Dashboard already uploaded it.
+        // If imageFile is null, we take the URL from formData.image.
+        let imageUrl = formData.image || null;
+
         if (imageFile) {
-            // ✅ FIX 1: Disable WebWorker to prevent mobile/Vercel crashes
+            // ✅ FIX 2: Disable WebWorker to prevent mobile/Vercel crashes
             const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
             const optimized = await imageCompression(imageFile, options);
             
-            // ✅ FIX 2: Convert Blob to File for Supabase
+            // ✅ FIX 3: Convert Blob to File for Supabase compatibility
             const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
 
-            // ✅ FIX 3: Upload to 'quest-images' (Public) instead of 'proofs'
-            const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
-            const { error: uploadErr } = await supabase.storage.from('quest-images').upload(fileName, fileToUpload);
+            // ✅ FIX 4: Stronger Filename Sanitization (removes special characters that break paths)
+            const safeName = `${Date.now()}_${imageFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
             
+            const { error: uploadErr } = await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
             if (uploadErr) throw uploadErr;
             
-            // Get URL from the correct bucket
-            imageUrl = supabase.storage.from('quest-images').getPublicUrl(fileName).data.publicUrl;
+            // Update imageUrl with the fresh upload
+            imageUrl = supabase.storage.from('quest-images').getPublicUrl(safeName).data.publicUrl;
         }
 
+        // ✅ FIX 5: Number Sanitization (Crucial!)
+        // Prevents PostgreSQL from rejecting "NaN" or empty strings, which stops the "Processing" hang.
+        const cleanXP = parseInt(formData.xp_value) || 0;
+        const cleanLat = parseFloat(formData.lat) || 0;
+        const cleanLng = parseFloat(formData.lng) || 0;
+
         const { error } = await supabase.from('quests').insert([{
-            title: formData.title, 
-            description: formData.description, 
-            category: formData.category,
-            xp_value: Number(formData.xp_value), 
-            location_address: formData.location_address,
-            lat: parseFloat(formData.lat), 
-            lng: parseFloat(formData.lng), 
-            instructions: formData.instructions,
-            proof_requirements: formData.proof_requirements, 
-            image: imageUrl, 
+            title: formData.title || "Untitled Quest", 
+            description: formData.description || "", 
+            category: formData.category || "General",
+            xp_value: cleanXP, 
+            location_address: formData.location_address || "",
+            lat: cleanLat, 
+            lng: cleanLng, 
+            instructions: formData.instructions || "",
+            proof_requirements: formData.proof_requirements || "", 
+            image: imageUrl, // Correctly persists the URL from either source
             created_by: currentUser.id, 
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         }]);
 
         if (error) throw error;
+        
         console.log("SQ-Quest: Quest record successfully saved.");
         showToast("Quest submitted for approval!", 'success');
         return true; 
@@ -465,40 +476,50 @@ const addQuest = async (formData, imageFile) => {
         alert("Submission failed: " + error.message);
         return false;
     }
-  };
+};
 
-  
-  const updateQuest = async (id, updates) => {
+
+const updateQuest = async (id, updates) => {
     try {
         console.log(`SQ-System: Hardening Update Logic for Quest ID: ${id}`);
         
+        // 1. Clean the payload: Remove read-only system fields
         const { id: _id, created_at, created_by, ...payload } = updates;
-        delete payload.status; 
         
-        const finalStatus = currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin';
+        // 2. STATUS LOGIC: 
+        // If Admin: Respect the status they chose in the dropdown (active/inactive/pending).
+        // If Partner: Force it back to 'pending_admin' for re-verification.
+        const finalStatus = currentUser?.role === 'Admin' 
+            ? (updates.status || 'active') 
+            : 'pending_admin';
 
+        // 3. DATABASE UPDATE
         const { data, error } = await supabase.from('quests').update({
             ...payload, 
-            xp_value: Number(payload.xp_value), 
-            lat: parseFloat(payload.lat), 
-            lng: parseFloat(payload.lng), 
-            status: finalStatus
+            xp_value: parseInt(payload.xp_value) || 0, // ✅ FIX: Prevents NaN
+            lat: parseFloat(payload.lat) || 0,        // ✅ FIX: Prevents NaN
+            lng: parseFloat(payload.lng) || 0,        // ✅ FIX: Prevents NaN
+            status: finalStatus                        // ✅ FIX: Respects Admin choice
         }).eq('id', Number(id)).select();
 
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            alert("Error: You do not have permission to edit this quest.");
-            return;
+            throw new Error("Update failed: Quest not found or permission denied.");
         }
         
+        // 4. SYNC LOCAL STATE (Optional but good for immediate UI update)
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...payload, status: finalStatus } : q));
+        
         showToast("Quest updated successfully.", 'success');
+        return true; // ✅ FIX: Returns true so the Dashboard knows to close the form
+        
     } catch (error) { 
         console.error("SQ-Quest: Critical update failure ->", error.message);
         alert("Update Failed: " + error.message); 
+        return false; // ✅ FIX: Returns false so the button stops "Processing" but stays on the form
     }
-  };
+};
 
   const deleteQuest = async (id) => {
     try {
@@ -656,69 +677,77 @@ const addQuest = async (formData, imageFile) => {
   const addReward = async (formData, imageFile) => {
     try {
         console.log("SQ-Market: Adding new reward to marketplace...");
-        let imageUrl = null;
+        
+        // ✅ FIX 1: Capture URL if already uploaded by Dashboard
+        let imageUrl = formData.image || null;
+
         if (imageFile) {
-            // ✅ FIX 1: Disable WebWorker
             const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
             const optimized = await imageCompression(imageFile, options);
-            
-            // ✅ FIX 2: Convert Blob to File
             const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
 
-            // ✅ FIX 3: Upload to 'quest-images' (Public)
-            const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, '')}`;
-            const { error: uploadErr } = await supabase.storage.from('quest-images').upload(fileName, fileToUpload);
+            // ✅ FIX 2: Stronger Filename Sanitization
+            const safeName = `${Date.now()}_${imageFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
             
+            const { error: uploadErr } = await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
             if (uploadErr) throw uploadErr;
             
-            imageUrl = supabase.storage.from('quest-images').getPublicUrl(fileName).data.publicUrl;
+            imageUrl = supabase.storage.from('quest-images').getPublicUrl(safeName).data.publicUrl;
         }
 
         const { error } = await supabase.from('rewards').insert([{
-            title: formData.title, 
-            description: formData.description, 
-            xp_cost: Number(formData.xp_cost), 
+            ...formData, // Persist title, description, etc.
+            xp_cost: parseInt(formData.xp_cost) || 0, // ✅ FIX 3: Sanitization
             image: imageUrl, 
             created_by: currentUser.id, 
-            status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
+            status: currentUser.role === 'Admin' ? (formData.status || 'active') : 'pending_admin'
         }]);
 
         if (error) throw error;
+        
         console.log("SQ-Market: Reward record saved.");
         showToast("Reward submitted!", 'success');
-        return true;
+        return true; // ✅ Unblocks Dashboard
     } catch (error) {
         console.error("SQ-Market: Reward addition error ->", error.message);
-        alert("Reward submission failed.");
+        alert("Reward submission failed: " + error.message);
         return false;
     }
-  };
+};
 
   const updateReward = async (id, updates) => {
     try {
         console.log(`SQ-Market: Hardening Update Logic for Reward ID: ${id}`);
+        
+        // 1. Clean payload
         const { id: _id, created_at, created_by, ...payload } = updates;
         
-        delete payload.status;
-        const finalStatus = currentUser?.role === 'Admin' ? (updates.status || 'active') : 'pending_admin';
+        // 2. STATUS LOGIC: 
+        // If Admin: Respect the choice. If Partner: Force re-verification.
+        const finalStatus = currentUser?.role === 'Admin' 
+            ? (updates.status || 'active') 
+            : 'pending_admin';
         
         const { error } = await supabase.from('rewards').update({ 
           ...payload, 
-          xp_cost: Number(payload.xp_cost), 
+          xp_cost: parseInt(payload.xp_cost) || 0, // ✅ FIX 4: Sanitization
           status: finalStatus 
         }).eq('id', Number(id));
         
         if (error) throw error;
         
+        // 3. Sync local state for instant feedback
         setRewards(prev => prev.map(r => r.id === Number(id) ? { ...r, ...payload, status: finalStatus } : r));
         
         console.log("SQ-Market: Reward update confirmed.");
         showToast("Reward updated.", 'success');
+        return true; // ✅ Unblocks Dashboard
     } catch (error) { 
         console.error("SQ-Market: Update failure ->", error.message);
-        alert("Update failed."); 
+        alert("Update failed: " + error.message); 
+        return false;
     }
-  };
+};
 
   const deleteReward = async (id) => {
     try {

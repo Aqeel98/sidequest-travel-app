@@ -99,15 +99,20 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
 
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
+        { name: 'category', label: 'Category', type: 'select', options: ['Environmental', 'Social', 'Animal Welfare', 'Education', 'Cultural'] },
         { name: 'xp_value', label: 'XP Value', type: 'number' },
-        { name: 'location_address', label: 'Location', type: 'text' },
+        { name: 'location_address', label: 'Location Name', type: 'text' },
+        { name: 'lat', label: 'Latitude (Decimal Only)', type: 'number' },
+        { name: 'lng', label: 'Longitude (Decimal Only)', type: 'number' },
         { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending_admin'] },
-        { name: 'description', label: 'Description', type: 'textarea' },
+        { name: 'description', label: 'Impact Description', type: 'textarea' },
+        { name: 'instructions', label: 'Traveler Instructions', type: 'textarea' },
+        { name: 'proof_requirements', label: 'Proof Requirements', type: 'textarea' },
     ] : [ 
         { name: 'title', label: 'Reward Title', type: 'text' },
         { name: 'xp_cost', label: 'XP Cost', type: 'number' },
         { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending_admin'] },
-        { name: 'description', label: 'Description', type: 'textarea' },
+        { name: 'description', label: 'Reward Description', type: 'textarea' },
     ];
 
     return (
@@ -123,7 +128,14 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
                             {field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
                     ) : (
-                        <input type={field.type} name={field.name} value={formData[field.name] || ''} onChange={handleChange} className="mt-1 w-full border p-2 rounded text-sm" />
+                        <input 
+    type={field.type} 
+    name={field.name} 
+    step={field.name === 'lat' || field.name === 'lng' ? "any" : "1"}
+    value={formData[field.name] || ''} 
+    onChange={handleChange} 
+    className="mt-1 w-full border p-2 rounded text-sm" 
+/>
                     )}
                 </div>
             ))}
