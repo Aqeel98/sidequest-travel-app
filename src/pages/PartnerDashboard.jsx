@@ -55,92 +55,54 @@ const PartnerDashboard = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 1. VALIDATION: Check if image exists (via new file or existing preview)
+        // 1. VALIDATION: Check if image exists
         if (!imageFile && !preview) {
             alert(`Please select an image for your ${mode}.`);
             return;
         }
 
         setIsSubmitting(true);
+        console.log("SQ-System: Handing off to Turbo-Background process...");
     
         try {
-            let finalImageUrl = preview; 
+            let success = false;
     
-            // 2. UPLOAD LOGIC
-            if (imageFile) {
-                console.log("SQ-System: Processing image...");
-                let fileToUpload = imageFile;
-
-                // Attempt Compression (Safe Mode: useWebWorker: false)
-                try {
-                    const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
-                    const compressedBlob = await imageCompression(imageFile, options);
-                    // FORCE the blob to be a File object for Supabase compatibility
-                    fileToUpload = new File([compressedBlob], imageFile.name, { type: imageFile.type });
-                } catch (cErr) {
-                    console.warn("Compression skipped, uploading original.", cErr);
-                }
-
-                console.log("SQ-System: Uploading to Supabase Storage...");
-                
-                // ✅ ACCURACY FIX: Sanitize filename to prevent storage path errors
-                const safeName = `${Date.now()}_${imageFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
-                
-                const { error: uploadError } = await supabase.storage
-                    .from('quest-images') 
-                    .upload(safeName, fileToUpload, { cacheControl: '3600', upsert: false });
-                
-                if (uploadError) throw uploadError;
-                
-                const { data } = supabase.storage.from('quest-images').getPublicUrl(safeName);
-                finalImageUrl = data.publicUrl;
-                console.log("SQ-System: Upload Success!", finalImageUrl);
-            }
-    
-            // 3. PREPARE DATA
-            const payload = { 
-                ...form, 
-                image: finalImageUrl,
-                // ✅ ACCURACY FIX: Correct status naming for Admin Oversight
-                status: currentUser?.role === 'Admin' ? 'active' : 'pending_admin',
-                
-                ...(mode === 'quest' && {
-                    // ✅ ACCURACY FIX: Sanitization prevents "NaN" Database Crashes
+            // 2. SUBMIT TO CONTEXT
+            if (editingId) {
+                // For EDITING: We pass the data synchronously to ensure accuracy
+                const payload = { 
+                    ...form, 
+                    image: preview,
                     xp_value: parseInt(form.xp_value) || 0,
                     lat: parseFloat(form.lat) || 0,
                     lng: parseFloat(form.lng) || 0
-                }),
-                ...(mode === 'reward' && {
-                    // ✅ ACCURACY FIX: Sanitization prevents "NaN" Database Crashes
-                    xp_cost: parseInt(form.xp_cost) || 0
-                })
-            };
-    
-            // 4. SUBMIT TO DATABASE (Capture boolean from Context)
-            let success = false;
-            if (editingId) {
+                };
                 if (mode === 'quest') success = await updateQuest(editingId, payload);
                 else success = await updateReward(editingId, payload);
             } else {
-                if (mode === 'quest') success = await addQuest(payload, null);
-                else success = await addReward(payload, null);
+                // For NEW: We use the Fast-Insert logic. 
+                // We pass the raw 'imageFile' and the Context handles the rest in the background.
+                if (mode === 'quest') success = await addQuest(form, imageFile);
+                else success = await addReward(form, imageFile);
             }
     
-            // 5. CLEANUP (Only runs if the database actually saved)
+            // 3. INSTANT UI RESET
+            // Because addQuest returns 'true' as soon as the text is saved,
+            // this code runs immediately, closing the form for the user.
             if (success) {
-                console.log("SQ-System: Submission successful.");
+                console.log("SQ-System: Fast-Insert confirmed. Switching view.");
                 setEditingId(null);
                 setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
                 setImageFile(null);
                 setPreview(null);
-                setView('manage');
+                setView('manage'); 
             }
             
         } catch (err) {
-            console.error("SQ-System: Error ->", err);
+            console.error("Dashboard Error:", err);
             alert("Error: " + (err.message || "Something went wrong"));
         } finally {
-            // ✅ ACCURACY FIX: Button always unsticks from "Processing" regardless of success/fail
+            // ALWAYS unstick the button
             setIsSubmitting(false);
         }
     };

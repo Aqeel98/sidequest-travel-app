@@ -421,37 +421,17 @@ export const SideQuestProvider = ({ children }) => {
 // Partner creation (Hardened for: Image URLs, 4G Latency, and NaN Sanitization)
 const addQuest = async (formData, imageFile) => {
     try {
-        console.log("SQ-Quest: Initiating new quest creation...");
-        
-        // ✅ FIX 1: Capture the URL if the Dashboard already uploaded it.
-        // If imageFile is null, we take the URL from formData.image.
-        let imageUrl = formData.image || null;
+        console.log("SQ-Quest: Initiating Fast-Insert process...");
 
-        if (imageFile) {
-            // ✅ FIX 2: Disable WebWorker to prevent mobile/Vercel crashes
-            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
-            const optimized = await imageCompression(imageFile, options);
-            
-            // ✅ FIX 3: Convert Blob to File for Supabase compatibility
-            const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
-
-            // ✅ FIX 4: Stronger Filename Sanitization (removes special characters that break paths)
-            const safeName = `${Date.now()}_${imageFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
-            
-            const { error: uploadErr } = await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
-            if (uploadErr) throw uploadErr;
-            
-            // Update imageUrl with the fresh upload
-            imageUrl = supabase.storage.from('quest-images').getPublicUrl(safeName).data.publicUrl;
-        }
-
-        // ✅ FIX 5: Number Sanitization (Crucial!)
-        // Prevents PostgreSQL from rejecting "NaN" or empty strings, which stops the "Processing" hang.
+        // 1. DATA SANITIZATION (Prevents NaN errors from crashing the save)
         const cleanXP = parseInt(formData.xp_value) || 0;
         const cleanLat = parseFloat(formData.lat) || 0;
         const cleanLng = parseFloat(formData.lng) || 0;
 
-        const { error } = await supabase.from('quests').insert([{
+        // 2. IMMEDIATE DATABASE INSERT
+        // We save the quest text first. This takes less than 1 second.
+        // We preserve the Admin flow by setting the status correctly.
+        const { data: newQuest, error: dbErr } = await supabase.from('quests').insert([{
             title: formData.title || "Untitled Quest", 
             description: formData.description || "", 
             category: formData.category || "General",
@@ -461,18 +441,44 @@ const addQuest = async (formData, imageFile) => {
             lng: cleanLng, 
             instructions: formData.instructions || "",
             proof_requirements: formData.proof_requirements || "", 
-            image: imageUrl, // Correctly persists the URL from either source
+            image: formData.image || null, // Uses URL if Dashboard already uploaded it
             created_by: currentUser.id, 
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
-        }]);
+        }]).select().single();
 
-        if (error) throw error;
-        
-        console.log("SQ-Quest: Quest record successfully saved.");
-        showToast("Quest submitted for approval!", 'success');
-        return true; 
+        if (dbErr) throw dbErr;
+
+        // 3. BACKGROUND IMAGE HANDLER (Non-blocking)
+        // If there is a file to upload, we do it in the background.
+        // The user's UI will already be unlocked and finished by now.
+        if (imageFile) {
+            const processImageInBackground = async () => {
+                try {
+                    const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1280, useWebWorker: false };
+                    const optimized = await imageCompression(imageFile, options);
+                    const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
+                    const safeName = `${Date.now()}_${imageFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
+                    
+                    const { error: uploadErr } = await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
+                    if (uploadErr) throw uploadErr;
+                    
+                    const publicUrl = supabase.storage.from('quest-images').getPublicUrl(safeName).data.publicUrl;
+
+                    // Update the quest record with the URL once the upload is done
+                    await supabase.from('quests').update({ image: publicUrl }).eq('id', newQuest.id);
+                    console.log("SQ-Quest: Background Image Sync Complete.");
+                } catch (bgErr) {
+                    console.error("SQ-Quest: Background Sync Failed:", bgErr.message);
+                }
+            };
+            processImageInBackground(); // Start background process without 'await'
+        }
+
+        console.log("SQ-Quest: Record saved. Approval flow started.");
+        showToast("Quest submitted! Image is processing.", 'success');
+        return true; // Returns TRUE instantly to unlock the Dashboard button
     } catch (error) {
-        console.error("SQ-Quest: Creation Failure ->", error.message);
+        console.error("SQ-Quest: Fast-Insert Failure ->", error.message);
         alert("Submission failed: " + error.message);
         return false;
     }
@@ -676,40 +682,55 @@ const updateQuest = async (id, updates) => {
 
   const addReward = async (formData, imageFile) => {
     try {
-        console.log("SQ-Market: Adding new reward to marketplace...");
-        
-        // ✅ FIX 1: Capture URL if already uploaded by Dashboard
-        let imageUrl = formData.image || null;
+        console.log("SQ-Market: Initiating Fast-Insert for Reward...");
 
+        // 1. DATA SANITIZATION
+        // Ensures the database receives a valid number for the cost.
+        const cleanXP = parseInt(formData.xp_cost) || 0;
+
+        // 2. IMMEDIATE DATABASE INSERT
+        // This starts the Admin approval flow immediately.
+        const { data: newReward, error: dbErr } = await supabase.from('rewards').insert([{
+            title: formData.title || "New Reward",
+            description: formData.description || "",
+            xp_cost: cleanXP,
+            image: formData.image || null, // Uses URL if Dashboard already uploaded it
+            created_by: currentUser.id,
+            status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
+        }]).select().single();
+
+        if (dbErr) throw dbErr;
+
+        // 3. BACKGROUND IMAGE HANDLER (Non-blocking)
+        // The user's UI is already finished and switched to 'Manage' view by now.
         if (imageFile) {
-            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
-            const optimized = await imageCompression(imageFile, options);
-            const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
+            const processRewardImageInBackground = async () => {
+                try {
+                    const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1280, useWebWorker: false };
+                    const optimized = await imageCompression(imageFile, options);
+                    const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
+                    const safeName = `reward_${Date.now()}_${imageFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
+                    
+                    const { error: uploadErr } = await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
+                    if (uploadErr) throw uploadErr;
+                    
+                    const publicUrl = supabase.storage.from('quest-images').getPublicUrl(safeName).data.publicUrl;
 
-            // ✅ FIX 2: Stronger Filename Sanitization
-            const safeName = `${Date.now()}_${imageFile.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
-            
-            const { error: uploadErr } = await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
-            if (uploadErr) throw uploadErr;
-            
-            imageUrl = supabase.storage.from('quest-images').getPublicUrl(safeName).data.publicUrl;
+                    // Update the reward record with the final URL
+                    await supabase.from('rewards').update({ image: publicUrl }).eq('id', newReward.id);
+                    console.log("SQ-Market: Background Reward Image Sync Complete.");
+                } catch (bgErr) {
+                    console.error("SQ-Market: Background Sync Failed:", bgErr.message);
+                }
+            };
+            processRewardImageInBackground(); // Execute without 'await'
         }
 
-        const { error } = await supabase.from('rewards').insert([{
-            ...formData, // Persist title, description, etc.
-            xp_cost: parseInt(formData.xp_cost) || 0, // ✅ FIX 3: Sanitization
-            image: imageUrl, 
-            created_by: currentUser.id, 
-            status: currentUser.role === 'Admin' ? (formData.status || 'active') : 'pending_admin'
-        }]);
-
-        if (error) throw error;
-        
-        console.log("SQ-Market: Reward record saved.");
-        showToast("Reward submitted!", 'success');
-        return true; // ✅ Unblocks Dashboard
+        console.log("SQ-Market: Reward record saved. Pending approval.");
+        showToast("Reward submitted! Image processing.", 'success');
+        return true; // Returns TRUE instantly to unlock the UI
     } catch (error) {
-        console.error("SQ-Market: Reward addition error ->", error.message);
+        console.error("SQ-Market: Fast-Insert Failure ->", error.message);
         alert("Reward submission failed: " + error.message);
         return false;
     }
