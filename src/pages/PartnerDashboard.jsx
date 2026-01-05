@@ -55,42 +55,35 @@ const PartnerDashboard = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 1. VALIDATION: Check if image exists
         if (!imageFile && !preview) {
             alert(`Please select an image for your ${mode}.`);
             return;
         }
 
         setIsSubmitting(true);
-        console.log("SQ-System: Handing off to Turbo-Background process...");
+        console.log("SQ-System: Processing...");
     
         try {
             let success = false;
-    
-            // 2. SUBMIT TO CONTEXT
+            
             if (editingId) {
-                // For EDITING: We pass the data synchronously to ensure accuracy
+                // Synchronous update for safety
                 const payload = { 
-                    ...form, 
-                    image: preview,
+                    ...form, image: preview,
                     xp_value: parseInt(form.xp_value) || 0,
                     lat: parseFloat(form.lat) || 0,
-                    lng: parseFloat(form.lng) || 0
+                    lng: parseFloat(form.lng) || 0,
+                    xp_cost: parseInt(form.xp_cost) || 0
                 };
                 if (mode === 'quest') success = await updateQuest(editingId, payload);
                 else success = await updateReward(editingId, payload);
             } else {
-                // For NEW: We use the Fast-Insert logic. 
-                // We pass the raw 'imageFile' and the Context handles the rest in the background.
+                // Fast-Insert for new content
                 if (mode === 'quest') success = await addQuest(form, imageFile);
                 else success = await addReward(form, imageFile);
             }
     
-            // 3. INSTANT UI RESET
-            // Because addQuest returns 'true' as soon as the text is saved,
-            // this code runs immediately, closing the form for the user.
             if (success) {
-                console.log("SQ-System: Fast-Insert confirmed. Switching view.");
                 setEditingId(null);
                 setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
                 setImageFile(null);
@@ -99,11 +92,12 @@ const PartnerDashboard = () => {
             }
             
         } catch (err) {
-            console.error("Dashboard Error:", err);
-            alert("Error: " + (err.message || "Something went wrong"));
+            console.error("Critical Dashboard Error:", err);
+            alert("Connection error. Please try again.");
         } finally {
-            // ALWAYS unstick the button
+            // ✅ THE MASTER RESET: Button will always unstick.
             setIsSubmitting(false);
+            console.log("SQ-System: UI Unlocked.");
         }
     };
 

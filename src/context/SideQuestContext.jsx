@@ -421,9 +421,10 @@ export const SideQuestProvider = ({ children }) => {
 
   const addQuest = async (formData, imageFile) => {
     try {
-        console.log("SQ-Quest: Initiating Insert...");
+        console.log("SQ-Quest: Initiating Hardened Insert...");
 
-        // 1. Map columns and sanitize numbers (The Safety Shield)
+        // 1. EXPLICIT MAPPING: Only send quest-specific columns. 
+        // This prevents the "extra field" crash.
         const cleanPayload = {
             title: formData.title || "Untitled Quest",
             description: formData.description || "",
@@ -439,47 +440,40 @@ export const SideQuestProvider = ({ children }) => {
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
-        // 2. Insert and AWAIT response (RESTORED .select() to prevent hanging)
+        // 2. INSERT & GET ID: Standard Supabase flow with explicit selection.
         const { data, error: dbErr } = await supabase
             .from('quests')
             .insert([cleanPayload])
-            .select()
+            .select('id')
             .single();
 
-        if (dbErr) {
-            console.error("Supabase Database Error:", dbErr);
-            throw dbErr;
-        }
+        if (dbErr) throw dbErr;
+        console.log("SQ-Quest: Insert successful. ID:", data.id);
 
-        console.log("SQ-Quest: Insert successful, ID created:", data.id);
-
-        // 3. Background Image Processing (Non-blocking)
+        // 3. BACKGROUND UPLOAD: Handled after the UI is already released.
         if (imageFile && data.id) {
-            const runBackgroundUpload = async () => {
+            const runBackground = async () => {
                 try {
                     const options = { maxSizeMB: 0.4, maxWidthOrHeight: 1200, useWebWorker: false };
                     const optimized = await imageCompression(imageFile, options);
                     const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
                     const safeName = `${Date.now()}_quest.jpg`;
-
-                    const { error: upErr } = await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
-                    if (upErr) throw upErr;
                     
+                    await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
                     const url = supabase.storage.from('quest-images').getPublicUrl(safeName).data.publicUrl;
 
-                    // Update the row we just created using its unique ID
                     await supabase.from('quests').update({ image: url }).eq('id', data.id);
-                    console.log("SQ-Quest: Background Image finished.");
-                } catch (e) { console.error("BG Image Error:", e); }
+                    console.log("SQ-Quest: Background upload finished.");
+                } catch (e) { console.error("BG Error:", e); }
             };
-            runBackgroundUpload();
+            runBackground();
         }
 
         showToast("Quest submitted successfully!", 'success');
         return true; 
     } catch (error) {
-        console.error("SQ-Quest CRITICAL ERROR ->", error.message);
-        alert("Submission failed: " + error.message);
+        console.error("SQ-Quest Error:", error.message);
+        alert("Database Error: " + error.message);
         return false;
     }
 };
@@ -681,8 +675,8 @@ const updateQuest = async (id, updates) => {
 
   const addReward = async (formData, imageFile) => {
     try {
-        console.log("SQ-Market: Initiating Reward Insert...");
-
+        console.log("SQ-Market: Initiating Hardened Reward Insert...");
+        
         const cleanPayload = {
             title: formData.title || "New Reward",
             description: formData.description || "",
@@ -695,7 +689,7 @@ const updateQuest = async (id, updates) => {
         const { data, error: dbErr } = await supabase
             .from('rewards')
             .insert([cleanPayload])
-            .select()
+            .select('id')
             .single();
 
         if (dbErr) throw dbErr;
@@ -706,10 +700,9 @@ const updateQuest = async (id, updates) => {
                     const options = { maxSizeMB: 0.4, maxWidthOrHeight: 1200, useWebWorker: false };
                     const optimized = await imageCompression(imageFile, options);
                     const fileToUpload = new File([optimized], imageFile.name, { type: imageFile.type });
-                    const safeName = `reward_${Date.now()}.jpg`;
-                    await supabase.storage.from('quest-images').upload(safeName, fileToUpload);
-                    const url = supabase.storage.from('quest-images').getPublicUrl(safeName).data.publicUrl;
-                    await supabase.from('rewards').update({ image: url }).eq('id', data.id);
+                    await supabase.storage.from('quest-images').upload(`reward_${Date.now()}.jpg`, fileToUpload);
+                    const { data: urlData } = supabase.storage.from('quest-images').getPublicUrl(`reward_${Date.now()}.jpg`);
+                    await supabase.from('rewards').update({ image: urlData.publicUrl }).eq('id', data.id);
                 } catch (e) { console.error(e); }
             };
             runBgReward();
@@ -719,7 +712,7 @@ const updateQuest = async (id, updates) => {
         return true;
     } catch (error) {
         console.error("SQ-Reward Error:", error.message);
-        alert("Submission failed: " + error.message);
+        alert("Database Error: " + error.message);
         return false;
     }
 };
