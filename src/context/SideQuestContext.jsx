@@ -486,43 +486,34 @@ export const SideQuestProvider = ({ children }) => {
 
 const updateQuest = async (id, updates) => {
     try {
-        console.log(`SQ-System: Hardening Update Logic for Quest ID: ${id}`);
+        console.log(`SQ-System: Updating Quest ID: ${id}`);
         
-        // 1. Clean the payload: Remove read-only system fields
         const { id: _id, created_at, created_by, ...payload } = updates;
         
-        // 2. STATUS LOGIC: 
-        // If Admin: Respect the status they chose in the dropdown (active/inactive/pending).
-        // If Partner: Force it back to 'pending_admin' for re-verification.
         const finalStatus = currentUser?.role === 'Admin' 
             ? (updates.status || 'active') 
             : 'pending_admin';
 
-        // 3. DATABASE UPDATE
-        const { data, error } = await supabase.from('quests').update({
+        
+        const { error } = await supabase.from('quests').update({
             ...payload, 
-            xp_value: parseInt(payload.xp_value) || 0, // ✅ FIX: Prevents NaN
-            lat: parseFloat(payload.lat) || 0,        // ✅ FIX: Prevents NaN
-            lng: parseFloat(payload.lng) || 0,        // ✅ FIX: Prevents NaN
-            status: finalStatus                        // ✅ FIX: Respects Admin choice
-        }).eq('id', Number(id)).select();
+            xp_value: parseInt(payload.xp_value) || 0, 
+            lat: parseFloat(payload.lat) || 0, 
+            lng: parseFloat(payload.lng) || 0, 
+            status: finalStatus
+        }).eq('id', Number(id)); // No .select() here
 
         if (error) throw error;
 
-        if (!data || data.length === 0) {
-            throw new Error("Update failed: Quest not found or permission denied.");
-        }
-        
-        // 4. SYNC LOCAL STATE (Optional but good for immediate UI update)
+        // Sync local state immediately
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...payload, status: finalStatus } : q));
         
         showToast("Quest updated successfully.", 'success');
-        return true; // ✅ FIX: Returns true so the Dashboard knows to close the form
-        
+        return true; 
     } catch (error) { 
-        console.error("SQ-Quest: Critical update failure ->", error.message);
+        console.error("SQ-Quest Update Error:", error.message);
         alert("Update Failed: " + error.message); 
-        return false; // ✅ FIX: Returns false so the button stops "Processing" but stays on the form
+        return false; 
     }
 };
 

@@ -55,34 +55,59 @@ const PartnerDashboard = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // 1. VALIDATION
         if (!imageFile && !preview) {
             alert(`Please select an image for your ${mode}.`);
             return;
         }
 
         setIsSubmitting(true);
-        console.log("SQ-System: Processing...");
     
         try {
             let success = false;
-            
+
             if (editingId) {
-                // Synchronous update for safety
+                // --- EDIT MODE (Keep Synchronous for Safety) ---
+                let finalImageUrl = preview;
+                
+                // Only upload if a NEW file was chosen during edit
+                if (imageFile) {
+                    console.log("SQ-System: Updating image...");
+                    const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
+                    const compressed = await imageCompression(imageFile, options);
+                    
+                    // Timestamp rename to prevent hangs
+                    const fname = `${Date.now()}.jpg`;
+                    const fileToUpload = new File([compressed], fname, { type: 'image/jpeg' });
+                    
+                    const { error } = await supabase.storage.from('quest-images').upload(fname, fileToUpload);
+                    if (error) throw error;
+                    
+                    finalImageUrl = supabase.storage.from('quest-images').getPublicUrl(fname).data.publicUrl;
+                }
+
                 const payload = { 
-                    ...form, image: preview,
+                    ...form, 
+                    image: finalImageUrl,
                     xp_value: parseInt(form.xp_value) || 0,
                     lat: parseFloat(form.lat) || 0,
                     lng: parseFloat(form.lng) || 0,
                     xp_cost: parseInt(form.xp_cost) || 0
                 };
+
                 if (mode === 'quest') success = await updateQuest(editingId, payload);
                 else success = await updateReward(editingId, payload);
+
             } else {
-                // Fast-Insert for new content
+                // --- NEW ITEM (Turbo Mode) ---
+                // We pass the RAW FILE to the Context.
+                // The Context saves the text INSTANTLY (so this form closes immediately)
+                // and handles the image upload in the background.
                 if (mode === 'quest') success = await addQuest(form, imageFile);
                 else success = await addReward(form, imageFile);
             }
     
+            // 3. INSTANT UI RESET
             if (success) {
                 setEditingId(null);
                 setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
@@ -92,15 +117,15 @@ const PartnerDashboard = () => {
             }
             
         } catch (err) {
-            console.error("Critical Dashboard Error:", err);
-            alert("Connection error. Please try again.");
+            console.error("Dashboard Error:", err);
+            alert("Error: " + (err.message || "Connection failed"));
         } finally {
-            // ✅ THE MASTER RESET: Button will always unstick.
+            // ALWAYS unstick the button
             setIsSubmitting(false);
-            console.log("SQ-System: UI Unlocked.");
         }
     };
 
+    
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
