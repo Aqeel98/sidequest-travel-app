@@ -92,7 +92,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
             setUploading(false);
         }
     };
-    
+
 
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
@@ -161,7 +161,7 @@ const Admin = () => {
   const { 
     currentUser, questProgress, quests, rewards, users, redemptions,
     approveSubmission, rejectSubmission, approveNewQuest, approveNewReward, 
-    updateQuest, deleteQuest, updateReward, deleteReward 
+    updateQuest, deleteQuest, updateReward, deleteReward, showToast 
   } = useSideQuest();
 
   const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
