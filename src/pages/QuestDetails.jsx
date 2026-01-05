@@ -149,15 +149,27 @@ const QuestDetails = () => {
                 <Navigation size={18} className="mr-2" /> Get Directions
           </button>
 
-          <div className="bg-yellow-50 p-6 rounded-2xl mb-8 border border-yellow-200">
+          {/* 1. Target Impact (Yellow Box) */}
+          <div className="bg-yellow-50 p-6 rounded-2xl mb-6 border border-yellow-200">
              <h3 className="font-bold text-yellow-800 text-lg mb-2">Target Impact</h3>
-             <p className="text-yellow-900">{quest.description}</p>
-             <div className="mt-4 pt-4 border-t border-yellow-200">
-                <h4 className="font-bold text-yellow-800 text-sm">Proof Required:</h4>
-                <p className="text-sm text-yellow-900 italic flex items-center gap-2">
-                    <Camera size={16} /> {quest.proof_requirements || "Upload a photo of your activity."}
-                </p>
+             <p className="text-yellow-900 leading-relaxed">{quest.description}</p>
+          </div>
+
+          {/* 2. Traveler Instructions (Blue Box) */}
+          {quest.instructions && (
+             <div className="bg-blue-50 p-6 rounded-2xl mb-6 border border-blue-100">
+                <h3 className="font-bold text-blue-800 text-lg mb-2">How to Complete</h3>
+                <p className="text-blue-900 leading-relaxed">{quest.instructions}</p>
              </div>
+          )}
+
+          {/* 3. Proof Requirements (Gray Box) */}
+          <div className="bg-gray-50 p-4 rounded-2xl mb-8 border border-gray-200">
+             <h4 className="font-bold text-gray-700 text-xs uppercase tracking-widest mb-2">Submission Proof Required</h4>
+             <p className="text-sm text-gray-600 flex items-center gap-2 italic font-medium">
+                <Camera size={18} className="text-brand-500" /> 
+                {quest.proof_requirements || "Upload a photo of your activity to earn XP."}
+             </p>
           </div>
 
           {/* ACTION AREA */}
