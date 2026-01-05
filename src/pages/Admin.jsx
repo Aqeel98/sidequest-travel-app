@@ -50,52 +50,49 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         if (!file) return;
     
         setUploading(true);
-        try {
-            let fileToUpload = file; 
+        console.log("SQ-Admin: Optimizing...");
 
-            // 1. Attempt Safe Compression (Technical Bible Standard)
+        try {
+            // 1. COMPRESSION (0.6MB Limit)
+            let fileToUpload = file;
             try {
-                const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: false };
+                const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
                 const compressedBlob = await imageCompression(file, options);
                 
-                // Convert Blob to File to prevent Supabase upload errors
-                fileToUpload = new File([compressedBlob], file.name, { 
-                    type: file.type 
-                });
-            } catch (compressionError) {
-                console.warn("Admin: Compression skipped, using original.", compressionError);
+                // 2. THE FIX: RENAME TO TIMESTAMP
+                // This prevents Supabase from hanging on special characters
+                const cleanName = `${Date.now()}.jpg`;
+                fileToUpload = new File([compressedBlob], cleanName, { type: 'image/jpeg' });
+            } catch (cErr) {
+                console.warn("Compression skipped.");
             }
             
-            // 2. Local Preview
-            const localPreview = URL.createObjectURL(fileToUpload);
-            setPreviewUrl(localPreview); 
-    
-            // 3. Upload Logic (Corrected)
-            console.log("SQ-Admin: Uploading to quest-images...");
+            console.log("SQ-Admin: Uploading...");
             
-            // ✅ FIX 1: Remove folder prefix to match Partner structure
-            const fileName = `${Date.now()}_${file.name.replace(/\s/g, '')}`;
-            
-            // ✅ FIX 2: Upload to 'quest-images' (Public) instead of 'proofs' (Private)
+            // 3. UPLOAD (With no special chars in name)
             const { error: uploadError } = await supabase.storage
               .from('quest-images')
-              .upload(fileName, fileToUpload, { cacheControl: '3600', upsert: false });
+              .upload(fileToUpload.name, fileToUpload, { cacheControl: '3600', upsert: false });
             
             if (uploadError) throw uploadError;
     
-            // ✅ FIX 3: Get the public URL from the correct bucket
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
+            // 4. GET URL & UPDATE STATE
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileToUpload.name);
             setFormData(prev => ({ ...prev, image: data.publicUrl }));
+            setPreviewUrl(data.publicUrl);
             
-            alert("Image uploaded! Click 'Save Changes' to confirm.");
+            console.log("SQ-Admin: Success!");
+            alert("Image updated! Don't forget to click 'Save Changes'.");
+
         } catch (error) {
             console.error("Admin Upload Error:", error);
-            setPreviewUrl(item.image || null); // Revert preview on failure
             alert("Upload failed: " + error.message);
         } finally {
+            // 5. THE UNSTICK: Button always resets
             setUploading(false);
         }
     };
+    
 
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
