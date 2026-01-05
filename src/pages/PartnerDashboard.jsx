@@ -283,7 +283,7 @@ const PartnerDashboard = () => {
                         
                         {myQuests.length === 0 ? <p className="text-gray-400 py-10 text-center bg-white rounded-3xl border border-dashed">No quests yet.</p> :
                         myQuests.map(q => {
-                            // CALCULATE COMPLETIONS
+                            // CALCULATE 
                             const completedCount = questProgress.filter(p => p.quest_id === q.id && p.status === 'approved').length;
                             
                             return (

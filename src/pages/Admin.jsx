@@ -514,7 +514,15 @@ const Admin = () => {
                 <div key={reward.id} className="border-b pb-4">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
-                             <img src={reward.image || "https://via.placeholder.com/50"} className="w-12 h-12 rounded object-cover border" alt="thumbnail" />
+                        <div className="w-12 h-12 rounded border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
+    {reward.image ? (
+        <img src={reward.image} className="w-full h-full object-cover" alt="" />
+    ) : (
+        <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <Gift size={18} />
+        </div>
+    )}
+</div>
                              <div><h3 className="font-bold text-lg text-gray-900">{reward.title}</h3><p className="text-xs text-gray-500 flex items-center"><Award size={12} className="mr-1"/> Cost: {reward.xp_cost} XP</p></div>
                         </div>
                         <div className="flex gap-2">
