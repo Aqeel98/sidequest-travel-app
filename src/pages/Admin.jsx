@@ -479,11 +479,15 @@ const Admin = () => {
                     <div key={quest.id} className="border-b pb-4 last:border-0">
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-4">
-                              <img 
-                               src={(quest.image ? quest.image + '?t=' + Date.now() : "https://via.placeholder.com/50")} 
-                                className="w-12 h-12 rounded object-cover border" 
-                                alt="thumbnail" 
-                              />
+                            <div className="w-12 h-12 rounded border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
+                                    {quest.image ? (
+                      <img src={quest.image + '?t=' + Date.now()} className="w-full h-full object-cover" alt="" />
+                                      ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                    <MapPin size={18} />
+                                       </div>
+                                   )}
+                                </div>
                                 <div>
                                     <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
                                     <p className="text-xs text-gray-500 flex items-center"><MapPin size={12} className="mr-1"/> {quest.location_address}</p>

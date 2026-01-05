@@ -290,7 +290,15 @@ const PartnerDashboard = () => {
                                 <div key={q.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-4">
-                                            <img src={q.image || "https://via.placeholder.com/60"} className="w-16 h-16 rounded-2xl object-cover border shadow-sm" />
+                                        <div className="w-16 h-16 rounded-2xl border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
+                                                             {q.image ? (
+                                             <img src={q.image} className="w-full h-full object-cover" alt={q.title} />
+                                               ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                  <Map size={24} />
+                                            </div>
+                                 )}
+                                            </div>
                                             <div>
                                                 <p className="font-bold text-gray-900 leading-tight">{q.title}</p>
                                                 <div className="mt-1 flex items-center gap-2">
@@ -328,7 +336,15 @@ const PartnerDashboard = () => {
                                 <div key={r.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
                                     <div className="p-5 flex justify-between items-center">
                                         <div className="flex items-center gap-4">
-                                            <img src={r.image || "https://via.placeholder.com/60"} className="w-16 h-16 rounded-2xl object-cover border shadow-sm" />
+                                        <div className="w-16 h-16 rounded-2xl border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
+                                            {r.image ? (
+                                          <img src={r.image} className="w-full h-full object-cover" alt={r.title} />
+                                            ) : (
+                               <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                          <Gift size={24} />
+                           </div>
+                                                      )}
+                                            </div>
                                             <div>
                                                 <p className="font-bold text-gray-900 leading-tight">{r.title}</p>
                                                 <div className="mt-1 flex items-center gap-3">
