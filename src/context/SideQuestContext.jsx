@@ -398,11 +398,13 @@ export const SideQuestProvider = ({ children }) => {
                 console.log("SQ-Auth: Identity Hydration complete.");
             }
 
-            alert(`Welcome to SideQuest, ${name}! Your profile is ready.`);
+            // ✅ UI FIX: Replaced alert with showToast
+            showToast(`Welcome to SideQuest, ${name}! Your profile is ready.`, 'success');
         }
     } catch (err) {
         console.error("SQ-Auth: Registration Halted ->", err.message);
-        throw err; 
+        // ✅ UI FIX: Handle errors gracefully with Toast
+        showToast(err.message, 'error'); 
     }
   };
 
