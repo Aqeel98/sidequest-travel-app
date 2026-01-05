@@ -424,8 +424,7 @@ export const SideQuestProvider = ({ children }) => {
   const addQuest = async (formData, imageFile) => {
     try {
         console.log("SQ-Quest: Initiating Insert...");
-
-        // 1. Explicit Payload (Safety Shield against NaN and extra fields)
+        
         const cleanPayload = {
             title: formData.title || "Untitled Quest",
             description: formData.description || "",
@@ -436,55 +435,49 @@ export const SideQuestProvider = ({ children }) => {
             lng: parseFloat(formData.lng) || 0,
             instructions: formData.instructions || "",
             proof_requirements: formData.proof_requirements || "",
-            image: formData.image || null, // Use URL if Dashboard sent it
+            image: formData.image || null,
             created_by: currentUser.id,
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
-        // 2. INSERT & GET ID (Wait for ID confirmation)
-        const { data, error: dbErr } = await supabase
-            .from('quests')
-            .insert([cleanPayload])
-            .select('id') 
-            .single();
-
+        // 1. BLIND INSERT (No .select() - This stops the "Processing" hang)
+        const { error: dbErr } = await supabase.from('quests').insert([cleanPayload]);
         if (dbErr) throw dbErr;
-        console.log("SQ-Quest: Insert successful. ID:", data.id);
 
-        // 3. BACKGROUND IMAGE (Run without await)
-        if (imageFile && data.id) {
+        // 2. BACKGROUND IMAGE UPLOAD
+        if (imageFile) {
             const runBgUpload = async () => {
                 try {
-                    // Optimized for 4G (0.6MB)
+                    // Fetch the ID we just created (since we didn't use .select() above)
+                    const { data: latest } = await supabase.from('quests')
+                        .select('id').eq('created_by', currentUser.id)
+                        .order('created_at', { ascending: false }).limit(1).single();
+
+                    if (!latest?.id) return;
+
                     const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
                     const optimized = await imageCompression(imageFile, options);
-                    
-                    // FIX: RENAME TO TIMESTAMP (Matches addReward logic for 100% safety)
                     const fname = `quest_${Date.now()}.jpg`;
                     const fileToUpload = new File([optimized], fname, { type: 'image/jpeg' });
 
-                    const { error: upErr } = await supabase.storage.from('quest-images').upload(fname, fileToUpload);
-                    if (upErr) throw upErr;
-                    
+                    await supabase.storage.from('quest-images').upload(fname, fileToUpload);
                     const url = supabase.storage.from('quest-images').getPublicUrl(fname).data.publicUrl;
-
-                    // Update the quest record
-                    await supabase.from('quests').update({ image: url }).eq('id', data.id);
-                    console.log("SQ-Quest: Background Image finished.");
+                    
+                    // Update the quest with the new URL
+                    await supabase.from('quests').update({ image: url }).eq('id', latest.id);
                 } catch (e) { console.error("BG Upload Error:", e); }
             };
             runBgUpload();
         }
 
-        showToast("Quest submitted successfully!", 'success');
-        return true; // Unlocks Dashboard immediately
+        showToast("Quest submitted for review!", 'success');
+        return true; // Form closes and Dashboard resets immediately
     } catch (error) {
         console.error("SQ-Quest Error:", error.message);
-        alert("Submission failed: " + error.message);
+        showToast("Error: " + error.message, 'error');
         return false;
     }
 };
-
 
 const updateQuest = async (id, updates) => {
     try {
@@ -674,9 +667,7 @@ const updateQuest = async (id, updates) => {
 
   const addReward = async (formData, imageFile) => {
     try {
-        console.log("SQ-Market: Initiating Reward Insert...");
-
-        // 1. Explicit Payload
+        console.log("SQ-Market: Initiating Insert...");
         const cleanPayload = {
             title: formData.title || "New Reward",
             description: formData.description || "",
@@ -686,43 +677,36 @@ const updateQuest = async (id, updates) => {
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
-        // 2. Standard Insert
-        const { data, error: dbErr } = await supabase
-            .from('rewards')
-            .insert([cleanPayload])
-            .select('id')
-            .single();
-
+        const { error: dbErr } = await supabase.from('rewards').insert([cleanPayload]);
         if (dbErr) throw dbErr;
 
-        // 3. Background Upload
-        if (imageFile && data.id) {
+        if (imageFile) {
             const runBgReward = async () => {
                 try {
+                    const { data: latest } = await supabase.from('rewards')
+                        .select('id').eq('created_by', currentUser.id)
+                        .order('created_at', { ascending: false }).limit(1).single();
+
+                    if (!latest?.id) return;
+
                     const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
                     const optimized = await imageCompression(imageFile, options);
-                    
-                    // TIMESTAMP RENAME
                     const fname = `reward_${Date.now()}.jpg`;
                     const fileToUpload = new File([optimized], fname, { type: 'image/jpeg' });
                     
-                    const { error: upErr } = await supabase.storage.from('quest-images').upload(fname, fileToUpload);
-                    if (upErr) throw upErr;
-
+                    await supabase.storage.from('quest-images').upload(fname, fileToUpload);
                     const url = supabase.storage.from('quest-images').getPublicUrl(fname).data.publicUrl;
-                    
-                    await supabase.from('rewards').update({ image: url }).eq('id', data.id);
-                    console.log("SQ-Market: Background Image finished.");
+                    await supabase.from('rewards').update({ image: url }).eq('id', latest.id);
                 } catch (e) { console.error(e); }
             };
             runBgReward();
         }
 
-        showToast("Reward submitted!", 'success');
+        showToast("Reward submitted for review!", 'success');
         return true;
     } catch (error) {
         console.error("SQ-Reward Error:", error.message);
-        alert("Submission failed: " + error.message);
+        showToast("Error: " + error.message, 'error');
         return false;
     }
 };
