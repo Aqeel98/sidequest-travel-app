@@ -483,10 +483,9 @@ export const SideQuestProvider = ({ children }) => {
 
 const updateQuest = async (id, updates) => {
     try {
-        console.log(`SQ-System: Hardened Update for Quest: ${id}`);
+        console.log(`SQ-System: Linear Update for Quest: ${id}`);
         
         // 1. DATA SHIELD: Explicitly pick ONLY Quest columns
-        // This stops "ghost" data or system fields from crashing the update
         const { 
             title, description, category, xp_value, 
             location_address, lat, lng, instructions, 
@@ -509,29 +508,25 @@ const updateQuest = async (id, updates) => {
             status: finalStatus
         };
 
-        // 2. OPTIMISTIC UI: Update screen instantly
+        // 2. DIRECT UPDATE (The "Accurate" part)
+        // We AWAIT this. If the network is slow, the "Processing" button stays 
+        // until the database actually SAVES the data.
+        const { error } = await supabase
+            .from('quests')
+            .update(cleanPayload)
+            .eq('id', Number(id));
+
+        if (error) throw error;
+
+        // 3. UI UPDATE (Only happens if the DB save worked)
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
-
-        // 3. BACKGROUND SYNC
-        const performBackgroundSync = async () => {
-            try {
-                const { error } = await supabase.from('quests')
-                    .update(cleanPayload)
-                    .eq('id', Number(id));
-
-                if (error) throw error;
-                showToast("Quest synced successfully.", 'success');
-            } catch (err) {
-                console.error("SQ-Sync-Error:", err.message);
-                showToast("Sync delayed (Weak Signal).", 'info');
-            }
-        };
-
-        performBackgroundSync();
+        
+        showToast("Quest updated accurately!", 'success');
         return true; 
+
     } catch (error) { 
-        console.error("SQ-Quest Update Error:", error.message);
-        showToast("Update Failed", 'error'); 
+        console.error("SQ-Quest Update Fatal Error:", error.message);
+        showToast("Update Failed: " + error.message, 'error');
         return false; 
     }
 };
@@ -756,9 +751,10 @@ const deleteQuest = async (id) => {
 
 const updateReward = async (id, updates) => {
     try {
-        console.log(`SQ-Market: Hardened Update for Reward: ${id}`);
+        console.log(`SQ-Market: Linear Update for Reward: ${id}`);
         
-        // 1. DATA SHIELD: Explicitly pick ONLY Reward columns
+        // 1. DATA SHIELD: Pick ONLY Reward columns
+        // This stops 'lat' or other quest fields from crashing the rewards table
         const { title, description, xp_cost, image } = updates;
         
         const finalStatus = currentUser?.role === 'Admin' 
@@ -773,27 +769,24 @@ const updateReward = async (id, updates) => {
             status: finalStatus 
         };
 
-        // 2. OPTIMISTIC UI
+        // 2. DIRECT UPDATE (The "Accurate" part)
+        // We AWAIT this. The app waits for the DB to say "Success".
+        const { error } = await supabase
+            .from('rewards')
+            .update(cleanPayload)
+            .eq('id', Number(id));
+
+        if (error) throw error;
+
+        // 3. UI UPDATE (Only happens AFTER the database saves)
         setRewards(prev => prev.map(r => r.id === Number(id) ? { ...r, ...cleanPayload } : r));
-
-        // 3. BACKGROUND SYNC
-        const performBackgroundSync = async () => {
-            try {
-                const { error } = await supabase.from('rewards')
-                    .update(cleanPayload)
-                    .eq('id', Number(id));
-
-                if (error) throw error;
-                showToast("Reward synced.", 'success');
-            } catch (err) { 
-                console.error("SQ-Market Sync Error:", err.message);
-            }
-        };
-
-        performBackgroundSync();
+        
+        showToast("Reward updated accurately!", 'success');
         return true; 
+
     } catch (error) { 
         console.error("SQ-Market Update Error:", error.message);
+        showToast("Update Failed: " + error.message, 'error');
         return false;
     }
 };
