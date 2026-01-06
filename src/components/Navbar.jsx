@@ -77,7 +77,7 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile  */}
       {isOpen && (
         <div className="md:hidden bg-white border-t p-4 flex flex-col space-y-2 shadow-xl animate-in slide-in-from-top-5">
             {currentUser ? (
@@ -106,12 +106,13 @@ const Navbar = () => {
                 <HeartPulse size={18} className="mr-2"/> Emergency & Safety Info
             </Link>
 
-            {currentUser?.role === 'Partner' && (
-                <Link to="/partner" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Partner Dashboard</Link>
-            )}
-            {currentUser?.role === 'Admin' && (
-                <Link to="/admin" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Admin Panel</Link>
-            )}
+            {(currentUser?.role === 'Partner' || currentUser?.role === 'Admin') && (
+        <Link to="/partner" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Partner Dashboard</Link>
+        )}
+
+      {currentUser?.role === 'Admin' && (
+       <Link to="/admin" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Admin Panel</Link>
+        )}
             
             {currentUser && (
                 <button onClick={() => { logout(); setIsOpen(false); }} className="w-full text-red-500 font-bold p-3 rounded-lg hover:bg-red-50 transition-colors mt-2 border-t pt-3">

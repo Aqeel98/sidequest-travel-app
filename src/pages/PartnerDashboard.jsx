@@ -168,15 +168,26 @@ const PartnerDashboard = () => {
                     </button>
 
                     {!editingId && (
-                        <div className="flex gap-4 mb-8">
-                            <button onClick={() => setMode('quest')} className={`flex-1 py-4 rounded-2xl border-2 flex items-center justify-center font-bold text-lg transition-all ${mode === 'quest' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}>
-                                <Map className="mr-2" /> Impact Quest
-                            </button>
-                            <button onClick={() => setMode('reward')} className={`flex-1 py-4 rounded-2xl border-2 flex items-center justify-center font-bold text-lg transition-all ${mode === 'reward' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}>
-                                <Gift className="mr-2" /> Marketplace Reward
-                            </button>
-                        </div>
-                    )}
+    <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        {/* IMPACT QUEST BUTTON */}
+        <button 
+            onClick={() => setMode('quest')} 
+            className={`flex-1 p-4 rounded-2xl border-2 flex flex-col items-center justify-center font-bold transition-all ${mode === 'quest' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}
+        >
+            <Map className="mb-2" size={24} />
+            <span className="text-sm md:text-lg text-center leading-tight">Impact Quest</span>
+        </button>
+
+        {/* MARKETPLACE REWARD BUTTON */}
+        <button 
+            onClick={() => setMode('reward')} 
+            className={`flex-1 p-4 rounded-2xl border-2 flex flex-col items-center justify-center font-bold transition-all ${mode === 'reward' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}
+        >
+            <Gift className="mb-2" size={24} /> 
+            <span className="text-sm md:text-lg text-center leading-tight">Marketplace Reward</span>
+        </button>
+    </div>
+)}
 
                     <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 space-y-6">
                         <h2 className="text-2xl font-black text-gray-800">{editingId ? 'Edit Information' : `New ${mode === 'quest' ? 'Quest' : 'Reward'}`}</h2>
