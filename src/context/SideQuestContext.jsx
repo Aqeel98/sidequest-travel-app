@@ -422,61 +422,63 @@ export const SideQuestProvider = ({ children }) => {
   // --- 7. QUEST & IMPACT ACTIONS ---
 
   const addQuest = async (formData, imageFile) => {
-    try {
-        console.log("SQ-Quest: Initiating Insert...");
-        
-        const cleanPayload = {
-            title: formData.title || "Untitled Quest",
-            description: formData.description || "",
-            category: formData.category || "General",
-            xp_value: parseInt(formData.xp_value) || 0,
-            location_address: formData.location_address || "",
-            lat: parseFloat(formData.lat) || 0,
-            lng: parseFloat(formData.lng) || 0,
-            instructions: formData.instructions || "",
-            proof_requirements: formData.proof_requirements || "",
-            image: formData.image || null,
-            created_by: currentUser.id,
-            status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
-        };
+    // 1. Prepare data (Synchronous - Instant)
+    const cleanPayload = {
+        title: formData.title || "Untitled Quest",
+        description: formData.description || "",
+        category: formData.category || "General",
+        xp_value: parseInt(formData.xp_value) || 0,
+        location_address: formData.location_address || "",
+        lat: parseFloat(formData.lat) || 0,
+        lng: parseFloat(formData.lng) || 0,
+        instructions: formData.instructions || "",
+        proof_requirements: formData.proof_requirements || "",
+        image: formData.image || null,
+        created_by: currentUser.id,
+        status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
+    };
 
-        // 1. BLIND INSERT (No .select() - This stops the "Processing" hang)
-        const { error: dbErr } = await supabase.from('quests').insert([cleanPayload]);
-        if (dbErr) throw dbErr;
+    // 2. THE SMOOTH FIX: Define the work, but DO NOT 'await' it here.
+    const processUpload = async () => {
+        try {
+            console.log("SQ-Quest: Background Sync Starting...");
+            
+            // Step A: Database Insert
+            const { error: dbErr } = await supabase.from('quests').insert([cleanPayload]);
+            if (dbErr) throw dbErr;
 
-        // 2. BACKGROUND IMAGE UPLOAD
-        if (imageFile) {
-            const runBgUpload = async () => {
-                try {
-                    // Fetch the ID we just created (since we didn't use .select() above)
-                    const { data: latest } = await supabase.from('quests')
-                        .select('id').eq('created_by', currentUser.id)
-                        .order('created_at', { ascending: false }).limit(1).single();
+            // Step B: Image Upload (only if file exists)
+            if (imageFile) {
+                const { data: latest } = await supabase.from('quests')
+                    .select('id').eq('created_by', currentUser.id)
+                    .order('created_at', { ascending: false }).limit(1).single();
 
-                    if (!latest?.id) return;
-
-                    const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
+                if (latest?.id) {
+                    const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: false };
                     const optimized = await imageCompression(imageFile, options);
                     const fname = `quest_${Date.now()}.jpg`;
-                    const fileToUpload = new File([optimized], fname, { type: 'image/jpeg' });
-
-                    await supabase.storage.from('quest-images').upload(fname, fileToUpload);
-                    const url = supabase.storage.from('quest-images').getPublicUrl(fname).data.publicUrl;
                     
-                    // Update the quest with the new URL
-                    await supabase.from('quests').update({ image: url }).eq('id', latest.id);
-                } catch (e) { console.error("BG Upload Error:", e); }
-            };
-            runBgUpload();
+                    const { error: upErr } = await supabase.storage.from('quest-images').upload(fname, optimized);
+                    if (!upErr) {
+                        const url = supabase.storage.from('quest-images').getPublicUrl(fname).data.publicUrl;
+                        await supabase.from('quests').update({ image: url }).eq('id', latest.id);
+                    }
+                }
+            }
+            showToast("Quest published!", 'success');
+        } catch (e) {
+            console.error("Background Sync Failed:", e);
+            showToast("Upload failed. Check connection.", "error");
         }
+    };
 
-        showToast("Quest submitted for review!", 'success');
-        return true; // Form closes and Dashboard resets immediately
-    } catch (error) {
-        console.error("SQ-Quest Error:", error.message);
-        showToast("Error: " + error.message, 'error');
-        return false;
-    }
+    // 3. TRIGGER BACKGROUND WORK
+    processUpload();
+
+    // 4. RETURN TRUE IMMEDIATELY
+    // This makes the 'Processing' button disappear and moves the view in 0.1 seconds.
+    console.log("SQ-Quest: Form released. Working in background.");
+    return true; 
 };
 
 const updateQuest = async (id, updates) => {
