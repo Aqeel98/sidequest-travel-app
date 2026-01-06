@@ -483,42 +483,51 @@ export const SideQuestProvider = ({ children }) => {
 
 const updateQuest = async (id, updates) => {
     try {
-        console.log(`SQ-System: Initiating Optimistic Update for ID: ${id}`);
+        console.log(`SQ-System: Hardened Update for Quest: ${id}`);
         
-        const { id: _id, created_at, created_by, ...payload } = updates;
+        // 1. DATA SHIELD: Explicitly pick ONLY Quest columns
+        // This stops "ghost" data or system fields from crashing the update
+        const { 
+            title, description, category, xp_value, 
+            location_address, lat, lng, instructions, 
+            proof_requirements, image 
+        } = updates;
         
         const finalStatus = currentUser?.role === 'Admin' 
             ? (updates.status || 'active') 
             : 'pending_admin';
 
-        // 1. UPDATE UI INSTANTLY (The "Smooth" part)
-        // This makes the changes appear on the dashboard in 0.01 seconds
-        setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...payload, status: finalStatus } : q));
+        const cleanPayload = {
+            title, description, category,
+            xp_value: parseInt(xp_value) || 0,
+            location_address,
+            lat: parseFloat(lat) || 0,
+            lng: parseFloat(lng) || 0,
+            instructions,
+            proof_requirements,
+            image,
+            status: finalStatus
+        };
 
-        // 2. BACKGROUND SYNC (The "No Hiccup" part)
-        // We define the sync but we do NOT use 'await' on it in the main flow
+        // 2. OPTIMISTIC UI: Update screen instantly
+        setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
+
+        // 3. BACKGROUND SYNC
         const performBackgroundSync = async () => {
             try {
-                const { error } = await supabase.from('quests').update({
-                    ...payload, 
-                    xp_value: parseInt(payload.xp_value) || 0, 
-                    lat: parseFloat(payload.lat) || 0, 
-                    lng: parseFloat(payload.lng) || 0, 
-                    status: finalStatus
-                }).eq('id', Number(id));
+                const { error } = await supabase.from('quests')
+                    .update(cleanPayload)
+                    .eq('id', Number(id));
 
                 if (error) throw error;
-                showToast("Changes synced to server.", 'success');
+                showToast("Quest synced successfully.", 'success');
             } catch (err) {
                 console.error("SQ-Sync-Error:", err.message);
                 showToast("Sync delayed (Weak Signal).", 'info');
             }
         };
 
-        performBackgroundSync(); // Fire this in the background
-
-        // 3. RETURN TRUE IMMEDIATELY
-        // This tells the Dashboard the "process" is done so the button unsticks.
+        performBackgroundSync();
         return true; 
     } catch (error) { 
         console.error("SQ-Quest Update Error:", error.message);
@@ -747,38 +756,32 @@ const deleteQuest = async (id) => {
 
 const updateReward = async (id, updates) => {
     try {
-        console.log(`SQ-Market: Initiating Sanitized Update for ID: ${id}`);
+        console.log(`SQ-Market: Hardened Update for Reward: ${id}`);
         
-        // 1. HARDENED DESTRUCTURING
-        // We explicitly take only what the Rewards table allows.
-        // This SAFELY IGNORES 'lat', 'lng', or 'xp_value' even if they are present.
+        // 1. DATA SHIELD: Explicitly pick ONLY Reward columns
         const { title, description, xp_cost, image } = updates;
         
         const finalStatus = currentUser?.role === 'Admin' 
             ? (updates.status || 'active') 
             : 'pending_admin';
         
-        // 2. UPDATE UI INSTANTLY (Optimistic)
-        setRewards(prev => prev.map(r => r.id === Number(id) ? { 
-            ...r, 
-            title, 
-            description, 
-            image, 
-            xp_cost: parseInt(xp_cost) || 0, 
+        const cleanPayload = {
+            title,
+            description,
+            image,
+            xp_cost: parseInt(xp_cost) || 0,
             status: finalStatus 
-        } : r));
+        };
 
-        // 3. BACKGROUND SYNC (The Shielded Update)
+        // 2. OPTIMISTIC UI
+        setRewards(prev => prev.map(r => r.id === Number(id) ? { ...r, ...cleanPayload } : r));
+
+        // 3. BACKGROUND SYNC
         const performBackgroundSync = async () => {
             try {
-                // We send ONLY the allowed columns to Supabase
-                const { error } = await supabase.from('rewards').update({ 
-                    title,
-                    description,
-                    image,
-                    xp_cost: parseInt(xp_cost) || 0,
-                    status: finalStatus 
-                }).eq('id', Number(id));
+                const { error } = await supabase.from('rewards')
+                    .update(cleanPayload)
+                    .eq('id', Number(id));
 
                 if (error) throw error;
                 showToast("Reward synced.", 'success');
@@ -794,6 +797,7 @@ const updateReward = async (id, updates) => {
         return false;
     }
 };
+
 
 const deleteReward = async (id) => {
     try {
