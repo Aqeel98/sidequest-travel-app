@@ -483,7 +483,7 @@ export const SideQuestProvider = ({ children }) => {
 
 const updateQuest = async (id, updates) => {
     try {
-        console.log(`SQ-System: Updating Quest ID: ${id}`);
+        console.log(`SQ-System: Initiating Optimistic Update for ID: ${id}`);
         
         const { id: _id, created_at, created_by, ...payload } = updates;
         
@@ -491,49 +491,80 @@ const updateQuest = async (id, updates) => {
             ? (updates.status || 'active') 
             : 'pending_admin';
 
-        
-        const { error } = await supabase.from('quests').update({
-            ...payload, 
-            xp_value: parseInt(payload.xp_value) || 0, 
-            lat: parseFloat(payload.lat) || 0, 
-            lng: parseFloat(payload.lng) || 0, 
-            status: finalStatus
-        }).eq('id', Number(id)); // No .select() here
-
-        if (error) throw error;
-
-        // Sync local state immediately
+        // 1. UPDATE UI INSTANTLY (The "Smooth" part)
+        // This makes the changes appear on the dashboard in 0.01 seconds
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...payload, status: finalStatus } : q));
-        
-        showToast("Quest updated successfully.", 'success');
+
+        // 2. BACKGROUND SYNC (The "No Hiccup" part)
+        // We define the sync but we do NOT use 'await' on it in the main flow
+        const performBackgroundSync = async () => {
+            try {
+                const { error } = await supabase.from('quests').update({
+                    ...payload, 
+                    xp_value: parseInt(payload.xp_value) || 0, 
+                    lat: parseFloat(payload.lat) || 0, 
+                    lng: parseFloat(payload.lng) || 0, 
+                    status: finalStatus
+                }).eq('id', Number(id));
+
+                if (error) throw error;
+                showToast("Changes synced to server.", 'success');
+            } catch (err) {
+                console.error("SQ-Sync-Error:", err.message);
+                showToast("Sync delayed (Weak Signal).", 'info');
+            }
+        };
+
+        performBackgroundSync(); // Fire this in the background
+
+        // 3. RETURN TRUE IMMEDIATELY
+        // This tells the Dashboard the "process" is done so the button unsticks.
         return true; 
     } catch (error) { 
         console.error("SQ-Quest Update Error:", error.message);
-        alert("Update Failed: " + error.message); 
+        showToast("Update Failed", 'error'); 
         return false; 
     }
 };
 
-  const deleteQuest = async (id) => {
+const deleteQuest = async (id) => {
     try {
-        console.log(`SQ-Quest: Attempting to remove quest: ${id}`);
+        console.log(`SQ-Quest: Initiating Optimistic Deletion for: ${id}`);
         
-        // 1. First, wipe the history (Submissions) so the database doesn't complain
-        const { error: subError } = await supabase.from('submissions').delete().eq('quest_id', id);
-        if (subError) console.warn("SQ-System: Could not clear history", subError);
-
-        // 2. Now delete the Quest itself
-        const { error } = await supabase.from('quests').delete().eq('id', id);
-        
-        if (error) throw error;
-        
+        // Step 1: UI UPDATE INSTANTLY (The "No Hiccup" part)
+        // This makes the quest disappear from the list in 0.01 seconds
         setQuests(prev => prev.filter(q => q.id !== id));
-        showToast("Quest permanently deleted.", 'info');
+
+        // Step 2: BACKGROUND SYNC
+        // We do the heavy database cleanup in the background
+        const performBackgroundDelete = async () => {
+            try {
+                // First, wipe the history so the database constraint doesn't block us
+                await supabase.from('submissions').delete().eq('quest_id', id);
+                
+                // Now delete the Quest itself
+                const { error } = await supabase.from('quests').delete().eq('id', id);
+                
+                if (error) throw error;
+                showToast("Quest permanently removed.", 'info');
+            } catch (err) {
+                console.error("SQ-Delete-Error:", err.message);
+                // If it fails, we re-fetch to bring the item back to the UI
+                fetchQuests();
+                showToast("Delete failed. Re-syncing...", 'error');
+            }
+        };
+
+        performBackgroundDelete();
+
+        // Step 3: RETURN IMMEDIATELY
+        return true; 
     } catch (error) { 
-        console.error("SQ-Quest: Deletion error ->", error.message);
-        alert("Deletion failed: " + error.message); 
+        console.error("SQ-Quest: Deletion process failed ->", error.message);
+        return false;
     }
-  };
+};
+
   
   const acceptQuest = async (questId) => {
     if (!currentUser) {
@@ -714,58 +745,87 @@ const updateQuest = async (id, updates) => {
 };
 
 
-  const updateReward = async (id, updates) => {
+const updateReward = async (id, updates) => {
     try {
-        console.log(`SQ-Market: Hardening Update Logic for Reward ID: ${id}`);
+        console.log(`SQ-Market: Initiating Sanitized Update for ID: ${id}`);
         
-        // 1. Clean payload
-        const { id: _id, created_at, created_by, ...payload } = updates;
+        // 1. HARDENED DESTRUCTURING
+        // We explicitly take only what the Rewards table allows.
+        // This SAFELY IGNORES 'lat', 'lng', or 'xp_value' even if they are present.
+        const { title, description, xp_cost, image } = updates;
         
-        // 2. STATUS LOGIC: 
-        // If Admin: Respect the choice. If Partner: Force re-verification.
         const finalStatus = currentUser?.role === 'Admin' 
             ? (updates.status || 'active') 
             : 'pending_admin';
         
-        const { error } = await supabase.from('rewards').update({ 
-          ...payload, 
-          xp_cost: parseInt(payload.xp_cost) || 0, // ✅ FIX 4: Sanitization
-          status: finalStatus 
-        }).eq('id', Number(id));
-        
-        if (error) throw error;
-        
-        // 3. Sync local state for instant feedback
-        setRewards(prev => prev.map(r => r.id === Number(id) ? { ...r, ...payload, status: finalStatus } : r));
-        
-        console.log("SQ-Market: Reward update confirmed.");
-        showToast("Reward updated.", 'success');
-        return true; // ✅ Unblocks Dashboard
+        // 2. UPDATE UI INSTANTLY (Optimistic)
+        setRewards(prev => prev.map(r => r.id === Number(id) ? { 
+            ...r, 
+            title, 
+            description, 
+            image, 
+            xp_cost: parseInt(xp_cost) || 0, 
+            status: finalStatus 
+        } : r));
+
+        // 3. BACKGROUND SYNC (The Shielded Update)
+        const performBackgroundSync = async () => {
+            try {
+                // We send ONLY the allowed columns to Supabase
+                const { error } = await supabase.from('rewards').update({ 
+                    title,
+                    description,
+                    image,
+                    xp_cost: parseInt(xp_cost) || 0,
+                    status: finalStatus 
+                }).eq('id', Number(id));
+
+                if (error) throw error;
+                showToast("Reward synced.", 'success');
+            } catch (err) { 
+                console.error("SQ-Market Sync Error:", err.message);
+            }
+        };
+
+        performBackgroundSync();
+        return true; 
     } catch (error) { 
-        console.error("SQ-Market: Update failure ->", error.message);
-        alert("Update failed: " + error.message); 
+        console.error("SQ-Market Update Error:", error.message);
         return false;
     }
 };
 
-  const deleteReward = async (id) => {
+const deleteReward = async (id) => {
     try {
-      console.log(`SQ-Market: Deleting reward: ${id}`);
-      
-      // 1. First, wipe the redemption history
-      const { error: redError } = await supabase.from('redemptions').delete().eq('reward_id', id);
-      if (redError) console.warn("SQ-System: Could not clear redemptions", redError);
+        console.log(`SQ-Market: Initiating Optimistic Deletion for: ${id}`);
+        
+        // Step 1: UI UPDATE INSTANTLY
+        setRewards(prev => prev.filter(r => r.id !== id));
 
-      // 2. Now delete the Reward
-      const { error } = await supabase.from('rewards').delete().eq('id', id);
-      
-      if (error) throw error;
-      
-      setRewards(prev => prev.filter(r => r.id !== id));
-      showToast("Reward permanently deleted.", 'info');
+        // Step 2: BACKGROUND SYNC
+        const performBackgroundDelete = async () => {
+            try {
+                // Wipe redemption history first
+                await supabase.from('redemptions').delete().eq('reward_id', id);
+                
+                // Delete the Reward
+                const { error } = await supabase.from('rewards').delete().eq('id', id);
+                
+                if (error) throw error;
+                showToast("Reward permanently removed.", 'info');
+            } catch (err) {
+                console.error("SQ-Delete-Error:", err.message);
+                fetchRewards();
+                showToast("Delete failed.", 'error');
+            }
+        };
+
+        performBackgroundDelete();
+
+        return true; 
     } catch (error) { 
-      console.error("SQ-Market: Deletion error ->", error.message);
-      alert("Deletion failed: " + error.message); 
+        console.error("SQ-Market: Deletion process failed ->", error.message);
+        return false;
     }
 };
 

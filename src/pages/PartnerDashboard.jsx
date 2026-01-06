@@ -54,29 +54,26 @@ const PartnerDashboard = () => {
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         // 1. VALIDATION
         if (!imageFile && !preview) {
             alert(`Please select an image for your ${mode}.`);
             return;
         }
-
+    
         setIsSubmitting(true);
     
         try {
             let success = false;
-
+    
             if (editingId) {
-                // --- EDIT MODE (Keep Synchronous for Safety) ---
+                // --- EDIT MODE ---
                 let finalImageUrl = preview;
                 
-                // Only upload if a NEW file was chosen during edit
                 if (imageFile) {
                     console.log("SQ-System: Updating image...");
                     const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
                     const compressed = await imageCompression(imageFile, options);
-                    
-                    // Timestamp rename to prevent hangs
                     const fname = `${Date.now()}.jpg`;
                     const fileToUpload = new File([compressed], fname, { type: 'image/jpeg' });
                     
@@ -85,24 +82,35 @@ const PartnerDashboard = () => {
                     
                     finalImageUrl = supabase.storage.from('quest-images').getPublicUrl(fname).data.publicUrl;
                 }
-
+    
+                // --- ACCURATE PAYLOAD FIX ---
+                // We start with the basic info and then only add what each table allows
                 const payload = { 
-                    ...form, 
-                    image: finalImageUrl,
-                    xp_value: parseInt(form.xp_value) || 0,
-                    lat: parseFloat(form.lat) || 0,
-                    lng: parseFloat(form.lng) || 0,
-                    xp_cost: parseInt(form.xp_cost) || 0
+                    title: form.title,
+                    description: form.description,
+                    image: finalImageUrl 
                 };
-
-                if (mode === 'quest') success = await updateQuest(editingId, payload);
-                else success = await updateReward(editingId, payload);
-
+    
+                if (mode === 'quest') {
+                    // ONLY add Quest columns
+                    payload.category = form.category;
+                    payload.xp_value = parseInt(form.xp_value) || 0;
+                    payload.location_address = form.location_address;
+                    payload.lat = parseFloat(form.lat) || 0;
+                    payload.lng = parseFloat(form.lng) || 0;
+                    payload.instructions = form.instructions;
+                    payload.proof_requirements = form.proof_requirements;
+                    
+                    success = await updateQuest(editingId, payload);
+                } else {
+                    // ONLY add Reward columns (removes lat/lng/xp_value)
+                    payload.xp_cost = parseInt(form.xp_cost) || 0;
+                    
+                    success = await updateReward(editingId, payload);
+                }
+    
             } else {
                 // --- NEW ITEM (Turbo Mode) ---
-                // We pass the RAW FILE to the Context.
-                // The Context saves the text INSTANTLY (so this form closes immediately)
-                // and handles the image upload in the background.
                 if (mode === 'quest') success = await addQuest(form, imageFile);
                 else success = await addReward(form, imageFile);
             }
@@ -118,7 +126,8 @@ const PartnerDashboard = () => {
             
         } catch (err) {
             console.error("Dashboard Error:", err);
-            alert("Error: " + (err.message || "Connection failed"));
+            // FIX: Replaced alert with showToast to prevent "Processing" hang
+            showToast("Error: " + (err.message || "Connection failed"), 'error');
         } finally {
             // ALWAYS unstick the button
             setIsSubmitting(false);
