@@ -483,21 +483,25 @@ export const SideQuestProvider = ({ children }) => {
 
 const updateQuest = async (id, updates) => {
     try {
-        console.log(`SQ-System: Linear Update for Quest: ${id}`);
+        console.log(`SQ-System: Accurate Linear Update for Quest ID: ${id}`);
         
-        // 1. DATA SHIELD: Explicitly pick ONLY Quest columns
+        // 1. DATA SHIELD: Pick ONLY valid Quest columns
+        // This stops "ghost" fields like 'created_at' from crashing the database
         const { 
             title, description, category, xp_value, 
             location_address, lat, lng, instructions, 
             proof_requirements, image 
         } = updates;
         
+        // 2. STATUS LOGIC: Admin keeps status, Partner resets to review
         const finalStatus = currentUser?.role === 'Admin' 
             ? (updates.status || 'active') 
             : 'pending_admin';
 
         const cleanPayload = {
-            title, description, category,
+            title,
+            description,
+            category,
             xp_value: parseInt(xp_value) || 0,
             location_address,
             lat: parseFloat(lat) || 0,
@@ -508,9 +512,8 @@ const updateQuest = async (id, updates) => {
             status: finalStatus
         };
 
-        // 2. DIRECT UPDATE (The "Accurate" part)
-        // We AWAIT this. If the network is slow, the "Processing" button stays 
-        // until the database actually SAVES the data.
+        // 3. THE LINEAR SAVE: We wait for the Database to confirm
+        // If the internet is slow, the button stays on 'Processing' until saved
         const { error } = await supabase
             .from('quests')
             .update(cleanPayload)
@@ -518,15 +521,16 @@ const updateQuest = async (id, updates) => {
 
         if (error) throw error;
 
-        // 3. UI UPDATE (Only happens if the DB save worked)
+        // 4. UI UPDATE: Only happens after the Database confirms SUCCESS
+        // This ensures the data NEVER reverts on refresh
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
         
-        showToast("Quest updated accurately!", 'success');
+        showToast("Quest saved successfully!", 'success');
         return true; 
 
     } catch (error) { 
-        console.error("SQ-Quest Update Fatal Error:", error.message);
-        showToast("Update Failed: " + error.message, 'error');
+        console.error("SQ-Quest Update Error:", error.message);
+        showToast("Save failed: " + error.message, 'error');
         return false; 
     }
 };
@@ -751,10 +755,9 @@ const deleteQuest = async (id) => {
 
 const updateReward = async (id, updates) => {
     try {
-        console.log(`SQ-Market: Linear Update for Reward: ${id}`);
+        console.log(`SQ-Market: Accurate Linear Update for Reward ID: ${id}`);
         
         // 1. DATA SHIELD: Pick ONLY Reward columns
-        // This stops 'lat' or other quest fields from crashing the rewards table
         const { title, description, xp_cost, image } = updates;
         
         const finalStatus = currentUser?.role === 'Admin' 
@@ -769,8 +772,7 @@ const updateReward = async (id, updates) => {
             status: finalStatus 
         };
 
-        // 2. DIRECT UPDATE (The "Accurate" part)
-        // We AWAIT this. The app waits for the DB to say "Success".
+        // 2. DIRECT UPDATE: We wait for truth
         const { error } = await supabase
             .from('rewards')
             .update(cleanPayload)
@@ -778,19 +780,18 @@ const updateReward = async (id, updates) => {
 
         if (error) throw error;
 
-        // 3. UI UPDATE (Only happens AFTER the database saves)
+        // 3. UI UPDATE
         setRewards(prev => prev.map(r => r.id === Number(id) ? { ...r, ...cleanPayload } : r));
         
-        showToast("Reward updated accurately!", 'success');
+        showToast("Reward saved successfully!", 'success');
         return true; 
 
     } catch (error) { 
         console.error("SQ-Market Update Error:", error.message);
-        showToast("Update Failed: " + error.message, 'error');
+        showToast("Save failed: " + error.message, 'error');
         return false;
     }
 };
-
 
 const deleteReward = async (id) => {
     try {
