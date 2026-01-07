@@ -423,26 +423,48 @@ export const SideQuestProvider = ({ children }) => {
 
   const addQuest = async (formData, imageFile) => {
     try {
-        console.log("SQ-Quest: Initiating Atomic Upload...");
+        // CHECKPOINT 1
+        showToast("Debug: Starting Compression...", 'info');
+        console.log("SQ-Debug: 1. Starting Compression");
+        
         let finalImageUrl = null;
 
-        // STEP 1: UPLOAD IMAGE FIRST (Just like the Traveler Proof flow)
         if (imageFile) {
-            const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: false };
-            const optimized = await imageCompression(imageFile, options);
-            const fname = `quest_${Date.now()}.jpg`;
+            // FIX: Force Main Thread to prevent Mobile Browser Crash
+            const options = { 
+                maxSizeMB: 0.5,           // Reduce size aggressively for 4G
+                maxWidthOrHeight: 1024,   // Cap resolution
+                useWebWorker: false,      // CRITICAL: Must be false for mobile stability
+                fileType: 'image/jpeg'
+            };
             
-            // Wait for upload to finish
-            const { error: upErr } = await supabase.storage.from('quest-images').upload(fname, optimized);
-            if (upErr) throw upErr;
+            const compressed = await imageCompression(imageFile, options);
+            
+            // CHECKPOINT 2
+            showToast("Debug: Image Compressed. Uploading...", 'info');
+            console.log("SQ-Debug: 2. Compression Done. Uploading...");
 
-            const { data: urlData } = supabase.storage.from('quest-images').getPublicUrl(fname);
-            finalImageUrl = urlData.publicUrl;
+            const fname = `quest_${Date.now()}.jpg`;
+            // FIX: Explicit File construction
+            const fileToUpload = new File([compressed], fname, { type: 'image/jpeg' });
+            
+            const { error: upErr } = await supabase.storage.from('quest-images').upload(fname, fileToUpload);
+            
+            if (upErr) {
+                console.error("Storage Error:", upErr);
+                throw new Error("Storage Blocked: " + upErr.message);
+            }
+
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fname);
+            finalImageUrl = data.publicUrl;
         }
 
-        // STEP 2: SAVE TO DB (Only after we have the image URL)
+        // CHECKPOINT 3
+        showToast("Debug: Upload Done. Saving to DB...", 'info');
+        console.log("SQ-Debug: 3. Upload Done. Saving to DB...");
+
         const cleanPayload = {
-            title: formData.title || "Untitled Quest",
+            title: formData.title || "Untitled",
             description: formData.description || "",
             category: formData.category || "General",
             xp_value: parseInt(formData.xp_value) || 0,
@@ -450,21 +472,26 @@ export const SideQuestProvider = ({ children }) => {
             lat: parseFloat(formData.lat) || 0,
             lng: parseFloat(formData.lng) || 0,
             instructions: formData.instructions || "",
-            proof_requirements: formData.proof_requirements || "",
-            image: finalImageUrl, // Image is attached AT BIRTH
+            proof_requirements: formData.proof_requirements || "", 
+            image: finalImageUrl,
             created_by: currentUser.id,
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
-        const { error: dbErr } = await supabase.from('quests').insert([cleanPayload]);
-        if (dbErr) throw dbErr;
+        const { error } = await supabase.from('quests').insert([cleanPayload]);
+        
+        if (error) {
+            console.error("DB Error:", error);
+            throw new Error("DB Rejected: " + error.message);
+        }
 
-        showToast("Quest submitted successfully!", 'success');
-        return true; // Form releases only when save is 100% complete
+        // CHECKPOINT 4
+        showToast("Success! Quest Created.", 'success');
+        return true;
 
     } catch (error) {
-        console.error("SQ-Quest Error:", error.message);
-        showToast("Upload failed: " + error.message, 'error');
+        console.error("Critical Failure:", error);
+        showToast("FAILED: " + error.message, 'error');
         return false;
     }
 };
