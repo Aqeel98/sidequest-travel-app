@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
-import imageCompression from 'browser-image-compression';
+
 import { supabase } from '../supabaseClient'; 
 import { 
   PlusCircle, Edit, Trash2, Check, MapPin, Award, 
@@ -50,42 +50,26 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         if (!file) return;
     
         setUploading(true);
-        console.log("SQ-Admin: Optimizing...");
+        console.log("SQ-Admin: Uploading..."); 
 
         try {
-            // 1. COMPRESSION (Mobile Safe)
-            const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
-            let compressedBlob = file;
-            
-            try {
-                compressedBlob = await imageCompression(file, options);
-            } catch (cErr) {
-                console.warn("Compression skipped, using original.");
-            }
-            
-            // 2. RENAME (Timestamp for uniqueness)
-            const cleanName = `${Date.now()}.jpg`;
+            // --- FIX: SKIP COMPRESSION (Direct Upload) ---
+            // 1. Sanitize Name
+            const fileExt = file.name.split('.').pop();
+            const cleanName = `${Date.now()}.${fileExt}`;
 
-            console.log("SQ-Admin: Uploading...");
-            
-            // ✅ THE FIX: Explicit File Conversion (Prevents Mobile Hang)
-            const fileForUpload = new File([compressedBlob], cleanName, { type: 'image/jpeg' });
-
-            // 3. UPLOAD
+            // 2. Upload ORIGINAL 'file' directly
             const { error: uploadError } = await supabase.storage
               .from('quest-images')
-              .upload(cleanName, fileForUpload, { // <--- Upload the FILE
-                  contentType: 'image/jpeg',
+              .upload(cleanName, file, { 
                   cacheControl: '3600', 
                   upsert: false 
               });
             
             if (uploadError) throw uploadError;
     
-            // 4. GET URL & UPDATE STATE
+            // 3. Get URL
             const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanName);
-            
-            // Force cache bust logic if needed, but usually not required for new filenames
             const finalUrl = data.publicUrl;
             
             setFormData(prev => ({ ...prev, image: finalUrl }));
@@ -101,7 +85,6 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
             setUploading(false);
         }
     };
-
 
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },

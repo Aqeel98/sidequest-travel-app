@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import imageCompression from 'browser-image-compression';
+
 
 /**
  * SideQuestContext: The central nervous system of the platform.
@@ -437,44 +437,29 @@ export const SideQuestProvider = ({ children }) => {
 
   const addQuest = async (formData, imageFile) => {
     try {
-        console.log("SQ-Quest: 1. Processing Image...");
+        console.log("SQ-Quest: 1. Preparing Upload...");
         let finalImageUrl = null;
 
         if (imageFile) {
-            let fileForUpload = imageFile; // Default to ORIGINAL file
+            // --- FIX: NO COMPRESSION (Fixes 4G Hang) ---
+            // We upload the original file. Cloudinary will optimize it later for viewers.
             
-            try {
-                // RACE: Compression vs. 3-Second Timer
-                // If compression hangs, the timer wins and we skip compression.
-                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: false };
-                
-                const compressionPromise = imageCompression(imageFile, options);
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000));
+            const fileExt = imageFile.name.split('.').pop();
+            // Sanitize file name to prevent errors
+            const fileName = `quest_${Date.now()}.${fileExt}`;
 
-                const compressedBlob = await Promise.race([compressionPromise, timeoutPromise]);
-                
-                // If we get here, compression worked fast enough!
-                const fileName = `quest_${Date.now()}.jpg`;
-                fileForUpload = new File([compressedBlob], fileName, { type: 'image/jpeg' });
-                console.log("SQ-Quest: Compression successful.");
-
-            } catch (err) {
-                console.warn("SQ-Quest: Compression stuck or timed out. Uploading ORIGINAL file instead.");
-                // Ensure the original file has a unique name to prevent overwrites
-                const ext = imageFile.name.split('.').pop();
-                const safeName = `quest_raw_${Date.now()}.${ext}`;
-                fileForUpload = new File([imageFile], safeName, { type: imageFile.type });
-            }
-
-            console.log("SQ-Quest: 2. Uploading...");
-            // Upload whichever file we decided on (Compressed or Original)
+            console.log("SQ-Quest: 2. Uploading Original File...");
+            
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
-                .upload(fileForUpload.name, fileForUpload, { upsert: false });
+                .upload(fileName, imageFile, { // Direct upload of the File object
+                    cacheControl: '3600',
+                    upsert: false
+                });
 
             if (upErr) throw upErr;
 
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileForUpload.name);
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
             finalImageUrl = data.publicUrl;
         }
 
@@ -502,7 +487,7 @@ export const SideQuestProvider = ({ children }) => {
 
         if (error) throw error;
 
-        // Manual Update for Instant Feedback
+        // Instant UI Update
         setQuests(prev => [...prev, data]);
         showToast("Quest submitted successfully!", 'success');
         return true;
@@ -742,37 +727,26 @@ const deleteQuest = async (id) => {
 
   const addReward = async (formData, imageFile) => {
     try {
-        console.log("SQ-Reward: 1. Processing Image...");
+        console.log("SQ-Reward: 1. Preparing Upload...");
         let finalImageUrl = null;
   
         if (imageFile) {
-            let fileForUpload = imageFile; // Default to ORIGINAL
+            // --- FIX: NO COMPRESSION ---
+            const fileExt = imageFile.name.split('.').pop();
+            const fileName = `reward_${Date.now()}.${fileExt}`;
             
-            try {
-                // RACE: Compression vs Timer
-                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: false };
-                const compressedBlob = await Promise.race([
-                    imageCompression(imageFile, options),
-                    new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000))
-                ]);
-                
-                const fileName = `reward_${Date.now()}.jpg`;
-                fileForUpload = new File([compressedBlob], fileName, { type: 'image/jpeg' });
+            console.log("SQ-Reward: 2. Uploading Original File...");
 
-            } catch (err) {
-                console.warn("SQ-Reward: Compression skipped. Uploading original.");
-                const ext = imageFile.name.split('.').pop();
-                const safeName = `reward_raw_${Date.now()}.${ext}`;
-                fileForUpload = new File([imageFile], safeName, { type: imageFile.type });
-            }
-  
             const { error: upErr } = await supabase.storage
                   .from('quest-images')
-                  .upload(fileForUpload.name, fileForUpload, { upsert: false });
+                  .upload(fileName, imageFile, {
+                      cacheControl: '3600',
+                      upsert: false
+                  });
             
             if (upErr) throw upErr;
   
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileForUpload.name);
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
             finalImageUrl = data.publicUrl;
         }
   

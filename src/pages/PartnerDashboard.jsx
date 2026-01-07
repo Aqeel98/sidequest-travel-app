@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
-import imageCompression from 'browser-image-compression';
+
 
 const PartnerDashboard = () => {
     // 1. Updated Destructuring
@@ -76,20 +76,17 @@ const PartnerDashboard = () => {
                 let finalImageUrl = preview;
                 
                 if (imageFile) {
-                    console.log("SQ-System: Updating image...");
-                    // COMPRESSION: Mobile Safe
-                    const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
-                    const compressed = await imageCompression(imageFile, options);
-                    const fname = `edit_${Date.now()}.jpg`;
+                    console.log("SQ-System: Uploading original image...");
                     
-                    // ✅ THE FIX: Explicit File Conversion (Prevents 4G Hangs)
-                    const fileForUpload = new File([compressed], fname, { type: 'image/jpeg' });
-
-                    // UPLOAD
+                    // --- FIX: SKIP COMPRESSION (Direct Upload) ---
+                    const fileExt = imageFile.name.split('.').pop();
+                    const fname = `edit_${Date.now()}.${fileExt}`;
+                    
+                    // Upload ORIGINAL 'imageFile' directly
                     const { error } = await supabase.storage
                         .from('quest-images')
-                        .upload(fname, fileForUpload, { // Upload the FILE, not the Blob
-                            contentType: 'image/jpeg',
+                        .upload(fname, imageFile, { 
+                            cacheControl: '3600',
                             upsert: false
                         });
 
@@ -107,7 +104,6 @@ const PartnerDashboard = () => {
                 };
     
                 if (mode === 'quest') {
-                    // Quest Specifics
                     payload.category = form.category;
                     payload.xp_value = parseInt(form.xp_value) || 0;
                     payload.location_address = form.location_address;
@@ -115,13 +111,10 @@ const PartnerDashboard = () => {
                     payload.lng = parseFloat(form.lng) || 0;
                     payload.instructions = form.instructions;
                     payload.proof_requirements = form.proof_requirements;
-                    
-                    // GOD MODE: If Admin, allow changing status directly via Context
                     if (currentUser.role === 'Admin') payload.status = form.status;
 
                     success = await updateQuest(editingId, payload);
                 } else {
-                    // Reward Specifics
                     payload.xp_cost = parseInt(form.xp_cost) || 0;
                     if (currentUser.role === 'Admin') payload.status = form.status;
                     success = await updateReward(editingId, payload);
