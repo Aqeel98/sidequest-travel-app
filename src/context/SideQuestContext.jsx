@@ -441,22 +441,44 @@ export const SideQuestProvider = ({ children }) => {
         let finalImageUrl = null;
 
         if (imageFile) {
-            const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: false };
-            const compressedBlob = await imageCompression(imageFile, options);
+            let fileForUpload = imageFile; // Default to ORIGINAL file
             
-            // FIX 1: Convert Blob to File
-            const fileName = `quest_${Date.now()}.jpg`;
-            const fileForUpload = new File([compressedBlob], fileName, { type: 'image/jpeg' });
+            try {
+                // RACE: Compression vs. 3-Second Timer
+                // If compression hangs, the timer wins and we skip compression.
+                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: false };
+                
+                const compressionPromise = imageCompression(imageFile, options);
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000));
 
+                const compressedBlob = await Promise.race([compressionPromise, timeoutPromise]);
+                
+                // If we get here, compression worked fast enough!
+                const fileName = `quest_${Date.now()}.jpg`;
+                fileForUpload = new File([compressedBlob], fileName, { type: 'image/jpeg' });
+                console.log("SQ-Quest: Compression successful.");
+
+            } catch (err) {
+                console.warn("SQ-Quest: Compression stuck or timed out. Uploading ORIGINAL file instead.");
+                // Ensure the original file has a unique name to prevent overwrites
+                const ext = imageFile.name.split('.').pop();
+                const safeName = `quest_raw_${Date.now()}.${ext}`;
+                fileForUpload = new File([imageFile], safeName, { type: imageFile.type });
+            }
+
+            console.log("SQ-Quest: 2. Uploading...");
+            // Upload whichever file we decided on (Compressed or Original)
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
-                .upload(fileName, fileForUpload, { contentType: 'image/jpeg', upsert: false });
+                .upload(fileForUpload.name, fileForUpload, { upsert: false });
 
             if (upErr) throw upErr;
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
+
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileForUpload.name);
             finalImageUrl = data.publicUrl;
         }
 
+        console.log("SQ-Quest: 3. Inserting to DB...");
         const cleanPayload = {
             title: formData.title || "Untitled",
             description: formData.description || "",
@@ -480,9 +502,8 @@ export const SideQuestProvider = ({ children }) => {
 
         if (error) throw error;
 
-        // FIX 2: Manual Update (Ensures Partner sees it immediately)
-        setQuests(prev => [...prev, data]); 
-
+        // Manual Update for Instant Feedback
+        setQuests(prev => [...prev, data]);
         showToast("Quest submitted successfully!", 'success');
         return true;
 
@@ -493,21 +514,22 @@ export const SideQuestProvider = ({ children }) => {
     }
   };
 
-const updateQuest = async (id, updates) => {
+  const updateQuest = async (id, updates) => {
     try {
         console.log(`SQ-System: Accurate Linear Update for Quest ID: ${id}`);
         
         // 1. DATA SHIELD: Pick ONLY valid Quest columns
-        // This stops "ghost" fields like 'created_at' from crashing the database
         const { 
             title, description, category, xp_value, 
             location_address, lat, lng, instructions, 
-            proof_requirements, image 
+            proof_requirements, image, status // Include status in destructuring
         } = updates;
         
-        // 2. STATUS LOGIC: Admin keeps status, Partner resets to review
+        // 2. STATUS LOGIC: 
+        // If Admin, use the status they sent. If they didn't send one, keep existing or default to active.
+        // If Partner, FORCE 'pending_admin' to require re-approval.
         const finalStatus = currentUser?.role === 'Admin' 
-            ? (updates.status || 'active') 
+            ? (status || 'active') 
             : 'pending_admin';
 
         const cleanPayload = {
@@ -524,8 +546,7 @@ const updateQuest = async (id, updates) => {
             status: finalStatus
         };
 
-        // 3. THE LINEAR SAVE: We wait for the Database to confirm
-        // If the internet is slow, the button stays on 'Processing' until saved
+        // 3. THE LINEAR SAVE: Wait for Database
         const { error } = await supabase
             .from('quests')
             .update(cleanPayload)
@@ -533,8 +554,9 @@ const updateQuest = async (id, updates) => {
 
         if (error) throw error;
 
-        // 4. UI UPDATE: Only happens after the Database confirms SUCCESS
-        // This ensures the data NEVER reverts on refresh
+        // 4. UI UPDATE (Instant Feedback)
+        // We merge the OLD data (...q) with the NEW data (...cleanPayload)
+        // This ensures the screen updates immediately without a refresh.
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
         
         showToast("Quest saved successfully!", 'success');
@@ -724,19 +746,33 @@ const deleteQuest = async (id) => {
         let finalImageUrl = null;
   
         if (imageFile) {
-            const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: false };
-            const compressedBlob = await imageCompression(imageFile, options);
-            const fileName = `reward_${Date.now()}.jpg`;
+            let fileForUpload = imageFile; // Default to ORIGINAL
             
-            // ✅ FIX 1: Convert Blob to File
-            const fileForUpload = new File([compressedBlob], fileName, { type: 'image/jpeg' });
+            try {
+                // RACE: Compression vs Timer
+                const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1200, useWebWorker: false };
+                const compressedBlob = await Promise.race([
+                    imageCompression(imageFile, options),
+                    new Promise((_, reject) => setTimeout(() => reject("Timeout"), 3000))
+                ]);
+                
+                const fileName = `reward_${Date.now()}.jpg`;
+                fileForUpload = new File([compressedBlob], fileName, { type: 'image/jpeg' });
+
+            } catch (err) {
+                console.warn("SQ-Reward: Compression skipped. Uploading original.");
+                const ext = imageFile.name.split('.').pop();
+                const safeName = `reward_raw_${Date.now()}.${ext}`;
+                fileForUpload = new File([imageFile], safeName, { type: imageFile.type });
+            }
   
             const { error: upErr } = await supabase.storage
                   .from('quest-images')
-                  .upload(fileName, fileForUpload, { contentType: 'image/jpeg', upsert: false });
+                  .upload(fileForUpload.name, fileForUpload, { upsert: false });
             
             if (upErr) throw upErr;
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
+  
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileForUpload.name);
             finalImageUrl = data.publicUrl;
         }
   
@@ -757,9 +793,7 @@ const deleteQuest = async (id) => {
 
         if (error) throw error;
 
-        // ✅ FIX 2: Manual Update
         setRewards(prev => [...prev, data]);
-
         showToast("Reward submitted!", 'success');
         return true;
     } catch (e) { 
@@ -768,7 +802,6 @@ const deleteQuest = async (id) => {
         return false; 
     }
   };
-
 
 const updateReward = async (id, updates) => {
     try {

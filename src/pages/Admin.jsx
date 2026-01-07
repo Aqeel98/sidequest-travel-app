@@ -210,8 +210,16 @@ const Admin = () => {
   const activeRewards = rewards.filter(r => r.status === 'active');  
 
   // Handlers
-  const handleSaveQuest = (id, fields) => { updateQuest(id, fields); setEditingId(null); };
-  const handleSaveReward = (id, fields) => { updateReward(id, fields); setEditingId(null); };
+ 
+  const handleSaveQuest = async (id, fields) => { 
+    const success = await updateQuest(id, fields); 
+    if (success) setEditingId(null); // Only close if save worked
+};
+
+const handleSaveReward = async (id, fields) => { 
+    const success = await updateReward(id, fields); 
+    if (success) setEditingId(null); // Only close if save worked
+};
   const handleDeleteQuest = (id) => { if(window.confirm('Are you sure you want to delete this quest?')) deleteQuest(id); };
   const handleDeleteReward = (id) => { if(window.confirm('Are you sure you want to delete this reward?')) deleteReward(id); };
 
