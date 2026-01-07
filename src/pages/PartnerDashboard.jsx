@@ -82,10 +82,13 @@ const PartnerDashboard = () => {
                     const compressed = await imageCompression(imageFile, options);
                     const fname = `edit_${Date.now()}.jpg`;
                     
-                    // UPLOAD DIRECTLY: Desktop Safe (No 'new File()' wrapper)
+                    // ✅ THE FIX: Explicit File Conversion (Prevents 4G Hangs)
+                    const fileForUpload = new File([compressed], fname, { type: 'image/jpeg' });
+
+                    // UPLOAD
                     const { error } = await supabase.storage
                         .from('quest-images')
-                        .upload(fname, compressed, {
+                        .upload(fname, fileForUpload, { // Upload the FILE, not the Blob
                             contentType: 'image/jpeg',
                             upsert: false
                         });
@@ -111,7 +114,7 @@ const PartnerDashboard = () => {
                     payload.lat = parseFloat(form.lat) || 0;
                     payload.lng = parseFloat(form.lng) || 0;
                     payload.instructions = form.instructions;
-                    payload.proof_requirements = form.proof_requirements; // <--- SENDS THE TEXT
+                    payload.proof_requirements = form.proof_requirements;
                     
                     // GOD MODE: If Admin, allow changing status directly via Context
                     if (currentUser.role === 'Admin') payload.status = form.status;

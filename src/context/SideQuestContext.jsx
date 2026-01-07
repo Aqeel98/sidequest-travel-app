@@ -59,8 +59,8 @@ export const SideQuestProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
     
-    // Initialize the Realtime ecosystem "Ears"
-    const ecosystemSync = subscribeToEcosystemChanges();
+    // NOTE: Realtime subscription removed from here. 
+    // It is moved to the new useEffect below to fix the connection bug.
 
     const bootSequence = async () => {
       try {
@@ -158,11 +158,25 @@ export const SideQuestProvider = ({ children }) => {
 
     return () => {
       mounted = false;
-      if (ecosystemSync) ecosystemSync.unsubscribe(); 
+      // NOTE: Removed ecosystemSync.unsubscribe() here
       subscription.unsubscribe();
       clearTimeout(safetyTimer);
     };
   }, []);
+
+  // --- NEW: Realtime Connection Fix (Reconnects when User/Role changes) ---
+  useEffect(() => {
+    if (isLoading) return; 
+
+    // This calls your existing function, but connects with the CORRECT permissions
+    const channel = subscribeToEcosystemChanges();
+
+    return () => {
+        if (channel) supabase.removeChannel(channel);
+    };
+  }, [currentUser?.id, isLoading]);
+
+
 
   // --- 4. REALTIME DATA CHANNELS (CDC) ---
   const subscribeToEcosystemChanges = () => {
@@ -427,33 +441,22 @@ export const SideQuestProvider = ({ children }) => {
         let finalImageUrl = null;
 
         if (imageFile) {
-            // 1. Compress
-            const options = { 
-                maxSizeMB: 0.5, 
-                maxWidthOrHeight: 1200, 
-                useWebWorker: false // Keeps mobile safe
-            };
-            const compressed = await imageCompression(imageFile, options);
+            const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: false };
+            const compressedBlob = await imageCompression(imageFile, options);
             
-            // 2. Upload DIRECTLY (Fixes the Desktop Hang)
-            const fname = `quest_${Date.now()}.jpg`;
-            console.log("SQ-Quest: 2. Uploading...");
+            // FIX 1: Convert Blob to File
+            const fileName = `quest_${Date.now()}.jpg`;
+            const fileForUpload = new File([compressedBlob], fileName, { type: 'image/jpeg' });
 
-            // We pass 'compressed' directly, but force the Content-Type header
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
-                .upload(fname, compressed, {
-                    contentType: 'image/jpeg',
-                    upsert: false
-                });
+                .upload(fileName, fileForUpload, { contentType: 'image/jpeg', upsert: false });
 
             if (upErr) throw upErr;
-
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fname);
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
             finalImageUrl = data.publicUrl;
         }
 
-        console.log("SQ-Quest: 3. Saving to DB...");
         const cleanPayload = {
             title: formData.title || "Untitled",
             description: formData.description || "",
@@ -469,8 +472,16 @@ export const SideQuestProvider = ({ children }) => {
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
-        const { error } = await supabase.from('quests').insert([cleanPayload]);
+        const { data, error } = await supabase
+            .from('quests')
+            .insert([cleanPayload])
+            .select()
+            .single();
+
         if (error) throw error;
+
+        // FIX 2: Manual Update (Ensures Partner sees it immediately)
+        setQuests(prev => [...prev, data]); 
 
         showToast("Quest submitted successfully!", 'success');
         return true;
@@ -480,7 +491,7 @@ export const SideQuestProvider = ({ children }) => {
         showToast("Upload failed: " + error.message, 'error');
         return false;
     }
-};
+  };
 
 const updateQuest = async (id, updates) => {
     try {
@@ -714,21 +725,18 @@ const deleteQuest = async (id) => {
   
         if (imageFile) {
             const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: false };
-            const compressed = await imageCompression(imageFile, options);
-            const fname = `reward_${Date.now()}.jpg`;
+            const compressedBlob = await imageCompression(imageFile, options);
+            const fileName = `reward_${Date.now()}.jpg`;
+            
+            // ✅ FIX 1: Convert Blob to File
+            const fileForUpload = new File([compressedBlob], fileName, { type: 'image/jpeg' });
   
-            console.log("SQ-Reward: 2. Uploading...");
-            // Upload directly with explicit content type
             const { error: upErr } = await supabase.storage
                   .from('quest-images')
-                  .upload(fname, compressed, {
-                      contentType: 'image/jpeg',
-                      upsert: false
-                  });
+                  .upload(fileName, fileForUpload, { contentType: 'image/jpeg', upsert: false });
             
             if (upErr) throw upErr;
-  
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fname);
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
             finalImageUrl = data.publicUrl;
         }
   
@@ -741,8 +749,17 @@ const deleteQuest = async (id) => {
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
   
-        const { error } = await supabase.from('rewards').insert([cleanPayload]);
+        const { data, error } = await supabase
+            .from('rewards')
+            .insert([cleanPayload])
+            .select()
+            .single();
+
         if (error) throw error;
+
+        // ✅ FIX 2: Manual Update
+        setRewards(prev => [...prev, data]);
+
         showToast("Reward submitted!", 'success');
         return true;
     } catch (e) { 
@@ -751,6 +768,7 @@ const deleteQuest = async (id) => {
         return false; 
     }
   };
+
 
 const updateReward = async (id, updates) => {
     try {

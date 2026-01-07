@@ -68,11 +68,13 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
 
             console.log("SQ-Admin: Uploading...");
             
-            // 3. UPLOAD DIRECTLY (Desktop Safe - No 'new File' wrapper)
-            // We upload the blob directly and force the content type
+            // ✅ THE FIX: Explicit File Conversion (Prevents Mobile Hang)
+            const fileForUpload = new File([compressedBlob], cleanName, { type: 'image/jpeg' });
+
+            // 3. UPLOAD
             const { error: uploadError } = await supabase.storage
               .from('quest-images')
-              .upload(cleanName, compressedBlob, { 
+              .upload(cleanName, fileForUpload, { // <--- Upload the FILE
                   contentType: 'image/jpeg',
                   cacheControl: '3600', 
                   upsert: false 
