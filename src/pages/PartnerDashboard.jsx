@@ -26,8 +26,13 @@ const PartnerDashboard = () => {
     }, [preview]);
 
     // FILTER: Only show what THIS Partner created
-    const myQuests = quests.filter(q => q.created_by === currentUser?.id);
-    const myRewards = rewards.filter(r => r.created_by === currentUser?.id);
+    const myQuests = currentUser?.role === 'Admin' 
+    ? quests 
+    : quests.filter(q => q.created_by === currentUser?.id);
+    
+    const myRewards = currentUser?.role === 'Admin' 
+    ? rewards 
+    : rewards.filter(r => r.created_by === currentUser?.id);
 
     if (currentUser?.role !== 'Partner' && currentUser?.role !== 'Admin') {
         return <div className="p-20 text-center font-bold text-red-500">Partner Access Required</div>;
@@ -57,7 +62,7 @@ const PartnerDashboard = () => {
     
         // 1. VALIDATION
         if (!imageFile && !preview) {
-            alert(`Please select an image for your ${mode}.`);
+            showToast("Please select an image.", 'error');
             return;
         }
     
@@ -72,19 +77,26 @@ const PartnerDashboard = () => {
                 
                 if (imageFile) {
                     console.log("SQ-System: Updating image...");
+                    // COMPRESSION: Mobile Safe
                     const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
                     const compressed = await imageCompression(imageFile, options);
-                    const fname = `${Date.now()}.jpg`;
-                    const fileToUpload = new File([compressed], fname, { type: 'image/jpeg' });
+                    const fname = `edit_${Date.now()}.jpg`;
                     
-                    const { error } = await supabase.storage.from('quest-images').upload(fname, fileToUpload);
+                    // UPLOAD DIRECTLY: Desktop Safe (No 'new File()' wrapper)
+                    const { error } = await supabase.storage
+                        .from('quest-images')
+                        .upload(fname, compressed, {
+                            contentType: 'image/jpeg',
+                            upsert: false
+                        });
+
                     if (error) throw error;
                     
-                    finalImageUrl = supabase.storage.from('quest-images').getPublicUrl(fname).data.publicUrl;
+                    const { data } = supabase.storage.from('quest-images').getPublicUrl(fname);
+                    finalImageUrl = data.publicUrl;
                 }
     
-                // --- ACCURATE PAYLOAD FIX ---
-                // We start with the basic info and then only add what each table allows
+                // PREPARE DATA
                 const payload = { 
                     title: form.title,
                     description: form.description,
@@ -92,30 +104,33 @@ const PartnerDashboard = () => {
                 };
     
                 if (mode === 'quest') {
-                    // ONLY add Quest columns
+                    // Quest Specifics
                     payload.category = form.category;
                     payload.xp_value = parseInt(form.xp_value) || 0;
                     payload.location_address = form.location_address;
                     payload.lat = parseFloat(form.lat) || 0;
                     payload.lng = parseFloat(form.lng) || 0;
                     payload.instructions = form.instructions;
-                    payload.proof_requirements = form.proof_requirements;
+                    payload.proof_requirements = form.proof_requirements; // <--- SENDS THE TEXT
                     
+                    // GOD MODE: If Admin, allow changing status directly via Context
+                    if (currentUser.role === 'Admin') payload.status = form.status;
+
                     success = await updateQuest(editingId, payload);
                 } else {
-                    // ONLY add Reward columns (removes lat/lng/xp_value)
+                    // Reward Specifics
                     payload.xp_cost = parseInt(form.xp_cost) || 0;
-                    
+                    if (currentUser.role === 'Admin') payload.status = form.status;
                     success = await updateReward(editingId, payload);
                 }
     
             } else {
-                // --- NEW ITEM (Turbo Mode) ---
+                // --- CREATE MODE ---
                 if (mode === 'quest') success = await addQuest(form, imageFile);
                 else success = await addReward(form, imageFile);
             }
     
-            // 3. INSTANT UI RESET
+            // RESET UI ON SUCCESS
             if (success) {
                 setEditingId(null);
                 setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
@@ -126,14 +141,11 @@ const PartnerDashboard = () => {
             
         } catch (err) {
             console.error("Dashboard Error:", err);
-            // FIX: Replaced alert with showToast to prevent "Processing" hang
             showToast("Error: " + (err.message || "Connection failed"), 'error');
         } finally {
-            // ALWAYS unstick the button
             setIsSubmitting(false);
         }
     };
-
     
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -253,16 +265,27 @@ const PartnerDashboard = () => {
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
-                                        
                                         <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="8.676767" required />
-                                        <p className="col-span-full text-[10px] text-brand-400 italic text-center mt-2">
-                                                Tip: Long-press your location in Google Maps to find these numbers.
-                                        </p>
                                     </div>
                                 </div>
+                                
+                                {/* INSTRUCTIONS */}
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Instructions for Travelers</label>
-                                    <textarea name="instructions" value={form.instructions || ''} onChange={handleChange} rows="2" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                                    <textarea name="instructions" value={form.instructions || ''} onChange={handleChange} rows="2" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" placeholder="How to find the location..." required />
+                                </div>
+
+                                {/* NEW INPUT: SUBMISSION PROOF */}
+                                <div>
+                                    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Submission Proof Required</label>
+                                    <input 
+                                        type="text" 
+                                        name="proof_requirements" 
+                                        value={form.proof_requirements || ''} 
+                                        onChange={handleChange} 
+                                        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+                                        placeholder="e.g. Upload a photo of the statue..." 
+                                    />
                                 </div>
                             </div>
                         )}

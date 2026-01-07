@@ -423,46 +423,37 @@ export const SideQuestProvider = ({ children }) => {
 
   const addQuest = async (formData, imageFile) => {
     try {
-        // CHECKPOINT 1
-        showToast("Debug: Starting Compression...", 'info');
-        console.log("SQ-Debug: 1. Starting Compression");
-        
+        console.log("SQ-Quest: 1. Processing Image...");
         let finalImageUrl = null;
 
         if (imageFile) {
-            // FIX: Force Main Thread to prevent Mobile Browser Crash
+            // 1. Compress
             const options = { 
-                maxSizeMB: 0.5,           // Reduce size aggressively for 4G
-                maxWidthOrHeight: 1024,   // Cap resolution
-                useWebWorker: false,      // CRITICAL: Must be false for mobile stability
-                fileType: 'image/jpeg'
+                maxSizeMB: 0.5, 
+                maxWidthOrHeight: 1200, 
+                useWebWorker: false // Keeps mobile safe
             };
-            
             const compressed = await imageCompression(imageFile, options);
             
-            // CHECKPOINT 2
-            showToast("Debug: Image Compressed. Uploading...", 'info');
-            console.log("SQ-Debug: 2. Compression Done. Uploading...");
-
+            // 2. Upload DIRECTLY (Fixes the Desktop Hang)
             const fname = `quest_${Date.now()}.jpg`;
-            // FIX: Explicit File construction
-            const fileToUpload = new File([compressed], fname, { type: 'image/jpeg' });
-            
-            const { error: upErr } = await supabase.storage.from('quest-images').upload(fname, fileToUpload);
-            
-            if (upErr) {
-                console.error("Storage Error:", upErr);
-                throw new Error("Storage Blocked: " + upErr.message);
-            }
+            console.log("SQ-Quest: 2. Uploading...");
+
+            // We pass 'compressed' directly, but force the Content-Type header
+            const { error: upErr } = await supabase.storage
+                .from('quest-images')
+                .upload(fname, compressed, {
+                    contentType: 'image/jpeg',
+                    upsert: false
+                });
+
+            if (upErr) throw upErr;
 
             const { data } = supabase.storage.from('quest-images').getPublicUrl(fname);
             finalImageUrl = data.publicUrl;
         }
 
-        // CHECKPOINT 3
-        showToast("Debug: Upload Done. Saving to DB...", 'info');
-        console.log("SQ-Debug: 3. Upload Done. Saving to DB...");
-
+        console.log("SQ-Quest: 3. Saving to DB...");
         const cleanPayload = {
             title: formData.title || "Untitled",
             description: formData.description || "",
@@ -472,26 +463,21 @@ export const SideQuestProvider = ({ children }) => {
             lat: parseFloat(formData.lat) || 0,
             lng: parseFloat(formData.lng) || 0,
             instructions: formData.instructions || "",
-            proof_requirements: formData.proof_requirements || "", 
+            proof_requirements: formData.proof_requirements || "",
             image: finalImageUrl,
             created_by: currentUser.id,
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
         const { error } = await supabase.from('quests').insert([cleanPayload]);
-        
-        if (error) {
-            console.error("DB Error:", error);
-            throw new Error("DB Rejected: " + error.message);
-        }
+        if (error) throw error;
 
-        // CHECKPOINT 4
-        showToast("Success! Quest Created.", 'success');
+        showToast("Quest submitted successfully!", 'success');
         return true;
 
     } catch (error) {
-        console.error("Critical Failure:", error);
-        showToast("FAILED: " + error.message, 'error');
+        console.error("SQ-Quest Error:", error);
+        showToast("Upload failed: " + error.message, 'error');
         return false;
     }
 };
@@ -723,42 +709,48 @@ const deleteQuest = async (id) => {
 
   const addReward = async (formData, imageFile) => {
     try {
-        console.log("SQ-Market: Initiating Atomic Upload...");
+        console.log("SQ-Reward: 1. Processing Image...");
         let finalImageUrl = null;
-
+  
         if (imageFile) {
             const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1200, useWebWorker: false };
-            const optimized = await imageCompression(imageFile, options);
+            const compressed = await imageCompression(imageFile, options);
             const fname = `reward_${Date.now()}.jpg`;
+  
+            console.log("SQ-Reward: 2. Uploading...");
+            // Upload directly with explicit content type
+            const { error: upErr } = await supabase.storage
+                  .from('quest-images')
+                  .upload(fname, compressed, {
+                      contentType: 'image/jpeg',
+                      upsert: false
+                  });
             
-            const { error: upErr } = await supabase.storage.from('quest-images').upload(fname, optimized);
             if (upErr) throw upErr;
-
-            const { data: urlData } = supabase.storage.from('quest-images').getPublicUrl(fname);
-            finalImageUrl = urlData.publicUrl;
+  
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fname);
+            finalImageUrl = data.publicUrl;
         }
-
+  
         const cleanPayload = {
-            title: formData.title || "New Reward",
-            description: formData.description || "",
+            title: formData.title,
+            description: formData.description,
             xp_cost: parseInt(formData.xp_cost) || 0,
             image: finalImageUrl,
             created_by: currentUser.id,
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
-
-        const { error: dbErr } = await supabase.from('rewards').insert([cleanPayload]);
-        if (dbErr) throw dbErr;
-
+  
+        const { error } = await supabase.from('rewards').insert([cleanPayload]);
+        if (error) throw error;
         showToast("Reward submitted!", 'success');
         return true;
-    } catch (error) {
-        console.error("SQ-Reward Error:", error.message);
-        showToast("Upload failed", 'error');
-        return false;
+    } catch (e) { 
+        console.error(e);
+        showToast("Error adding reward: " + e.message, 'error'); 
+        return false; 
     }
-};
-
+  };
 
 const updateReward = async (id, updates) => {
     try {

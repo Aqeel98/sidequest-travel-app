@@ -53,33 +53,41 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         console.log("SQ-Admin: Optimizing...");
 
         try {
-            // 1. COMPRESSION (0.6MB Limit)
-            let fileToUpload = file;
+            // 1. COMPRESSION (Mobile Safe)
+            const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
+            let compressedBlob = file;
+            
             try {
-                const options = { maxSizeMB: 0.6, maxWidthOrHeight: 1200, useWebWorker: false };
-                const compressedBlob = await imageCompression(file, options);
-                
-                // 2. THE FIX: RENAME TO TIMESTAMP
-                // This prevents Supabase from hanging on special characters
-                const cleanName = `${Date.now()}.jpg`;
-                fileToUpload = new File([compressedBlob], cleanName, { type: 'image/jpeg' });
+                compressedBlob = await imageCompression(file, options);
             } catch (cErr) {
-                console.warn("Compression skipped.");
+                console.warn("Compression skipped, using original.");
             }
             
+            // 2. RENAME (Timestamp for uniqueness)
+            const cleanName = `${Date.now()}.jpg`;
+
             console.log("SQ-Admin: Uploading...");
             
-            // 3. UPLOAD (With no special chars in name)
+            // 3. UPLOAD DIRECTLY (Desktop Safe - No 'new File' wrapper)
+            // We upload the blob directly and force the content type
             const { error: uploadError } = await supabase.storage
               .from('quest-images')
-              .upload(fileToUpload.name, fileToUpload, { cacheControl: '3600', upsert: false });
+              .upload(cleanName, compressedBlob, { 
+                  contentType: 'image/jpeg',
+                  cacheControl: '3600', 
+                  upsert: false 
+              });
             
             if (uploadError) throw uploadError;
     
             // 4. GET URL & UPDATE STATE
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileToUpload.name);
-            setFormData(prev => ({ ...prev, image: data.publicUrl }));
-            setPreviewUrl(data.publicUrl);
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanName);
+            
+            // Force cache bust logic if needed, but usually not required for new filenames
+            const finalUrl = data.publicUrl;
+            
+            setFormData(prev => ({ ...prev, image: finalUrl }));
+            setPreviewUrl(finalUrl);
             
             console.log("SQ-Admin: Success!");
             alert("Image updated! Don't forget to click 'Save Changes'.");
@@ -88,7 +96,6 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
             console.error("Admin Upload Error:", error);
             alert("Upload failed: " + error.message);
         } finally {
-            // 5. THE UNSTICK: Button always resets
             setUploading(false);
         }
     };
