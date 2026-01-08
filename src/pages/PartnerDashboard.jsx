@@ -57,6 +57,42 @@ const PartnerDashboard = () => {
         setView('create');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+
+    // --- HELPER: 
+    const optimizeImage = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 1200; // Resize to 1200px max
+                    let w = img.width;
+                    let h = img.height;
+                    
+                    if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
+                    else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                    
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    
+                    // Compress to JPG 70%
+                    canvas.toBlob((blob) => {
+                        const safeName = `img_${Date.now()}.jpg`;
+                        resolve(new File([blob], safeName, { type: 'image/jpeg' }));
+                    }, 'image/jpeg', 0.7);
+                };
+            };
+            reader.onerror = () => resolve(file); // Fallback
+        });
+    };
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
     
@@ -76,23 +112,22 @@ const PartnerDashboard = () => {
                 let finalImageUrl = preview;
                 
                 if (imageFile) {
-                    console.log("SQ-System: Uploading original image...");
+                    console.log("SQ-System: Optimizing image...");
                     
-                    // --- FIX: SKIP COMPRESSION (Direct Upload) ---
-                    const fileExt = imageFile.name.split('.').pop();
-                    const fname = `edit_${Date.now()}.${fileExt}`;
+                    // ✅ FIX: Optimize locally using Canvas (Native, Fast, Light)
+                    const optimizedFile = await optimizeImage(imageFile);
                     
-                    // Upload ORIGINAL 'imageFile' directly
+                    // Upload the SMALL optimized file
                     const { error } = await supabase.storage
                         .from('quest-images')
-                        .upload(fname, imageFile, { 
+                        .upload(optimizedFile.name, optimizedFile, { 
                             cacheControl: '3600',
                             upsert: false
                         });
 
                     if (error) throw error;
                     
-                    const { data } = supabase.storage.from('quest-images').getPublicUrl(fname);
+                    const { data } = supabase.storage.from('quest-images').getPublicUrl(optimizedFile.name);
                     finalImageUrl = data.publicUrl;
                 }
     
@@ -122,6 +157,7 @@ const PartnerDashboard = () => {
     
             } else {
                 // --- CREATE MODE ---
+                // (Context already handles optimization for AddQuest, so we just pass the file)
                 if (mode === 'quest') success = await addQuest(form, imageFile);
                 else success = await addReward(form, imageFile);
             }

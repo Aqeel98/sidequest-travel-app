@@ -444,35 +444,72 @@ export const SideQuestProvider = ({ children }) => {
 
   // --- 7. QUEST & IMPACT ACTIONS ---
 
+  const optimizeImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Max dimensions (Safe for mobile memory)
+          const MAX_WIDTH = 1080;
+          const MAX_HEIGHT = 1080;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          } else {
+            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Compress to JPEG 0.7 (Reduces 5MB PNG -> ~200KB JPG)
+          canvas.toBlob((blob) => {
+            if (!blob) {
+                // Fallback if canvas fails
+                resolve(file); 
+                return;
+            }
+            const safeName = `img_${Date.now()}.jpg`;
+            const optimizedFile = new File([blob], safeName, { type: 'image/jpeg' });
+            resolve(optimizedFile);
+          }, 'image/jpeg', 0.7);
+        };
+        img.onerror = (err) => resolve(file); // Fallback to original on error
+      };
+      reader.onerror = (err) => resolve(file);
+    });
+  };
+
+  // --- 2. UPDATED ADD QUEST ---
   const addQuest = async (formData, imageFile) => {
     try {
-        console.log("SQ-Quest: 1. Preparing Upload...");
+        console.log("SQ-Quest: 1. Processing...");
         let finalImageUrl = null;
 
         if (imageFile) {
-            // --- FIX: NO COMPRESSION (Fixes 4G Hang) ---
-            // We upload the original file. Cloudinary will optimize it later for viewers.
-            
-            const fileExt = imageFile.name.split('.').pop();
-            // Sanitize file name to prevent errors
-            const fileName = `quest_${Date.now()}.${fileExt}`;
+            // ✅ Optimize: Turns heavy PNG into tiny JPG instantly
+            const fileToUpload = await optimizeImage(imageFile);
+            console.log(`SQ-Quest: Uploading ${fileToUpload.name} (${(fileToUpload.size/1024).toFixed(0)}KB)`);
 
-            console.log("SQ-Quest: 2. Uploading Original File...");
-            
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
-                .upload(fileName, imageFile, { // Direct upload of the File object
-                    cacheControl: '3600',
-                    upsert: false
-                });
+                .upload(fileToUpload.name, fileToUpload, { cacheControl: '3600', upsert: false });
 
             if (upErr) throw upErr;
-
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileToUpload.name);
             finalImageUrl = data.publicUrl;
         }
 
-        console.log("SQ-Quest: 3. Inserting to DB...");
+        console.log("SQ-Quest: 2. Saving to DB...");
         const cleanPayload = {
             title: formData.title || "Untitled",
             description: formData.description || "",
@@ -488,25 +525,25 @@ export const SideQuestProvider = ({ children }) => {
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
-        const { data, error } = await supabase
-            .from('quests')
-            .insert([cleanPayload])
-            .select()
-            .single();
-
+        const { data, error } = await supabase.from('quests').insert([cleanPayload]).select().single();
         if (error) throw error;
 
-        // Instant UI Update
-        setQuests(prev => [...prev, data]);
+        // Manual Update (Deduplicated logic)
+        setQuests(prev => {
+            if (prev.find(q => q.id === data.id)) return prev;
+            return [...prev, data];
+        });
+        
         showToast("Quest submitted successfully!", 'success');
         return true;
 
     } catch (error) {
-        console.error("SQ-Quest Error:", error);
+        console.error("SQ-Error:", error);
         showToast("Upload failed: " + error.message, 'error');
         return false;
     }
   };
+
 
   const updateQuest = async (id, updates) => {
     try {
@@ -736,53 +773,31 @@ const deleteQuest = async (id) => {
 
   const addReward = async (formData, imageFile) => {
     try {
-        console.log("SQ-Reward: 1. Preparing Upload...");
+        console.log("SQ-Reward: 1. Processing...");
         let finalImageUrl = null;
-  
         if (imageFile) {
-            // --- FIX: NO COMPRESSION ---
-            const fileExt = imageFile.name.split('.').pop();
-            const fileName = `reward_${Date.now()}.${fileExt}`;
+            // ✅ Optimize
+            const fileToUpload = await optimizeImage(imageFile);
             
-            console.log("SQ-Reward: 2. Uploading Original File...");
-
-            const { error: upErr } = await supabase.storage
-                  .from('quest-images')
-                  .upload(fileName, imageFile, {
-                      cacheControl: '3600',
-                      upsert: false
-                  });
-            
+            const { error: upErr } = await supabase.storage.from('quest-images').upload(fileToUpload.name, fileToUpload);
             if (upErr) throw upErr;
-  
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileToUpload.name);
             finalImageUrl = data.publicUrl;
         }
-  
+        
         const cleanPayload = {
-            title: formData.title,
-            description: formData.description,
-            xp_cost: parseInt(formData.xp_cost) || 0,
-            image: finalImageUrl,
-            created_by: currentUser.id,
-            status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
+            title: formData.title, description: formData.description,
+            xp_cost: parseInt(formData.xp_cost) || 0, image: finalImageUrl,
+            created_by: currentUser.id, status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
-  
-        const { data, error } = await supabase
-            .from('rewards')
-            .insert([cleanPayload])
-            .select()
-            .single();
-
+        const { data, error } = await supabase.from('rewards').insert([cleanPayload]).select().single();
         if (error) throw error;
 
-        setRewards(prev => [...prev, data]);
+        setRewards(prev => { if (prev.find(r => r.id === data.id)) return prev; return [...prev, data]; });
         showToast("Reward submitted!", 'success');
         return true;
     } catch (e) { 
-        console.error(e);
-        showToast("Error adding reward: " + e.message, 'error'); 
-        return false; 
+        showToast("Error: " + e.message, 'error'); return false; 
     }
   };
 

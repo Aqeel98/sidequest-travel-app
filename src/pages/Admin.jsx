@@ -45,46 +45,75 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-    
-        setUploading(true);
-        console.log("SQ-Admin: Uploading..."); 
+// --- HELPER: 
+const optimizeImage = (file) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX = 1200;
+                let w = img.width;
+                let h = img.height;
+                if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
+                else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                canvas.toBlob((blob) => {
+                    const safeName = `img_${Date.now()}.jpg`;
+                    resolve(new File([blob], safeName, { type: 'image/jpeg' }));
+                }, 'image/jpeg', 0.7);
+            };
+        };
+        reader.onerror = () => resolve(file);
+    });
+};
 
-        try {
-            // --- FIX: SKIP COMPRESSION (Direct Upload) ---
-            // 1. Sanitize Name
-            const fileExt = file.name.split('.').pop();
-            const cleanName = `${Date.now()}.${fileExt}`;
 
-            // 2. Upload ORIGINAL 'file' directly
-            const { error: uploadError } = await supabase.storage
-              .from('quest-images')
-              .upload(cleanName, file, { 
-                  cacheControl: '3600', 
-                  upsert: false 
-              });
-            
-            if (uploadError) throw uploadError;
-    
-            // 3. Get URL
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanName);
-            const finalUrl = data.publicUrl;
-            
-            setFormData(prev => ({ ...prev, image: finalUrl }));
-            setPreviewUrl(finalUrl);
-            
-            console.log("SQ-Admin: Success!");
-            alert("Image updated! Don't forget to click 'Save Changes'.");
+const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-        } catch (error) {
-            console.error("Admin Upload Error:", error);
-            alert("Upload failed: " + error.message);
-        } finally {
-            setUploading(false);
-        }
-    };
+    setUploading(true);
+    console.log("SQ-Admin: Optimizing..."); 
+
+    try {
+        // ✅ FIX: Optimize locally first
+        const optimizedFile = await optimizeImage(file);
+
+        // Upload the SMALL optimized file
+        const { error: uploadError } = await supabase.storage
+          .from('quest-images')
+          .upload(optimizedFile.name, optimizedFile, { 
+              cacheControl: '3600', 
+              upsert: false 
+          });
+        
+        if (uploadError) throw uploadError;
+
+        // 3. Get URL
+        const { data } = supabase.storage.from('quest-images').getPublicUrl(optimizedFile.name);
+        const finalUrl = data.publicUrl;
+        
+        setFormData(prev => ({ ...prev, image: finalUrl }));
+        setPreviewUrl(finalUrl);
+        
+        console.log("SQ-Admin: Success!");
+        alert("Image updated! Don't forget to click 'Save Changes'.");
+
+    } catch (error) {
+        console.error("Admin Upload Error:", error);
+        alert("Upload failed: " + error.message);
+    } finally {
+        setUploading(false);
+    }
+};
+
 
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
