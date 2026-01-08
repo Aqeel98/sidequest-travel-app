@@ -177,7 +177,6 @@ export const SideQuestProvider = ({ children }) => {
   }, [currentUser?.id, isLoading]);
 
 
-
   // --- 4. REALTIME DATA CHANNELS (CDC) ---
   const subscribeToEcosystemChanges = () => {
     return supabase
@@ -192,7 +191,12 @@ export const SideQuestProvider = ({ children }) => {
               }
           } 
           else if (payload.eventType === 'INSERT') {
-              setQuests(prev => [...prev, payload.new]);
+              setQuests(prev => {
+                  // ✅ FIX: Check if ID exists. If yes, ignore it.
+                  if (prev.find(q => q.id === payload.new.id)) return prev;
+                  return [...prev, payload.new];
+              });
+
               if (payload.new.status === 'pending_admin') {
                   showToast("New Partner Quest awaiting approval.", 'info');
               }
@@ -208,7 +212,12 @@ export const SideQuestProvider = ({ children }) => {
               setRewards(prev => prev.map(r => r.id === payload.new.id ? payload.new : r));
           } 
           else if (payload.eventType === 'INSERT') {
-              setRewards(prev => [...prev, payload.new]);
+              setRewards(prev => {
+                  // ✅ FIX: Check if ID exists. If yes, ignore it.
+                  if (prev.find(r => r.id === payload.new.id)) return prev;
+                  return [...prev, payload.new];
+              });
+
               if (payload.new.status === 'pending_admin') {
                   showToast("New Partner Reward awaiting approval.", 'info');
               }
