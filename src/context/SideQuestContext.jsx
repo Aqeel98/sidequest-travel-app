@@ -560,60 +560,66 @@ export const SideQuestProvider = ({ children }) => {
   };
 
 
-  const updateQuest = async (id, updates) => {
-    try {
-        console.log(`SQ-System: Accurate Linear Update for Quest ID: ${id}`);
-        
-        // 1. DATA SHIELD: Pick ONLY valid Quest columns
-        const { 
-            title, description, category, xp_value, 
-            location_address, lat, lng, instructions, 
-            proof_requirements, image, status // Include status in destructuring
-        } = updates;
-        
-        // 2. STATUS LOGIC: 
-        // If Admin, use the status they sent. If they didn't send one, keep existing or default to active.
-        // If Partner, FORCE 'pending_admin' to require re-approval.
-        const finalStatus = currentUser?.role === 'Admin' 
-            ? (status || 'active') 
-            : 'pending_admin';
-
-        const cleanPayload = {
-            title,
-            description,
-            category,
-            xp_value: parseInt(xp_value) || 0,
-            location_address,
-            lat: parseFloat(lat) || 0,
-            lng: parseFloat(lng) || 0,
-            instructions,
-            proof_requirements,
-            image,
-            status: finalStatus
-        };
-
-        // 3. THE LINEAR SAVE: Wait for Database
-        const { error } = await supabase
-            .from('quests')
-            .update(cleanPayload)
-            .eq('id', Number(id));
-
-        if (error) throw error;
-
-        // 4. UI UPDATE (Instant Feedback)
-        // We merge the OLD data (...q) with the NEW data (...cleanPayload)
-        // This ensures the screen updates immediately without a refresh.
-        setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
-        
-        showToast("Quest saved successfully!", 'success');
-        return true; 
-
-    } catch (error) { 
-        console.error("SQ-Quest Update Error:", error.message);
-        showToast("Save failed: " + error.message, 'error');
-        return false; 
-    }
+  const withTimeout = (promise, ms) => {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Connection Timeout")), ms))
+    ]);
 };
+
+// --- ROBUST UPDATE QUEST (Fixed for "Nothing Happens" Hang) ---
+const updateQuest = async (id, updates) => {
+  try {
+      console.log(`SQ-System: Accurate Linear Update for Quest ID: ${id}`);
+      
+      // 1. DATA SHIELD: Pick ONLY valid Quest columns
+      const { 
+          title, description, category, xp_value, 
+          location_address, lat, lng, instructions, 
+          proof_requirements, image, status 
+      } = updates;
+      
+      // 2. STATUS LOGIC: 
+      const finalStatus = currentUser?.role === 'Admin' 
+          ? (status || 'active') 
+          : 'pending_admin'; // Partners always reset to pending
+
+      const cleanPayload = {
+          title, description, category,
+          xp_value: parseInt(xp_value) || 0,
+          location_address,
+          lat: parseFloat(lat) || 0,
+          lng: parseFloat(lng) || 0,
+          instructions, proof_requirements, image,
+          status: finalStatus
+      };
+
+      // 3. THE LINEAR SAVE (With 6-Second Fail-Safe)
+      // We wrap the Supabase call in withTimeout. 
+      // If the internet is "Zombie", this kills the wait after 6s.
+      const updatePromise = supabase
+          .from('quests')
+          .update(cleanPayload)
+          .eq('id', Number(id));
+
+      const { error } = await withTimeout(updatePromise, 6000);
+
+      if (error) throw error;
+
+      // 4. UI UPDATE (Instant Feedback)
+      setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
+      
+      showToast("Quest saved successfully!", 'success');
+      return true; 
+
+  } catch (error) { 
+      console.error("SQ-Quest Update Error:", error);
+      // Provide a clear message so the user knows to click again
+      showToast("Save failed: " + (error.message || "Network Error. Try again."), 'error');
+      return false; 
+  }
+};
+
 
 const deleteQuest = async (id) => {
     try {
