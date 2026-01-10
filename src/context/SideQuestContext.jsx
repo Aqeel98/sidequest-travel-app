@@ -489,28 +489,34 @@ export const SideQuestProvider = ({ children }) => {
     });
   };
 
-  // --- 2. UPDATED ADD QUEST ---
   const addQuest = async (formData, imageFile) => {
     try {
         console.log("SQ-Quest: 1. Initiating Robust Upload...");
         
-        //WAKE UP CALL 
-        // Pings the server to ensure the connection is alive even if you typed slowly.
-        await supabase.auth.getSession(); 
+        // CONNECTION CHECK WITH TIMEOUT
+        // We try to shake hands with the server. 
+        // If it takes longer than 3 seconds, we ignore it and proceed anyway.
+        // This prevents the "Forever Hang".
+        try {
+            await withTimeout(supabase.auth.getSession(), 3000);
+        } catch (err) {
+            console.warn("SQ-Quest: Connection check timed out. Proceeding via Public Access.");
+        }
 
         let finalImageUrl = null;
 
         if (imageFile) {
-            //SANITIZE FILENAME
-            // Prevents hangs if your file has spaces or symbols 
+            // 1. Sanitize Filename
             const fileExt = imageFile.name.split('.').pop();
             const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
-            // Optimize Image 
-            const fileToUpload = await optimizeImage(imageFile);
-            console.log(`SQ-Quest: Uploading ${cleanFileName} (${(fileToUpload.size/1024).toFixed(0)}KB)`);
+            // 2. Optimize Image
+            let fileToUpload = imageFile;
+            try { fileToUpload = await optimizeImage(imageFile); } catch (e) { console.warn("Optimization skipped"); }
+            
+            console.log(`SQ-Quest: Uploading ${cleanFileName}...`);
 
-            // Upload with SAFE name and UPSERT to prevent conflicts
+            // 3. Upload (Public Bucket Access)
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
                 .upload(cleanFileName, fileToUpload, { 
@@ -518,14 +524,14 @@ export const SideQuestProvider = ({ children }) => {
                     upsert: true 
                 });
 
-            if (upErr) throw upErr;
+            if (upErr) throw new Error("Image Upload Failed: " + upErr.message);
             
-            // Get URL using the CLEAN name
             const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanFileName);
             finalImageUrl = data.publicUrl;
         }
 
         console.log("SQ-Quest: 2. Saving to DB...");
+        
         const cleanPayload = {
             title: formData.title || "Untitled",
             description: formData.description || "",
@@ -537,7 +543,7 @@ export const SideQuestProvider = ({ children }) => {
             instructions: formData.instructions || "",
             proof_requirements: formData.proof_requirements || "",
             image: finalImageUrl,
-            created_by: currentUser.id,
+            created_by: currentUser.id, // Safe to use local ID
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
@@ -554,7 +560,7 @@ export const SideQuestProvider = ({ children }) => {
 
     } catch (error) {
         console.error("SQ-Error:", error);
-        showToast("Upload failed: " + (error.message || "Connection lost. Refresh and try again."), 'error');
+        showToast("Upload failed: " + (error.message || "Network Error"), 'error');
         return false;
     }
   };
@@ -796,30 +802,28 @@ const deleteQuest = async (id) => {
     try {
         console.log("SQ-Reward: 1. Initiating Robust Upload...");
         
-        // WAKE UP CALL
-        await supabase.auth.getSession();
+        // 🔥 THE FIX: CONNECTION CHECK WITH TIMEOUT
+        try {
+            await withTimeout(supabase.auth.getSession(), 3000);
+        } catch (err) {
+            console.warn("SQ-Reward: Connection check timed out. Proceeding.");
+        }
 
         let finalImageUrl = null;
         if (imageFile) {
-            // SANITIZE FILENAME
             const fileExt = imageFile.name.split('.').pop();
             const cleanFileName = `reward_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
             
-            // Optimize
-            const fileToUpload = await optimizeImage(imageFile);
+            let fileToUpload = imageFile;
+            try { fileToUpload = await optimizeImage(imageFile); } catch (e) { console.warn("Optimization skipped"); }
             
-            // Upload with SAFE name
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
-                .upload(cleanFileName, fileToUpload, { 
-                    cacheControl: '3600',
-                    upsert: true 
-                });
+                .upload(cleanFileName, fileToUpload, { upsert: true });
             
-            if (upErr) throw upErr;
-            
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanFileName);
-            finalImageUrl = data.publicUrl;
+            if (upErr) throw new Error("Image Upload Failed: " + upErr.message);
+            const { data: urlData } = supabase.storage.from('quest-images').getPublicUrl(cleanFileName);
+            finalImageUrl = urlData.publicUrl;
         }
         
         const cleanPayload = {
@@ -839,20 +843,23 @@ const deleteQuest = async (id) => {
         return true;
     } catch (e) { 
         console.error("SQ-Error:", e);
-        showToast("Upload failed: " + (e.message || "Connection lost."), 'error');
+        showToast("Upload failed: " + e.message, 'error');
         return false; 
     }
   };
 
+// --- ROBUST UPDATE REWARD (Fixed for "Nothing Happens" Hang) ---
 const updateReward = async (id, updates) => {
     try {
         console.log(`SQ-Market: Accurate Linear Update for Reward ID: ${id}`);
         
         // 1. DATA SHIELD: Pick ONLY Reward columns
-        const { title, description, xp_cost, image } = updates;
+        const { title, description, xp_cost, image, status } = updates;
         
+        // 2. STATUS LOGIC:
+        // Admin uses provided status (or active), Partner forced to pending_admin
         const finalStatus = currentUser?.role === 'Admin' 
-            ? (updates.status || 'active') 
+            ? (status || 'active') 
             : 'pending_admin';
         
         const cleanPayload = {
@@ -863,23 +870,26 @@ const updateReward = async (id, updates) => {
             status: finalStatus 
         };
 
-        // 2. DIRECT UPDATE: We wait for truth
-        const { error } = await supabase
+        // 3. THE LINEAR SAVE (With 6-Second Fail-Safe)
+        // If the internet is "Zombie", this kills the wait after 6s.
+        const updatePromise = supabase
             .from('rewards')
             .update(cleanPayload)
             .eq('id', Number(id));
 
+        const { error } = await withTimeout(updatePromise, 6000);
+
         if (error) throw error;
 
-        // 3. UI UPDATE
+        // 4. UI UPDATE
         setRewards(prev => prev.map(r => r.id === Number(id) ? { ...r, ...cleanPayload } : r));
         
         showToast("Reward saved successfully!", 'success');
         return true; 
 
     } catch (error) { 
-        console.error("SQ-Market Update Error:", error.message);
-        showToast("Save failed: " + error.message, 'error');
+        console.error("SQ-Market Update Error:", error);
+        showToast("Save failed: " + (error.message || "Network Error. Try again."), 'error');
         return false;
     }
 };
