@@ -502,11 +502,11 @@ export const SideQuestProvider = ({ children }) => {
 
         if (imageFile) {
             //SANITIZE FILENAME
-            // Prevents hangs if your file has spaces or symbols (e.g. "My Photo(1).jpg")
+            // Prevents hangs if your file has spaces or symbols 
             const fileExt = imageFile.name.split('.').pop();
             const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
-            // Optimize Image (Your existing logic)
+            // Optimize Image 
             const fileToUpload = await optimizeImage(imageFile);
             console.log(`SQ-Quest: Uploading ${cleanFileName} (${(fileToUpload.size/1024).toFixed(0)}KB)`);
 
