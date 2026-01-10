@@ -492,20 +492,36 @@ export const SideQuestProvider = ({ children }) => {
   // --- 2. UPDATED ADD QUEST ---
   const addQuest = async (formData, imageFile) => {
     try {
-        console.log("SQ-Quest: 1. Processing...");
+        console.log("SQ-Quest: 1. Initiating Robust Upload...");
+        
+        //WAKE UP CALL 
+        // Pings the server to ensure the connection is alive even if you typed slowly.
+        await supabase.auth.getSession(); 
+
         let finalImageUrl = null;
 
         if (imageFile) {
-            // ✅ Optimize: Turns heavy PNG into tiny JPG instantly
-            const fileToUpload = await optimizeImage(imageFile);
-            console.log(`SQ-Quest: Uploading ${fileToUpload.name} (${(fileToUpload.size/1024).toFixed(0)}KB)`);
+            //SANITIZE FILENAME
+            // Prevents hangs if your file has spaces or symbols (e.g. "My Photo(1).jpg")
+            const fileExt = imageFile.name.split('.').pop();
+            const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
+            // Optimize Image (Your existing logic)
+            const fileToUpload = await optimizeImage(imageFile);
+            console.log(`SQ-Quest: Uploading ${cleanFileName} (${(fileToUpload.size/1024).toFixed(0)}KB)`);
+
+            // Upload with SAFE name and UPSERT to prevent conflicts
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
-                .upload(fileToUpload.name, fileToUpload, { cacheControl: '3600', upsert: false });
+                .upload(cleanFileName, fileToUpload, { 
+                    cacheControl: '3600', 
+                    upsert: true 
+                });
 
             if (upErr) throw upErr;
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileToUpload.name);
+            
+            // Get URL using the CLEAN name
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanFileName);
             finalImageUrl = data.publicUrl;
         }
 
@@ -528,7 +544,6 @@ export const SideQuestProvider = ({ children }) => {
         const { data, error } = await supabase.from('quests').insert([cleanPayload]).select().single();
         if (error) throw error;
 
-        // Manual Update (Deduplicated logic)
         setQuests(prev => {
             if (prev.find(q => q.id === data.id)) return prev;
             return [...prev, data];
@@ -539,7 +554,7 @@ export const SideQuestProvider = ({ children }) => {
 
     } catch (error) {
         console.error("SQ-Error:", error);
-        showToast("Upload failed: " + error.message, 'error');
+        showToast("Upload failed: " + (error.message || "Connection lost. Refresh and try again."), 'error');
         return false;
     }
   };
@@ -773,23 +788,43 @@ const deleteQuest = async (id) => {
 
   const addReward = async (formData, imageFile) => {
     try {
-        console.log("SQ-Reward: 1. Processing...");
+        console.log("SQ-Reward: 1. Initiating Robust Upload...");
+        
+        // WAKE UP CALL
+        await supabase.auth.getSession();
+
         let finalImageUrl = null;
         if (imageFile) {
-            // ✅ Optimize
+            // SANITIZE FILENAME
+            const fileExt = imageFile.name.split('.').pop();
+            const cleanFileName = `reward_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+            
+            // Optimize
             const fileToUpload = await optimizeImage(imageFile);
             
-            const { error: upErr } = await supabase.storage.from('quest-images').upload(fileToUpload.name, fileToUpload);
+            // Upload with SAFE name
+            const { error: upErr } = await supabase.storage
+                .from('quest-images')
+                .upload(cleanFileName, fileToUpload, { 
+                    cacheControl: '3600',
+                    upsert: true 
+                });
+            
             if (upErr) throw upErr;
-            const { data } = supabase.storage.from('quest-images').getPublicUrl(fileToUpload.name);
+            
+            const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanFileName);
             finalImageUrl = data.publicUrl;
         }
         
         const cleanPayload = {
-            title: formData.title, description: formData.description,
-            xp_cost: parseInt(formData.xp_cost) || 0, image: finalImageUrl,
-            created_by: currentUser.id, status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
+            title: formData.title, 
+            description: formData.description,
+            xp_cost: parseInt(formData.xp_cost) || 0, 
+            image: finalImageUrl,
+            created_by: currentUser.id, 
+            status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
+
         const { data, error } = await supabase.from('rewards').insert([cleanPayload]).select().single();
         if (error) throw error;
 
@@ -797,7 +832,9 @@ const deleteQuest = async (id) => {
         showToast("Reward submitted!", 'success');
         return true;
     } catch (e) { 
-        showToast("Error: " + e.message, 'error'); return false; 
+        console.error("SQ-Error:", e);
+        showToast("Upload failed: " + (e.message || "Connection lost."), 'error');
+        return false; 
     }
   };
 
