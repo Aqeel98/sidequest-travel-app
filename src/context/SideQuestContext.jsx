@@ -12,6 +12,16 @@ const SideQuestContext = createContext();
 
 export const useSideQuest = () => useContext(SideQuestContext);
 
+const withTimeout = (promise, ms) => {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Connection Timeout")), ms))
+    ]);
+};
+
+
+
+
 export const SideQuestProvider = ({ children }) => {
   // --- 1. GLOBAL SYSTEM STATE ---
   // Core user identity and session persistence
@@ -329,7 +339,9 @@ export const SideQuestProvider = ({ children }) => {
           
           await Promise.all([
              fetchSubmissions(userId, data.role),
-             fetchRedemptions(userId)
+             fetchRedemptions(userId),
+             fetchQuests(), 
+             fetchRewards()
           ]);
       }
     } catch (err) {
@@ -566,12 +578,6 @@ export const SideQuestProvider = ({ children }) => {
   };
 
 
-  const withTimeout = (promise, ms) => {
-    return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Connection Timeout")), ms))
-    ]);
-};
 
 // --- ROBUST UPDATE QUEST (Fixed for "Nothing Happens" Hang) ---
 const updateQuest = async (id, updates) => {
