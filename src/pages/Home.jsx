@@ -141,15 +141,23 @@ const Home = () => {
                         
                         <div className="p-6">
                             <div className="flex items-center gap-2 mb-3">
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                    quest.category === 'Environmental' ? 'bg-emerald-100 text-emerald-700' :
-                                    quest.category === 'Social' ? 'bg-blue-100 text-blue-700' :
-                                    quest.category === 'Education' ? 'bg-indigo-100 text-indigo-700' :
-                                    quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
-                                    'bg-orange-100 text-orange-700'
-                                }`}>
-                                    {quest.category}
-                                </span>
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+        quest.category === 'Environmental' ? 'bg-emerald-100 text-emerald-700' :
+        quest.category === 'Social' ? 'bg-rose-100 text-rose-700' :
+        quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
+        quest.category === 'Education' ? 'bg-blue-100 text-blue-700' :
+        quest.category === 'Cultural' ? 'bg-amber-100 text-amber-700' :
+      
+        quest.category === 'Adventure' ? 'bg-violet-100 text-violet-700' :
+        quest.category === 'Exploration' ? 'bg-indigo-100 text-indigo-700' :
+        quest.category === 'Marine Adventure' ? 'bg-cyan-100 text-cyan-700' :
+        quest.category === 'Wildlife Adventure' ? 'bg-lime-100 text-lime-700' :
+        
+        // Default
+        'bg-orange-100 text-orange-700'
+    }`}>
+        {quest.category}
+    </span>
                             </div>
                             
                             <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-brand-600 transition-colors">
