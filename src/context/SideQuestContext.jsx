@@ -505,37 +505,46 @@ export const SideQuestProvider = ({ children }) => {
     try {
         console.log("SQ-Quest: 1. Initiating Upload...");
         
-        // 🔥 THE SMART WAKE-UP CALL
-        // We try to refresh the connection to wake up the network.
-        // If it takes longer than 2 seconds, we catch the error and UPLOAD ANYWAY.
-        // This guarantees NO HANGS.
+        // 1. Connection Check (Smart Wake-Up)
         try {
             await withTimeout(supabase.auth.getSession(), 2000);
-            console.log("SQ-Quest: Connection refreshed.");
         } catch (err) {
-            console.warn("SQ-Quest: Connection refresh slow, proceeding to upload anyway...");
+            console.warn("SQ-Quest: Connection check slow, proceeding...");
         }
 
         let finalImageUrl = null;
 
         if (imageFile) {
-            // A. Sanitize
-            const fileExt = imageFile.name.split('.').pop();
-            const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-
-            // B. Optimize
+            // --- LOGIC FIX START ---
+            
+            // Step A: Setup defaults
             let fileToUpload = imageFile;
-            try { fileToUpload = await optimizeImage(imageFile); } catch (e) { console.warn("Optimization skipped"); }
+            let fileExt = imageFile.name.split('.').pop(); // Default to original (e.g. png)
+
+            // Step B: Optimize FIRST
+            try { 
+                fileToUpload = await optimizeImage(imageFile); 
+                // CRITICAL: Optimization turns it into a JPEG. 
+                // So we MUST update the extension to match the data.
+                fileExt = 'jpg'; 
+            } catch (e) { 
+                console.warn("Optimization skipped"); 
+            }
+
+            // Step C: Create Name (Now using the correct extension)
+            const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
             
             console.log(`SQ-Quest: Uploading ${cleanFileName}...`);
 
-            // C. Upload (Direct to Public Bucket)
+            // Step D: Upload
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
                 .upload(cleanFileName, fileToUpload, { 
                     cacheControl: '3600', 
                     upsert: true 
                 });
+            
+            // --- LOGIC FIX END ---
 
             if (upErr) throw new Error("Image Upload Failed: " + upErr.message);
             
@@ -577,7 +586,6 @@ export const SideQuestProvider = ({ children }) => {
         return false;
     }
   };
-
 
 
 // --- ROBUST UPDATE QUEST (Fixed for "Nothing Happens" Hang) ---
