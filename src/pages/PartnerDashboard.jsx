@@ -265,7 +265,7 @@ const PartnerDashboard = () => {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Description</label>
+                            <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Mission Brief</label>
                             <textarea name="description" value={form.description || ''} onChange={handleChange} rows="3" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
                         </div>
 

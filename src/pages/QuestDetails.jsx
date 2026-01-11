@@ -149,9 +149,9 @@ const QuestDetails = () => {
                 <Navigation size={18} className="mr-2" /> Get Directions
           </button>
 
-          {/* 1. Target Impact (Yellow Box) */}
+          {/* 1. Mission Brief (Yellow Box) */}
           <div className="bg-yellow-50 p-6 rounded-2xl mb-6 border border-yellow-200">
-             <h3 className="font-bold text-yellow-800 text-lg mb-2">Target Impact</h3>
+             <h3 className="font-bold text-yellow-800 text-lg mb-2">Mission Brief</h3>
              <p className="text-yellow-900 leading-relaxed">{quest.description}</p>
           </div>
 
