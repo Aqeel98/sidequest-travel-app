@@ -146,9 +146,9 @@ const Home = () => {
         quest.category === 'Social' ? 'bg-rose-100 text-rose-700' :
         quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
         quest.category === 'Education' ? 'bg-blue-100 text-blue-700' :
-        quest.category === 'Cultural' ? 'bg-amber-100 text-amber-700' :
+        quest.category === 'Cultural' ? 'bg-violet-100 text-violet-700' :
       
-        quest.category === 'Adventure' ? 'bg-violet-100 text-violet-700' :
+        quest.category === 'Adventure' ? 'bg-red-100 text-red-700' :
         quest.category === 'Exploration' ? 'bg-indigo-100 text-indigo-700' :
         quest.category === 'Marine Adventure' ? 'bg-cyan-100 text-cyan-700' :
         quest.category === 'Wildlife Adventure' ? 'bg-lime-100 text-lime-700' :
