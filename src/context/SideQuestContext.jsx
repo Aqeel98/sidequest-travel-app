@@ -589,57 +589,63 @@ export const SideQuestProvider = ({ children }) => {
 
 
 // --- ROBUST UPDATE QUEST (Fixed for "Nothing Happens" Hang) ---
+// --- ROBUST UPDATE QUEST (With Auto-Reconnect) ---
 const updateQuest = async (id, updates) => {
-  try {
-      console.log(`SQ-System: Accurate Linear Update for Quest ID: ${id}`);
-      
-      // 1. DATA SHIELD: Pick ONLY valid Quest columns
-      const { 
-          title, description, category, xp_value, 
-          location_address, lat, lng, instructions, 
-          proof_requirements, image, status 
-      } = updates;
-      
-      // 2. STATUS LOGIC: 
-      const finalStatus = currentUser?.role === 'Admin' 
-          ? (status || 'active') 
-          : 'pending_admin'; // Partners always reset to pending
-
-      const cleanPayload = {
-          title, description, category,
-          xp_value: parseInt(xp_value) || 0,
-          location_address,
-          lat: parseFloat(lat) || 0,
-          lng: parseFloat(lng) || 0,
-          instructions, proof_requirements, image,
-          status: finalStatus
-      };
-
-      // 3. THE LINEAR SAVE (With 6-Second Fail-Safe)
-      // We wrap the Supabase call in withTimeout. 
-      // If the internet is "Zombie", this kills the wait after 6s.
-      const updatePromise = supabase
-          .from('quests')
-          .update(cleanPayload)
-          .eq('id', Number(id));
-
-      const { error } = await withTimeout(updatePromise, 6000);
-
-      if (error) throw error;
-
-      // 4. UI UPDATE (Instant Feedback)
-      setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
-      
-      showToast("Quest saved successfully!", 'success');
-      return true; 
-
-  } catch (error) { 
-      console.error("SQ-Quest Update Error:", error);
-      // Provide a clear message so the user knows to click again
-      showToast("Save failed: " + (error.message || "Network Error. Try again."), 'error');
-      return false; 
-  }
-};
+    try {
+        console.log(`SQ-System: Accurate Linear Update for Quest ID: ${id}`);
+        
+        // 🔥 FIX: Wake Up Connection before saving
+        // This prevents the "Connection Timeout" error you saw in the logs.
+        try {
+            await withTimeout(supabase.auth.getSession(), 2000);
+        } catch (err) {
+            console.warn("SQ-Update: Connection check slow, proceeding...");
+        }
+  
+        // 1. DATA SHIELD
+        const { 
+            title, description, category, xp_value, 
+            location_address, lat, lng, instructions, 
+            proof_requirements, image, status 
+        } = updates;
+        
+        // 2. STATUS LOGIC
+        const finalStatus = currentUser?.role === 'Admin' 
+            ? (status || 'active') 
+            : 'pending_admin';
+  
+        const cleanPayload = {
+            title, description, category,
+            xp_value: parseInt(xp_value) || 0,
+            location_address,
+            lat: parseFloat(lat) || 0,
+            lng: parseFloat(lng) || 0,
+            instructions, proof_requirements, image,
+            status: finalStatus
+        };
+  
+        // 3. THE LINEAR SAVE (With 6-Second Fail-Safe)
+        const updatePromise = supabase
+            .from('quests')
+            .update(cleanPayload)
+            .eq('id', Number(id));
+  
+        const { error } = await withTimeout(updatePromise, 6000);
+  
+        if (error) throw error;
+  
+        // 4. UI UPDATE
+        setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
+        
+        showToast("Quest saved successfully!", 'success');
+        return true; 
+  
+    } catch (error) { 
+        console.error("SQ-Quest Update Error:", error);
+        showToast("Save failed: " + (error.message === "Connection Timeout" ? "Network slow. Click Save again." : error.message), 'error');
+        return false; 
+    }
+  };
 
 
 const deleteQuest = async (id) => {
