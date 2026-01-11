@@ -503,32 +503,33 @@ export const SideQuestProvider = ({ children }) => {
 
   const addQuest = async (formData, imageFile) => {
     try {
-        console.log("SQ-Quest: 1. Initiating Robust Upload...");
+        console.log("SQ-Quest: 1. Initiating Upload...");
         
-        // CONNECTION CHECK WITH TIMEOUT
-        // We try to shake hands with the server. 
-        // If it takes longer than 3 seconds, we ignore it and proceed anyway.
-        // This prevents the "Forever Hang".
+        // 🔥 THE SMART WAKE-UP CALL
+        // We try to refresh the connection to wake up the network.
+        // If it takes longer than 2 seconds, we catch the error and UPLOAD ANYWAY.
+        // This guarantees NO HANGS.
         try {
-            await withTimeout(supabase.auth.getSession(), 3000);
+            await withTimeout(supabase.auth.getSession(), 2000);
+            console.log("SQ-Quest: Connection refreshed.");
         } catch (err) {
-            console.warn("SQ-Quest: Connection check timed out. Proceeding via Public Access.");
+            console.warn("SQ-Quest: Connection refresh slow, proceeding to upload anyway...");
         }
 
         let finalImageUrl = null;
 
         if (imageFile) {
-            // 1. Sanitize Filename
+            // A. Sanitize
             const fileExt = imageFile.name.split('.').pop();
             const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
-            // 2. Optimize Image
+            // B. Optimize
             let fileToUpload = imageFile;
             try { fileToUpload = await optimizeImage(imageFile); } catch (e) { console.warn("Optimization skipped"); }
             
             console.log(`SQ-Quest: Uploading ${cleanFileName}...`);
 
-            // 3. Upload (Public Bucket Access)
+            // C. Upload (Direct to Public Bucket)
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
                 .upload(cleanFileName, fileToUpload, { 
@@ -555,7 +556,7 @@ export const SideQuestProvider = ({ children }) => {
             instructions: formData.instructions || "",
             proof_requirements: formData.proof_requirements || "",
             image: finalImageUrl,
-            created_by: currentUser.id, // Safe to use local ID
+            created_by: currentUser.id,
             status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
         };
 
