@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Award, Compass, Globe, CheckCircle, Clock, Leaf, Heart, Flag } from 'lucide-react';
+import { Award, Compass, Globe, CheckCircle, Clock, Leaf, Heart, Flag, Mountain, Map, Anchor, Bird } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const BADGE_THRESHOLDS = {
@@ -10,6 +10,11 @@ const BADGE_THRESHOLDS = {
     'Community Builder': 2,
     'Cultural Ambassador': 1,
     'Animal Ally': 1,
+    'Adventure Seeker': 2,    // For 'Adventure' category
+    'True Explorer': 2,       // For 'Exploration' category
+    'Ocean Guardian': 1,      // For 'Marine Adventure' category
+    'Wildlife Ranger': 1,     // For 'Wildlife Adventure' category
+
 };
 
 const Profile = () => {
@@ -63,6 +68,18 @@ const Profile = () => {
              badges.push({ name: 'Animal Ally', icon: <Heart size={24} />, color: 'text-pink-500', desc: 'Completed an Animal Welfare Quest' });
         }
 
+        if (categoryCounts['Adventure'] >= BADGE_THRESHOLDS['Adventure Seeker']) {
+            badges.push({ name: 'Adventure Seeker', icon: <Mountain size={24} />, color: 'text-purple-600', desc: 'Completed 2+ Adventure Quests' });
+       }
+       if (categoryCounts['Exploration'] >= BADGE_THRESHOLDS['True Explorer']) {
+            badges.push({ name: 'True Explorer', icon: <Map size={24} />, color: 'text-indigo-500', desc: 'Completed 2+ Exploration Quests' });
+       }
+       if (categoryCounts['Marine Adventure'] >= BADGE_THRESHOLDS['Ocean Guardian']) {
+            badges.push({ name: 'Ocean Guardian', icon: <Anchor size={24} />, color: 'text-cyan-600', desc: 'Completed a Marine Adventure' });
+       }
+       if (categoryCounts['Wildlife Adventure'] >= BADGE_THRESHOLDS['Wildlife Ranger']) {
+            badges.push({ name: 'Wildlife Ranger', icon: <Bird size={24} />, color: 'text-lime-600', desc: 'Completed a Wildlife Adventure' });
+       }
         return {
             totalXP: currentUser.xp,
             completedQuests,
