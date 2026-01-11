@@ -17,22 +17,58 @@ L.Icon.Default.mergeOptions({
 });
 
 // --- CUSTOM ICONS (Your Original Colors) ---
-const createQuestIcon = (status) => {
-  const colors = { 
-    'available': '#14b8a6', // Teal
-    'in_progress': '#3B82F6', // Blue
-    'pending': '#F59E0B', // Amber
-    'approved': '#10B981', // Emerald
-    'default': '#737373' 
-  };
-  const color = colors[status] || colors.default;
-  const iconHtml = status === 'pending' ? '⏳' : status === 'approved' ? '🏆' : '🎯';
-  
-  return L.divIcon({
-    className: "gamified-marker",
-    html: `<div style="background-color:${color};width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 0 10px rgba(0,0,0,.3);font-size:16px;display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg); display:block; height:100%; color:white;">${iconHtml}</span></div>`,
-    iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32],
-  });
+// --- NEW HELPER: CATEGORY COLORS & EMOJIS ---
+const getCategoryDetails = (category) => {
+  switch (category) {
+      // Existing
+      case 'Environmental': return { color: '#10b981', emoji: '🌿' }; // Emerald
+      case 'Social': return { color: '#f43f5e', emoji: '❤️' }; // Rose
+      case 'Animal Welfare': return { color: '#ec4899', emoji: '🐾' }; // Pink
+      case 'Cultural': return { color: '#f59e0b', emoji: '🏯' }; // Amber
+      case 'Education': return { color: '#3b82f6', emoji: '📚' }; // Blue
+      
+      // New Categories
+      case 'Adventure': return { color: '#8b5cf6', emoji: '🧗' }; // Violet
+      case 'Exploration': return { color: '#6366f1', emoji: '🧭' }; // Indigo
+      case 'Marine Adventure': return { color: '#06b6d4', emoji: '🤿' }; // Cyan
+      case 'Wildlife Adventure': return { color: '#84cc16', emoji: '🐘' }; // Lime
+      
+      default: return { color: '#f97316', emoji: '🎯' }; // Orange
+  }
+};
+
+const createQuestIcon = (status, category) => {
+// 1. Get Base Category Style
+let { color, emoji } = getCategoryDetails(category);
+
+// 2. Override if Completed or Pending
+if (status === 'approved') {
+    color = '#10B981'; // Emerald Green
+    emoji = '🏆';
+} else if (status === 'pending') {
+    color = '#F59E0B'; // Amber
+    emoji = '⏳';
+}
+
+// 3. Return Leaflet Icon
+return L.divIcon({
+  className: "gamified-marker",
+  html: `<div style="
+      background-color: ${color};
+      width: 36px; height: 36px;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      border: 3px solid white;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+  ">
+      <span style="transform: rotate(45deg); display: block; line-height: 1;">${emoji}</span>
+  </div>`,
+  iconSize: [36, 36], 
+  iconAnchor: [18, 36], 
+  popupAnchor: [0, -36],
+});
 };
 
 const createAvatarIcon = () => {
@@ -141,7 +177,8 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
             <Marker
               key={quest.id}
               position={[quest.lat, quest.lng]}
-              icon={createQuestIcon(status)}
+              icon={createQuestIcon(status, quest.category)}
+
             >
               <Popup maxWidth={280} autoPan={true}>
                 <div className="p-1 flex flex-col items-start text-left">
