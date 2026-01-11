@@ -28,7 +28,7 @@ const getCategoryDetails = (category) => {
       case 'Education': return { color: '#3b82f6', emoji: '📚' }; // Blue
       
       // --- NEW (High Contrast) ---
-      case 'Adventure': return { color: '#ef4444', emoji: '🧗' }; // RED (High Energy)
+      case 'Adventure': return { color: '#ea580c', emoji: '🧗' }; // Deep Orange
       case 'Exploration': return { color: '#eab308', emoji: '🧭' }; // GOLD (Discovery)
       case 'Marine Adventure': return { color: '#06b6d4', emoji: '🤿' }; // CYAN (Water)
       case 'Wildlife Adventure': return { color: '#84cc16', emoji: '🐘' }; // LIME (Jungle)

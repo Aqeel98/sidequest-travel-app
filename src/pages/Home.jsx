@@ -148,7 +148,7 @@ const Home = () => {
         quest.category === 'Education' ? 'bg-blue-100 text-blue-700' :
         quest.category === 'Cultural' ? 'bg-violet-100 text-violet-700' :
       
-        quest.category === 'Adventure' ? 'bg-red-100 text-red-700' :
+        quest.category === 'Adventure' ? 'bg-orange-100 text-orange-800' :
         quest.category === 'Exploration' ? 'bg-indigo-100 text-indigo-700' :
         quest.category === 'Marine Adventure' ? 'bg-cyan-100 text-cyan-700' :
         quest.category === 'Wildlife Adventure' ? 'bg-lime-100 text-lime-700' :
