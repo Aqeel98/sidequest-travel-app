@@ -60,7 +60,50 @@ export const SideQuestProvider = ({ children }) => {
   // MASTER SECURITY CONSTANT
   const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
+  // --- 1.5 PWA AUTO-RECONNECT LOGIC ---
+  
+  // A. Helper to refresh data when app wakes up
+  const refreshFullState = async (userId, role) => {
+    try {
+        console.log("SQ-PWA: Waking up & refreshing data...");
+        
+        // Refresh Global Data
+        const { data: qData } = await supabase.from('quests').select('*');
+        if (qData) setQuests(qData);
+        const { data: rData } = await supabase.from('rewards').select('*');
+        if (rData) setRewards(rData);
 
+        // Refresh User Data
+        if (role === 'Admin') {
+            const { data: subs } = await supabase.from('submissions').select('*');
+            if (subs) setQuestProgress(subs);
+        } else {
+            const { data: mySubs } = await supabase.from('submissions').select('*').eq('traveler_id', userId);
+            if (mySubs) setQuestProgress(mySubs);
+            // Refresh Redemptions
+            const { data: redData } = await supabase.from('redemptions').select('*').eq('traveler_id', userId);
+            if (redData) setRedemptions(redData);
+        }
+        console.log("SQ-PWA: Data synced.");
+    } catch (e) { console.warn("SQ-PWA: Background refresh failed", e); }
+};
+
+// B. Listener for App Visibility (Switching tabs/Unlocking phone)
+useEffect(() => {
+    const handleVisibilityChange = async () => {
+        // If app becomes visible AND we have a logged-in user
+        if (document.visibilityState === 'visible' && userRef.current) {
+            // 1. Wake up the connection line
+            try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){}
+            
+            // 2. Refresh the data
+            await refreshFullState(userRef.current.id, userRef.current.role);
+        }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+}, []);
 
   
 
@@ -591,16 +634,9 @@ export const SideQuestProvider = ({ children }) => {
 // --- ROBUST UPDATE QUEST (Extended Timeout) ---
 const updateQuest = async (id, updates) => {
     try {
-        console.log(`SQ-System: Accurate Linear Update for Quest ID: ${id}`);
+        console.log(`SQ-System: Updating Quest ID: ${id}...`);
         
-        // 1. Connection Wake Up
-        try {
-            await withTimeout(supabase.auth.getSession(), 2000);
-        } catch (err) {
-            console.warn("SQ-Update: Connection check slow, proceeding...");
-        }
-  
-        // 2. Data Prep
+        // 1. DATA PREP (Keep exact logic)
         const { 
             title, description, category, xp_value, 
             location_address, lat, lng, instructions, 
@@ -610,7 +646,7 @@ const updateQuest = async (id, updates) => {
         const finalStatus = currentUser?.role === 'Admin' 
             ? (status || 'active') 
             : 'pending_admin';
-  
+
         const cleanPayload = {
             title, description, category,
             xp_value: parseInt(xp_value) || 0,
@@ -620,28 +656,34 @@ const updateQuest = async (id, updates) => {
             instructions, proof_requirements, image,
             status: finalStatus
         };
-  
-        // 3. EXECUTE UPDATE (Increased to 25 Seconds)
-        // This allows the "Zombie" connection enough time to wake up and write.
-        const updatePromise = supabase
-            .from('quests')
-            .update(cleanPayload)
-            .eq('id', Number(id));
-  
-        // CHANGED: 6000 -> 25000
-        const { error } = await withTimeout(updatePromise, 25000);
-  
-        if (error) throw error;
-  
+
+        // 2. DEFINE THE SAVE OPERATION
+        const executeSave = () => supabase.from('quests').update(cleanPayload).eq('id', Number(id));
+
+        // 3. EXECUTE WITH RETRY
+        try {
+            // Attempt 1: Fast check (5 seconds). 
+            // If connection is "Zombie", this fails quickly to wake it up.
+            const { error } = await withTimeout(executeSave(), 5000);
+            if (error) throw error;
+        } catch (firstErr) {
+            console.warn("SQ-Update: Connection dormant. Retrying immediately...");
+            
+            // Attempt 2: The Real Save (20 seconds).
+            // Connection is now awake, so this will succeed.
+            const { error: secondErr } = await withTimeout(executeSave(), 20000);
+            if (secondErr) throw secondErr;
+        }
+
         // 4. UI UPDATE
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
         
-        showToast("Changes saved!", 'success');
+        showToast("Quest saved successfully!", 'success');
         return true; 
-  
+
     } catch (error) { 
         console.error("SQ-Quest Update Error:", error);
-        showToast("Save failed: " + (error.message === "Connection Timeout" ? "Network too slow. Click Save again." : error.message), 'error');
+        showToast("Save failed: " + (error.message === "Connection Timeout" ? "Network unstable. Please click Save again." : error.message), 'error');
         return false; 
     }
   };
@@ -691,6 +733,9 @@ const deleteQuest = async (id) => {
         return false;
     }
     
+    try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){}
+
+
     // --- FIX: OPTIMISTIC UI UPDATE (Instant Feedback) ---
     const tempId = `temp-${Date.now()}`;
     const optimisticSub = { id: tempId, quest_id: questId, traveler_id: currentUser.id, status: 'in_progress' };
@@ -709,6 +754,7 @@ const deleteQuest = async (id) => {
         
         // Swap temp ID with real ID
         setQuestProgress(prev => prev.map(p => p.id === tempId ? data : p));
+        showToast("Quest Accepted!", 'success');
         console.log("SQ-Quest: Quest join successful.");
         return true; 
         
@@ -722,6 +768,9 @@ const deleteQuest = async (id) => {
   };
 
   const submitProof = async (questId, note, file) => {
+    
+    try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){}
+    
     // 1. GET LOCAL STATE
     let currentProgress = questProgress.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
     
@@ -876,7 +925,7 @@ const updateReward = async (id, updates) => {
         const { title, description, xp_cost, image, status } = updates;
         
         // 2. STATUS LOGIC:
-        // Admin uses provided status (or active), Partner forced to pending_admin
+       
         const finalStatus = currentUser?.role === 'Admin' 
             ? (status || 'active') 
             : 'pending_admin';
@@ -889,14 +938,14 @@ const updateReward = async (id, updates) => {
             status: finalStatus 
         };
 
-        // 3. THE LINEAR SAVE (With 6-Second Fail-Safe)
-        // If the internet is "Zombie", this kills the wait after 6s.
+        
+        // If the internet is "Zombie", this kills the wait after 25s.
         const updatePromise = supabase
             .from('rewards')
             .update(cleanPayload)
             .eq('id', Number(id));
 
-        const { error } = await withTimeout(updatePromise, 6000);
+        const { error } = await withTimeout(updatePromise, 25000);
 
         if (error) throw error;
 
