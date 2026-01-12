@@ -588,28 +588,25 @@ export const SideQuestProvider = ({ children }) => {
   };
 
 
-// --- ROBUST UPDATE QUEST (Fixed for "Nothing Happens" Hang) ---
-// --- ROBUST UPDATE QUEST (With Auto-Reconnect) ---
+// --- ROBUST UPDATE QUEST (Extended Timeout) ---
 const updateQuest = async (id, updates) => {
     try {
         console.log(`SQ-System: Accurate Linear Update for Quest ID: ${id}`);
         
-        // 🔥 FIX: Wake Up Connection before saving
-        // This prevents the "Connection Timeout" error you saw in the logs.
+        // 1. Connection Wake Up
         try {
             await withTimeout(supabase.auth.getSession(), 2000);
         } catch (err) {
             console.warn("SQ-Update: Connection check slow, proceeding...");
         }
   
-        // 1. DATA SHIELD
+        // 2. Data Prep
         const { 
             title, description, category, xp_value, 
             location_address, lat, lng, instructions, 
             proof_requirements, image, status 
         } = updates;
         
-        // 2. STATUS LOGIC
         const finalStatus = currentUser?.role === 'Admin' 
             ? (status || 'active') 
             : 'pending_admin';
@@ -624,29 +621,30 @@ const updateQuest = async (id, updates) => {
             status: finalStatus
         };
   
-        // 3. THE LINEAR SAVE (With 6-Second Fail-Safe)
+        // 3. EXECUTE UPDATE (Increased to 25 Seconds)
+        // This allows the "Zombie" connection enough time to wake up and write.
         const updatePromise = supabase
             .from('quests')
             .update(cleanPayload)
             .eq('id', Number(id));
   
-        const { error } = await withTimeout(updatePromise, 6000);
+        // CHANGED: 6000 -> 25000
+        const { error } = await withTimeout(updatePromise, 25000);
   
         if (error) throw error;
   
         // 4. UI UPDATE
         setQuests(prev => prev.map(q => q.id === Number(id) ? { ...q, ...cleanPayload } : q));
         
-        showToast("Quest saved successfully!", 'success');
+        showToast("Changes saved!", 'success');
         return true; 
   
     } catch (error) { 
         console.error("SQ-Quest Update Error:", error);
-        showToast("Save failed: " + (error.message === "Connection Timeout" ? "Network slow. Click Save again." : error.message), 'error');
+        showToast("Save failed: " + (error.message === "Connection Timeout" ? "Network too slow. Click Save again." : error.message), 'error');
         return false; 
     }
   };
-
 
 const deleteQuest = async (id) => {
     try {
