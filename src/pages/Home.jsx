@@ -12,8 +12,8 @@ const Home = () => {
 
   const categories = [
       'All', 
-      'Environmental', 'Social', 'Animal Welfare', 'Education', 'Cultural',
-      'Adventure', 'Exploration', 'Marine Adventure', 'Wildlife Adventure'
+      'Exploration','Adventure','Marine Adventure','Environmental','Wildlife Adventure', 'Animal Welfare', 'Cultural',
+          'Social', 'Education'
   ];
 
   // Filter & Sort Logic
