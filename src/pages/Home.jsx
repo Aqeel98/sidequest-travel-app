@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ArrowRight, Sparkles } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
@@ -7,7 +8,19 @@ const Home = () => {
   const { quests } = useSideQuest();
   const navigate = useNavigate();
   const activeQuests = quests.filter(quest => quest.status === 'active');
-  
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const categories = [
+      'All', 
+      'Environmental', 'Social', 'Animal Welfare', 'Education', 'Cultural',
+      'Adventure', 'Exploration', 'Marine Adventure', 'Wildlife Adventure'
+  ];
+
+  // Filter & Sort Logic
+  const displayQuests = activeQuests
+      .filter(q => selectedCategory === 'All' || q.category === selectedCategory)
+      // Sort by XP (Highest to Lowest)
+      .sort((a, b) => (b.xp_value || 0) - (a.xp_value || 0));
 
   return (
     
@@ -107,21 +120,40 @@ const Home = () => {
 
       {/* Quest Grid */}
       <div id="quests-grid" className="max-w-7xl mx-auto px-4 mt-20">
-        <div className="flex items-end justify-between mb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Available Quests</h2>
-            <p className="text-gray-500 mt-2">Curated experiences for the modern traveler</p>
+            <p className="text-gray-500 mt-2">Curated experiences, sorted by highest impact.</p>
           </div>
-          <button onClick={() => navigate('/map')} className="hidden md:block text-brand-600 font-bold hover:underline">View All</button>
+          <button onClick={() => navigate('/map')} className="hidden md:block text-brand-600 font-bold hover:underline">View All on Map</button>
         </div>
 
-        {activeQuests.length === 0 ? (
+        {/* --- CATEGORY FILTER BUTTONS --- */}
+        <div className="flex overflow-x-auto pb-4 mb-8 gap-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            {categories.map(cat => (
+                <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${
+                        selectedCategory === cat
+                        ? 'bg-brand-600 text-white border-brand-600 shadow-md transform scale-105'
+                        : 'bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:border-gray-200'
+                    }`}
+                >
+                    {cat}
+                </button>
+            ))}
+        </div>
+
+        {/* --- THE GRID (Uses displayQuests) --- */}
+        {displayQuests.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-dashed border-gray-300">
-                <p className="text-gray-500 text-lg">No active quests found right now. Check back soon!</p>
+                <p className="text-gray-500 text-lg">No active quests found in this category.</p>
+                <button onClick={() => setSelectedCategory('All')} className="mt-4 text-brand-600 font-bold hover:underline">View All</button>
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {activeQuests.map(quest => (
+                {displayQuests.map(quest => (
                     <div 
                         key={quest.id} 
                         onClick={() => navigate(`/quest/${quest.id}`)} 
@@ -149,7 +181,7 @@ const Home = () => {
         quest.category === 'Cultural' ? 'bg-violet-100 text-violet-700' :
       
         quest.category === 'Adventure' ? 'bg-orange-100 text-orange-800' :
-        quest.category === 'Exploration' ? 'bg-indigo-100 text-indigo-700' :
+        quest.category === 'Exploration' ? 'bg-yellow-100 text-yellow-800' :
         quest.category === 'Marine Adventure' ? 'bg-cyan-100 text-cyan-700' :
         quest.category === 'Wildlife Adventure' ? 'bg-lime-100 text-lime-700' :
         
