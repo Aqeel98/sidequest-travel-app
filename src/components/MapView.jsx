@@ -23,15 +23,13 @@ const getCategoryDetails = (category) => {
       // Existing
       case 'Environmental': return { color: '#10b981', emoji: '🌿' }; // Emerald
       case 'Social': return { color: '#f43f5e', emoji: '❤️' }; // Rose
-      case 'Animal Welfare': return { color: '#ec4899', emoji: '🐾' }; // Pink
-      case 'Cultural': return { color: '#8b5cf6', emoji: '🏯' }; // Violet (Moved here to look mystical)
+      case 'Animal Welfare': return { color: '#ec4899', emoji: '🐘' }; // Pink
+      case 'Cultural': return { color: '#8b5cf6', emoji: '🏯' }; // Violet 
       case 'Education': return { color: '#3b82f6', emoji: '📚' }; // Blue
-      
-      // --- NEW (High Contrast) ---
       case 'Adventure': return { color: '#ea580c', emoji: '🧗' }; // Deep Orange
       case 'Exploration': return { color: '#eab308', emoji: '🧭' }; // GOLD (Discovery)
       case 'Marine Adventure': return { color: '#06b6d4', emoji: '🤿' }; // CYAN (Water)
-      case 'Wildlife Adventure': return { color: '#84cc16', emoji: '🐘' }; // LIME (Jungle)
+      case 'Wildlife Adventure': return { color: '#84cc16', emoji: '🐾' }; // LIME (Jungle)
       
       default: return { color: '#f97316', emoji: '🎯' }; // Orange
   }
