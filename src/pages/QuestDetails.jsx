@@ -29,6 +29,23 @@ const QuestDetails = () => {
   const isStarted = !!currentProgress; 
   const status = currentProgress?.status; 
 
+// --- HELPER: CATEGORY COLORS ---
+const getCategoryColor = (cat) => {
+  if (cat === 'Adventure') return 'bg-orange-100 text-orange-800';
+  if (cat === 'Exploration') return 'bg-yellow-100 text-yellow-800';
+  if (cat === 'Cultural') return 'bg-violet-100 text-violet-800';
+  if (cat === 'Marine Adventure') return 'bg-cyan-100 text-cyan-800';
+  if (cat === 'Wildlife Adventure') return 'bg-lime-100 text-lime-800';
+  if (cat === 'Environmental') return 'bg-emerald-100 text-emerald-800';
+  if (cat === 'Social') return 'bg-rose-100 text-rose-800';
+  if (cat === 'Education') return 'bg-blue-100 text-blue-800';
+  if (cat === 'Animal Welfare') return 'bg-pink-100 text-pink-800';
+  return 'bg-gray-100 text-gray-800';
+};
+
+
+
+
   // 3. MEMORY CLEANUP (Prevents Lag)
   useEffect(() => {
     return () => {
@@ -132,6 +149,11 @@ const QuestDetails = () => {
               className="w-full h-full object-cover" 
               alt={quest.title} 
             />
+              
+            <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg ${getCategoryColor(quest.category)}`}>
+                {quest.category}
+            </div>
+
             <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-8">
                 <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{quest.title}</h1>
                 <div className="flex flex-wrap items-center gap-3 text-white/90">

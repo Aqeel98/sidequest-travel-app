@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, UploadCloud, MapPin, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { MapPin, Camera, UploadCloud, CheckCircle, Clock, AlertCircle, Navigation, Loader2, ArrowLeft } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
-import imageCompression from 'browser-image-compression'; // FIX: Added Compression
+import imageCompression from 'browser-image-compression'; 
 
 // --- SUB-COMPONENT: Individual Quest Card ---
 const QuestCard = ({ progress, quest, onSubmitProof }) => {

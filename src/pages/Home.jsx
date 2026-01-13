@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ArrowRight, Sparkles } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
@@ -21,6 +21,37 @@ const Home = () => {
       .filter(q => selectedCategory === 'All' || q.category === selectedCategory)
       // Sort by XP (Highest to Lowest)
       .sort((a, b) => (b.xp_value || 0) - (a.xp_value || 0));
+
+
+
+      // --- SCROLL RESTORATION LOGIC ---
+  useEffect(() => {
+    // 1. Restore position when coming BACK to this page
+    const savedPosition = sessionStorage.getItem('homeScrollPos');
+    if (savedPosition) {
+      // Small timeout ensures the grid has rendered before scrolling
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedPosition));
+      }, 100);
+    }
+
+    // 2. Save position when LEAVING this page
+    const handleScrollSave = () => {
+      sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
+    };
+
+    // Attach listener to save scroll on clicks (navigation)
+    window.addEventListener('beforeunload', handleScrollSave);
+    
+    return () => {
+      // Save position when component unmounts (navigating to Quest Details)
+      handleScrollSave(); 
+      window.removeEventListener('beforeunload', handleScrollSave);
+    };
+  }, []);
+
+
+
 
   return (
     
