@@ -1138,7 +1138,6 @@ const approveNewReward = async (id) => {
     showToast(`Debug: Switched to ${role}`, 'info');
   };
 
-  // --- RENDER PROVIDER GATEWAY ---
   return (
     <SideQuestContext.Provider value={{
       currentUser, isLoading, 

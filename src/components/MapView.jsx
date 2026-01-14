@@ -145,6 +145,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
         scrollWheelZoom={true}
         minZoom={7} // Country Level
         maxZoom={18} // Street Level
+        attributionControl={false} 
       >
         <TileLayer
            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
