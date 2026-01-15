@@ -2,6 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    
+    <!-- 1. PERFORMANCE: Wakes up Supabase connection immediately for faster quest loading -->
+    <link rel="preconnect" href="https://sisyjuaspeznyrmipmlo.supabase.co" />
+    <link rel="dns-prefetch" href="https://sisyjuaspeznyrmipmlo.supabase.co" />
+
+    <!-- 2. ICONS (Matches your public folder exactly) -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -11,19 +17,30 @@
     
     <title>SideQuest | Adventure with Impact</title>
     
-    <!-- Added Meta Description for SEO and Professionalism -->
+    <!-- 3. SEO LOGO & INSTAGRAM: Tells Google specifically what image is your logo -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "url": "https://sidequest.lk",
+      "logo": "https://sidequest.lk/pwa-512x512.png",
+      "name": "SideQuest Sri Lanka",
+      "sameAs": [
+        "https://www.instagram.com/sidequest.lk"
+      ]
+    }
+    </script>
+
     <meta name="description" content="Discover meaningful quests across Sri Lanka. Help local communities and earn rewards." />
     
-    <!-- WhatsApp / Social Media Preview -->
+    <!-- 4. WHATSAPP / SOCIAL MEDIA PREVIEW (Uses larger 512px icon for better quality) -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="SideQuest | Adventure with Impact" />
     <meta property="og:description" content="Discover meaningful quests across Sri Lanka. Help local communities and earn rewards." />
-    <!-- Using the 96x96 favicon as requested -->
-    <meta property="og:image" content="https://sidequest.lk/favicon.png" />
+    <meta property="og:image" content="https://sidequest.lk/pwa-512x512.png" />
     <meta property="og:url" content="https://sidequest.lk" />
 
-
-  </head>
+</head>
   <body>
     <div id="root"></div>
     <!-- Keeping your exact main.tsx entry point -->

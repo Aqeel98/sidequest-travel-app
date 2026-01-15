@@ -1,4 +1,7 @@
 User-agent: *
+Disallow: /my-quests
+Disallow: /partner
+Disallow: /admin
 Allow: /
 
 Sitemap: https://sidequest.lk/sitemap.xml

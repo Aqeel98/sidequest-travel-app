@@ -3,6 +3,17 @@ import { MapPin, Camera, UploadCloud, CheckCircle, Clock, AlertCircle, Navigatio
 import { useSideQuest } from '../context/SideQuestContext';
 import imageCompression from 'browser-image-compression'; 
 
+import { Helmet } from "react-helmet"; // If using react-helmet, otherwise just:
+
+useEffect(() => {
+  const meta = document.createElement('meta');
+  meta.name = "robots";
+  meta.content = "noindex, nofollow";
+  document.getElementsByTagName('head')[0].appendChild(meta);
+}, []);
+
+
+
 // --- SUB-COMPONENT: Individual Quest Card ---
 const QuestCard = ({ progress, quest, onSubmitProof }) => {
   const [note, setNote] = useState('');
