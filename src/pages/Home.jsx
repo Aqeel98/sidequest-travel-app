@@ -25,7 +25,9 @@ const Home = () => {
   const { quests, isLoading  } = useSideQuest();
   const navigate = useNavigate();
   const activeQuests = quests.filter(quest => quest.status === 'active');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState(
+    sessionStorage.getItem('sq_selected_category') || 'All'
+);
 
   const categories = [
       'All', 
@@ -37,6 +39,7 @@ const Home = () => {
   // Wrapper to save position before leaving
   const handleQuestClick = (questId) => {
     sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
+    sessionStorage.setItem('sq_selected_category', selectedCategory); 
     navigate(`/quest/${questId}`);
 };
 
@@ -192,7 +195,10 @@ const Home = () => {
             {categories.map(cat => (
                 <button
                     key={cat}
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      sessionStorage.setItem('sq_selected_category', cat);
+                  }}
                     className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${
                         selectedCategory === cat
                         ? 'bg-brand-600 text-white border-brand-600 shadow-md transform scale-105'
