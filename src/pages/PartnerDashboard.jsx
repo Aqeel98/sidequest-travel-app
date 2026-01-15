@@ -294,16 +294,33 @@ const PartnerDashboard = () => {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 bg-brand-50 p-6 rounded-2xl border border-brand-100">
-                                    <div className="col-span-full mb-2"><h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest text-center">GPS Coordinates</h4></div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
-                                        <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="6.696969" required />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
-                                        <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none" placeholder="8.676767" required />
-                                    </div>
-                                </div>
+    <div className="col-span-full mb-2">
+        <h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest text-center">GPS Coordinates</h4>
+    </div>
+    
+    <div>
+        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
+        <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-brand-200" placeholder="6.696969" required />
+    </div>
+    
+    <div>
+        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
+        <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-brand-200" placeholder="80.676767" required />
+    </div>
+
+    {/* --- NEW HELP SECTION --- */}
+    <div className="col-span-full mt-1">
+        <div className="bg-white/60 p-3 rounded-lg border border-brand-200 text-center">
+            <p className="text-[10px] text-gray-600 leading-relaxed">
+                <span className="font-bold text-brand-600">How to find this?</span> <br/>
+                Open <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="text-blue-500 underline hover:text-blue-700">Google Maps</a>. 
+                <span className="font-bold"> Right-Click</span> (or Long-Press on mobile) on the exact spot. 
+                Click the numbers at the top to copy them. <br/>
+                <span className="italic text-gray-400">(Example: 6.9344, 79.8428)</span>
+            </p>
+        </div>
+    </div>
+</div>
                                 
                                 {/* INSTRUCTIONS */}
                                 <div>
