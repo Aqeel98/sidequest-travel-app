@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Camera, UploadCloud, CheckCircle, Clock, AlertCircle, Navigation, Loader2, ArrowLeft } from 'lucide-react';
+import { MapPin, Camera, UploadCloud, CheckCircle, Clock, AlertCircle, Navigation, Loader2, ArrowLeft, XCircle  } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 import imageCompression from 'browser-image-compression'; 
 

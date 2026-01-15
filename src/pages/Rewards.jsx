@@ -3,7 +3,7 @@ import { Award, ShoppingBag } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Rewards = () => {
-  const { currentUser, rewards, redemptions, redeemReward, setShowAuthModal } = useSideQuest();
+  const { currentUser, rewards, redemptions, redeemReward, setShowAuthModal, showToast  } = useSideQuest();
 
   const myRedemptions = currentUser 
     ? redemptions.filter(r => r.traveler_id === currentUser.id) 

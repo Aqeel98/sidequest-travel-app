@@ -6,7 +6,8 @@ import { supabase } from '../supabaseClient';
 
 const PartnerDashboard = () => {
     // 1. Updated Destructuring
-    const { currentUser, quests, rewards, questProgress, redemptions, users, addQuest, addReward, updateQuest, updateReward } = useSideQuest();
+    const { currentUser, quests, rewards, questProgress, redemptions, users, addQuest, addReward, updateQuest, updateReward, showToast,
+        deleteQuest, deleteReward  } = useSideQuest();
     
     // UI State
     const [view, setView] = useState('create'); 
@@ -122,7 +123,7 @@ const PartnerDashboard = () => {
                         .from('quest-images')
                         .upload(optimizedFile.name, optimizedFile, { 
                             cacheControl: '3600',
-                            upsert: false
+                            upsert: true
                         });
 
                     if (error) throw error;

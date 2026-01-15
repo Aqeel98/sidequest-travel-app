@@ -43,7 +43,9 @@ const getCategoryColor = (cat) => {
   return 'bg-gray-100 text-gray-800';
 };
 
-
+    useEffect(() => {
+    window.scrollTo(0, 0);
+    }, []);
 
 
   // 3. MEMORY CLEANUP (Prevents Lag)
@@ -136,7 +138,7 @@ const getCategoryColor = (cat) => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
-      <button onClick={() => navigate('/')} className="text-brand-600 mb-4 font-medium flex items-center hover:underline">
+      <button onClick={() => navigate(-1)} className="text-brand-600 mb-4 font-medium flex items-center hover:underline">
         <ArrowLeft size={18} className="mr-1" /> Back to Explore
       </button>
       

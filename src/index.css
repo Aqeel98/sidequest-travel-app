@@ -99,3 +99,30 @@ body {
   animation: wave-roll 7s ease-in-out infinite;
   animation-delay: -4s;
 }
+
+/* --- PRO FIX: Glassmorphism Popups --- */
+.leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(8px);
+  border-radius: 20px !important;
+  padding: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Make the close button easier to tap on mobile */
+.leaflet-container a.leaflet-popup-close-button {
+  top: 12px !important;
+  right: 12px !important;
+  background: #f3f4f6;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563 !important;
+}
