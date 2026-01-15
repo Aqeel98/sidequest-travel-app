@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+   <!-- ==================== -->
+   <!--     MAIN PAGES       -->
+   <!-- ==================== -->
+   <url>
+      <loc>https://sidequest.lk/</loc>
+      <lastmod>2026-01-15</lastmod>
+      <priority>1.0</priority>
+   </url>
+   <url>
+      <loc>https://sidequest.lk/map</loc>
+      <lastmod>2026-01-15</lastmod>
+      <priority>0.9</priority>
+   </url>
+
+   <url>
+      <loc>https://sidequest.lk/how-it-works</loc>
+      <lastmod>2026-01-15</lastmod>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://sidequest.lk/emergency</loc>
+      <lastmod>2026-01-15</lastmod>
+      <priority>0.7</priority>
+   </url>
+
+   <!-- ==================== -->
+   <!--    INDIVIDUAL QUESTS -->
+   <!-- ==================== -->
+   
+   <!-- Environmental / Social -->
+   <url><loc>https://sidequest.lk/quest/10</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/14</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/15</loc><priority>0.8</priority></url>
+   
+   <!-- Exploration Series -->
+   <url><loc>https://sidequest.lk/quest/48</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/64</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/77</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/78</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/80</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/81</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/82</loc><priority>0.8</priority></url>
+   
+   <!-- Pekoe Trail & Hill Country -->
+   <url><loc>https://sidequest.lk/quest/83</loc><priority>0.9</priority></url>
+   <url><loc>https://sidequest.lk/quest/84</loc><priority>0.9</priority></url>
+   <url><loc>https://sidequest.lk/quest/85</loc><priority>0.9</priority></url>
+   <url><loc>https://sidequest.lk/quest/86</loc><priority>0.9</priority></url>
+   
+   <!-- East Coast & Wildlife -->
+   <url><loc>https://sidequest.lk/quest/87</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/88</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/89</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/90</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/91</loc><priority>0.8</priority></url>
+   
+   <!-- Marine Adventure Series -->
+   <url><loc>https://sidequest.lk/quest/93</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/94</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/95</loc><priority>0.9</priority></url>
+   <url><loc>https://sidequest.lk/quest/96</loc><priority>0.8</priority></url>
+   
+   <!-- Wildlife & Cultural -->
+   <url><loc>https://sidequest.lk/quest/97</loc><priority>0.9</priority></url>
+   <url><loc>https://sidequest.lk/quest/98</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/99</loc><priority>0.9</priority></url>
+   <url><loc>https://sidequest.lk/quest/100</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/101</loc><priority>0.8</priority></url>
+   
+   <!-- Newest Additions -->
+   <url><loc>https://sidequest.lk/quest/103</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/104</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/105</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/106</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/107</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/108</loc><priority>0.8</priority></url>
+   <url><loc>https://sidequest.lk/quest/109</loc><priority>0.8</priority></url>
+
+</urlset>
