@@ -4,21 +4,6 @@ import { useSideQuest } from '../context/SideQuestContext';
 import imageCompression from 'browser-image-compression'; 
 
 
-useEffect(() => {
-  // 1. Add the "noindex" tag when entering this page
-  const meta = document.createElement('meta');
-  meta.name = "robots";
-  meta.content = "noindex, nofollow";
-  meta.id = "pwa-noindex"; // Give it an ID to find it later
-  document.head.appendChild(meta);
-
-  // This ensures your Home and Map pages ARE still indexed!
-  return () => {
-    const tag = document.getElementById('pwa-noindex');
-    if (tag) document.head.removeChild(tag);
-  };
-}, []);
-
 
 
 // --- SUB-COMPONENT: Individual Quest Card ---
@@ -168,6 +153,21 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
 // --- MAIN PAGE COMPONENT ---
 const MyQuests = () => {
   const { currentUser, questProgress, quests, submitProof, setShowAuthModal } = useSideQuest();
+
+
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = "robots";
+    meta.content = "noindex, nofollow";
+    meta.id = "pwa-noindex";
+    document.head.appendChild(meta);
+
+    return () => {
+      const tag = document.getElementById('pwa-noindex');
+      if (tag) document.head.removeChild(tag);
+    };
+  }, []);
+
 
   if (!currentUser) {
     return (
