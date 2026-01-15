@@ -3,13 +3,20 @@ import { MapPin, Camera, UploadCloud, CheckCircle, Clock, AlertCircle, Navigatio
 import { useSideQuest } from '../context/SideQuestContext';
 import imageCompression from 'browser-image-compression'; 
 
-import { Helmet } from "react-helmet"; // If using react-helmet, otherwise just:
 
 useEffect(() => {
+  // 1. Add the "noindex" tag when entering this page
   const meta = document.createElement('meta');
   meta.name = "robots";
   meta.content = "noindex, nofollow";
-  document.getElementsByTagName('head')[0].appendChild(meta);
+  meta.id = "pwa-noindex"; // Give it an ID to find it later
+  document.head.appendChild(meta);
+
+  // This ensures your Home and Map pages ARE still indexed!
+  return () => {
+    const tag = document.getElementById('pwa-noindex');
+    if (tag) document.head.removeChild(tag);
+  };
 }, []);
 
 
