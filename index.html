@@ -2,22 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    
-    <!-- 1. PERFORMANCE: Wakes up Supabase connection immediately for faster quest loading -->
-    <link rel="preconnect" href="https://sisyjuaspeznyrmipmlo.supabase.co" />
-    <link rel="dns-prefetch" href="https://sisyjuaspeznyrmipmlo.supabase.co" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- 2. ICONS (Matches your public folder exactly) -->
+    <!-- 1. HANDSHAKES: Start connecting to Supabase and Fonts immediately -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://sisyjuaspeznyrmipmlo.supabase.co">
+
+    <!-- 2. FONT PRELOAD: This is the secret to a high score when using code-based logos -->
+    <!-- We preload the 800 weight because that is what your "SideQuest" logo and H1 use -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" media="print" onload="this.media='all'">
+
+    <!-- 3. ICONS -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="SideQuest" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <title>SideQuest | Adventure with Impact</title>
     
-    <!-- 3. SEO LOGO & INSTAGRAM: Tells Google specifically what image is your logo -->
+    <!-- 4. SEO & SOCIAL (Kept your accurate schema) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -25,21 +29,16 @@
       "url": "https://sidequest.lk",
       "logo": "https://sidequest.lk/pwa-512x512.png",
       "name": "SideQuest Sri Lanka",
-      "sameAs": [
-        "https://www.instagram.com/sidequest.lk"
-      ]
+      "sameAs": ["https://www.instagram.com/sidequest.lk"]
     }
     </script>
 
     <meta name="description" content="Discover meaningful quests across Sri Lanka. Help local communities and earn rewards." />
-    
-    <!-- 4. WHATSAPP / SOCIAL MEDIA PREVIEW (Uses larger 512px icon for better quality) -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="SideQuest | Adventure with Impact" />
     <meta property="og:description" content="Discover meaningful quests across Sri Lanka. Help local communities and earn rewards." />
     <meta property="og:image" content="https://sidequest.lk/pwa-512x512.png" />
     <meta property="og:url" content="https://sidequest.lk" />
-
 </head>
   <body>
     <div id="root"></div>

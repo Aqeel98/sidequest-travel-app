@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 
 
 const AuthModal = () => {
-  const { showAuthModal, setShowAuthModal, login, signup } = useSideQuest();
+  const { showAuthModal, setShowAuthModal, login, signup, showToast  } = useSideQuest();
   
   // --- INTERNAL STATE ---
   const [mode, setMode] = useState('login'); 
@@ -45,12 +45,12 @@ const AuthModal = () => {
             
             if (error) throw error;
             
-            alert("Check your email! We sent you a password reset link.");
-            setMode('login'); // Send them back to login screen
+            showToast("Check your email for the recovery link!", 'info');
+            setMode('login');
         }
     } catch (err) {
         console.error("Auth Error:", err);
-        alert(err.message || "Authentication failed.");
+        showToast(err.message || "Authentication failed.", 'error');
     } finally {
         setLoading(false); 
     }

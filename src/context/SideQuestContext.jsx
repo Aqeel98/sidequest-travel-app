@@ -113,61 +113,43 @@ useEffect(() => {
     let mounted = true;
     
     // NOTE: Realtime subscription removed from here. 
-    // It is moved to the new useEffect below to fix the connection bug.
-
-    const bootSequence = async () => {
-      try {
-        console.log("SQ-Step 1: Initiating Sequential Boot Sequence...");
+    
+        const bootSequence = async () => {
+          try {
+            console.log("SQ-Step 1: Initiating Hardened Parallel Boot...");
+            if (mounted) setIsLoading(true);
         
-        if (mounted) {
-            setIsLoading(true);
-            // GUEST GUARD: Force modal closed during system initialization
-            setShowAuthModal(false); 
-        }
-
-        // --- HANDSHAKE A: PUBLIC DATA SYNC ---
-        console.log("SQ-Step 2: Syncing public ecosystem data pools...");
-        const { data: qData, error: qErr } = await supabase.from('quests').select('*');
-        const { data: rData, error: rErr } = await supabase.from('rewards').select('*');
-
-        if (qErr) console.error("SQ-Boot: Quest sync failed ->", qErr.message);
-        if (rErr) console.error("SQ-Boot: Reward sync failed ->", rErr.message);
-
-        if (mounted) {
-            setQuests(qData || []);
-            setRewards(rData || []);
-            console.log("SQ-Step 2: Quests and Rewards synchronized for Guest/User.");
-        }
-
-        // --- HANDSHAKE B: SESSION RECOVERY (The Persistence Pillar) ---
-        console.log("SQ-Step 3: Checking LocalStorage for existing session token...");
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            // 1. FIRE ALL PUBLIC & AUTH CHECKS AT ONCE
+            const questPromise = supabase.from('quests').select('*');
+            const rewardPromise = supabase.from('rewards').select('*');
+            const sessionPromise = supabase.auth.getSession();
         
-        if (sessionError) {
-            console.warn("SQ-Step 3: Session recovery encountered an error.");
-            throw sessionError;
-        }
-
-        if (session && mounted) {
-           console.log("SQ-Step 4: Active session detected for:", session.user.email);
-           await fetchProfile(session.user.id, session.user.email);
-           console.log("SQ-Step 4: Profile and user history handshaked successfully.");
-        } else {
-           console.log("SQ-Step 4: No active session. Transitioning to Silent Guest Mode.");
-           if (mounted) setShowAuthModal(false);
-        }
+            // 2. WAIT FOR ALL THREE TO ARRIVE
+            const [qRes, rRes, sRes] = await Promise.all([questPromise, rewardPromise, sessionPromise]);
         
-      } catch (error) {
-        console.error("SQ-Boot-Failure: The system failed to initialize properly ->", error.message);
-      } finally {
-        if (mounted) {
-            // RELEASE THE LOCK: The system is now ready for manual user events
-            isInitialBoot.current = false; 
-            setIsLoading(false);
-            console.log("SQ-Step 5: Sequential Boot Finalized. Application Unlocked.");
-        }
-      }
-    };
+            if (mounted) {
+                setQuests(qRes.data || []);
+                setRewards(rRes.data || []);
+                const session = sRes.data?.session;
+        
+                if (session) {
+                    console.log("SQ-Step 2: Session found, hydrating profile...");
+                    await fetchProfile(session.user.id, session.user.email);
+                } else {
+                    console.log("SQ-Step 2: No session. Guest mode active.");
+                    setShowAuthModal(false);
+                }
+            }
+          } catch (error) {
+            console.error("SQ-Boot-Failure:", error.message);
+          } finally {
+            if (mounted) {
+                isInitialBoot.current = false; 
+                setIsLoading(false);
+                console.log("SQ-Step 3: UI Released.");
+            }
+          }
+        };
 
     bootSequence();
 
