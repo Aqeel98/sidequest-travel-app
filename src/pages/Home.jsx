@@ -220,7 +220,7 @@ const Home = () => {
        </>
     ) : (
         /* 2. DATA STATE: Shown when data arrives. One single map only. */
-        displayQuests.map(quest => (
+        displayQuests.map((quest, index) => (
             <div 
                 key={quest.id} 
                 onClick={() => handleQuestClick(quest.id)}
