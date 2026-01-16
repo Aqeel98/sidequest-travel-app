@@ -4,7 +4,7 @@ import { List, X, MapPin, Compass } from 'lucide-react';
 const ClosestQuestsOverlay = ({ sortedQuests, onSelectQuest, onClose, locationReady }) => {
   return (
     // Overlay with Blur
-    <div className="fixed inset-0 top-16 bg-black/40 backdrop-blur-sm z-[1000] flex justify-end transition-opacity duration-300">
+    <div className="fixed inset-0 top-20 bg-black/40 backdrop-blur-sm z-[1500] flex justify-end transition-opacity duration-300">
       
       {/* Slide-out Panel with Animation */}
       <div className="w-full max-w-md bg-white/95 h-full shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300 border-l border-white/20">

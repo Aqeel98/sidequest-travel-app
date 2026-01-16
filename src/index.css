@@ -126,3 +126,10 @@ body {
   justify-content: center;
   color: #4b5563 !important;
 }
+
+.leaflet-pane {
+  z-index: 1 !important; /* Forces markers to stay low */
+}
+.leaflet-top, .leaflet-bottom {
+  z-index: 1000 !important; /* Keeps map controls at 1000 */
+}

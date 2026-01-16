@@ -110,7 +110,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
       {/* --- FIX: MOBILE FLOATING BUTTON --- */}
       {currentUser && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1050] w-full max-w-[280px] px-4 pointer-events-none">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1100] w-full max-w-[280px] px-4 pointer-events-none">
           <button
             onClick={(e) => {
                // CHANGE 1: Stop the map from stealing the click
