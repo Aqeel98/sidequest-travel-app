@@ -135,6 +135,7 @@ const PartnerDashboard = () => {
                 // PREPARE DATA
                 const payload = { 
                     title: form.title,
+                    contact_phone: form.contact_phone,
                     description: form.description,
                     image: finalImageUrl 
                 };
@@ -242,6 +243,24 @@ const PartnerDashboard = () => {
                                 <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Title</label>
                                 <input type="text" name="title" value={form.title || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
                             </div>
+                            {/* PHONE NUMBER FIELD */}
+                                <div>
+                                 <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">
+                                  WhatsApp Contact
+                                 </label>
+                                 <input 
+                                    type="tel" 
+                                    name="contact_phone" 
+                                     value={form.contact_phone || ''} 
+                                      onChange={handleChange} 
+                                      placeholder="077 123 4567"
+                                      className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+                                       required 
+                                 />
+                                 <p className="text-[10px] text-gray-400 mt-1 italic">
+                                        Required for verification. We will only contact you for urgent location issues.
+                                   </p>
+                                    </div>
                             {mode === 'quest' ? (
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Category</label>

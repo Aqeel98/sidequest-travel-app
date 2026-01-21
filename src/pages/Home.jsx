@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ArrowRight, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, PlusCircle  } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 
@@ -189,6 +189,20 @@ const Home = () => {
           </div>
           <button onClick={() => navigate('/map')} className="hidden md:block text-brand-600 font-bold hover:underline">View All on Map</button>
         </div>
+
+          {/* NEW: Partner Quick-Add Floating Button */}
+    {/* Only visible to Partners/Admins */}
+    {(currentUser?.role === 'Partner' || currentUser?.role === 'Admin') && (
+      <button
+        onClick={() => navigate('/partner')}
+        // Z-Index 100 ensures it is above the background but below the Install Banner (1400)
+        className="fixed bottom-24 right-6 md:bottom-10 md:right-10 z-[100] bg-brand-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform border-4 border-white/50 backdrop-blur active:bg-brand-700"
+        title="Quick Add Quest"
+      >
+        <PlusCircle size={32} />
+      </button>
+    )}
+
 
         {/* --- CATEGORY FILTER BUTTONS --- */}
         <div className="flex overflow-x-auto pb-4 mb-8 gap-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">

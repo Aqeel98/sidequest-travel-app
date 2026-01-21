@@ -16,7 +16,7 @@ import Profile from './pages/Profile';
 import PartnerDashboard from './pages/PartnerDashboard'; 
 import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
-
+import InstallBanner from './components/InstallBanner';
 
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
@@ -66,6 +66,7 @@ const MainLayout = () => {
     return (
         <div className="min-h-screen bg-gray-50 pt-20 font-sans text-gray-900">
             <Navbar />
+            <InstallBanner />
             <Toast />
             <AuthModal />
             <Outlet />
