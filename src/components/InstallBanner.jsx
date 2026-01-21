@@ -7,26 +7,34 @@ const InstallBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // 1. Check if already installed (Standalone Mode)
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    // --- 1. MEMORY CHECK ---
+    // If user previously closed it, don't show it again.
+    if (localStorage.getItem('sq_install_dismissed') === 'true') {
+        return;
+    }
+
+    // --- 2. HARDENED PWA DETECTION ---
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOSStandalone = window.navigator.standalone === true; // Specific for iOS
+    
+    // If running as an App (Android OR iOS), STOP here.
+    if (isStandalone || isIOSStandalone) {
       return; 
     }
 
-    // 2. Detect iOS (iPhone/iPad)
+    // --- 3. DEVICE DETECTION ---
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
     
     if (isIosDevice) {
       setIsIOS(true);
-      // Show after 3 seconds to let the page load first
       setTimeout(() => setIsVisible(true), 3000);
     }
 
-    // 3. Detect Android/Desktop (Chrome/Edge)
     const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault(); // Stop default browser banner
-      setDeferredPrompt(e); // Save the event
-      setIsVisible(true);   // Show our custom UI
+      e.preventDefault(); 
+      setDeferredPrompt(e); 
+      setIsVisible(true);   
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -46,24 +54,26 @@ const InstallBanner = () => {
     setDeferredPrompt(null);
   };
 
+  const handleDismiss = () => {
+      setIsVisible(false);
+      // Save to memory so it doesn't pop up again
+      localStorage.setItem('sq_install_dismissed', 'true');
+  };
+
   if (!isVisible) return null;
 
   return (
-    // Z-Index 1400: Above Map (1000) & Auth (1200), Below Toast (2000)
     <div className="fixed bottom-4 left-4 right-4 z-[1400] animate-in slide-in-from-bottom-4 duration-500">
       <div className="bg-slate-900/95 backdrop-blur-md text-white p-5 rounded-2xl shadow-2xl border border-white/10 flex items-start gap-4">
         
-        {/* Icon */}
         <div className="bg-brand-500 p-2.5 rounded-xl shrink-0">
            <Download size={24} className="text-white" />
         </div>
 
-        {/* Content */}
         <div className="flex-1">
           <h4 className="font-bold text-lg leading-tight mb-1">Install SideQuest</h4>
           
           {isIOS ? (
-            // iOS Instructions
             <div className="text-xs text-slate-300 leading-relaxed space-y-1">
               <p>Install this app for offline maps & faster loading.</p>
               <p>
@@ -74,7 +84,6 @@ const InstallBanner = () => {
               </p>
             </div>
           ) : (
-            // Android Instructions
             <p className="text-xs text-slate-300 mb-3">
               Add to your home screen for the best experience. Works offline!
             </p>
@@ -90,10 +99,10 @@ const InstallBanner = () => {
           )}
         </div>
 
-        {/* Close Button */}
+        {/* CLOSE BUTTON WITH MEMORY */}
         <button 
-          onClick={() => setIsVisible(false)} 
-          className="text-slate-500 hover:text-white p-1 -mt-2 -mr-2"
+          onClick={handleDismiss} 
+          className="text-slate-500 hover:text-white p-2 -mt-2 -mr-2 rounded-full hover:bg-white/10"
         >
           <X size={20} />
         </button>
