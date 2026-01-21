@@ -139,7 +139,7 @@ const Home = () => {
           </div>
         </div>
 
-     {/* --- THE EXPANDED BEACH (Inverted Logic for Perfect Blend) --- */}
+     {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
   
   {/* 1. TALLER SAND BASE */}
@@ -151,30 +151,27 @@ const Home = () => {
     preserveAspectRatio="none"
   >
     
-    {/* 2. GHOST WAVE (Now sits ON TOP of the white foam as requested) */}
-    {/* INVERTED PATH: Draws from Bottom-Up */}
+    {/* 2. GHOST WAVE (Added as requested - Sits behind main foam) */}
+    {/* This creates the "Double Wave" look */}
     <path 
-      d="M0,320 L1200,320 L1200,120 C900,170 600,80 300,150 L0,110 Z" 
-      className="fill-white/20 animate-wave-roll" 
-      style={{ animationDuration: '13s', animationDelay: '-3s' }}
+      d="M0,0 L1200,0 L1200,130 C900,180 600,90 300,160 L0,120 Z" 
+      className="fill-white/30 animate-wave-roll"
+      style={{ animationDuration: '15s', animationDelay: '-5s' }}
     ></path>
 
     {/* 3. WHITE FOAM */}
-    {/* INVERTED PATH: Draws from Bottom-Up */}
     <path 
-      d="M0,320 L1200,320 L1200,100 C900,140 600,60 300,120 L0,80 Z" 
+      d="M0,0 L1200,0 L1200,120 C900,160 600,80 300,140 L0,100 Z" 
       className="fill-white animate-wave-roll"
-      style={{ animationDuration: '10s' }}
+      style={{ animationDuration: '10s', animationDelay: '-2s' }}
     ></path>
 
-    {/* 4. SAND COVER UP */}
-    {/* This solid shape covers the bottom area to blend with the div */}
+    {/* 4. TURQUOISE WATER (Matched to Header) */}
     <path 
-      d="M0,320 L1200,320 L1200,105 C900,145 600,65 300,125 L0,85 Z" 
-      className="fill-[#E6D5B8] animate-wave-roll"
+      d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z" 
+      className="fill-brand-600 animate-wave-roll"
       style={{ animationDuration: '10s' }}
     ></path>
-
   </svg>
 </div>
             </div>
