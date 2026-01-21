@@ -4,5 +4,8 @@ export default defineConfig({
     plugins: [react()],
     optimizeDeps: {
         include: ['leaflet']
-    }
+    },
+    esbuild: {
+        drop: ['console', 'debugger'],
+    },
 });
