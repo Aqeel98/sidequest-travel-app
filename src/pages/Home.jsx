@@ -22,7 +22,7 @@ const QuestSkeleton = () => (
 
 const Home = () => {
   const hasRestored = useRef(false);
-  const { quests, isLoading  } = useSideQuest();
+  const { quests, isLoading, currentUser } = useSideQuest(); 
   const navigate = useNavigate();
   const activeQuests = quests.filter(quest => quest.status === 'active');
   const [selectedCategory, setSelectedCategory] = useState(
