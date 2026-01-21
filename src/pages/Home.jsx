@@ -172,7 +172,7 @@ const Home = () => {
     */}
     <path 
       d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z" 
-      className="fill-brand-600 animate-wave-roll"
+      className="fill-brand-500 animate-wave-roll"
     ></path>
   </svg>
 </div>
