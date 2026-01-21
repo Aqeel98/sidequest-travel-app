@@ -154,6 +154,14 @@ const Home = () => {
     viewBox="0 0 1200 320" 
     preserveAspectRatio="none"
   >
+     {/* 2. GHOST WAVE (Subtle Movement Depth) */}
+     <path 
+      d="M0,0 L1200,0 L1200,130 C900,180 600,90 300,160 L0,120 Z" 
+      className="fill-brand-600/50 animate-wave-roll" 
+      style={{ animationDuration: '15s', animationDelay: '-5s' }}
+    ></path>
+    
+    
     {/* 
        2. WHITE FOAM
        Notice the path ends around '100' on the Y-axis. 
@@ -173,9 +181,9 @@ const Home = () => {
     <path 
       d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z" 
       className="fill-brand-600 animate-wave-roll"
-    ></path>
-  </svg>
-</div>
+            ></path>
+          </svg>
+          </div>
             </div>
 
       {/* --- AESTHETIC HEADER END --- */}
