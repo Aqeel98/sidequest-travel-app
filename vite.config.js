@@ -5,7 +5,5 @@ export default defineConfig({
     optimizeDeps: {
         include: ['leaflet']
     },
-    esbuild: {
-        drop: ['console', 'debugger'],
-    },
+    
 });
