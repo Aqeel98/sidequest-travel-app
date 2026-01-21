@@ -715,7 +715,7 @@ const deleteQuest = async (id) => {
         return false;
     }
     
-    try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){}
+    try { await withTimeout(supabase.auth.getSession(), 5000); } catch(e){}
 
 
     // --- FIX: OPTIMISTIC UI UPDATE (Instant Feedback) ---
@@ -751,7 +751,7 @@ const deleteQuest = async (id) => {
 
   const submitProof = async (questId, note, file) => {
     
-    try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){}
+    try { await withTimeout(supabase.auth.getSession(), 5000); } catch(e){}
     
     // 1. GET LOCAL STATE
     let currentProgress = questProgress.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
