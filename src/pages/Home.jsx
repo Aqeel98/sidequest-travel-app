@@ -139,14 +139,10 @@ const Home = () => {
           </div>
         </div>
 
-     {/* --- THE EXPANDED BEACH (High Water Line, Lots of Sand) --- */}
+     {/* --- THE EXPANDED BEACH (Inverted Logic for Perfect Blend) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
   
-  {/* 
-      1. TALLER SAND BASE 
-      I increased the height to 320px on laptops. 
-      This creates the big "SAND" area you drew.
-  */}
+  {/* 1. TALLER SAND BASE */}
   <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
 
   <svg 
@@ -154,36 +150,33 @@ const Home = () => {
     viewBox="0 0 1200 320" 
     preserveAspectRatio="none"
   >
-     {/* 2. GHOST WAVE (Subtle Movement Depth) */}
-     <path 
-      d="M0,0 L1200,0 L1200,130 C900,180 600,90 300,160 L0,120 Z" 
-      className="fill-brand-600/50 animate-wave-roll" 
-      style={{ animationDuration: '15s', animationDelay: '-5s' }}
-    ></path>
     
-    
-    {/* 
-       2. WHITE FOAM
-       Notice the path ends around '100' on the Y-axis. 
-       Since the total height is 320, this leaves 220 units of SAND below it.
-    */}
+    {/* 2. GHOST WAVE (Now sits ON TOP of the white foam as requested) */}
+    {/* INVERTED PATH: Draws from Bottom-Up */}
     <path 
-      d="M0,0 L1200,0 L1200,120 C900,160 600,80 300,140 L0,100 Z" 
-      className="fill-white animate-wave-roll"
-      style={{ animationDelay: '-2s' }}
+      d="M0,320 L1200,320 L1200,120 C900,170 600,80 300,150 L0,110 Z" 
+      className="fill-white/20 animate-wave-roll" 
+      style={{ animationDuration: '13s', animationDelay: '-3s' }}
     ></path>
 
-    {/* 
-       3. TURQUOISE WATER
-       This connects to the header and stops high up, 
-       revealing the massive beach below.
-    */}
+    {/* 3. WHITE FOAM */}
+    {/* INVERTED PATH: Draws from Bottom-Up */}
     <path 
-      d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z" 
-      className="fill-brand-600 animate-wave-roll"
-            ></path>
-          </svg>
-          </div>
+      d="M0,320 L1200,320 L1200,100 C900,140 600,60 300,120 L0,80 Z" 
+      className="fill-white animate-wave-roll"
+      style={{ animationDuration: '10s' }}
+    ></path>
+
+    {/* 4. SAND COVER UP */}
+    {/* This solid shape covers the bottom area to blend with the div */}
+    <path 
+      d="M0,320 L1200,320 L1200,105 C900,145 600,65 300,125 L0,85 Z" 
+      className="fill-[#E6D5B8] animate-wave-roll"
+      style={{ animationDuration: '10s' }}
+    ></path>
+
+  </svg>
+</div>
             </div>
 
       {/* --- AESTHETIC HEADER END --- */}
