@@ -769,12 +769,18 @@ const deleteQuest = async (id) => {
 
   const submitProof = async (questId, note, file) => {
     
-    try { await withTimeout(supabase.auth.getSession(), 5000); } catch(e){}
+    // 1. Connection Check
+    try { await withTimeout(supabase.auth.getSession(), 3000); } catch(e) {
+        showToast("Network unstable. Please tap Submit again.", 'error');
+        return false; 
+    }
     
-    // 1. GET LOCAL STATE
+    // 2. Lock Browser
+    activeUploads.current++;
+
     let currentProgress = questProgress.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
     
-    // 2. OPTIMISTIC UPDATE (Instant Visual Feedback)
+    // 3. Optimistic Update
     const optimisticUpdate = { 
         ...currentProgress, 
         status: 'pending', 
@@ -783,29 +789,26 @@ const deleteQuest = async (id) => {
         submitted_at: new Date().toISOString()
     };
     
-    // Update UI immediately
     setQuestProgress(prev => {
         const exists = prev.find(p => p.quest_id === questId);
         if (exists) return prev.map(p => p.quest_id === questId ? optimisticUpdate : p);
         return [...prev, optimisticUpdate];
     });
 
-    // 3. BACKGROUND SYNC (The "Smart Wait" Logic)
     const performSync = async () => {
         try {
             console.log(`SQ-Impact: Starting sync for Quest: ${questId}`);
             
-            // STEP A: RESOLVE REAL ID 
-            // If the ID is "temp-", we must wait for the DB to give us the Real ID
+            // STEP A: Try to find the Real ID
             let realSubmissionId = currentProgress?.id && !currentProgress.id.toString().startsWith('temp-') 
                 ? currentProgress.id 
                 : null;
 
             if (!realSubmissionId) {
-                console.log("SQ-System: ID is temporary. Waiting for DB sync...");
+                console.log("SQ-System: ID is temporary. Looking for DB record...");
                 
-                // Wait 10 seconds (20 x 500ms) for rural connections
-                for (let i = 0; i < 20; i++) {
+                // Wait loop (Shortened to 5 seconds. We don't need to wait long.)
+                for (let i = 0; i < 10; i++) {
                     const { data } = await supabase.from('submissions')
                         .select('id')
                         .eq('quest_id', questId)
@@ -814,57 +817,66 @@ const deleteQuest = async (id) => {
                     
                     if (data) {
                         realSubmissionId = data.id;
-                        break; // Found it! Exit loop.
+                        break; 
                     }
-                    await new Promise(r => setTimeout(r, 500)); // Wait 0.5s
-                }
-
-                if (!realSubmissionId) {
-                    throw new Error("Network sync timeout. Please refresh and try again.");
+                    await new Promise(r => setTimeout(r, 500)); 
                 }
             }
 
-            // STEP B: UPLOAD FILE (Background)
+            // STEP B: Upload File
             let proofUrl = null;
             if (file) {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `proofs/${currentUser.id}_${Date.now()}.${fileExt}`;
-                
                 const { error: upErr } = await supabase.storage.from('proofs').upload(fileName, file);
                 if (upErr) throw upErr;
-                
                 const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
                 proofUrl = data.publicUrl;
             }
 
-            // STEP C: UPDATE DATABASE
-            // Now we update the Real ID with the proof info
-            const { error: dbErr } = await supabase.from('submissions').update({
+            // STEP C: UPDATE OR INSERT (The Self-Healing Logic)
+            const payload = {
                 status: 'pending',
                 completion_note: note,
                 proof_photo_url: proofUrl || optimisticUpdate.proof_photo_url,
                 submitted_at: new Date().toISOString()
-            }).eq('id', realSubmissionId);
+            };
 
-            if (dbErr) throw dbErr;
+            if (realSubmissionId) {
+                // Scenario 1: Normal. The quest exists, we update it.
+                console.log("SQ-System: Updating existing record.");
+                const { error } = await supabase.from('submissions').update(payload).eq('id', realSubmissionId);
+                if (error) throw error;
+            } else {
+                // Scenario 2: The "Ghost" Fix. 
+                // The 'Accept' failed, so we create the submission from scratch right now.
+                console.log("SQ-System: Original 'Accept' missing. Creating new record (Self-Healing).");
+                const { error } = await supabase.from('submissions').insert([{
+                    ...payload,
+                    quest_id: questId,
+                    traveler_id: currentUser.id
+                }]);
+                if (error) throw error;
+            }
 
-            console.log("SQ-Impact: Sync complete. Admin notified.");
+            console.log("SQ-Impact: Sync complete.");
             showToast("Proof verified & saved to server!", 'success');
 
         } catch (err) {
             console.error("SQ-Error:", err);
             showToast(err.message, 'error');
-            // On failure, revert the UI to the truth so the user knows to retry
             fetchSubmissions(currentUser.id, 'Traveler');
+        } finally {
+            activeUploads.current--;
         }
     };
 
-    // Execute background work (Don't await it, let the UI move on)
     performSync();
-    
-    return true; // Unblocks the UI immediately
+    return true; 
   };
-  // // --- 8. REWARD ECONOMY ACTIONS ---
+
+
+ // --- 8. REWARD ECONOMY ACTIONS ---
 
   const addReward = async (formData, imageFile) => {
     try {
