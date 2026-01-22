@@ -28,6 +28,8 @@ export const SideQuestProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true); 
   const userRef = useRef(null);
+  const activeUploads = useRef(0); 
+
   useEffect(() => {
       userRef.current = currentUser;
   }, [currentUser]);
