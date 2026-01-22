@@ -37,6 +37,14 @@ const Profile = () => {
         const completedQuests = completedProgress.length;
         const activeQuests = activeProgress.length; 
 
+
+        const currentXP = currentUser.xp || 0;
+        // Level Calculation: 0-99 XP = Level 1, 100-199 XP = Level 2
+        const level = Math.floor(currentXP / 100) + 1;
+        // Progress Bar: 0 to 100% based on remainder
+        const progressPercent = currentXP % 100;
+
+
         // Count completed quests by category
         const categoryCounts = completedProgress.reduce((acc, p) => {
             const quest = quests.find(q => q.id === p.quest_id);
@@ -83,9 +91,11 @@ const Profile = () => {
         return {
             totalXP: currentUser.xp,
             completedQuests,
-            activeQuests, // Updated variable
+            activeQuests, 
             badges,
             recentQuests: completedProgress.slice(-3).reverse(),
+            level, 
+            progressPercent
         };
     }, [currentUser, questProgress, quests]);
     
@@ -98,7 +108,7 @@ const Profile = () => {
         );
     }
     
-    const { totalXP, completedQuests, activeQuests, badges, recentQuests } = stats;
+    const { totalXP, completedQuests, activeQuests, badges, recentQuests, level, progressPercent } = stats;
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -108,6 +118,34 @@ const Profile = () => {
             </h1>
             {/* Correctly displays Full Name or falls back to Email */}
             <p className="text-lg text-gray-500 mb-8">Welcome back, {currentUser.full_name || currentUser.email.split('@')[0]}!</p>
+
+            {/* --- LEVEL CARD START --- */}
+            <div className="bg-gray-900 text-white rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden">
+                {/* Background Glow Effect */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+                
+                <div className="relative z-10 flex items-center justify-between gap-6">
+                    <div>
+                        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Current Rank</p>
+                        <h2 className="text-4xl font-black text-white">Level {level}</h2>
+                        <p className="text-xs text-gray-400 mt-1">{100 - progressPercent} XP to next level</p>
+                    </div>
+
+                    <div className="flex-1 max-w-[200px]">
+                        <div className="flex justify-between text-xs font-bold mb-1">
+                            <span className="text-yellow-400">{Math.round(progressPercent)}%</span>
+                            <span className="text-gray-500">Level {level + 1}</span>
+                        </div>
+                        <div className="w-full bg-gray-700 h-3 rounded-full overflow-hidden border border-gray-600">
+                            <div 
+                                className="bg-gradient-to-r from-yellow-400 to-orange-500 h-full rounded-full transition-all duration-1000" 
+                                style={{ width: `${progressPercent}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {/* --- LEVEL CARD END --- */}
 
             {/* --- XP & STATS --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
