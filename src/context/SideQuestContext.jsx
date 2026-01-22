@@ -88,23 +88,41 @@ export const SideQuestProvider = ({ children }) => {
     } catch (e) { console.warn("SQ-PWA: Background refresh failed", e); }
 };
 
-// B. Listener for App Visibility (Switching tabs/Unlocking phone)
+// B. Listener for App Visibility AND Network Recovery
 useEffect(() => {
-    const handleVisibilityChange = async () => {
-        // If app becomes visible AND we have a logged-in user
-        if (document.visibilityState === 'visible' && userRef.current) {
-            // 1. Wake up the connection line
+    // Helper: What to do when the app wakes up
+    const handleWakeUp = async () => {
+        if (userRef.current) {
+            // 1. Wake up Auth (in case token expired)
             try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){}
             
-            // 2. Refresh the data
+            // 2. FORCE REALTIME RECONNECT (The Socket Jumper)
+            supabase.realtime.connect(); 
+
+            // 3. Refresh Data
             await refreshFullState(userRef.current.id, userRef.current.role);
         }
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-}, []);
+    // Trigger 1: User switches tabs back to SideQuest
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') handleWakeUp();
+    };
 
+    // Trigger 2: User regains internet (e.g. coming out of tunnel)
+    const handleOnline = () => {
+        console.log("SQ-Network: Signal restored. Reconnecting...");
+        handleWakeUp();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("online", handleOnline);
+    };
+  }, []);
   
 
 
