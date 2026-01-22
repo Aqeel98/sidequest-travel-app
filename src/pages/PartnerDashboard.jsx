@@ -96,7 +96,21 @@ const PartnerDashboard = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+        
+             // Check if empty
+    if (!form.contact_phone) {
+        showToast("Phone number is required.", 'error');
+        return;
+    }
+
+    // Min 9 digits (local short), Max 15 (international standard is max 15)
+    if (form.contact_phone.length < 9 || form.contact_phone.length > 15) {
+        showToast("Invalid Phone Number length.", 'error');
+        return;
+    }
+
+
+
         // 1. VALIDATION
         if (!imageFile && !preview) {
             showToast("Please select an image.", 'error');
@@ -249,14 +263,19 @@ const PartnerDashboard = () => {
                                   WhatsApp Contact
                                  </label>
                                  <input 
-                                    type="tel" 
-                                    name="contact_phone" 
-                                     value={form.contact_phone || ''} 
-                                      onChange={handleChange} 
-                                      placeholder="077 123 4567"
-                                      className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
-                                       required 
-                                 />
+                                             type="tel" 
+                                             inputMode="numeric"
+                                             pattern="[+]?[0-9]*" 
+                                                 name="contact_phone" 
+                                                value={form.contact_phone || ''} 
+                                                onChange={(e) => {
+                                                    const cleanVal = e.target.value.replace(/[^0-9+]/g, '');
+                                                       setForm({ ...form, contact_phone: cleanVal });
+                                                       }} 
+                                            placeholder="+94771234567"
+                                          className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+                                         required 
+                                />
                                  <p className="text-[10px] text-gray-400 mt-1 italic">
                                         Required for verification. We will only contact you for urgent location issues.
                                    </p>
