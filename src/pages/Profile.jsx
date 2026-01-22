@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Award, Compass, Globe, CheckCircle, Clock, Leaf, Heart, Flag, Mountain, Map, Anchor, Bird } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -18,6 +18,28 @@ const BADGE_THRESHOLDS = {
 };
 
 const Profile = () => {
+        // --- NEW: ROTATING QUOTES LOGIC ---
+    const [quoteIndex, setQuoteIndex] = useState(0);
+    
+    const IMPACT_QUOTES = [
+        "Your journey is measured in impact, not just miles.",
+        "Leave the island better than you found it.",
+        "You are writing a story the island will remember.",
+        "Travel far, tread lightly, and give back.",
+        "Every quest completed is a story preserved.",
+        "The map is only the beginning of the adventure."
+
+    ];
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setQuoteIndex((prev) => (prev + 1) % IMPACT_QUOTES.length);
+        }, 30000); // 30,000ms = 30 seconds
+        return () => clearInterval(timer); // Cleanup on leave
+    }, []);
+    // ----------------------------------
+
+
     // 1. All Hooks called at the top level
     const { currentUser, questProgress, quests } = useSideQuest();
 
@@ -117,7 +139,15 @@ const Profile = () => {
                 Traveler Profile
             </h1>
             {/* Correctly displays Full Name or falls back to Email */}
-            <p className="text-lg text-gray-500 mb-8">Welcome back, {currentUser.full_name || currentUser.email.split('@')[0]}!</p>
+            {/* User Name + Rotating Quote */}
+            <div className="mb-8">
+                <p className="text-lg font-bold text-gray-900">
+                    {currentUser.full_name || currentUser.email.split('@')[0]}
+                </p>
+                <p className="text-gray-500 italic text-sm mt-1 animate-in fade-in duration-700 key={quoteIndex}">
+                    "{IMPACT_QUOTES[quoteIndex]}"
+                </p>
+            </div>
 
             {/* --- LEVEL CARD START --- */}
             <div className="bg-gray-900 text-white rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden">
