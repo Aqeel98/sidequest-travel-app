@@ -144,13 +144,20 @@ const getCategoryColor = (cat) => {
       
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         
-        {/* HERO IMAGE */}
-        <div className="relative h-80">
+        {/* HERO IMAGE (Protected) */}
+        {/* onContextMenu prevents Right-Click Menu */}
+        <div className="relative h-80" onContextMenu={(e) => e.preventDefault()}>
             <img 
               src={quest.image || 'https://via.placeholder.com/800x400'} 
-              className="w-full h-full object-cover" 
-              alt={quest.title} 
+              // select-none prevents highlighting, pointer-events-none stops dragging (on some browsers)
+              className="w-full h-full object-cover select-none" 
+              alt={quest.title}
+              // draggable="false" stops the "drag to desktop" action
+              draggable="false"
             />
+            
+            {/* INVISIBLE SHIELD: Sits on top of the image so clicks hit this div, not the image */}
+            <div className="absolute inset-0 z-0"></div>
               
             <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg ${getCategoryColor(quest.category)}`}>
                 {quest.category}

@@ -239,15 +239,20 @@ const Home = () => {
                 className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer h-[450px]"
             >
                 {/* Image Section */}
-                <div className="relative h-64 overflow-hidden">
+                <div className="relative h-64 overflow-hidden"onContextMenu={(e) => e.preventDefault()}>
                     <img 
                         src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
                         alt={quest.title} 
                         loading={index < 2 ? "eager" : "lazy"} 
                         fetchpriority={index < 2 ? "high" : "low"}
                          decoding="async" 
+                         draggable="false"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                     />
+
+                       {/* Transparent Shield */}
+                    <div className="absolute inset-0 z-10"></div>
+
                     <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-brand-600 shadow-lg">
                         ⭐ {quest.xp_value} XP
                     </div>
