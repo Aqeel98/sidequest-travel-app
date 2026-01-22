@@ -736,7 +736,7 @@ const deleteQuest = async (id) => {
     try { await withTimeout(supabase.auth.getSession(), 5000); } catch(e){}
 
 
-    // --- FIX: OPTIMISTIC UI UPDATE (Instant Feedback) ---
+    // OPTIMISTIC UI UPDATE (Instant Feedback) ---
     const tempId = `temp-${Date.now()}`;
     const optimisticSub = { id: tempId, quest_id: questId, traveler_id: currentUser.id, status: 'in_progress' };
     setQuestProgress(prev => [...prev, optimisticSub]);
