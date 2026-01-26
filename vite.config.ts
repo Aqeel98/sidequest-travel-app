@@ -8,15 +8,39 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
-      manifest: false, 
-      includeAssets: [
-        'apple-touch-icon.png',
-        'pwa-192-v3.png',
-        'pwa-512-v3.png',
-        'site.webmanifest'
-      ],      
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'favicon.svg'],
+      manifest: {
+        name: 'SideQuest',
+        short_name: 'SideQuest',
+        description: 'Discover meaningful quests across Sri Lanka.',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
+        display: 'standalone',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: 'pwa-192.png', 
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: 'pwa-512.png', 
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          }
+        ]
+      },
       workbox: {
-        cleanupOutdatedCaches: true, 
+        cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true
       }
@@ -24,5 +48,5 @@ export default defineConfig({
   ],
   optimizeDeps: {
     include: ['leaflet']
-  },
+  }
 });
