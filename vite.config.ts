@@ -1,9 +1,17 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: false, 
+      includeAssets: ['apple-touch-icon-v3.png', 'pwa-192-v3.png', 'pwa-512-v3.png'],
+    })
+  ],
   optimizeDeps: {
     include: ['leaflet']
-  }
-})
+  },
+});
