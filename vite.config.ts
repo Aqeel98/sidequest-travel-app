@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
       manifest: false, 
-      includeAssets: ['apple-touch-icon-v3.png', 'pwa-192-v3.png', 'pwa-512-v3.png'],
+      includeAssets: ['apple-touch-icon-v3.png', 'pwa-192-v3.png', 'pwa-512-v3.png','site.webmanifest'],
       workbox: {
         cleanupOutdatedCaches: true, 
         skipWaiting: true,
