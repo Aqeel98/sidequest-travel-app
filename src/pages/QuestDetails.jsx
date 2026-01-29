@@ -183,7 +183,7 @@ const getCategoryColor = (cat) => {
           {/* 1. Mission Brief (Yellow Box) */}
           <div className="bg-yellow-50 p-6 rounded-2xl mb-6 border border-yellow-200">
              <h3 className="font-bold text-yellow-800 text-lg mb-2">Mission Brief</h3>
-             <p className="text-yellow-900 leading-relaxed">{quest.description}</p>
+             <p className="text-yellow-900 leading-relaxed whitespace-pre-line">{quest.description}</p>
           </div>
 
           {/* 2. Traveler Instructions (Blue Box) */}
@@ -197,7 +197,7 @@ const getCategoryColor = (cat) => {
           {/* 3. Proof Requirements (Gray Box) */}
           <div className="bg-gray-50 p-4 rounded-2xl mb-8 border border-gray-200">
              <h4 className="font-bold text-gray-700 text-xs uppercase tracking-widest mb-2">Submission Proof Required</h4>
-             <p className="text-sm text-gray-600 flex items-center gap-2 italic font-medium">
+             <p className="text-sm text-gray-600 flex items-center gap-2 italic font-medium whitespace-pre-line">
                 <Camera size={18} className="text-brand-500" /> 
                 {quest.proof_requirements || "Upload a photo of your activity to earn XP."}
              </p>
