@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { HeartPulse, Phone, MapPin, Shield, Siren, AlertCircle, Navigation, Search, Crosshair, Loader2 } from 'lucide-react';
 
 // --- DATA: ALL 25 DISTRICTS + YOUR REGIONAL NOTES ---
@@ -12,6 +12,7 @@ const HOSPITAL_DATA = [
     { name: "Kings Hospital (Pvt)", district: "Colombo", type: "Private", contact: "+94 11 774 0000", lat: 6.9050, lng: 79.8820, note: "Premium private facility in Narahenpita." },
     { name: "Gampaha General Hospital", district: "Gampaha", type: "Public", contact: "+94 33 222 2261", lat: 7.0910, lng: 79.9960, note: "Primary center for Gampaha and Katunayake International Airport." },
     { name: "Kalutara General Hospital", district: "Kalutara", type: "Public", contact: "+94 34 222 2261", lat: 6.5860, lng: 79.9570, note: "Main hospital for Bentota, Wadduwa, and Beruwala travelers." },
+    { name: "Avissawella Base Hospital", district: "Colombo", type: "Public", contact: "+94 36 222 2261", lat: 6.9543, lng: 80.2046, note: "NEAREST TRAUMA CENTER FOR KITULGALA RAFTING ACCIDENTS." },
 
     // --- SOUTHERN PROVINCE (Galle, Matara, Tangalle, Deep South) ---
     { name: "Karapitiya Teaching Hospital", district: "Galle", type: "Public", contact: "+94 91 223 2176", lat: 6.0638, lng: 80.2222, note: "Largest public trauma hub in South. Best for serious accidents in Galle and Unawatuna." },
@@ -30,6 +31,7 @@ const HOSPITAL_DATA = [
     { name: "Navodaya Hospital", district: "Hambantota", type: "Private", contact: "+94 47 222 0152", lat: 6.1240, lng: 81.1210, note: "Main private ER for Hambantota and Ambalantota." },
     { name: "Hambantota General Hospital", district: "Hambantota", type: "Public", contact: "+94 47 222 0261", lat: 6.1345, lng: 81.1185, note: "Major facility near Mattala Airport and Yala National Park." },
 
+
     // --- CENTRAL PROVINCE (Kandy, Nuwara Eliya, Hiking Zones) ---
     { name: "Kandy National Hospital", district: "Kandy", type: "Public", contact: "+94 81 222 2261", lat: 7.2910, lng: 80.6320, note: "Main trauma hub for Pekoe Trail, Knuckles, and Central hikers." },
     { name: "Lakeside Adventist Hospital", district: "Kandy", type: "Private", contact: "+94 81 222 3466", lat: 7.2915, lng: 80.6455, note: "Trusted by tourists and expats. Located near Kandy Lake." },
@@ -41,16 +43,24 @@ const HOSPITAL_DATA = [
     { name: "Dambulla Medical Center", district: "Matale", type: "Private", contact: "+94 66 228 4833", lat: 7.8580, lng: 80.6510, note: "Private medical choice for Sigiriya, Dambulla, and Habarana." },
     { name: "Nuwara Eliya General Hospital", district: "Nuwara Eliya", type: "Public", contact: "+94 52 222 2261", lat: 6.9670, lng: 80.7760, note: "Main hub for High Mountains, Tea Country, and Horton Plains." },
     { name: "Suwa Shanthi Private Hospital", district: "Nuwara Eliya", type: "Private", contact: "+94 52 222 2495", lat: 6.9695, lng: 80.7720, note: "Reliable private ER hub in Nuwara Eliya." },
+    { name: "Dikoya Base Hospital", district: "Nuwara Eliya", type: "Public", contact: "+94 51 222 2261", lat: 6.8750, lng: 80.6020, note: "CRITICAL: Nearest hospital for ADAM'S PEAK & Hatton." },
+
 
     // --- UVA PROVINCE (Ella & East-Access) ---
     { name: "Badulla General Hospital", district: "Badulla", type: "Public", contact: "+94 55 222 2261", lat: 6.9880, lng: 81.0560, note: "Closest major trauma center for Ella, Haputale, and Diyaluma Falls." },
     { name: "Monaragala General Hospital", district: "Monaragala", type: "Public", contact: "+94 55 227 6161", lat: 6.8710, lng: 81.3520, note: "Primary medical hub for Arugam Bay and Pottuvil travelers." },
+    { name: "Ratnapura Teaching Hospital", district: "Ratnapura", type: "Public", contact: "+94 45 222 2261", lat: 6.6820, lng: 80.3990, note: "Primary hub for Sinharaja Forest hikers." },
+    { name: "Embilipitiya General Hospital", district: "Ratnapura", type: "Public", contact: "+94 47 223 0261", lat: 6.3350, lng: 80.8520, note: "NEAREST MAJOR HOSPITAL FOR UDAWALAWE SAFARI." },
+    { name: "Kegalle General Hospital", district: "Kegalle", type: "Public", contact: "+94 35 222 2261", lat: 7.2510, lng: 80.3450, note: "Primary care on the Colombo-Kandy highway." },
+
 
     // --- EASTERN PROVINCE (Arugam Bay, Trinco, Batticaloa) ---
     { name: "Trincomalee General Hospital", district: "Trincomalee", type: "Public", contact: "+94 26 222 2261", lat: 8.5720, lng: 81.2330, note: "Primary trauma care for Pigeon Island and Nilaveli beach." },
     { name: "Trinco Medical Center (Pvt)", district: "Trincomalee", type: "Private", contact: "+94 26 222 2226", lat: 8.5750, lng: 81.2310, note: "Private clinical care hub in Trincomalee town." },
     { name: "Batticaloa Teaching Hospital", district: "Batticaloa", type: "Public", contact: "+94 65 222 2261", lat: 7.7170, lng: 81.6970, note: "Major facility for Batticaloa and Pasikudah travelers." },
     { name: "Ampara General Hospital", district: "Ampara", type: "Public", contact: "+94 63 222 2261", lat: 7.2910, lng: 81.6720, note: "Central medical hub for the interior East Province." },
+    { name: "Pottuvil Base Hospital", district: "Ampara", type: "Public", contact: "+94 63 224 8261", lat: 6.8850, lng: 81.8280, note: "CLOSEST HOSPITAL TO ARUGAM BAY SURF POINTS." },
+
 
     // --- NORTHERN PROVINCE (Jaffna & North) ---
     { name: "Jaffna Teaching Hospital", district: "Jaffna", type: "Public", contact: "+94 21 222 2261", lat: 9.6640, lng: 80.0190, note: "Main hospital for Jaffna city, Delft Island, and the North coast." },
@@ -73,6 +83,9 @@ const HOSPITAL_DATA = [
 ];
 
 const Emergency = () => {
+    useEffect(() => {
+        window.scrollTo(0, 0);
+      }, []);
     const [searchQuery, setSearchQuery] = useState("");
     const [userLoc, setUserLoc] = useState(null);
     const [isLocating, setIsLocating] = useState(false);
