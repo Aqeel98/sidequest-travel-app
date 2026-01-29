@@ -22,7 +22,7 @@ const HowItWorks = () => {
     },
     {
       title: "Journey with Purpose", 
-      desc: "Travel to the location and immerse yourself in the task. It's not just volunteering; it's experiencing the island deeper than any tourist.",
+      desc: "Follow the map and step into the mission. Move beyond the surface of travel and connect with the heart of the island through actions that leave a lasting, positive mark.",
       icon: <HeartHandshake className="text-red-500" size={32} />,
       color: "bg-red-50 border-red-200"
     },
