@@ -34,7 +34,7 @@ const HowItWorks = () => {
     },
     {
       title: "Earn & Redeem",
-      desc: "Admins verify your proof. You earn XP instantly! Spend XP in the Marketplace for discounts at local cafes & hotels.",
+      desc: "Game Masters verify your proof. You earn XP instantly! Redeem XP in the Marketplace for exclusive rewards, perks, and discounts at our partner locations.",
       icon: <Gift className="text-orange-500" size={32} />,
       color: "bg-orange-50 border-orange-200"
     }
@@ -56,7 +56,7 @@ const HowItWorks = () => {
     },
     {
       title: "Receive Travelers",
-      desc: "Travelers find your Quest, visit your location, and complete the task. You get visibility; the island gets impact.",
+      desc: "Travelers find your Quest, visit your location,  and complete their mission. You get visibility; the island gets impact.",
       icon: <Map className="text-brand-600" size={32} />,
       color: "bg-brand-50 border-brand-200"
     }
@@ -187,15 +187,16 @@ const HowItWorks = () => {
               <ul className="space-y-4">
                 {activeTab === 'traveler' ? (
                   <>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Take clear photos showing YOU doing the activity.</li>
+                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Take clear photos of the completed task or your participation.</li>
                     <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Respect local customs and dress codes.</li>
                     <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Wait for GPS to lock before starting a quest.</li>
                   </>
                 ) : (
                   <>
                     <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Provide accurate GPS coordinates.</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Offer genuine rewards (discounts/freebies).</li>
+                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Offer meaningful rewards (discounts, unique experiences, or freebies).</li>
                     <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Keep safety instructions clear.</li>
+                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Provide clear, helpful arrival instructions.</li>
                   </>
                 )}
               </ul>
