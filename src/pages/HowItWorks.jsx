@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Map, Camera, Award, Gift, CheckCircle, Shield, 
@@ -7,6 +7,9 @@ import {
 import { useSideQuest } from '../context/SideQuestContext';
 
 const HowItWorks = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const navigate = useNavigate();
   const { setShowAuthModal, currentUser } = useSideQuest(); 
   const [activeTab, setActiveTab] = useState('traveler');
