@@ -47,7 +47,23 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         skipWaiting: true,
-        clientsClaim: true
+        clientsClaim: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/res\.cloudinary\.com\/dtowdaysr\/image\/fetch\/.*sisyjuaspeznyrmipmlo\.supabase\.co.*/i,
+            handler: 'CacheFirst', 
+            options: {
+              cacheName: 'quest-image-cache',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
       }
     })
   ],

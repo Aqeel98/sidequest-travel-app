@@ -133,3 +133,12 @@ body {
 .leaflet-top, .leaflet-bottom {
   z-index: 1000 !important; /* Keeps map controls at 1000 */
 }
+
+img {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Prevents the browser from showing the 'alt' text before the image loads */
+img:not([src]) {
+  visibility: hidden;
+}

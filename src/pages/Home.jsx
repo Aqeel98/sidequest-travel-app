@@ -232,26 +232,35 @@ const Home = () => {
                 </>
             )}
 
-            {/* 2. DATA STATE: Shown whenever data exists. 
-                Because it is not behind an 'isLoading' check anymore, 
-                it stays visible when you hit "Back". */}
+            {/* 2. DATA STATE */}
+
             {displayQuests.map((quest, index) => (
                 <div 
-                    key={quest.id} 
-                    onClick={() => handleQuestClick(quest.id)}
-                    className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer h-[450px]"
-                >
+                key={quest.id} 
+                onClick={() => handleQuestClick(quest.id)}
+                className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm overflow-hidden cursor-pointer h-[450px]"
+                style={{ 
+                    contentVisibility: 'auto', // Browser keeps the pixels ready
+                    containIntrinsicSize: '450px', // Prevents layout jumping
+                }}
+            >
                     {/* Image Section */}
-                    <div className="relative h-64 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
+                    <div className="relative h-64 overflow-hidden bg-[#D9C9A8]" onContextMenu={(e) => e.preventDefault()}>
                         <img 
                             src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
                             alt={quest.title} 
-                            // Optimized: Load first 6 images instantly to prevent white flash on Back button
-                            loading={index < 6 ? "eager" : "lazy"} 
-                            fetchpriority={index < 6 ? "high" : "low"}
-                            decoding="async" 
+                            loading={index < 12 ? "eager" : "lazy"} 
+                            fetchpriority={index < 12 ? "high" : "low"}
+                            //decoding="async" 
                             draggable="false"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                            style={{ 
+                              backgroundColor: '#D9C9A8',      
+                              transform: 'translateZ(0)',     
+                              backfaceVisibility: 'hidden',   
+                              WebkitBackfaceVisibility: 'hidden',
+                              contentVisibility: 'auto'       
+                          }}
                         />
 
                         {/* Transparent Shield */}
