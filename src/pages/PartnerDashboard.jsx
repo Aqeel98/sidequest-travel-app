@@ -14,12 +14,33 @@ const PartnerDashboard = () => {
     const [mode, setMode] = useState('quest');
     const [editingId, setEditingId] = useState(null);
     const [viewClaimsId, setViewClaimsId] = useState(null); // State for toggling claim list
+    const [showGps, setShowGps] = useState(false);
 
     // Form State
     const [form, setForm] = useState({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
     const [imageFile, setImageFile] = useState(null); 
     const [preview, setPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (editingId) return;
+        const savedDraft = sessionStorage.getItem('sq_partner_draft');
+        if (savedDraft) {
+            try {
+                const parsed = JSON.parse(savedDraft);
+                setForm(prev => ({ ...prev, ...parsed }));
+                if (parsed.lat && parsed.lat !== 0) setShowGps(true);
+            } catch (e) { console.error("Draft restore error", e); }
+        }
+    }, [editingId]);
+
+    useEffect(() => {
+        if (!editingId && view === 'create') {
+            sessionStorage.setItem('sq_partner_draft', JSON.stringify(form));
+        }
+    }, [form, editingId, view]);
+
+
 
     // Cleanup memory for image previews
     useEffect(() => {
@@ -180,8 +201,9 @@ const PartnerDashboard = () => {
     
             // RESET UI ON SUCCESS
             if (success) {
+                sessionStorage.removeItem('sq_partner_draft');
                 setEditingId(null);
-                setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
+                setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50, lat: 0, lng: 0 });
                 setImageFile(null);
                 setPreview(null);
                 setView('manage'); 
@@ -308,79 +330,101 @@ const PartnerDashboard = () => {
                             <textarea name="description" value={form.description || ''} onChange={handleChange} rows="3" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
                         </div>
 
-                        <div className="bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-200">
-                            <label className="block text-xs font-black text-gray-400 uppercase mb-3 tracking-widest">Item Photo</label>
-                            <div className="flex items-center gap-6">
-                                <label className="cursor-pointer bg-white border border-gray-300 px-6 py-3 rounded-xl hover:bg-gray-100 flex items-center shadow-sm transition-all">
-                                    <UploadCloud className="text-brand-600 mr-2" size={20} />
-                                    <span className="text-sm font-bold text-gray-600">Choose Image</span>
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                                </label>
-                                {preview && <img src={preview} alt="Preview" className="h-20 w-20 object-cover rounded-xl border-2 border-white shadow-lg" />}
-                            </div>
-                        </div>
+                        
                         
                         {mode === 'quest' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">XP Reward Value</label>
-                                        <input type="number" name="xp_value" value={form.xp_value} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Location Name</label>
-                                        <input type="text" name="location_address" value={form.location_address || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 bg-brand-50 p-6 rounded-2xl border border-brand-100">
-    <div className="col-span-full mb-2">
-        <h4 className="text-[10px] font-black text-brand-600 uppercase tracking-widest text-center">GPS Coordinates</h4>
-    </div>
-    
-    <div>
-        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
-        <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-brand-200" placeholder="6.696969" required />
-    </div>
-    
-    <div>
-        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
-        <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-brand-200" placeholder="80.676767" required />
-    </div>
-
-    {/* --- NEW HELP SECTION --- */}
-    <div className="col-span-full mt-1">
-        <div className="bg-white/60 p-3 rounded-lg border border-brand-200 text-center">
-            <p className="text-[10px] text-gray-600 leading-relaxed">
-                <span className="font-bold text-brand-600">How to find this?</span> <br/>
-                Open <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="text-blue-500 underline hover:text-blue-700">Google Maps</a>. 
-                <span className="font-bold"> Right-Click</span> (or Long-Press on mobile) on the exact spot. 
-                Click the numbers at the top to copy them. <br/>
-                <span className="italic text-gray-400">(Example: 6.9344, 79.8428)</span>
-            </p>
+    <div className="space-y-6">
+        {/* 1. BASIC DETAILS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">XP Reward Value</label>
+                <input type="number" name="xp_value" value={form.xp_value} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" />
+            </div>
+            <div>
+                <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Location Name</label>
+                <input type="text" name="location_address" value={form.location_address || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+            </div>
         </div>
-    </div>
-</div>
-                                
-                                {/* INSTRUCTIONS */}
-                                <div>
-                                    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Instructions for Travelers</label>
-                                    <textarea name="instructions" value={form.instructions || ''} onChange={handleChange} rows="2" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" placeholder="How to find the location..." required />
-                                </div>
 
-                                {/* NEW INPUT: SUBMISSION PROOF */}
-                                <div>
-                                    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Submission Proof Required</label>
-                                    <input 
-                                        type="text" 
-                                        name="proof_requirements" 
-                                        value={form.proof_requirements || ''} 
-                                        onChange={handleChange} 
-                                        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
-                                        placeholder="e.g. Upload a photo of the statue..." 
-                                    />
-                                </div>
-                            </div>
-                        )}
+        {/* 2. HYBRID LOCATION BLOCK (The New Way) */}
+        <div className="bg-brand-50 p-6 rounded-2xl border border-brand-100">
+            <label className="block text-[10px] font-black text-brand-600 uppercase mb-3 tracking-widest flex items-center">
+                <Map size={14} className="mr-1"/> Location Source (Google Maps)
+            </label>
+            
+            <input 
+                type="url" 
+                name="map_link" 
+                value={form.map_link || ''} 
+                onChange={handleChange}
+                placeholder="Paste Google Maps Link here..."
+                className="w-full border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-brand-200 text-sm"
+                required
+            />
+
+            {!showGps ? (
+                <button 
+                    type="button" 
+                    onClick={() => setShowGps(true)}
+                    className="mt-3 text-[10px] font-bold text-brand-400 hover:text-brand-600 transition-colors underline"
+                >
+                    Know exact Coordinates? Click to add manually.
+                </button>
+            ) : (
+                <div className="grid grid-cols-2 gap-4 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div>
+                        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
+                        <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none text-xs" placeholder="6.6969" />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
+                        <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none text-xs" placeholder="80.6767" />
+                    </div>
+                </div>
+            )}
+        </div>
+        
+        {/* 3. INSTRUCTIONS & PROOF */}
+        <div>
+            <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Instructions for Travelers</label>
+            <textarea name="instructions" value={form.instructions || ''} onChange={handleChange} rows="2" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" placeholder="How to find the location..." required />
+        </div>
+
+        <div>
+            <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Submission Proof Required</label>
+            <input 
+                type="text" 
+                name="proof_requirements" 
+                value={form.proof_requirements || ''} 
+                onChange={handleChange} 
+                className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+                placeholder="e.g. Upload a photo of the statue..." 
+            />
+                 </div>
+
+                  </div>
+                )}
+                {/* 4. ITEM PHOTO (MOVED TO BOTTOM FOR PWA RELIABILITY) */}
+        <div className="bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-200">
+            <label className="block text-xs font-black text-gray-400 uppercase mb-3 tracking-widest">
+                Quest Photo 
+            </label>
+            <div className="flex items-center gap-6">
+                <label className="cursor-pointer bg-white border border-gray-300 px-6 py-3 rounded-xl hover:bg-gray-100 flex items-center shadow-sm transition-all">
+                    <UploadCloud className="text-brand-600 mr-2" size={20} />
+                    <span className="text-sm font-bold text-gray-600">Choose Image</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                </label>
+                {preview && <img src={preview} alt="Preview" className="h-20 w-20 object-cover rounded-xl border-2 border-white shadow-lg" />}
+            </div>
+            
+            {/* Draft Logic UI Feedback */}
+            {!imageFile && !preview && form.title && (
+                <p className="mt-3 text-[10px] text-brand-600 font-bold bg-brand-50 p-2 rounded animate-pulse">
+                    ✨ Draft Restored! Please re-select your photo before publishing.
+                </p>
+            )}
+                   </div>
 
                         <button type="submit" disabled={isSubmitting} className={`w-full text-white py-4 rounded-2xl font-black text-lg shadow-xl transition-all transform active:scale-95 flex items-center justify-center ${mode === 'quest' ? 'bg-brand-600 hover:bg-brand-700 shadow-brand-200' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'}`}>
                             {isSubmitting ? 'Processing...' : (editingId ? 'Save & Resubmit for Approval' : 'Publish to SideQuest')}

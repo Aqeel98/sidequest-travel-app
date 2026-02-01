@@ -595,7 +595,10 @@ useEffect(() => {
             
             const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanFileName);
             finalImageUrl = data.publicUrl;
-        }
+        }   
+
+        const hasCoords = parseFloat(formData.lat) !== 0 && parseFloat(formData.lng) !== 0;
+        const finalStatus = (currentUser.role === 'Admin' && hasCoords) ? 'active' : 'pending_admin';
 
         console.log("SQ-Quest: 2. Saving to DB...");
         
@@ -607,6 +610,7 @@ useEffect(() => {
             location_address: formData.location_address || "",
             lat: parseFloat(formData.lat) || 0,
             lng: parseFloat(formData.lng) || 0,
+            map_link: formData.map_link || "",
             instructions: formData.instructions || "",
             proof_requirements: formData.proof_requirements || "",
             image: finalImageUrl,

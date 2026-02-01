@@ -140,6 +140,17 @@ const handleImageUpload = async (e) => {
     return (
         <form className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3" onSubmit={(e) => { e.preventDefault(); onSave(item.id, formData); }}>
             <h4 className="font-bold text-lg">{type === 'quest' ? 'Edit Quest' : 'Edit Reward'}</h4>
+
+            {type === 'quest' && formData.map_link && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Partner Location Link</p>
+                <a href={formData.map_link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline break-all hover:text-blue-800 font-bold">
+                    Click to Open Maps Link 📍
+                </a>
+                <p className="text-[10px] text-blue-400 mt-1 italic">Open link, right-click the spot, and copy the numbers into Lat/Lng below.</p>
+            </div>
+        )}
+
             {fields.map(field => (
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
