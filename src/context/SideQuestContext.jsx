@@ -299,7 +299,7 @@ useEffect(() => {
                 const existingTemp = prev.find(p => 
                     p.quest_id === payload.new.quest_id && 
                     p.traveler_id === payload.new.traveler_id &&
-                    p.id.toString().startsWith('temp-')
+                    p.id?.toString().startsWith('temp-')
                 );
 
                 if (existingTemp) {
@@ -744,6 +744,7 @@ const deleteQuest = async (id) => {
     // 3. Optimistic Update
     const optimisticUpdate = { 
         ...currentProgress, 
+        id: currentProgress?.id || `temp-sync-${Date.now()}`, 
         status: 'pending', 
         completion_note: note,
         proof_photo_url: file ? URL.createObjectURL(file) : currentProgress?.proof_photo_url,
@@ -763,7 +764,7 @@ const deleteQuest = async (id) => {
             console.log(`SQ-Impact: Starting sync for Quest: ${questId}`);
             
             // STEP A: Try to find the Real ID
-            let realSubmissionId = currentProgress?.id && !currentProgress.id.toString().startsWith('temp-') 
+            let realSubmissionId = currentProgress?.id && !currentProgress?.id?.toString().startsWith('temp-')
                 ? currentProgress.id 
                 : null;
 
