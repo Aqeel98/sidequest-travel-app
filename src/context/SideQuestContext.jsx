@@ -702,9 +702,6 @@ const deleteQuest = async (id) => {
         return false;
     }
     
-    try { await withTimeout(supabase.auth.getSession(), 5000); } catch(e){}
-
-
     // OPTIMISTIC UI UPDATE (Instant Feedback) ---
     const tempId = `temp-${Date.now()}`;
     const optimisticSub = { id: tempId, quest_id: questId, traveler_id: currentUser.id, status: 'in_progress' };
@@ -738,12 +735,7 @@ const deleteQuest = async (id) => {
 
   const submitProof = async (questId, note, file) => {
     
-    // 1. Connection Check
-    try { await withTimeout(supabase.auth.getSession(), 3000); } catch(e) {
-        showToast("Network unstable. Please tap Submit again.", 'error');
-        return false; 
-    }
-    
+
     // 2. Lock Browser
     activeUploads.current++;
 
@@ -755,12 +747,14 @@ const deleteQuest = async (id) => {
         status: 'pending', 
         completion_note: note,
         proof_photo_url: file ? URL.createObjectURL(file) : currentProgress?.proof_photo_url,
-        submitted_at: new Date().toISOString()
+        submitted_at: new Date().toISOString(),
+        quest_id: questId,
+        traveler_id: currentUser.id
     };
     
     setQuestProgress(prev => {
-        const exists = prev.find(p => p.quest_id === questId);
-        if (exists) return prev.map(p => p.quest_id === questId ? optimisticUpdate : p);
+        const exists = prev.find(p => p.quest_id === questId && p.traveler_id === currentUser.id);
+        if (exists) return prev.map(p => (p.quest_id === questId && p.traveler_id === currentUser.id) ? optimisticUpdate : p);
         return [...prev, optimisticUpdate];
     });
 
