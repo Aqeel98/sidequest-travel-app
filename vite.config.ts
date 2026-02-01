@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png','favicon.svg'],
+      includeAssets: ['favicon.ico', 'favicon-96x96.png', 'sq-v4-apple.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'SideQuest',
         short_name: 'SideQuest',
@@ -20,25 +20,25 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'pwa-192.png', 
+            src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'pwa-192.png',
+            src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable'
           },
           {
-            src: 'pwa-512.png', 
+            src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'apple-touch-icon.png',
+            src: 'sq-v4-apple.png',
             sizes: '180x180',
             type: 'image/png'
           }
