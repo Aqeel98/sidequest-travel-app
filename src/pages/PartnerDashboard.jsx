@@ -40,7 +40,67 @@ const PartnerDashboard = () => {
         }
     }, [form, editingId, view]);
 
+    // --- 1. THE AUTO-RESUME ENGINE ---
+    useEffect(() => {
+        const pendingData = localStorage.getItem('sq_auto_submit');
+        if (pendingData) {
+            const resumeSubmit = async () => {
+                const { form: sForm, imageString, mode: sMode, editingId: sId } = JSON.parse(pendingData);
+                localStorage.removeItem('sq_auto_submit'); // Clear immediately
+                setIsSubmitting(true);
+                
+                try {
+                    // Convert Base64 back to File
+                    const res = await fetch(imageString);
+                    const blob = await res.blob();
+                    const finalFile = new File([blob], "upload.jpg", { type: "image/jpeg" });
 
+                    let success = false;
+
+                    if (sId) {
+                        // --- RESUME EDIT MODE ---
+                        const payload = { 
+                            title: sForm.title,
+                            contact_phone: sForm.contact_phone,
+                            description: sForm.description,
+                            image: sForm.image // Keep old URL if file fails
+                        };
+
+                        if (sMode === 'quest') {
+                            payload.category = sForm.category;
+                            payload.xp_value = parseInt(sForm.xp_value) || 0;
+                            payload.location_address = sForm.location_address;
+                            payload.lat = parseFloat(sForm.lat) || 0;
+                            payload.lng = parseFloat(sForm.lng) || 0;
+                            payload.instructions = sForm.instructions;
+                            payload.proof_requirements = sForm.proof_requirements;
+                            payload.map_link = sForm.map_link;
+                            // Note: updateQuest in Context should handle the image file or URL
+                            success = await updateQuest(sId, payload);
+                        } else {
+                            payload.xp_cost = parseInt(sForm.xp_cost) || 0;
+                            success = await updateReward(sId, payload);
+                        }
+                    } else {
+                        // --- RESUME CREATE MODE ---
+                        if (sMode === 'quest') success = await addQuest(sForm, finalFile);
+                        else success = await addReward(sForm, finalFile);
+                    }
+                    
+                    if (success) {
+                        sessionStorage.removeItem('sq_partner_draft');
+                        showToast("Published Successfully!", 'success');
+                        setView('manage');
+                    }
+                } catch (e) { 
+                    console.error("SQ-Resume-Error:", e);
+                    showToast("Submission interrupted. Please try once more.", 'error'); 
+                }
+                setIsSubmitting(false);
+            };
+            resumeSubmit();
+        }
+    }, []);
 
     // Cleanup memory for image previews
     useEffect(() => {
@@ -118,101 +178,61 @@ const PartnerDashboard = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-             // Check if empty
-    if (!form.contact_phone) {
-        showToast("Phone number is required.", 'error');
-        return;
-    }
+        // 1. PHONE VALIDATION
+        if (!form.contact_phone) {
+            showToast("Phone number is required.", 'error');
+            return;
+        }
 
-    // Min 9 digits (local short), Max 15 (international standard is max 15)
-    if (form.contact_phone.length < 9 || form.contact_phone.length > 15) {
-        showToast("Invalid Phone Number length.", 'error');
-        return;
-    }
+        if (form.contact_phone.length < 9 || form.contact_phone.length > 15) {
+            showToast("Invalid Phone Number length.", 'error');
+            return;
+        }
 
-
-
-        // 1. VALIDATION
+        // 2. IMAGE VALIDATION
         if (!imageFile && !preview) {
             showToast("Please select an image.", 'error');
             return;
         }
     
         setIsSubmitting(true);
-    
+        showToast("Waking up 4G connection...", "info");
+
         try {
-            let success = false;
-    
-            if (editingId) {
-                // --- EDIT MODE ---
-                let finalImageUrl = preview;
+            // 3. IMAGE PREPARATION
+            // If it's an Edit without a new file, we use the existing 'preview' URL.
+            // If it's a new file, we optimize and convert to String.
+            let imageToStore = preview; 
+
+            if (imageFile) {
+                console.log("SQ-System: Optimizing image for memory transfer...");
+                const optimizedFile = await optimizeImage(imageFile);
                 
-                if (imageFile) {
-                    console.log("SQ-System: Optimizing image...");
-                    
-                    // ✅ FIX: Optimize locally using Canvas (Native, Fast, Light)
-                    const optimizedFile = await optimizeImage(imageFile);
-                    
-                    // Upload the SMALL optimized file
-                    const { error } = await supabase.storage
-                        .from('quest-images')
-                        .upload(optimizedFile.name, optimizedFile, { 
-                            cacheControl: '3600',
-                            upsert: true
-                        });
-
-                    if (error) throw error;
-                    
-                    const { data } = supabase.storage.from('quest-images').getPublicUrl(optimizedFile.name);
-                    finalImageUrl = data.publicUrl;
-                }
-    
-                // PREPARE DATA
-                const payload = { 
-                    title: form.title,
-                    contact_phone: form.contact_phone,
-                    description: form.description,
-                    image: finalImageUrl 
-                };
-    
-                if (mode === 'quest') {
-                    payload.category = form.category;
-                    payload.xp_value = parseInt(form.xp_value) || 0;
-                    payload.location_address = form.location_address;
-                    payload.lat = parseFloat(form.lat) || 0;
-                    payload.lng = parseFloat(form.lng) || 0;
-                    payload.instructions = form.instructions;
-                    payload.proof_requirements = form.proof_requirements;
-                    if (currentUser.role === 'Admin') payload.status = form.status;
-
-                    success = await updateQuest(editingId, payload);
-                } else {
-                    payload.xp_cost = parseInt(form.xp_cost) || 0;
-                    if (currentUser.role === 'Admin') payload.status = form.status;
-                    success = await updateReward(editingId, payload);
-                }
-    
-            } else {
-                // --- CREATE MODE ---
-                // (Context already handles optimization for AddQuest, so we just pass the file)
-                if (mode === 'quest') success = await addQuest(form, imageFile);
-                else success = await addReward(form, imageFile);
-            }
-    
-            // RESET UI ON SUCCESS
-            if (success) {
-                sessionStorage.removeItem('sq_partner_draft');
-                setEditingId(null);
-                setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50, lat: 0, lng: 0 });
-                setImageFile(null);
-                setPreview(null);
-                setView('manage'); 
+                imageToStore = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(optimizedFile);
+                });
             }
             
+            // 4. PERSISTENCE PAYLOAD
+            // We save EVERYTHING required to recreate the original logic after the refresh.
+            const payload = { 
+                form, 
+                imageString: imageToStore, 
+                mode, 
+                editingId // null for Create, ID for Edit
+            };
+            
+            localStorage.setItem('sq_auto_submit', JSON.stringify(payload));
+            
+            // 5. THE HARD REFRESH
+            // This forces the phone to kill "Zombie" sockets and start a fresh connection.
+            window.location.reload();
+
         } catch (err) {
-            console.error("Dashboard Error:", err);
-            showToast("Error: " + (err.message || "Connection failed"), 'error');
-        } finally {
+            console.error("SQ-Submit-Error:", err);
+            showToast("Device hardware busy. Please try again.", 'error');
             setIsSubmitting(false);
         }
     };
@@ -346,7 +366,7 @@ const PartnerDashboard = () => {
             </div>
         </div>
 
-        {/* 2. HYBRID LOCATION BLOCK (The New Way) */}
+        {/* 2. HYBRID LOCATION BLOCK  */}
         <div className="bg-brand-50 p-6 rounded-2xl border border-brand-100">
             <label className="block text-[10px] font-black text-brand-600 uppercase mb-3 tracking-widest flex items-center">
                 <Map size={14} className="mr-1"/> Location Source (Google Maps)
@@ -371,14 +391,28 @@ const PartnerDashboard = () => {
                     Know exact Coordinates? Click to add manually.
                 </button>
             ) : (
-                <div className="grid grid-cols-2 gap-4 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div>
-                        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
-                        <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none text-xs" placeholder="6.6969" />
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
+                            <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none text-xs" placeholder="6.6969" />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
+                            <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none text-xs" placeholder="80.6767" />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
-                        <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none text-xs" placeholder="80.6767" />
+
+                    <div className="mt-4">
+                        <div className="bg-white/60 p-3 rounded-lg border border-brand-200 text-center">
+                            <p className="text-[10px] text-gray-600 leading-relaxed">
+                                <span className="font-bold text-brand-600">How to find this?</span> <br/>
+                                Open <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="text-blue-500 underline hover:text-blue-700 font-bold">Google Maps</a>. 
+                                <span className="font-bold"> Right-Click</span> (or Long-Press on mobile) on the exact spot. 
+                                Click the numbers at the top to copy them. <br/>
+                                <span className="italic text-gray-400">(Example: 6.9344, 79.8428)</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
             )}
@@ -407,8 +441,8 @@ const PartnerDashboard = () => {
                 {/* 4. ITEM PHOTO (MOVED TO BOTTOM FOR PWA RELIABILITY) */}
         <div className="bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-200">
             <label className="block text-xs font-black text-gray-400 uppercase mb-3 tracking-widest">
-                Quest Photo 
-            </label>
+            {mode === 'quest' ? 'Quest Photo' : 'Reward Photo'}</label>
+
             <div className="flex items-center gap-6">
                 <label className="cursor-pointer bg-white border border-gray-300 px-6 py-3 rounded-xl hover:bg-gray-100 flex items-center shadow-sm transition-all">
                     <UploadCloud className="text-brand-600 mr-2" size={20} />

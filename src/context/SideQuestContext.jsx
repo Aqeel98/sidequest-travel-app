@@ -548,63 +548,28 @@ useEffect(() => {
 
   const addQuest = async (formData, imageFile) => {
     try {
-        console.log("SQ-Quest: 1. Initiating Upload...");
+        console.log("SQ-System: Processing upload on fresh connection...");
         
-        // 1. Connection Check (Smart Wake-Up)
-        try {
-            await withTimeout(supabase.auth.getSession(), 2000);
-        } catch (err) {
-            console.warn("SQ-Quest: Radio dormant. Sending wake-up pulse...");
-            // Small 500ms pause to let the hardware re-establish the 4G link
-            await new Promise(r => setTimeout(r, 500));
-            try { await withTimeout(supabase.auth.getSession(), 5000); } catch(e) {}
-        }
-
         let finalImageUrl = null;
-
         if (imageFile) {
-            // --- LOGIC FIX START ---
+            // Step A: Setup name
+            const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
             
-            // Step A: Setup defaults
-            let fileToUpload = imageFile;
-            let fileExt = imageFile.name.split('.').pop(); // Default to original (e.g. png)
-
-            // Step B: Optimize FIRST
-            try { 
-                fileToUpload = await optimizeImage(imageFile); 
-                // CRITICAL: Optimization turns it into a JPEG. 
-                // So we MUST update the extension to match the data.
-                fileExt = 'jpg'; 
-            } catch (e) { 
-                console.warn("Optimization skipped"); 
-            }
-
-            // Step C: Create Name (Now using the correct extension)
-            const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-            
-            console.log(`SQ-Quest: Uploading ${cleanFileName}...`);
-
-            // Step D: Upload
+            // Step B: Upload (Connection is fresh, so no pulses needed)
             const { error: upErr } = await supabase.storage
                 .from('quest-images')
-                .upload(cleanFileName, fileToUpload, { 
-                    cacheControl: '3600', 
-                    upsert: true 
-                });
+                .upload(cleanFileName, imageFile, { cacheControl: '3600', upsert: true });
             
-            // --- LOGIC FIX END ---
-
             if (upErr) throw new Error("Image Upload Failed: " + upErr.message);
             
             const { data } = supabase.storage.from('quest-images').getPublicUrl(cleanFileName);
             finalImageUrl = data.publicUrl;
-        }   
+        }
 
+        // SMART STATUS: Force pending if coords are 0 (missing), even for Admin
         const hasCoords = parseFloat(formData.lat) !== 0 && parseFloat(formData.lng) !== 0;
         const finalStatus = (currentUser.role === 'Admin' && hasCoords) ? 'active' : 'pending_admin';
 
-        console.log("SQ-Quest: 2. Saving to DB...");
-        
         const cleanPayload = {
             title: formData.title || "Untitled",
             description: formData.description || "",
@@ -618,26 +583,21 @@ useEffect(() => {
             proof_requirements: formData.proof_requirements || "",
             image: finalImageUrl,
             created_by: currentUser.id,
-            status: currentUser.role === 'Admin' ? 'active' : 'pending_admin'
+            status: finalStatus
         };
 
-        const { data, error } = await supabase.from('quests').insert([cleanPayload]).select().single();
+        const { data: quest, error } = await supabase.from('quests').insert([cleanPayload]).select().single();
         if (error) throw error;
 
-        setQuests(prev => {
-            if (prev.find(q => q.id === data.id)) return prev;
-            return [...prev, data];
-        });
-        
-        showToast("Quest submitted successfully!", 'success');
+        setQuests(prev => [...prev, quest]);
         return true;
 
     } catch (error) {
         console.error("SQ-Error:", error);
-        showToast("Upload failed: " + (error.message || "Network Error"), 'error');
+        showToast("Publication failed. Please try again.", 'error');
         return false;
     }
-  };
+};
 
 
 // --- ROBUST UPDATE QUEST (Extended Timeout) ---
