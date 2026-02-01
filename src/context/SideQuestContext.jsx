@@ -554,7 +554,10 @@ useEffect(() => {
         try {
             await withTimeout(supabase.auth.getSession(), 2000);
         } catch (err) {
-            console.warn("SQ-Quest: Connection check slow, proceeding...");
+            console.warn("SQ-Quest: Radio dormant. Sending wake-up pulse...");
+            // Small 500ms pause to let the hardware re-establish the 4G link
+            await new Promise(r => setTimeout(r, 500));
+            try { await withTimeout(supabase.auth.getSession(), 5000); } catch(e) {}
         }
 
         let finalImageUrl = null;
