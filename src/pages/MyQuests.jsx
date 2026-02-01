@@ -58,9 +58,20 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
     if (!file) return alert("Please upload a proof photo!");
     
     setIsSubmitting(true);
-    // Pass the QUEST ID, not the progress ID
-    await onSubmitProof(quest.id, note, file);
-    setIsSubmitting(false);
+    // 1. Convert optimized file to Base64 String
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+        const payload = {
+            questId: quest.id,
+            note: note,
+            imageString: reader.result,
+            type: 'proof_submission'
+        };
+        // 2. Save and Refresh
+        localStorage.setItem('sq_auto_proof', JSON.stringify(payload));
+        window.location.reload();
+    };
   };
 
   const getStatusBadge = (status) => {
@@ -152,7 +163,30 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
 
 // --- MAIN PAGE COMPONENT ---
 const MyQuests = () => {
-  const { currentUser, questProgress, quests, submitProof, setShowAuthModal } = useSideQuest();
+  const { currentUser, questProgress, quests, submitProof, setShowAuthModal, showToast } = useSideQuest();
+
+  useEffect(() => {
+    const pendingProof = localStorage.getItem('sq_auto_proof');
+    if (pendingProof && currentUser) {
+        const resume = async () => {
+            const { questId, note, imageString } = JSON.parse(pendingProof);
+            localStorage.removeItem('sq_auto_proof'); // Clear immediately
+            
+            try {
+                // Convert string back to file
+                const res = await fetch(imageString);
+                const blob = await res.blob();
+                const file = new File([blob], "proof.jpg", { type: "image/jpeg" });
+                
+                await submitProof(questId, note, file);
+                // Success toast is handled by Context
+            } catch (e) {
+                console.error("Auto-proof failed", e);
+            }
+        };
+        resume();
+    }
+  }, [currentUser]);
 
 
   useEffect(() => {

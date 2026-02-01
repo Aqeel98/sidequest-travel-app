@@ -7,7 +7,7 @@ import imageCompression from 'browser-image-compression'; // THE 4G FIX
 const QuestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { quests, acceptQuest, submitProof, currentUser, questProgress, setShowAuthModal } = useSideQuest();
+  const { quests, acceptQuest, submitProof, currentUser, questProgress, setShowAuthModal, showToast } = useSideQuest();
 
   // State
   const [description, setDescription] = useState('');
@@ -46,6 +46,33 @@ const getCategoryColor = (cat) => {
     useEffect(() => {
     window.scrollTo(0, 0);
     }, []);
+
+
+    useEffect(() => {
+      const pendingProof = localStorage.getItem('sq_auto_proof');
+      if (pendingProof && currentUser) {
+          const resume = async () => {
+              const { questId, note, imageString } = JSON.parse(pendingProof);
+              // Only resume if we are on the correct quest page or handle globally
+              if (Number(id) === questId) {
+                  localStorage.removeItem('sq_auto_proof');
+                  setIsSubmitting(true);
+                  
+                  try {
+                      const res = await fetch(imageString);
+                      const blob = await res.blob();
+                      const file = new File([blob], "proof.jpg", { type: "image/jpeg" });
+                      
+                      await submitProof(questId, note, file);
+                      navigate('/my-quests');
+                  } catch (e) { console.error(e); }
+                  setIsSubmitting(false);
+              }
+          };
+          resume();
+      }
+    }, [currentUser, id]);
+
 
 
   // 3. MEMORY CLEANUP (Prevents Lag)
@@ -125,13 +152,21 @@ const getCategoryColor = (cat) => {
     setIsSubmitting(true); 
 
     try {
-        // Send the ALREADY COMPRESSED file to Context
-        await submitProof(quest.id, description, selectedFile);
-        navigate('/my-quests');
+        // Convert the already compressed file to Base64
+        const reader = new FileReader();
+        reader.readAsDataURL(selectedFile);
+        reader.onloadend = () => {
+            const payload = {
+                questId: quest.id,
+                note: description,
+                imageString: reader.result,
+                type: 'proof_submission'
+            };
+            localStorage.setItem('sq_auto_proof', JSON.stringify(payload));
+            window.location.reload();
+        };
     } catch (error) {
-        console.error("Submit Error:", error);
-        alert("Submission failed. Please check your internet.");
-    } finally {
+        alert("Submission failed. Please try again.");
         setIsSubmitting(false);
     }
   };

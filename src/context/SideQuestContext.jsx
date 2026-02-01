@@ -797,7 +797,13 @@ const deleteQuest = async (id) => {
             if (file) {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `proofs/${currentUser.id}_${Date.now()}.${fileExt}`;
-                const { error: upErr } = await supabase.storage.from('proofs').upload(fileName, file);
+                
+                console.log("SQ-System: Syncing photo to storage...");
+
+                // --- ADD TIMEOUT SHIELD HERE ---
+                const uploadPromise = supabase.storage.from('proofs').upload(fileName, file);
+                const { error: upErr } = await withTimeout(uploadPromise, 45000); // 45s for photos
+                
                 if (upErr) throw upErr;
                 const { data } = supabase.storage.from('proofs').getPublicUrl(fileName);
                 proofUrl = data.publicUrl;
