@@ -115,7 +115,7 @@ const Profile = () => {
             completedQuests,
             activeQuests, 
             badges,
-            recentQuests: completedProgress.slice(-3).reverse(),
+            recentQuests: [...completedProgress].reverse(),
             level, 
             progressPercent
         };
