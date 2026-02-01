@@ -6,13 +6,12 @@ import { useSideQuest } from '../context/SideQuestContext';
 
 
 const QuestSkeleton = () => (
-  /* Match the h-[480px] here */
-  <div className="bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm overflow-hidden h-[450px]">
-      <div className="h-64 bg-gray-200 animate-pulse"></div>
+  /* We change bg-white to bg-transparent and remove the flash */
+  <div className="rounded-3xl h-[450px] opacity-20">
+      <div className="h-64 bg-black/5 rounded-t-3xl"></div>
       <div className="p-6 space-y-3">
-          <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-          <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+          <div className="h-4 bg-black/5 rounded w-1/4"></div>
+          <div className="h-6 bg-black/5 rounded w-3/4"></div>
       </div>
   </div>
 );
@@ -53,16 +52,16 @@ const Home = () => {
 
 
       // --- SCROLL RESTORATION LOGIC ---
-  // We use 'useLayoutEffect' to scroll BEFORE the screen paints the new data
-  useLayoutEffect(() => {
-    if (!isLoading && displayQuests.length > 0 && !hasRestored.current) {
-      const savedPosition = sessionStorage.getItem('homeScrollPos');
-      if (savedPosition) {
-        window.scrollTo({ top: parseInt(savedPosition), behavior: 'instant' });
-      }
-      hasRestored.current = true; // This "locks" the scroll so it never snaps again
-    }
-  }, [isLoading, displayQuests.length]);
+
+      useLayoutEffect(() => {
+        if (displayQuests.length > 0 && !hasRestored.current) {
+          const savedPosition = sessionStorage.getItem('homeScrollPos');
+          if (savedPosition) {
+            window.scrollTo({ top: parseInt(savedPosition), behavior: 'instant' });
+          }
+          hasRestored.current = true; 
+        }
+      }, [displayQuests.length]);
 
 
   useEffect(() => {
@@ -222,75 +221,78 @@ const Home = () => {
             ))}
         </div>
 
-        {/* --- THE GRID  WITH SKELETONS --- */}
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-    {/* 1. LOADING STATE: Shown while data is fetching */}
-    {isLoading ? (
-       <>
-         <QuestSkeleton /><QuestSkeleton /><QuestSkeleton />
-         <QuestSkeleton /><QuestSkeleton /><QuestSkeleton />
-       </>
-    ) : (
-        /* 2. DATA STATE: Shown when data arrives. One single map only. */
-        displayQuests.map((quest, index) => (
-            <div 
-                key={quest.id} 
-                onClick={() => handleQuestClick(quest.id)}
-                className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer h-[450px]"
-            >
-                {/* Image Section */}
-                <div className="relative h-64 overflow-hidden"onContextMenu={(e) => e.preventDefault()}>
-                    <img 
-                        src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
-                        alt={quest.title} 
-                        loading={index < 2 ? "eager" : "lazy"} 
-                        fetchpriority={index < 2 ? "high" : "low"}
-                         decoding="async" 
-                         draggable="false"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                    />
+        {/* --- THE GRID --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            {/* 1. LOADING STATE: Shown ONLY if we have zero data in cache */}
+            {isLoading && displayQuests.length === 0 && (
+                <>
+                    <QuestSkeleton /><QuestSkeleton /><QuestSkeleton />
+                    <QuestSkeleton /><QuestSkeleton /><QuestSkeleton />
+                </>
+            )}
 
-                       {/* Transparent Shield */}
-                    <div className="absolute inset-0 z-10"></div>
+            {/* 2. DATA STATE: Shown whenever data exists. 
+                Because it is not behind an 'isLoading' check anymore, 
+                it stays visible when you hit "Back". */}
+            {displayQuests.map((quest, index) => (
+                <div 
+                    key={quest.id} 
+                    onClick={() => handleQuestClick(quest.id)}
+                    className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer h-[450px]"
+                >
+                    {/* Image Section */}
+                    <div className="relative h-64 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
+                        <img 
+                            src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
+                            alt={quest.title} 
+                            // Optimized: Load first 6 images instantly to prevent white flash on Back button
+                            loading={index < 6 ? "eager" : "lazy"} 
+                            fetchpriority={index < 6 ? "high" : "low"}
+                            decoding="async" 
+                            draggable="false"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
 
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-brand-600 shadow-lg">
-                        ⭐ {quest.xp_value} XP
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-                
-                {/* Content Section */}
-                <div className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            quest.category === 'Environmental' ? 'bg-emerald-100 text-emerald-700' :
-                            quest.category === 'Social' ? 'bg-rose-100 text-rose-700' :
-                            quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
-                            quest.category === 'Education' ? 'bg-blue-100 text-blue-700' :
-                            quest.category === 'Cultural' ? 'bg-violet-100 text-violet-700' :
-                            quest.category === 'Adventure' ? 'bg-orange-100 text-orange-800' :
-                            quest.category === 'Exploration' ? 'bg-yellow-100 text-yellow-800' :
-                            quest.category === 'Marine Adventure' ? 'bg-cyan-100 text-cyan-700' :
-                            quest.category === 'Wildlife Adventure' ? 'bg-lime-100 text-lime-700' :
-                            'bg-orange-100 text-orange-700'
-                        }`}>
-                            {quest.category}
-                        </span>
+                        {/* Transparent Shield */}
+                        <div className="absolute inset-0 z-10"></div>
+
+                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-brand-600 shadow-lg">
+                            ⭐ {quest.xp_value} XP
+                        </div>
                     </div>
                     
-                    <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-brand-600 transition-colors">
-                        {quest.title}
-                    </h3>
-                    
-                    <div className="flex items-center text-gray-500 text-sm mt-4">
-                        <MapPin size={16} className="mr-1.5 text-gray-400" /> 
-                        {quest.location_address}
+                    {/* Content Section */}
+                    <div className="p-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                quest.category === 'Environmental' ? 'bg-emerald-100 text-emerald-700' :
+                                quest.category === 'Social' ? 'bg-rose-100 text-rose-700' :
+                                quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
+                                quest.category === 'Education' ? 'bg-blue-100 text-blue-700' :
+                                quest.category === 'Cultural' ? 'bg-violet-100 text-violet-700' :
+                                quest.category === 'Adventure' ? 'bg-orange-100 text-orange-800' :
+                                quest.category === 'Exploration' ? 'bg-yellow-100 text-yellow-800' :
+                                quest.category === 'Marine Adventure' ? 'bg-cyan-100 text-cyan-700' :
+                                quest.category === 'Wildlife Adventure' ? 'bg-lime-100 text-lime-700' :
+                                'bg-orange-100 text-orange-700'
+                            }`}>
+                                {quest.category}
+                            </span>
+                        </div>
+                        
+                        <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-brand-600 transition-colors">
+                            {quest.title}
+                        </h3>
+                        
+                        <div className="flex items-center text-gray-500 text-sm mt-4">
+                            <MapPin size={16} className="mr-1.5 text-gray-400" /> 
+                            {quest.location_address}
+                        </div>
                     </div>
                 </div>
-            </div>
-        ))
-    )}
-    </div>
+            ))}
+        </div>
        
       </div>
     </div>
