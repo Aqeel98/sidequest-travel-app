@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
 
@@ -13,7 +14,7 @@ const PartnerDashboard = () => {
     const [view, setView] = useState('create'); 
     const [mode, setMode] = useState('quest');
     const [editingId, setEditingId] = useState(null);
-    const [viewClaimsId, setViewClaimsId] = useState(null); // State for toggling claim list
+    const [viewClaimsId, setViewClaimsId] = useState(null); 
     const [showGps, setShowGps] = useState(false);
 
     // Form State
@@ -21,6 +22,19 @@ const PartnerDashboard = () => {
     const [imageFile, setImageFile] = useState(null); 
     const [preview, setPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const [searchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab');
+    
+    useEffect(() => {
+        if (activeTab === 'create') {
+            setView('create');
+            setEditingId(null);
+        } else if (activeTab === 'manage' || activeTab === 'verify') {
+            setView('manage');
+        }
+    }, [activeTab]);
+
 
     useEffect(() => {
         if (editingId) return;
@@ -42,6 +56,12 @@ const PartnerDashboard = () => {
 
     // --- 1. THE IMMORTAL PARTNER RESUME ENGINE ---
     useEffect(() => {
+        const pendingVoucher = localStorage.getItem('sq_pending_voucher');
+        if (pendingVoucher && currentUser) {
+            localStorage.removeItem('sq_pending_voucher'); // Clear immediately
+            verifyRedemptionCode(pendingVoucher); 
+        }
+
         const pendingData = localStorage.getItem('sq_auto_submit');
         
         // Ensure data exists and user is hydrated from Context
@@ -508,22 +528,28 @@ const PartnerDashboard = () => {
             <CheckCircle className="text-brand-600 mr-2" size={20}/> Verify Traveler Code
         </h3>
         <p className="text-xs text-gray-500 mb-4">Enter the SQ-Code from the traveler's phone to mark it as used.</p>
-        <form className="flex gap-2" onSubmit={async (e) => {
-            e.preventDefault();
-            const success = await verifyRedemptionCode(e.target.vCode.value);
-            if (success) e.target.reset();
-                   }}>
-            <input 
-                name="vCode" 
-                type="text" 
-                placeholder="e.g. SQ-KJ92-45" 
-                className="flex-1 bg-gray-50 border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none font-mono font-bold uppercase" 
-                required 
-                      />
-                   <button type="submit" className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-700 transition-all">
-                           Verify
-                      </button>
-                     </form>
+        <form className="flex gap-2" onSubmit={(e) => {
+    e.preventDefault();
+    const code = e.target.vCode.value;
+    if (!code) return;
+    
+    // 1. Save code to hardware memory
+    localStorage.setItem('sq_pending_voucher', code);
+    
+    // 2. Force hard refresh to kill Zombie Sockets
+    window.location.reload();
+}}>
+    <input 
+        name="vCode" 
+        type="text" 
+        placeholder="e.g. SQ-KJ92-45" 
+        className="flex-1 bg-gray-50 border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none font-mono font-bold uppercase" 
+        required 
+    />
+    <button type="submit" className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-700 transition-all">
+        Verify
+    </button>
+</form>
                     </div>
                     
                     {/* MY QUESTS SECTION */}

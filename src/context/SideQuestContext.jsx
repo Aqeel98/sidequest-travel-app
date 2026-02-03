@@ -1034,48 +1034,47 @@ const deleteReward = async (id) => {
   };
 
     // --- VOUCHER VALIDATION FOR PARTNERS ---
-  const verifyRedemptionCode = async (code) => {
-    try {
-        const cleanCode = code.trim().toUpperCase();
-        console.log(`SQ-Partner: Attempting to verify code: ${cleanCode}`);
-        
-        // 1. Fetch code and check ownership via reward join
-        const { data, error } = await supabase
-            .from('redemptions')
-            .select('*, rewards!inner(created_by, title)')
-            .eq('redemption_code', cleanCode)
-            .single();
-
-        if (error || !data) throw new Error("Invalid Code. Please check the spelling.");
-        
-        // 2. Security Check: Partner can only verify their own rewards
-        if (data.rewards.created_by !== currentUser.id && currentUser.role !== 'Admin') {
-            throw new Error("This code belongs to another partner's reward.");
+    const verifyRedemptionCode = async (code) => {
+        try {
+            const cleanCode = code.trim().toUpperCase();
+            
+            // 1. Fetch code using maybeSingle() to prevent 406 crashes
+            const { data, error } = await supabase
+                .from('redemptions')
+                .select('*, rewards(created_by, title)')
+                .eq('redemption_code', cleanCode)
+                .maybeSingle(); 
+    
+            if (error) throw error;
+            if (!data) throw new Error("Voucher not found. Check the code.");
+            
+            // 2. Security Check (Handle both object and array response)
+            const rewardData = Array.isArray(data.rewards) ? data.rewards[0] : data.rewards;
+            if (rewardData?.created_by !== currentUser.id && currentUser.role !== 'Admin') {
+                throw new Error("This voucher belongs to another partner.");
+            }
+    
+            if (data.status === 'verified') throw new Error("Voucher already marked as used.");
+    
+            // 3. Update the status
+            const { error: upErr } = await supabase
+                .from('redemptions')
+                .update({ status: 'verified', verified_at: new Date().toISOString() })
+                .eq('id', data.id);
+    
+            if (upErr) throw upErr;
+    
+            showToast(`Success! ${rewardData.title} verified.`, 'success');
+            
+            // 4. Refresh data
+            fetchRedemptions(currentUser.id, currentUser.role);
+            return true;
+    
+        } catch (err) {
+            showToast(err.message, 'error');
+            return false;
         }
-
-        // 3. Status Check: Is it already used?
-        if (data.status === 'verified') throw new Error("This code has already been used.");
-
-        // 4. Update the status to 'verified'
-        const { error: upErr } = await supabase
-            .from('redemptions')
-            .update({ status: 'verified', verified_at: new Date().toISOString() })
-            .eq('id', data.id);
-
-        if (upErr) throw upErr;
-
-        showToast(`Success! ${data.rewards.title} verified.`, 'success');
-        
-        // 5. Refresh redemptions so the UI updates for the partner
-        fetchRedemptions(currentUser.id, currentUser.role);
-        return true;
-
-    } catch (err) {
-        showToast(err.message, 'error');
-        return false;
-    }
-  };
-
+      };
 
 
   // --- 9. ADMIN MODERATION ENGINE ---
