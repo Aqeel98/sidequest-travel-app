@@ -83,13 +83,20 @@ export const SideQuestProvider = ({ children }) => {
             const { data: mySubs } = await supabase.from('submissions').select('*').eq('traveler_id', userId);
             if (mySubs) setQuestProgress(mySubs);
             
-            // Keep it consistent with the join logic
-            let redQuery = supabase.from('redemptions').select('*, profiles(full_name)');
-            if (role !== 'Admin' && role !== 'Partner') {
-                 redQuery = redQuery.eq('traveler_id', userId);
-                }
-                const { data: redData } = await redQuery;
-                if (redData) setRedemptions(redData);
+            let redQuery = supabase
+            .from('redemptions')
+            .select('*, profiles(full_name), rewards(created_by, title)');
+
+        if (role === 'Traveler') {
+
+            redQuery = redQuery.eq('traveler_id', userId);
+        } 
+        else if (role === 'Partner') {
+
+            redQuery = redQuery.eq('rewards.created_by', userId);
+        }
+        const { data: redData } = await redQuery;
+        if (redData) setRedemptions(redData);
 
 
         }
@@ -334,6 +341,39 @@ useEffect(() => {
             if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
         }
     })
+
+    // REDEMPTIONS 
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'redemptions' }, async (payload) => {
+        const myId = userRef.current?.id;
+        if (!myId) return;
+
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            let newRow = payload.new;
+
+            if (!newRow.profiles) {
+                const { data } = await supabase
+                    .from('redemptions')
+                    .select('*, profiles(full_name), rewards(title, created_by)')
+                    .eq('id', newRow.id)
+                    .maybeSingle();
+                if (data) newRow = data;
+            }
+
+            setRedemptions(prev => {
+                const exists = prev.find(r => r.id === newRow.id);
+                if (exists) return prev.map(r => r.id === newRow.id ? newRow : r);
+                return [...prev, newRow];
+            });
+
+            // TRAVELER NOTIFICATION: "Your voucher was just used!"
+            if (newRow.status === 'verified' && newRow.traveler_id === myId) {
+                showToast(`Voucher for ${newRow.rewards?.title || 'your reward'} verified!`, 'success');
+            }
+        } 
+        else if (payload.eventType === 'DELETE') {
+            setRedemptions(prev => prev.filter(r => r.id !== payload.old.id));
+        }
+      })
     .subscribe();
   };
 
@@ -1037,40 +1077,64 @@ const deleteReward = async (id) => {
     const verifyRedemptionCode = async (code) => {
         try {
             const cleanCode = code.trim().toUpperCase();
+            console.log("SQ-System: Hard Search for Code:", cleanCode);
             
-            // 1. Fetch code using maybeSingle() to prevent 406 crashes
+            // 1. Explicit Selection: Pulls the redemption row and the associated reward owner
             const { data, error } = await supabase
                 .from('redemptions')
-                .select('*, rewards(created_by, title)')
+                .select(`
+                    id,
+                    redemption_code,
+                    status,
+                    reward_id,
+                    rewards (
+                        created_by,
+                        title
+                    )
+                `)
                 .eq('redemption_code', cleanCode)
                 .maybeSingle(); 
     
             if (error) throw error;
-            if (!data) throw new Error("Voucher not found. Check the code.");
+    
+            // 2. Handle 'Not Found' (This triggers if RLS blocks the partner or code is wrong)
+            if (!data) {
+                throw new Error("Voucher not found. Ensure the code is correct and belongs to your business.");
+            }
             
-            // 2. Security Check (Handle both object and array response)
-            const rewardData = Array.isArray(data.rewards) ? data.rewards[0] : data.rewards;
-            if (rewardData?.created_by !== currentUser.id && currentUser.role !== 'Admin') {
-                throw new Error("This voucher belongs to another partner.");
+            // 3. Robust Security Check
+            const partnerId = currentUser?.id;
+            const rewardOwner = data.rewards?.created_by;
+            const isAdmin = currentUser?.role === 'Admin';
+    
+            if (rewardOwner !== partnerId && !isAdmin) {
+                throw new Error("Security Violation: This voucher belongs to another partner.");
             }
     
-            if (data.status === 'verified') throw new Error("Voucher already marked as used.");
+            // 4. Status Guard
+            if (data.status === 'verified') {
+                throw new Error("This voucher has already been marked as USED.");
+            }
     
-            // 3. Update the status
+            // 5. Update Status to 'verified'
             const { error: upErr } = await supabase
                 .from('redemptions')
-                .update({ status: 'verified', verified_at: new Date().toISOString() })
+                .update({ 
+                    status: 'verified', 
+                    verified_at: new Date().toISOString() 
+                })
                 .eq('id', data.id);
     
             if (upErr) throw upErr;
     
-            showToast(`Success! ${rewardData.title} verified.`, 'success');
+            showToast(`Verified! ${data.rewards?.title || 'Reward'} marked as used.`, 'success');
             
-            // 4. Refresh data
+            // 6. Refresh the local state so the partner sees the change
             fetchRedemptions(currentUser.id, currentUser.role);
             return true;
     
         } catch (err) {
+            console.error("Verification Error:", err.message);
             showToast(err.message, 'error');
             return false;
         }

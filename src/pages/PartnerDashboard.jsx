@@ -58,8 +58,13 @@ const PartnerDashboard = () => {
     useEffect(() => {
         const pendingVoucher = localStorage.getItem('sq_pending_voucher');
         if (pendingVoucher && currentUser) {
-            localStorage.removeItem('sq_pending_voucher'); // Clear immediately
-            verifyRedemptionCode(pendingVoucher); 
+            localStorage.removeItem('sq_pending_voucher');
+            
+            const timer = setTimeout(() => {
+                verifyRedemptionCode(pendingVoucher); 
+            }, 800); // 0.8 second delay for reliability
+            
+            return () => clearTimeout(timer);
         }
 
         const pendingData = localStorage.getItem('sq_auto_submit');
