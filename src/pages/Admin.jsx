@@ -204,6 +204,38 @@ const Admin = () => {
   const [editingId, setEditingId] = useState(null);
   const [viewDetailsId, setViewDetailsId] = useState(null);
 
+  // --- ADMIN DEFERRED ACTION RESUME ---
+  useEffect(() => {
+    const pendingAction = localStorage.getItem('sq_admin_deferred');
+    if (pendingAction) {
+      const resume = async () => {
+        try {
+          const { type, id, data } = JSON.parse(pendingAction);
+          localStorage.removeItem('sq_admin_deferred'); // Clear immediately to prevent loops
+
+          let success = false;
+          if (type === 'QUEST') {
+            success = await updateQuest(id, data);
+            setActiveTab('quests'); // Ensure we land back on the Quest Manager tab
+          } else if (type === 'REWARD') {
+            success = await updateReward(id, data);
+            setActiveTab('rewards'); // Ensure we land back on the Reward Manager tab
+          }
+
+          if (success) {
+            setEditingId(null);
+            showToast("Update finalized on fresh connection!", "success");
+          }
+        } catch (e) {
+          console.error("Deferred Resume Failed", e);
+        }
+      };
+      resume();
+    }
+  }, []); 
+
+
+
   if (currentUser?.role !== 'Admin') {
     return (
       <div className="p-12 text-center">
@@ -238,15 +270,28 @@ const Admin = () => {
 
   // Handlers
  
-  const handleSaveQuest = async (id, fields) => { 
-    const success = await updateQuest(id, fields); 
-    if (success) setEditingId(null); // Only close if save worked
-};
+  const handleSaveQuest = (id, fields) => { 
+    // Save payload to hardware memory
+    localStorage.setItem('sq_admin_deferred', JSON.stringify({
+        type: 'QUEST',
+        id,
+        data: fields
+    }));
+    // Kill Zombie Sockets with a hard refresh
+    window.location.reload();
+  };
 
-const handleSaveReward = async (id, fields) => { 
-    const success = await updateReward(id, fields); 
-    if (success) setEditingId(null); // Only close if save worked
-};
+  const handleSaveReward = (id, fields) => { 
+    // Save payload to hardware memory
+    localStorage.setItem('sq_admin_deferred', JSON.stringify({
+        type: 'REWARD',
+        id,
+        data: fields
+    }));
+    // Kill Zombie Sockets with a hard refresh
+    window.location.reload();
+  };
+  
   const handleDeleteQuest = (id) => { if(window.confirm('Are you sure you want to delete this quest?')) deleteQuest(id); };
   const handleDeleteReward = (id) => { if(window.confirm('Are you sure you want to delete this reward?')) deleteReward(id); };
 

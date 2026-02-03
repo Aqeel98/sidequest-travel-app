@@ -82,9 +82,16 @@ export const SideQuestProvider = ({ children }) => {
         } else {
             const { data: mySubs } = await supabase.from('submissions').select('*').eq('traveler_id', userId);
             if (mySubs) setQuestProgress(mySubs);
-            // Refresh Redemptions
-            const { data: redData } = await supabase.from('redemptions').select('*').eq('traveler_id', userId);
-            if (redData) setRedemptions(redData);
+            
+            // Keep it consistent with the join logic
+            let redQuery = supabase.from('redemptions').select('*, profiles(full_name)');
+            if (role !== 'Admin' && role !== 'Partner') {
+                 redQuery = redQuery.eq('traveler_id', userId);
+                }
+                const { data: redData } = await redQuery;
+                if (redData) setRedemptions(redData);
+
+
         }
         console.log("SQ-PWA: Data synced.");
     } catch (e) { console.warn("SQ-PWA: Background refresh failed", e); }
@@ -384,7 +391,7 @@ useEffect(() => {
           
           await Promise.all([
              fetchSubmissions(userId, data.role),
-             fetchRedemptions(userId),
+             fetchRedemptions(userId, data.role),
              fetchQuests(), 
              fetchRewards()
           ]);
@@ -394,15 +401,26 @@ useEffect(() => {
     }
   };
 
-  const fetchRedemptions = async (userId) => {
+  const fetchRedemptions = async (userId, role) => {
     try {
-        const { data, error } = await supabase.from('redemptions').select('*').eq('traveler_id', userId);
-        if (!error) {
-            setRedemptions(data || []);
-            console.log("SQ-Data: User redemptions history synced.");
+        // We join 'profiles' to get the name, and 'rewards' to check the owner
+        let query = supabase
+            .from('redemptions')
+            .select('*, profiles(full_name), rewards!inner(created_by)');
+
+        if (role === 'Traveler') {
+            query = query.eq('traveler_id', userId);
+        } 
+        else if (role === 'Partner') {
+            // SECURITY: Only fetch redemptions for rewards THIS partner created
+            query = query.eq('rewards.created_by', userId);
         }
+        // Admins see everything (no filter)
+
+        const { data, error } = await query;
+        if (!error) setRedemptions(data || []);
     } catch (e) { console.error(e); }
-  };
+};
 
   const fetchSubmissions = async (userId, role) => {
     try {
@@ -987,7 +1005,8 @@ const deleteReward = async (id) => {
           return null;
       }
       
-      const code = `SQ-${Date.now().toString().slice(-6)}`;
+      // Creates a unique collision-proof code (e.g., SQ-KJ92-45)
+        const code = `SQ-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString().slice(-2)}`;
       
       // Update local wallet first to ensure accuracy
       const { error: xpError } = await supabase.from('profiles').update({ xp: currentUser.xp - reward.xp_cost }).eq('id', currentUser.id);
@@ -1013,6 +1032,51 @@ const deleteReward = async (id) => {
       }
       return null;
   };
+
+    // --- VOUCHER VALIDATION FOR PARTNERS ---
+  const verifyRedemptionCode = async (code) => {
+    try {
+        const cleanCode = code.trim().toUpperCase();
+        console.log(`SQ-Partner: Attempting to verify code: ${cleanCode}`);
+        
+        // 1. Fetch code and check ownership via reward join
+        const { data, error } = await supabase
+            .from('redemptions')
+            .select('*, rewards!inner(created_by, title)')
+            .eq('redemption_code', cleanCode)
+            .single();
+
+        if (error || !data) throw new Error("Invalid Code. Please check the spelling.");
+        
+        // 2. Security Check: Partner can only verify their own rewards
+        if (data.rewards.created_by !== currentUser.id && currentUser.role !== 'Admin') {
+            throw new Error("This code belongs to another partner's reward.");
+        }
+
+        // 3. Status Check: Is it already used?
+        if (data.status === 'verified') throw new Error("This code has already been used.");
+
+        // 4. Update the status to 'verified'
+        const { error: upErr } = await supabase
+            .from('redemptions')
+            .update({ status: 'verified', verified_at: new Date().toISOString() })
+            .eq('id', data.id);
+
+        if (upErr) throw upErr;
+
+        showToast(`Success! ${data.rewards.title} verified.`, 'success');
+        
+        // 5. Refresh redemptions so the UI updates for the partner
+        fetchRedemptions(currentUser.id, currentUser.role);
+        return true;
+
+    } catch (err) {
+        showToast(err.message, 'error');
+        return false;
+    }
+  };
+
+
 
   // --- 9. ADMIN MODERATION ENGINE ---
 
@@ -1129,7 +1193,7 @@ const approveNewReward = async (id) => {
       addQuest, updateQuest, deleteQuest, approveNewQuest,
       addReward, updateReward, deleteReward, approveNewReward, 
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
-      redeemReward, switchRole, 
+      redeemReward, verifyRedemptionCode,  switchRole, 
       toast, showToast
     }}>
       {children}

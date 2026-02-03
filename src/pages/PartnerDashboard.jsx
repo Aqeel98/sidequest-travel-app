@@ -7,7 +7,7 @@ import { supabase } from '../supabaseClient';
 const PartnerDashboard = () => {
     // 1. Updated Destructuring
     const { currentUser, quests, rewards, questProgress, redemptions, users, addQuest, addReward, updateQuest, updateReward, showToast,
-        deleteQuest, deleteReward  } = useSideQuest();
+        deleteQuest, deleteReward, verifyRedemptionCode } = useSideQuest();
     
     // UI State
     const [view, setView] = useState('create'); 
@@ -40,30 +40,55 @@ const PartnerDashboard = () => {
         }
     }, [form, editingId, view]);
 
-    // --- 1. THE AUTO-RESUME ENGINE ---
+    // --- 1. THE IMMORTAL PARTNER RESUME ENGINE ---
     useEffect(() => {
         const pendingData = localStorage.getItem('sq_auto_submit');
-        if (pendingData) {
+        
+        // Ensure data exists and user is hydrated from Context
+        if (pendingData && currentUser) {
             const resumeSubmit = async () => {
                 const { form: sForm, imageString, mode: sMode, editingId: sId } = JSON.parse(pendingData);
-                localStorage.removeItem('sq_auto_submit'); // Clear immediately
+                
+                // Clear immediately to prevent accidental loops
+                localStorage.removeItem('sq_auto_submit'); 
                 setIsSubmitting(true);
                 
                 try {
-                    // Convert Base64 back to File
-                    const res = await fetch(imageString);
-                    const blob = await res.blob();
-                    const finalFile = new File([blob], "upload.jpg", { type: "image/jpeg" });
+                    // STEP A: RECONSTRUCT FILE FROM MEMORY
+                    let finalFile = null;
+                    if (imageString && imageString.startsWith('data:')) {
+                        const res = await fetch(imageString);
+                        const blob = await res.blob();
+                        finalFile = new File([blob], "upload.jpg", { type: "image/jpeg" });
+                    }
 
                     let success = false;
 
                     if (sId) {
-                        // --- RESUME EDIT MODE ---
+                        // --- SCENARIO A: RESUMING AN EDIT (ACCURATE MAPPING) ---
+                        
+                        let currentImageUrl = sForm.image; 
+                        
+                        // If the Partner updated the photo, we upload it now before updating the Quest row
+                        if (finalFile) {
+                            const cleanFileName = `quest_${Date.now()}_resubmit.jpg`;
+                            const { error: upErr } = await supabase.storage
+                                .from('quest-images')
+                                .upload(cleanFileName, finalFile);
+                            
+                            if (!upErr) {
+                                const { data: urlData } = supabase.storage.from('quest-images').getPublicUrl(cleanFileName);
+                                currentImageUrl = urlData.publicUrl;
+                            }
+                        }
+
+                        // THE EXPLICIT FIELD MAPPING (Ensures DB Integrity)
                         const payload = { 
                             title: sForm.title,
                             contact_phone: sForm.contact_phone,
                             description: sForm.description,
-                            image: sForm.image // Keep old URL if file fails
+                            image: currentImageUrl,
+                            status: 'pending_admin' // Force re-approval on edit
                         };
 
                         if (sMode === 'quest') {
@@ -75,32 +100,40 @@ const PartnerDashboard = () => {
                             payload.instructions = sForm.instructions;
                             payload.proof_requirements = sForm.proof_requirements;
                             payload.map_link = sForm.map_link;
-                            // Note: updateQuest in Context should handle the image file or URL
+                            
                             success = await updateQuest(sId, payload);
                         } else {
                             payload.xp_cost = parseInt(sForm.xp_cost) || 0;
                             success = await updateReward(sId, payload);
                         }
+
                     } else {
-                        // --- RESUME CREATE MODE ---
-                        if (sMode === 'quest') success = await addQuest(sForm, finalFile);
-                        else success = await addReward(sForm, finalFile);
+                        // --- SCENARIO B: RESUMING A NEW CREATION ---
+                        if (sMode === 'quest') {
+                            success = await addQuest(sForm, finalFile);
+                        } else {
+                            success = await addReward(sForm, finalFile);
+                        }
                     }
                     
                     if (success) {
+                        // Clean up the draft memory
                         sessionStorage.removeItem('sq_partner_draft');
-                        showToast("Published Successfully!", 'success');
+                        showToast(sId ? "Changes Resubmitted for Approval!" : "Published! Awaiting Review.", 'success');
                         setView('manage');
                     }
                 } catch (e) { 
-                    console.error("SQ-Resume-Error:", e);
-                    showToast("Submission interrupted. Please try once more.", 'error'); 
+                    console.error("SQ-Partner-Resume-Error:", e);
+                    showToast("Network reset failed. Try saving again.", 'error'); 
+                } finally {
+                    setIsSubmitting(false);
                 }
-                setIsSubmitting(false);
             };
             resumeSubmit();
         }
-    }, []);
+    }, [currentUser?.id]); 
+
+
 
     // Cleanup memory for image previews
     useEffect(() => {
@@ -468,6 +501,30 @@ const PartnerDashboard = () => {
             ) : (
                 /* --- MANAGE VIEW --- */
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in duration-500">
+
+                    {/* NEW: QUICK VERIFY BOX (Add this here) */}
+             <div className="col-span-full bg-white p-6 rounded-3xl border-2 border-brand-100 shadow-sm mb-2">
+        <h3 className="text-lg font-black text-gray-900 mb-2 flex items-center">
+            <CheckCircle className="text-brand-600 mr-2" size={20}/> Verify Traveler Code
+        </h3>
+        <p className="text-xs text-gray-500 mb-4">Enter the SQ-Code from the traveler's phone to mark it as used.</p>
+        <form className="flex gap-2" onSubmit={async (e) => {
+            e.preventDefault();
+            const success = await verifyRedemptionCode(e.target.vCode.value);
+            if (success) e.target.reset();
+                   }}>
+            <input 
+                name="vCode" 
+                type="text" 
+                placeholder="e.g. SQ-KJ92-45" 
+                className="flex-1 bg-gray-50 border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none font-mono font-bold uppercase" 
+                required 
+                      />
+                   <button type="submit" className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-700 transition-all">
+                           Verify
+                      </button>
+                     </form>
+                    </div>
                     
                     {/* MY QUESTS SECTION */}
                     <div className="space-y-6">
@@ -560,29 +617,38 @@ const PartnerDashboard = () => {
                                     </div>
 
                                     {/* EXPANDED CLAIM LIST */}
-                                    {isExpanded && (
-                                        <div className="bg-orange-50/50 p-4 border-t border-orange-100 animate-in slide-in-from-top-2 duration-200">
-                                            <h4 className="text-xs font-bold text-orange-800 uppercase mb-2 ml-1">Recent Claims</h4>
-                                            {claims.length === 0 ? (
-                                                <p className="text-xs text-gray-500 italic ml-1">No claims yet.</p>
-                                            ) : (
-                                                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
-                                                    {claims.map(claim => {
-                                                        const traveler = users.find(u => u.id === claim.traveler_id);
-                                                        return (
-                                                            <div key={claim.id} className="flex justify-between items-center bg-white p-2 rounded-lg border border-orange-100 shadow-sm">
-                                                                <span className="text-xs font-bold text-gray-700">
-                                                                    {traveler?.full_name || traveler?.email || 'Unknown Traveler'}
-                                                                </span>
-                                                                <span className="text-[10px] font-mono font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-200">
-                                                                    {claim.redemption_code}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
+                                {isExpanded && (
+                                 <div className="bg-orange-50/50 p-4 border-t border-orange-100 animate-in slide-in-from-top-2 duration-200">
+                                 <h4 className="text-xs font-bold text-orange-800 uppercase mb-2 ml-1">Recent Claims</h4>
+                                 {claims.length === 0 ? (
+                                    <p className="text-xs text-gray-500 italic ml-1">No claims yet.</p>
+                                          ) : (
+                                            <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                            {claims.map(claim => (
+                                 <div key={claim.id} className="flex justify-between items-center bg-white p-2 rounded-lg border border-orange-100 shadow-sm">
+                                    <div className="flex flex-col">
+                                   <span className="text-xs font-bold text-gray-700">
+                                {/* This uses the name joined from the profiles table in Context */}
+                                {claim.profiles?.full_name || 'Adventurer'}
+                                 </span>
+ 
+                                 <span className={`text-[9px] font-bold uppercase ${claim.status === 'verified' ? 'text-green-500' : 'text-orange-400'}`}>
+                                  {claim.status === 'verified' ? '✓ Used' : '○ Not Used Yet'}
+                                   </span>
+                                  </div>    
+                                   {/* Updated Code Badge styling */}
+                                   <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded border ${
+                                        claim.status === 'verified' 
+                                      ? 'text-gray-400 bg-gray-50 border-gray-100' 
+                                       : 'text-orange-600 bg-orange-50 border-orange-200'
+                                        }`}>
+                                       {claim.redemption_code}
+                                               </span>
+                                          </div>
+                                         ))}
+                                     </div>
+                                      )}
+                                    </div>
                                     )}
                                 </div>
                             );

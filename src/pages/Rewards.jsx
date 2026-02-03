@@ -96,16 +96,20 @@ const Rewards = () => {
                 : 'Date Unknown';
 
               return (
-                <div key={redemption.id} className="bg-green-50 rounded-lg p-5 border border-green-200 flex items-center justify-between">
+                <div key={redemption.id} className={`rounded-2xl p-5 border flex items-center justify-between transition-all ${
+                  redemption.status === 'verified' ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-green-50 border-green-200'
+              }`}>
                   <div>
-                    <h3 className="font-bold text-gray-800">{reward?.title || 'Unknown Reward'}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Code: <span className="font-mono font-bold text-green-700 bg-white px-2 py-0.5 rounded border border-green-200">{redemption.redemption_code}</span>
-                    </p>
-                    <p className="text-xs text-gray-400 mt-2">Redeemed on {dateString}</p>
+                      <h3 className={`font-bold ${redemption.status === 'verified' ? 'text-gray-400' : 'text-gray-800'}`}>
+                          {reward?.title || 'Unknown Reward'}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">Code: <span className="font-mono font-bold text-green-700">{redemption.redemption_code}</span></p>
+                      <p className={`text-[10px] font-black uppercase mt-2 tracking-widest ${redemption.status === 'verified' ? 'text-gray-400' : 'text-brand-600'}`}>
+                          {redemption.status === 'verified' ? '✓ Voucher Used' : '○ Ready to Use'}
+                      </p>
                   </div>
-                  <Award className="text-green-500" size={36} />
-                </div>
+                  <Award className={redemption.status === 'verified' ? 'text-gray-300' : 'text-green-500'} size={36} />
+              </div>
               );
             })}
           </div>
