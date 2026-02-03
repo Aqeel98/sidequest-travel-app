@@ -348,32 +348,41 @@ useEffect(() => {
         if (!myId) return;
 
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            let newRow = payload.new;
+            let finalRow = payload.new;
 
-            if (!newRow.profiles) {
-                const { data } = await supabase
+            try {
+                const { data: hydrated } = await supabase
                     .from('redemptions')
                     .select('*, profiles(full_name), rewards(title, created_by)')
-                    .eq('id', newRow.id)
+                    .eq('id', payload.new.id)
                     .maybeSingle();
-                if (data) newRow = data;
+                
+                if (hydrated) finalRow = hydrated;
+            } catch (e) {
+                console.warn("SQ-Realtime: Hydration failed, using raw payload", e);
             }
 
+            // 2. THE STATE UPDATE (Forces the Green -> Gray change)
             setRedemptions(prev => {
-                const exists = prev.find(r => r.id === newRow.id);
-                if (exists) return prev.map(r => r.id === newRow.id ? newRow : r);
-                return [...prev, newRow];
+                const exists = prev.find(r => r.id === finalRow.id);
+                if (exists) {
+                    // This 'map' is what triggers the instant color change in Rewards.jsx
+                    return prev.map(r => r.id === finalRow.id ? finalRow : r);
+                }
+                return [...prev, finalRow];
             });
 
-            // TRAVELER NOTIFICATION: "Your voucher was just used!"
-            if (newRow.status === 'verified' && newRow.traveler_id === myId) {
-                showToast(`Voucher for ${newRow.rewards?.title || 'your reward'} verified!`, 'success');
+            // 3. THE NOTIFICATION (The "Pop" for the Traveler)
+            if (finalRow.status === 'verified' && finalRow.traveler_id === myId) {
+                // We use the hydrated reward title here for a better experience
+                const rewardName = finalRow.rewards?.title || "your reward";
+                showToast(`Voucher for ${rewardName} verified!`, 'success');
             }
         } 
         else if (payload.eventType === 'DELETE') {
             setRedemptions(prev => prev.filter(r => r.id !== payload.old.id));
         }
-      })
+    })
     .subscribe();
   };
 
