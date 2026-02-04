@@ -306,11 +306,11 @@ useEffect(() => {
 
         if (payload.eventType === 'INSERT') {
             setQuestProgress(prev => {
-                if (prev.find(p => p.id === payload.new.id)) return prev;
+                if (prev.find(p => Number(p.id) === Number(payload.new.id))) return prev;
 
                 const existingTemp = prev.find(p => 
-                    p.quest_id === payload.new.quest_id && 
-                    p.traveler_id === payload.new.traveler_id &&
+                    p.quest_id == payload.new.quest_id && 
+                    p.traveler_id == payload.new.traveler_id &&
                     p.id?.toString().startsWith('temp-')
                 );
 
@@ -326,7 +326,7 @@ useEffect(() => {
         } 
         else if (payload.eventType === 'UPDATE') {
             // STEP 1: Update the state once and only once
-            setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+            setQuestProgress(prev => prev.map(p => p.id == payload.new.id ? { ...p, ...payload.new } : p));
             
             // STEP 2: Only show status toasts to the Traveler who owns the quest
             if (payload.new.traveler_id === myId) {
@@ -343,17 +343,15 @@ useEffect(() => {
         if (!myId) return;
 
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            
-            // STEP 1: FORCE INSTANT STATE UPDATE (Changes UI Color immediately)
+    
             setRedemptions(prev => {
-                const exists = prev.find(r => r.id === payload.new.id);
+                const exists = prev.find(r => r.id == payload.new.id);
                 if (exists) {
-                    return prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r);
+                    return prev.map(r => r.id == payload.new.id ? { ...r, ...payload.new } : r);
                 }
                 return [...prev, payload.new];
             });
-
-            // STEP 2: TRIGGER NOTIFICATION IMMEDIATELY
+        
             if (payload.new.status === 'verified' && payload.new.traveler_id === myId) {
                 showToast(`Voucher verified and used!`, 'success');
             }
@@ -367,7 +365,7 @@ useEffect(() => {
                     .maybeSingle();
                 
                 if (hydrated && !error) {
-                    setRedemptions(prev => prev.map(r => r.id === hydrated.id ? hydrated : r));
+                    setRedemptions(prev => prev.map(r => r.id == hydrated.id ? hydrated : r));
                 }
             } catch (e) {
                 console.warn("SQ-Realtime: Background hydration failed", e);
