@@ -339,52 +339,48 @@ useEffect(() => {
             if (payload.new.status === 'pending') showToast("Proof Uploaded Successfully!", 'info');
             if (payload.new.status === 'approved') showToast("Quest Approved! XP Awarded", 'success');
             if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
+
+            setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
         }
     })
 
     // REDEMPTIONS 
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'redemptions' }, async (payload) => {
-        const myId = userRef.current?.id;
-        if (!myId) return;
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'redemptions' }, async (payload) => {
+    const myId = userRef.current?.id;
+    if (!myId) return;
 
-        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            let finalRow = payload.new;
+    if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
 
-            try {
-                const { data: hydrated } = await supabase
-                    .from('redemptions')
-                    .select('*, profiles(full_name), rewards(title, created_by)')
-                    .eq('id', payload.new.id)
-                    .maybeSingle();
-                
-                if (hydrated) finalRow = hydrated;
-            } catch (e) {
-                console.warn("SQ-Realtime: Hydration failed, using raw payload", e);
+        setRedemptions(prev => {
+            const exists = prev.find(r => r.id === payload.new.id);
+            if (exists) {
+                return prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r);
             }
+            return [...prev, payload.new];
+        });
 
-            // 2. THE STATE UPDATE (Forces the Green -> Gray change)
-            setRedemptions(prev => {
-                const exists = prev.find(r => r.id === finalRow.id);
-                if (exists) {
-                    // This 'map' is what triggers the instant color change in Rewards.jsx
-                    return prev.map(r => r.id === finalRow.id ? finalRow : r);
-                }
-                return [...prev, finalRow];
-            });
-
-            // 3. THE NOTIFICATION (The "Pop" for the Traveler)
-            if (finalRow.status === 'verified' && finalRow.traveler_id === myId) {
-                // We use the hydrated reward title here for a better experience
-                const rewardName = finalRow.rewards?.title || "your reward";
-                showToast(`Voucher for ${rewardName} verified!`, 'success');
-            }
-        } 
-        else if (payload.eventType === 'DELETE') {
-            setRedemptions(prev => prev.filter(r => r.id !== payload.old.id));
+        if (payload.new.status === 'verified' && payload.new.traveler_id === myId) {
+            showToast(`Voucher verified and used!`, 'success');
         }
-    })
+
+        try {
+            const { data: hydrated } = await supabase
+                .from('redemptions')
+                .select('*, profiles(full_name), rewards(title, created_by)')
+                .eq('id', payload.new.id)
+                .maybeSingle();
+            
+            if (hydrated) {
+                setRedemptions(prev => prev.map(r => r.id === hydrated.id ? hydrated : r));
+            }
+        } catch (e) { console.warn("Hydration failed", e); }
+    } 
+    else if (payload.eventType === 'DELETE') {
+        setRedemptions(prev => prev.filter(r => r.id !== payload.old.id));
+         }
+            })
     .subscribe();
-  };
+            };
 
   const subscribeToProfileChanges = (userId) => {
       const channel = supabase

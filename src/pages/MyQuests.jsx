@@ -221,8 +221,12 @@ const MyQuests = () => {
   // Sort: In Progress first, then Pending, then Approved
   const sortedProgress = [...myProgress].sort((a, b) => {
     const order = { 'rejected': 1, 'in_progress': 2, 'pending': 3, 'approved': 4 };
-      return order[a.status] - order[b.status];
-  });
+ 
+    if (order[a.status] !== order[b.status]) {
+        return order[a.status] - order[b.status];
+    }
+    return b.id - a.id; 
+});
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
