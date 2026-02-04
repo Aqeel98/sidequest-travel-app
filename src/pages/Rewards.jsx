@@ -6,7 +6,14 @@ const Rewards = () => {
   const { currentUser, rewards, redemptions, redeemReward, setShowAuthModal, showToast  } = useSideQuest();
 
   const myRedemptions = currentUser 
-    ? redemptions.filter(r => r.traveler_id === currentUser.id) 
+    ? [...redemptions]
+        .filter(r => r.traveler_id === currentUser.id)
+        .sort((a, b) => {
+            if (a.status !== b.status) {
+                return a.status === 'verified' ? 1 : -1;
+            }
+            return b.id - a.id; 
+        })
     : [];
 
   // --- FIX: Only show Active Rewards to the public ---

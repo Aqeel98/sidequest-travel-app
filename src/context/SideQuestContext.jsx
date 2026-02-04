@@ -282,7 +282,6 @@ useEffect(() => {
           } 
           else if (payload.eventType === 'INSERT') {
               setRewards(prev => {
-                  // ✅ FIX: Check if ID exists. If yes, ignore it.
                   if (prev.find(r => r.id === payload.new.id)) return prev;
                   return [...prev, payload.new];
               });
@@ -296,20 +295,19 @@ useEffect(() => {
           }
       })
 
-      // SUBMISSIONS
+      // SUBMISSIONS (FIXED: Reliable Toasts & Instant UI for Travelers)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, (payload) => {
         
         const myId = userRef.current?.id;
         const myRole = userRef.current?.role;
+        
         // SECURITY: Only process if it's MY submission or I am ADMIN
         if (myRole !== 'Admin' && payload.new.traveler_id !== myId) return;
 
         if (payload.eventType === 'INSERT') {
             setQuestProgress(prev => {
-                // 1. Check if we already have this EXACT Real ID (Safety check)
                 if (prev.find(p => p.id === payload.new.id)) return prev;
 
-                //  2. Check if we have a TEMP version (The Ghost)
                 const existingTemp = prev.find(p => 
                     p.quest_id === payload.new.quest_id && 
                     p.traveler_id === payload.new.traveler_id &&
@@ -317,70 +315,70 @@ useEffect(() => {
                 );
 
                 if (existingTemp) {
-                    // REPLACE the temp row with the real DB row
                     return prev.map(p => p.id === existingTemp.id ? payload.new : p);
                 }
-
-                // 3. If no duplicate exists, add it fresh
                 return [...prev, payload.new];
             });
 
-            // Notification Logic
-            if (payload.new.status === 'in_progress') {
-                showToast("Quest Accepted!", 'info');
-            }
-            if (payload.new.status === 'pending') {
-                showToast("New Proof Submitted!", 'info');
-            }
+            // Trigger Toasts based on who is looking
+            if (payload.new.status === 'in_progress') showToast("Quest Accepted!", 'info');
+            if (payload.new.status === 'pending') showToast("New Proof Submitted!", 'info');
         } 
         else if (payload.eventType === 'UPDATE') {
+            // STEP 1: Update the state once and only once
             setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
             
-            if (payload.new.status === 'pending') showToast("Proof Uploaded Successfully!", 'info');
-            if (payload.new.status === 'approved') showToast("Quest Approved! XP Awarded", 'success');
-            if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
-
-            setQuestProgress(prev => prev.map(p => p.id === payload.new.id ? payload.new : p));
+            // STEP 2: Only show status toasts to the Traveler who owns the quest
+            if (payload.new.traveler_id === myId) {
+                if (payload.new.status === 'pending') showToast("Proof Uploaded Successfully!", 'info');
+                if (payload.new.status === 'approved') showToast("Quest Approved! XP Awarded ⭐", 'success');
+                if (payload.new.status === 'rejected') showToast("Proof Rejected. Check My Quests.", 'error');
+            }
         }
     })
 
-    // REDEMPTIONS 
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'redemptions' }, async (payload) => {
-    const myId = userRef.current?.id;
-    if (!myId) return;
+    // REDEMPTIONS (FIXED: Instant Green-to-Gray and instant Toast)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'redemptions' }, async (payload) => {
+        const myId = userRef.current?.id;
+        if (!myId) return;
 
-    if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-
-        setRedemptions(prev => {
-            const exists = prev.find(r => r.id === payload.new.id);
-            if (exists) {
-                return prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r);
-            }
-            return [...prev, payload.new];
-        });
-
-        if (payload.new.status === 'verified' && payload.new.traveler_id === myId) {
-            showToast(`Voucher verified and used!`, 'success');
-        }
-
-        try {
-            const { data: hydrated } = await supabase
-                .from('redemptions')
-                .select('*, profiles(full_name), rewards(title, created_by)')
-                .eq('id', payload.new.id)
-                .maybeSingle();
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             
-            if (hydrated) {
-                setRedemptions(prev => prev.map(r => r.id === hydrated.id ? hydrated : r));
+            // STEP 1: FORCE INSTANT STATE UPDATE (Changes UI Color immediately)
+            setRedemptions(prev => {
+                const exists = prev.find(r => r.id === payload.new.id);
+                if (exists) {
+                    return prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r);
+                }
+                return [...prev, payload.new];
+            });
+
+            // STEP 2: TRIGGER NOTIFICATION IMMEDIATELY
+            if (payload.new.status === 'verified' && payload.new.traveler_id === myId) {
+                showToast(`Voucher verified and used!`, 'success');
             }
-        } catch (e) { console.warn("Hydration failed", e); }
-    } 
-    else if (payload.eventType === 'DELETE') {
-        setRedemptions(prev => prev.filter(r => r.id !== payload.old.id));
-         }
-            })
+
+            // STEP 3: HYDRATE IN BACKGROUND (Does not block the UI update)
+            try {
+                const { data: hydrated, error } = await supabase
+                    .from('redemptions')
+                    .select('*, profiles(full_name), rewards(title, created_by)')
+                    .eq('id', payload.new.id)
+                    .maybeSingle();
+                
+                if (hydrated && !error) {
+                    setRedemptions(prev => prev.map(r => r.id === hydrated.id ? hydrated : r));
+                }
+            } catch (e) {
+                console.warn("SQ-Realtime: Background hydration failed", e);
+            }
+        } 
+        else if (payload.eventType === 'DELETE') {
+            setRedemptions(prev => prev.filter(r => r.id !== payload.old.id));
+        }
+    })
     .subscribe();
-            };
+  };
 
   const subscribeToProfileChanges = (userId) => {
       const channel = supabase
@@ -1041,42 +1039,73 @@ const deleteReward = async (id) => {
     }
 };
 
-  const redeemReward = async (reward) => {
-      console.log(`SQ-Market: Traveler initiating redemption for: ${reward.title}`);
-      
-      if (currentUser.xp < reward.xp_cost) {
-          console.warn("SQ-Market: Insufficient traveler balance.");
-          showToast("Insufficient XP!", 'error');
-          return null;
-      }
-      
-      // Creates a unique collision-proof code (e.g., SQ-KJ92-45)
-        const code = `SQ-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString().slice(-2)}`;
-      
-      // Update local wallet first to ensure accuracy
-      const { error: xpError } = await supabase.from('profiles').update({ xp: currentUser.xp - reward.xp_cost }).eq('id', currentUser.id);
-      
-      if (!xpError) {
-          console.log("SQ-Market: Wallet balance updated. Generating voucher...");
-          const { data, error: redError } = await supabase.from('redemptions').insert([{
-              traveler_id: currentUser.id, 
-              reward_id: reward.id, 
-              redemption_code: code
-          }]).select();
-          
-          if (redError) {
-              console.error("SQ-Market: Redemption history write failure.", redError);
-              throw redError;
-          }
+const redeemReward = async (reward) => {
+    console.log(`SQ-Market: Traveler initiating atomic redemption for: ${reward.title}`);
+    
+    // 1. FAST CLIENT-SIDE GUARD (Instant feedback before hitting network)
+    if (currentUser.xp < reward.xp_cost) {
+        console.warn("SQ-Market: Insufficient traveler balance detected locally.");
+        showToast("Insufficient XP!", 'error');
+        return null;
+    }
+    
+    try {
+        console.log("SQ-Market: Executing single-trip atomic transaction...");
 
-          setCurrentUser({...currentUser, xp: currentUser.xp - reward.xp_cost});
-          setRedemptions(prev => [...prev, data[0]]);
-          
-          console.log("SQ-Market: Redemption Successful. Code generated:", code);
-          return code;
-      }
-      return null;
-  };
+        // 2. THE ATOMIC RPC CALL
+        const { data: code, error: rpcError } = await supabase.rpc('redeem_reward', {
+            reward_id_input: reward.id,
+            reward_cost: reward.xp_cost
+        });
+
+        if (rpcError) {
+            console.error("SQ-Market: Server-side transaction failed ->", rpcError.message);
+            // Handle specific "Insufficient XP" error from SQL if it bypasses local check
+            if (rpcError.message.includes('Insufficient XP')) {
+                showToast("Insufficient XP!", 'error');
+            } else {
+                showToast("Transaction failed. Check your connection.", 'error');
+            }
+            return null;
+        }
+
+        // 3. LOG SUCCESSFUL SERVER CONFIRMATION
+        console.log("SQ-Market: Atomic handshake successful. Code generated:", code);
+
+        // 4. INSTANT WALLET HYDRATION
+        setCurrentUser(prev => ({
+            ...prev,
+            xp: prev.xp - reward.xp_cost
+        }));
+
+        // 5. DATA POOL HYDRATION
+
+        const { data: newRedemption, error: fetchError } = await supabase
+            .from('redemptions')
+            .select('*, profiles(full_name), rewards(title, created_by)')
+            .eq('redemption_code', code)
+            .maybeSingle();
+
+        if (!fetchError && newRedemption) {
+            setRedemptions(prev => {
+                // Check if Realtime listener already added it to prevent duplicates
+                if (prev.find(r => r.id === newRedemption.id)) return prev;
+                return [...prev, newRedemption];
+            });
+            console.log("SQ-Market: Local redemption pool hydrated.");
+        }
+
+        // 6. FINAL RETURN
+        // Returns the code (e.g. SQ-A1B2-99) to Rewards.jsx to show the success toast
+        console.log("SQ-Market: Redemption process complete.");
+        return code;
+
+    } catch (err) {
+        console.error("SQ-Market: Critical failure during redemption flow ->", err);
+        showToast("Network reset. Please try redeeming again.", 'error');
+        return null;
+    }
+};
 
     // --- VOUCHER VALIDATION FOR PARTNERS ---
     const verifyRedemptionCode = async (code) => {
@@ -1149,33 +1178,27 @@ const deleteReward = async (id) => {
   // --- 9. ADMIN MODERATION ENGINE ---
 
   const approveSubmission = async (submissionId) => {
-    // 1. OPTIMISTIC UPDATE: Update UI instantly (don't wait for DB)
+    // 1. OPTIMISTIC UPDATE: Update UI instantly
     setQuestProgress(prev => prev.map(p => 
         p.id === submissionId ? { ...p, status: 'approved' } : p
     ));
 
-    // 2. Logic & DB Call
-    const sub = questProgress.find(p => p.id === submissionId);
-    if (!sub) return; 
-    const quest = quests.find(q => q.id === sub.quest_id);
-    
     try {
-        const { error: sErr } = await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId);
-        if (sErr) throw sErr;
-        
-        // Award XP
-        const { data: traveler } = await supabase.from('profiles').select('xp').eq('id', sub.traveler_id).single();
-        if (traveler && quest) {
-            await supabase.from('profiles').update({ xp: (traveler.xp || 0) + quest.xp_value }).eq('id', sub.traveler_id);
-        }
 
-        showToast("Verified! XP Awarded.", 'success');
+        const { error } = await supabase
+            .from('submissions')
+            .update({ status: 'approved' })
+            .eq('id', submissionId);
+
+        if (error) throw error;  
+        
+        showToast("Verified! XP Awarded by Server.", 'success');
         
     } catch (e) {
-        console.error("SQ-Admin Error:", e);
-        showToast("Error: " + e.message, 'error');
-        // Revert UI if failed
-        fetchSubmissions(currentUser.id, 'Admin');
+        console.error("SQ-Admin Error:", e.message);
+        showToast("Approval failed: " + e.message, 'error');
+
+        fetchSubmissions(userRef.current?.id || currentUser?.id, 'Admin');
     }
   };
 
