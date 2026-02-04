@@ -1,9 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Award, ShoppingBag } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Rewards = () => {
   const { currentUser, rewards, redemptions, redeemReward, setShowAuthModal, showToast  } = useSideQuest();
+
+  // --- IMMORTAL REDEMPTION RESUME ---
+  React.useEffect(() => {
+    const pending = localStorage.getItem('sq_pending_redemption');
+
+    if (pending && currentUser) {
+      localStorage.removeItem('sq_pending_redemption'); // Clear immediately
+      const rewardData = JSON.parse(pending);
+
+      const executeRedemption = async () => {
+        const code = await redeemReward(rewardData);
+        if (code) {
+  
+          showToast(`Redeemed! Code: ${code}. Saved below.`, 'success');
+          setTimeout(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          }, 500);
+        }
+      };
+      executeRedemption();
+    }
+  }, [currentUser]);
+
 
   const myRedemptions = currentUser 
     ? [...redemptions]
@@ -19,19 +42,17 @@ const Rewards = () => {
   // --- FIX: Only show Active Rewards to the public ---
   const activeRewards = rewards.filter(r => r.status === 'active');
 
-  const handleRedeem = async (reward) => {
+  const handleRedeem = (reward) => {
     if (!currentUser) {
       setShowAuthModal(true);
       return;
     }
     
-    const code = await redeemReward(reward);
+    // 1. Stage the reward in hardware memory
+    localStorage.setItem('sq_pending_redemption', JSON.stringify(reward));
     
-    if (code) {
-      
-      showToast(`Redeemed! Code: ${code}. Saved to your history below.`, 'success');
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
+    // 2. Force hard refresh to establish a fresh connection
+    window.location.reload();
   };
 
   return (
