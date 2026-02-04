@@ -204,27 +204,42 @@ const Admin = () => {
   const [editingId, setEditingId] = useState(null);
   const [viewDetailsId, setViewDetailsId] = useState(null);
 
-  // --- ADMIN DEFERRED ACTION RESUME ---
-  useEffect(() => {
+ // --- IMMORTAL ADMIN RESUME ENGINE ---
+ useEffect(() => {
     const pendingAction = localStorage.getItem('sq_admin_deferred');
     if (pendingAction) {
       const resume = async () => {
         try {
           const { type, id, data } = JSON.parse(pendingAction);
-          localStorage.removeItem('sq_admin_deferred'); // Clear immediately to prevent loops
+          localStorage.removeItem('sq_admin_deferred'); 
 
           let success = false;
-          if (type === 'QUEST') {
+          
+          // --- NEW: Handle Approvals ---
+          if (type === 'APPROVE_SUBMISSION') {
+            await approveSubmission(id);
+            success = true;
+          } else if (type === 'APPROVE_NEW_QUEST') {
+            await approveNewQuest(id);
+            success = true;
+          } else if (type === 'APPROVE_NEW_REWARD') {
+            await approveNewReward(id);
+            success = true;
+          } 
+          // --- Existing Edit Logic ---
+          else if (type === 'QUEST') {
             success = await updateQuest(id, data);
-            setActiveTab('quests'); // Ensure we land back on the Quest Manager tab
+            setActiveTab('quests'); 
           } else if (type === 'REWARD') {
             success = await updateReward(id, data);
-            setActiveTab('rewards'); // Ensure we land back on the Reward Manager tab
+            setActiveTab('rewards'); 
           }
 
           if (success) {
             setEditingId(null);
-            showToast("Update finalized on fresh connection!", "success");
+            // MARK SESSION AS WARMED UP (Socket is now fresh)
+            sessionStorage.setItem('sq_admin_warmed', 'true');
+            showToast("Connection restored. Action verified!", "success");
           }
         } catch (e) {
           console.error("Deferred Resume Failed", e);
@@ -232,7 +247,7 @@ const Admin = () => {
       };
       resume();
     }
-  }, []); 
+  }, []);
 
 
 
@@ -268,8 +283,23 @@ const Admin = () => {
   const manageableQuests = quests.filter(q => q.status !== 'pending_admin');
   const activeRewards = rewards.filter(r => r.status === 'active');  
 
+  const handleImmortalAction = (type, id, directFn) => {
+    // Check if we just reloaded (session is warm)
+    const isWarmed = sessionStorage.getItem('sq_admin_warmed');
+
+    if (isWarmed) {
+        // Socket is fresh, execute instantly
+        directFn(id);
+    } else {
+        // Socket might be dead (Tab Switch), force the safety reload loop
+        localStorage.setItem('sq_admin_deferred', JSON.stringify({ type, id }));
+        window.location.reload();
+    }
+  };
+  
+  
+  
   // Handlers
- 
   const handleSaveQuest = (id, fields) => { 
     // Save payload to hardware memory
     localStorage.setItem('sq_admin_deferred', JSON.stringify({
@@ -436,8 +466,13 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="flex gap-2 h-fit">
-                    <button onClick={() => approveSubmission(progress.id)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 font-medium transition">Approve</button>
-                    <button onClick={() => rejectSubmission(progress.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 font-medium transition">Reject</button>
+                  <button 
+                        onClick={() => handleImmortalAction('APPROVE_SUBMISSION', progress.id, approveSubmission)} 
+                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 font-medium transition"
+                    >
+                        Approve
+                    </button>
+                       <button onClick={() => rejectSubmission(progress.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 font-medium transition">Reject</button>
                   </div>
                 </div>
               </div>
@@ -468,8 +503,13 @@ const Admin = () => {
                         <button onClick={() => setEditingId(editingId === quest.id ? null : quest.id)} className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg hover:bg-yellow-200 font-medium transition flex items-center">
                             <Edit size={18} className="mr-1"/> Edit
                         </button>
-                        <button onClick={() => approveNewQuest(quest.id)} className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition flex items-center"><Check size={18} className="mr-1"/> Approve</button>
-                        <button onClick={() => deleteQuest(quest.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"><Trash2 size={18} className="mr-1"/> Reject</button>
+                        <button 
+                            onClick={() => handleImmortalAction('APPROVE_NEW_QUEST', quest.id, approveNewQuest)} 
+                            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition flex items-center"
+                        >
+                            <Check size={18} className="mr-1"/> Approve
+                        </button>
+                          <button onClick={() => deleteQuest(quest.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"><Trash2 size={18} className="mr-1"/> Reject</button>
                     </div>
                 </div>
 
@@ -527,8 +567,13 @@ const Admin = () => {
                             <button onClick={() => setViewDetailsId(isDetailsOpen ? null : reward.id)} className="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-medium hover:bg-orange-200">{isDetailsOpen ? 'Hide' : 'View Details'}</button>
                             {/* EDIT BUTTON */}
                             <button onClick={() => setEditingId(editingId === reward.id ? null : reward.id)} className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg flex items-center hover:bg-blue-200"><Edit size={16} /></button>
-                            <button onClick={() => approveNewReward(reward.id)} className="bg-green-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-green-600 shadow-sm"><Check size={16} className="mr-1"/> Approve</button>
-                            <button onClick={() => deleteReward(reward.id)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-red-600 shadow-sm"><Trash2 size={16} className="mr-1"/> Reject</button>
+                            <button 
+                                onClick={() => handleImmortalAction('APPROVE_NEW_REWARD', reward.id, approveNewReward)} 
+                                className="bg-green-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-green-600 shadow-sm"
+                            >
+                                <Check size={16} className="mr-1"/> Approve
+                            </button>
+                               <button onClick={() => deleteReward(reward.id)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-red-600 shadow-sm"><Trash2 size={16} className="mr-1"/> Reject</button>
                         </div>
                     </div>
 
