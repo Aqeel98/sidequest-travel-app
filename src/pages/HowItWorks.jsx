@@ -136,7 +136,8 @@ const HowItWorks = () => {
             <div className="mt-12 bg-slate-50 border border-slate-200 rounded-3xl p-8">
                 <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">The SideQuest Promise</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    
+
+
                     {/* Privacy */}
                     <div className="text-center">
                         <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
@@ -167,6 +168,51 @@ const HowItWorks = () => {
                         <h4 className="font-bold text-slate-900 mb-1">Instant Recovery</h4>
                         <p className="text-sm text-slate-500">
                             Forget your password? No problem. We send a secure Magic Link to your email to log you back in instantly.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        )}
+
+
+
+                {/* --- PARTNER MODEL (Matches your Email Strategy) --- */}
+                {activeTab === 'partner' && (
+            <div className="mt-12 bg-purple-50 border border-purple-200 rounded-3xl p-8">
+                <h3 className="text-2xl font-bold text-purple-900 mb-6 text-center">The Partner Model</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    
+                    {/* Community First */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-purple-600">
+                            <HeartHandshake size={24} />
+                        </div>
+                        <h4 className="font-bold text-purple-900 mb-1">Community First</h4>
+                        <p className="text-sm text-purple-500">
+                            Keep your earnings. Travelers pay you directly, and while we launch together in Beta, we take zero commission on your sales.
+                        </p>
+                    </div>
+
+                    {/* The Reward Exchange */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-purple-600">
+                            <Gift size={24} />
+                        </div>
+                        <h4 className="font-bold text-purple-900 mb-1">The Reward Exchange</h4>
+                        <p className="text-sm text-purple-500">
+                        No listing fees. Your only "cost" is the reward you provide. This can be a discount, a unique experience, or a small freebie to welcome adventurers.
+                        </p>
+                    </div>
+
+                    {/* Expedition Ready */}
+                    <div className="text-center">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-purple-600">
+                            <Zap size={24} />
+                        </div>
+                        <h4 className="font-bold text-purple-900 mb-1">Expedition Ready</h4>
+                        <p className="text-sm text-purple-500">
+                            Built for scale. Soon, travel companies can list full tour packages for direct bookings on a commission basis.
                         </p>
                     </div>
 
