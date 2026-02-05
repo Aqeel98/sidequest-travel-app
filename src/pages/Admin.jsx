@@ -203,51 +203,34 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
   const [editingId, setEditingId] = useState(null);
   const [viewDetailsId, setViewDetailsId] = useState(null);
+  const [isWarmed, setIsWarmed] = useState(false);
 
  // --- IMMORTAL ADMIN RESUME ENGINE ---
  useEffect(() => {
     const pendingAction = localStorage.getItem('sq_admin_deferred');
-    if (pendingAction) {
+    if (pendingAction && currentUser) {
       const resume = async () => {
         try {
           const { type, id, data } = JSON.parse(pendingAction);
           localStorage.removeItem('sq_admin_deferred'); 
 
           let success = false;
-          
-          // --- NEW: Handle Approvals ---
-          if (type === 'APPROVE_SUBMISSION') {
-            await approveSubmission(id);
-            success = true;
-          } else if (type === 'APPROVE_NEW_QUEST') {
-            await approveNewQuest(id);
-            success = true;
-          } else if (type === 'APPROVE_NEW_REWARD') {
-            await approveNewReward(id);
-            success = true;
-          } 
-          // --- Existing Edit Logic ---
-          else if (type === 'QUEST') {
-            success = await updateQuest(id, data);
-            setActiveTab('quests'); 
-          } else if (type === 'REWARD') {
-            success = await updateReward(id, data);
-            setActiveTab('rewards'); 
-          }
+          if (type === 'APPROVE_SUBMISSION') { await approveSubmission(id); success = true; }
+          else if (type === 'APPROVE_NEW_QUEST') { await approveNewQuest(id); success = true; }
+          else if (type === 'APPROVE_NEW_REWARD') { await approveNewReward(id); success = true; }
+          else if (type === 'QUEST') { success = await updateQuest(id, data); setActiveTab('quests'); }
+          else if (type === 'REWARD') { success = await updateReward(id, data); setActiveTab('rewards'); }
 
           if (success) {
             setEditingId(null);
-            // MARK SESSION AS WARMED UP (Socket is now fresh)
-            sessionStorage.setItem('sq_admin_warmed', 'true');
-            showToast("Connection restored. Action verified!", "success");
+            setIsWarmed(true); // <--- This prevents the second reload
+            showToast("Connection fresh. Action verified!", "success");
           }
-        } catch (e) {
-          console.error("Deferred Resume Failed", e);
-        }
+        } catch (e) { console.error(e); }
       };
-      resume();
+      setTimeout(resume, 500);
     }
-  }, []);
+  }, [currentUser?.id]);
 
 
 
@@ -284,19 +267,16 @@ const Admin = () => {
   const activeRewards = rewards.filter(r => r.status === 'active');  
 
   const handleImmortalAction = (type, id, directFn) => {
-    // Check if we just reloaded (session is warm)
-    const isWarmed = sessionStorage.getItem('sq_admin_warmed');
-
     if (isWarmed) {
-        // Socket is fresh, execute instantly
+       
         directFn(id);
     } else {
-        // Socket might be dead (Tab Switch), force the safety reload loop
+      
+        showToast("Refreshing network connection...", "info");
         localStorage.setItem('sq_admin_deferred', JSON.stringify({ type, id }));
         window.location.reload();
     }
   };
-  
   
   
   // Handlers
