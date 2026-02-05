@@ -190,7 +190,7 @@ const HowItWorks = () => {
                         </div>
                         <h4 className="font-bold text-slate-900 mb-1">Community First</h4>
                         <p className="text-sm text-slate-500">
-                            Keep your earnings. Travelers pay you directly, and while we launch together in Beta, we take zero commission on your sales.
+                            Keep your earnings. Travelers pay you directly, and while we launch together in Beta, we do not charge any platform fees.
                         </p>
                     </div>
 
@@ -212,7 +212,7 @@ const HowItWorks = () => {
                         </div>
                         <h4 className="font-bold text-slate-900 mb-1">Expedition Ready</h4>
                         <p className="text-sm text-slate-500">
-                            Built for scale. Soon, travel companies can list full tour packages for direct bookings on a commission basis.
+                        Built for bigger journeys. Soon, travel companies can list full tour packages and all-in-one expeditions for our community.
                         </p>
                     </div>
                 </div>
