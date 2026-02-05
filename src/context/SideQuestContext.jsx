@@ -938,6 +938,7 @@ const deleteQuest = async (id) => {
         const cleanPayload = {
             title: formData.title, 
             description: formData.description,
+            map_link: formData.map_link || "",
             xp_cost: parseInt(formData.xp_cost) || 0, 
             image: finalImageUrl,
             created_by: currentUser.id, 
@@ -974,6 +975,7 @@ const updateReward = async (id, updates) => {
         const cleanPayload = {
             title,
             description,
+            map_link: updates.map_link || "",
             image,
             xp_cost: parseInt(xp_cost) || 0,
             status: finalStatus 

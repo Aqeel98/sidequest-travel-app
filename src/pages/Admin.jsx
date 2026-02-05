@@ -569,6 +569,15 @@ const Admin = () => {
                         <div className="p-5 bg-white border-t border-orange-100 animate-in fade-in slide-in-from-top-2 duration-200">
                             <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Reward Description</h4>
                             <p className="text-gray-700 leading-relaxed text-sm">{reward.description}</p>
+                            {reward.map_link && (
+                                <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Partner Location Link</p>
+                                    <a href={reward.map_link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline font-bold break-all">
+                                        {reward.map_link}
+                                    </a>
+                                </div>
+                            )}
+                        
                         </div>
                     )}
                 </div>

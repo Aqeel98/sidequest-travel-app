@@ -402,6 +402,36 @@ const PartnerDashboard = () => {
                                 </div>
                             )}
                         </div>
+                                
+                        {mode === 'reward' && (
+                            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                                <label className="block text-xs font-black text-orange-700 uppercase mb-2 tracking-widest flex items-center">
+                                    <Map size={14} className="mr-1"/> Business Location (Google Maps)
+                                </label>
+                                
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="url" 
+                                        name="map_link" 
+                                        value={form.map_link || ''} 
+                                        onChange={handleChange} 
+                                        placeholder="Paste Google Maps link here..."
+                                        className="flex-1 border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-orange-200 text-sm"
+                                    />
+                                    <button 
+                                        type="button"
+                                        onClick={() => window.open('https://www.google.com/maps', '_blank')}
+                                        className="bg-white border border-orange-200 text-orange-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-orange-100 transition-colors shadow-sm"
+                                    >
+                                        Open Maps 📍
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-orange-400 mt-2 italic">
+                                    Click "Open Maps", find your shop, copy the URL from the browser, and paste it here.
+                                </p>
+                            </div>
+                        )}
+
 
                         <div>
                             <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Mission Brief</label>

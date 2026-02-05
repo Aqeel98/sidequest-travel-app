@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Award, ShoppingBag } from 'lucide-react';
+import { Award, ShoppingBag, MapPin } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Rewards = () => {
@@ -88,6 +88,18 @@ const Rewards = () => {
                 <div className="p-5">
                     <h3 className="font-bold text-lg mb-2 text-gray-800">{reward.title}</h3>
                     <p className="text-gray-600 text-sm mb-4 h-10 line-clamp-2">{reward.description}</p>
+
+                    {reward.map_link && (
+                        <a 
+                            href={reward.map_link} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="inline-flex items-center text-[11px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors mb-4 border border-blue-100 uppercase tracking-tighter"
+                        >
+                            <MapPin size={12} className="mr-1"/> Navigate to Business
+                        </a>
+                    )}
+                    
                     <div className="flex items-center justify-between mt-auto">
                     <span className="text-green-600 font-bold flex items-center">
                         ⭐ {reward.xp_cost} XP
