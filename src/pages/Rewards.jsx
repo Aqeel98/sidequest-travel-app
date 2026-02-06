@@ -28,6 +28,48 @@ const Rewards = () => {
   }, [currentUser]);
 
 
+  // --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
+const LinkifyText = ({ text }) => {
+  if (!text) return null;
+
+  // Regex for [Text](URL)
+  const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = markdownLinkRegex.exec(text)) !== null) {
+    // Add text before the link
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    
+    // Add the clickable link
+    parts.push(
+      <a 
+        key={match.index}
+        href={match[2]} 
+        target="_blank" 
+        rel="noreferrer" 
+        className="text-blue-600 underline font-bold hover:text-blue-800"
+      >
+        {match[1]}
+      </a>
+    );
+    
+    lastIndex = markdownLinkRegex.lastIndex;
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return <span className="whitespace-pre-line">{parts.length > 0 ? parts : text}</span>;
+};
+
+
   const myRedemptions = currentUser 
     ? [...redemptions]
         .filter(r => r.traveler_id === currentUser.id)
@@ -87,7 +129,9 @@ const Rewards = () => {
                 />
                 <div className="p-5">
                     <h3 className="font-bold text-lg mb-2 text-gray-800">{reward.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4 h-10 line-clamp-2">{reward.description}</p>
+                    <p className="text-gray-600 text-sm mb-4 h-10 line-clamp-2">
+                       <LinkifyText text={reward.description} />
+                    </p>
 
                     {reward.map_link && (
                         <a 

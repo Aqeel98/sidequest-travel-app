@@ -7,6 +7,48 @@ import {
   UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon 
 } from 'lucide-react';
 
+
+// --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
+const LinkifyText = ({ text }) => {
+    if (!text) return null;
+  
+    // Regex for [Text](URL)
+    const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+  
+    while ((match = markdownLinkRegex.exec(text)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      
+      // Add the clickable link
+      parts.push(
+        <a 
+          key={match.index}
+          href={match[2]} 
+          target="_blank" 
+          rel="noreferrer" 
+          className="text-blue-600 underline font-bold hover:text-blue-800"
+        >
+          {match[1]}
+        </a>
+      );
+      
+      lastIndex = markdownLinkRegex.lastIndex;
+    }
+    
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+  
+    return <span className="whitespace-pre-line">{parts.length > 0 ? parts : text}</span>;
+  };
+
 // --- SUB-COMPONENT: STAT CARD (New for Oversight) ---
 const StatCard = ({ title, value, subtext, icon: Icon, colorClass }) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between transition-all hover:shadow-md">
@@ -434,7 +476,9 @@ const Admin = () => {
                     <p className="text-sm text-gray-600 mt-1">XP to Award: <span className="font-bold text-green-600">{quest?.xp_value} XP</span></p>
                     <div className="mt-3 bg-gray-50 p-3 rounded">
                        <p className="text-sm font-medium text-gray-700">Submission Note:</p>
-                       <p className="text-sm text-gray-600 mt-1 italic">"{progress.completion_note || 'No note provided'}"</p>
+                       <p className="text-sm text-gray-600 mt-1 italic">
+                             "<LinkifyText text={progress.completion_note} />"
+                        </p>
                        {progress.proof_photo_url && (
                             <div className="mt-2">
                                <p className="text-xs font-bold text-gray-500 mb-1">Proof Photo:</p>

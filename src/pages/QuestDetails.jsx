@@ -17,6 +17,48 @@ const QuestDetails = () => {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
 
+// --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
+const LinkifyText = ({ text }) => {
+  if (!text) return null;
+
+  // Regex for [Text](URL)
+  const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = markdownLinkRegex.exec(text)) !== null) {
+    // Add text before the link
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    
+    // Add the clickable link
+    parts.push(
+      <a 
+        key={match.index}
+        href={match[2]} 
+        target="_blank" 
+        rel="noreferrer" 
+        className="text-blue-600 underline font-bold hover:text-blue-800"
+      >
+        {match[1]}
+      </a>
+    );
+    
+    lastIndex = markdownLinkRegex.lastIndex;
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return <span className="whitespace-pre-line">{parts.length > 0 ? parts : text}</span>;
+};
+
+  
   // 1. SAFE LOOKUP
   const questId = Number(id);
   const quest = useMemo(() => quests.find(q => q.id === questId), [quests, questId]);
@@ -218,7 +260,9 @@ const getCategoryColor = (cat) => {
           {/* 1. Mission Brief (Yellow Box) */}
           <div className="bg-yellow-50 p-6 rounded-2xl mb-6 border border-yellow-200">
              <h3 className="font-bold text-yellow-800 text-lg mb-2">Mission Brief</h3>
-             <p className="text-yellow-900 leading-relaxed whitespace-pre-line">{quest.description}</p>
+             <p className="text-yellow-900 leading-relaxed">
+         <LinkifyText text={quest.description} />
+              </p>
           </div>
 
           {/* 2. Traveler Instructions (Blue Box) */}

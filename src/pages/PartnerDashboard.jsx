@@ -433,10 +433,23 @@ const PartnerDashboard = () => {
                         )}
 
 
-                        <div>
-                            <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Mission Brief</label>
-                            <textarea name="description" value={form.description || ''} onChange={handleChange} rows="3" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
-                        </div>
+<div>
+    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest flex justify-between">
+        Mission Brief
+        <span className="text-[9px] text-brand-500 lowercase font-normal italic">
+            Tip: Use [Display Text](Link URL) to hide links
+        </span>
+    </label>
+    <textarea 
+        name="description" 
+        value={form.description || ''} 
+        onChange={handleChange} 
+        rows="3" 
+        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+        placeholder="Example: Visit [our website](https://example.com) to see our impact history."
+        required 
+    />
+</div>
 
                         
                         
