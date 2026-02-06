@@ -269,7 +269,9 @@ const getCategoryColor = (cat) => {
           {quest.instructions && (
              <div className="bg-blue-50 p-6 rounded-2xl mb-6 border border-blue-100">
                 <h3 className="font-bold text-blue-800 text-lg mb-2">How to Complete</h3>
-                <p className="text-blue-900 leading-relaxed whitespace-pre-line">{quest.instructions}</p>
+                <p className="text-blue-900 leading-relaxed">
+               <LinkifyText text={quest.instructions} />
+              </p>
              </div>
           )}
 

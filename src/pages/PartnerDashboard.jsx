@@ -533,8 +533,21 @@ const PartnerDashboard = () => {
         
         {/* 3. INSTRUCTIONS & PROOF */}
         <div>
-            <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Instructions for Travelers</label>
-            <textarea name="instructions" value={form.instructions || ''} onChange={handleChange} rows="2" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" placeholder="How to find the location..." required />
+    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest flex justify-between">
+        Instructions for Travelers
+        <span className="text-[9px] text-brand-500 lowercase font-normal italic">
+            tip: use [display text](link url) to hide links
+        </span>
+    </label>
+    <textarea 
+        name="instructions" 
+        value={form.instructions || ''} 
+        onChange={handleChange} 
+        rows="2" 
+        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+        placeholder="How to find the location...."
+        required 
+              />
         </div>
 
         <div>
