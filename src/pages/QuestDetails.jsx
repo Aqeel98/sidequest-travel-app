@@ -21,20 +21,15 @@ const QuestDetails = () => {
 const LinkifyText = ({ text }) => {
   if (!text) return null;
 
-  // Regex for [Text](URL)
   const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-  
   const parts = [];
   let lastIndex = 0;
   let match;
 
   while ((match = markdownLinkRegex.exec(text)) !== null) {
-    // Add text before the link
     if (match.index > lastIndex) {
       parts.push(text.substring(lastIndex, match.index));
     }
-    
-    // Add the clickable link
     parts.push(
       <a 
         key={match.index}
@@ -46,18 +41,15 @@ const LinkifyText = ({ text }) => {
         {match[1]}
       </a>
     );
-    
     lastIndex = markdownLinkRegex.lastIndex;
   }
   
-  // Add remaining text
   if (lastIndex < text.length) {
     parts.push(text.substring(lastIndex));
   }
 
   return <span className="whitespace-pre-line">{parts.length > 0 ? parts : text}</span>;
 };
-
   
   // 1. SAFE LOOKUP
   const questId = Number(id);
