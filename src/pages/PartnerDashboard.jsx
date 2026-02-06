@@ -434,10 +434,10 @@ const PartnerDashboard = () => {
 
 
 <div>
-    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest flex justify-between">
-        Mission Brief
-        <span className="text-[9px] text-brand-500 lowercase font-normal italic">
-            Tip: Use [Display Text](Link URL) to hide links
+    <label className={`block text-xs font-black uppercase mb-1 tracking-widest flex justify-between ${mode === 'quest' ? 'text-gray-400' : 'text-orange-600'}`}>
+        {mode === 'quest' ? 'Mission Brief' : 'Reward Description'}
+        <span className={`text-[9px] lowercase font-normal italic ${mode === 'quest' ? 'text-brand-500' : 'text-orange-500'}`}>
+            tip: use [display text](link url) to hide links
         </span>
     </label>
     <textarea 
@@ -445,8 +445,7 @@ const PartnerDashboard = () => {
         value={form.description || ''} 
         onChange={handleChange} 
         rows="3" 
-        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
-        placeholder="Example: Visit [our website](https://example.com) to see our impact history."
+        className={`w-full border-2 border-gray-100 p-3 rounded-xl outline-none transition-all ${mode === 'quest' ? 'focus:border-brand-500' : 'focus:border-orange-500'}`}
         required 
     />
 </div>
@@ -468,30 +467,43 @@ const PartnerDashboard = () => {
         </div>
 
         {/* 2. HYBRID LOCATION BLOCK  */}
-        <div className="bg-brand-50 p-6 rounded-2xl border border-brand-100">
-            <label className="block text-[10px] font-black text-brand-600 uppercase mb-3 tracking-widest flex items-center">
-                <Map size={14} className="mr-1"/> Location Source (Google Maps)
-            </label>
-            
-            <input 
-                type="url" 
-                name="map_link" 
-                value={form.map_link || ''} 
-                onChange={handleChange}
-                placeholder="Paste Google Maps Link here..."
-                className="w-full border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-brand-200 text-sm"
-                required
-            />
+<div className="bg-brand-50 p-6 rounded-2xl border border-brand-100">
+    <label className="block text-[10px] font-black text-brand-600 uppercase mb-3 tracking-widest flex items-center">
+        <Map size={14} className="mr-1"/> Location Source (Google Maps)
+    </label>
+    
+    <div className="flex gap-2">
+        <input 
+            type="url" 
+            name="map_link" 
+            value={form.map_link || ''} 
+            onChange={handleChange}
+            placeholder="Paste Google Maps Link here..."
+            className="flex-1 border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-brand-200 text-sm"
+            required
+        />
+        <button 
+            type="button" 
+            onClick={() => window.open('https://www.google.com/maps', '_blank')}
+            className="bg-white border border-brand-200 text-brand-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-brand-100 transition-colors shadow-sm whitespace-nowrap"
+        >
+            Open Maps 📍
+        </button>
+    </div>
 
-            {!showGps ? (
-                <button 
-                    type="button" 
-                    onClick={() => setShowGps(true)}
-                    className="mt-3 text-[10px] font-bold text-brand-400 hover:text-brand-600 transition-colors underline"
-                >
-                    Know exact Coordinates? Click to add manually.
-                </button>
-            ) : (
+    <p className="text-[10px] text-brand-400 mt-2 italic">
+        Click "Open Maps", find the spot, copy the URL, and paste it here.
+    </p>
+
+                     {!showGps ? (
+        <button 
+            type="button" 
+            onClick={() => setShowGps(true)}
+            className="mt-3 text-[10px] font-bold text-brand-400 hover:text-brand-600 transition-colors underline"
+        >
+            Know exact Coordinates? Click to add manually.
+                   </button>
+                    ) : (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="grid grid-cols-2 gap-4 mt-4">
                         <div>
