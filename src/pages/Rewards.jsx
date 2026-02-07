@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Award, ShoppingBag, MapPin } from 'lucide-react';
+import { Award, ShoppingBag, Coffee, Waves, BedSingle, Search, MapPin } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Rewards = () => {
@@ -114,10 +114,61 @@ const LinkifyText = ({ text }) => {
 
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        {/* Render only activeRewards instead of all rewards */}
         {activeRewards.length === 0 ? (
-            <p className="text-gray-500 col-span-full text-center py-10">We are currently scouting the island for local partners who care about impact as much as you do. Your XP is a sign of the mark you've left on Sri Lanka hold onto it. We’ll be unlocking exclusive rewards at partner cafes, hotels, and workshops very soon.</p>
+            /* --- SCOUTING MODE UI --- */
+            <div className="col-span-full py-20 px-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <div className="max-w-2xl mx-auto">
+                    <div className="inline-flex p-4 bg-brand-50 rounded-full mb-6 text-brand-600">
+                        <Search size={32} className="animate-pulse" />
+                    </div>
+                    
+                    <h2 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">
+                        Our Marketplace is Growing...
+                    </h2>
+                    
+                    <p className="text-gray-600 leading-relaxed mb-12 text-lg font-medium">
+                        We are currently scouting the island for local partners who care about impact as much as you do. 
+                        Your XP is a sign of the mark you've left on Sri Lanka—hold onto it. 
+                        We’ll be unlocking exclusive rewards at partner cafes, hotels, and workshops very soon.
+                    </p>
+
+                    {/* --- COMING SOON GRAPHIC --- */}
+                    <div className="relative">
+                        {/* Connecting Line */}
+                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -z-10 hidden md:block"></div>
+                        
+                        <div className="grid grid-cols-3 gap-4 md:gap-12">
+                            <div className="flex flex-col items-center group">
+                                <div className="p-5 bg-white border-2 border-gray-50 rounded-2xl shadow-sm text-gray-300 group-hover:text-orange-500 transition-colors">
+                                    <Coffee size={32} />
+                                </div>
+                                <span className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Partner Cafes</span>
+                            </div>
+
+                            <div className="flex flex-col items-center group">
+                                <div className="p-5 bg-white border-2 border-gray-50 rounded-2xl shadow-sm text-gray-300 group-hover:text-blue-500 transition-colors">
+                                    <Waves size={32} />
+                                </div>
+                                <span className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Surf Lessons</span>
+                            </div>
+
+                            <div className="flex flex-col items-center group">
+                                <div className="p-5 bg-white border-2 border-gray-50 rounded-2xl shadow-sm text-gray-300 group-hover:text-emerald-500 transition-colors">
+                                    <BedSingle size={32} />
+                                </div>
+                                <span className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Impact Stays</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-16 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <div className="w-2 h-2 rounded-full bg-brand-500 animate-ping"></div>
+                        SideQuest Scouting in Progress
+                    </div>
+                </div>
+            </div>
         ) : (
+
             activeRewards.map(reward => {
             const canAfford = currentUser && currentUser.xp >= reward.xp_cost;
             return (
