@@ -1,3 +1,12 @@
+if (import.meta.env.PROD) {
+  console.log = () => {};
+  console.debug = () => {};
+  console.warn = () => {};
+  console.info = () => {};
+  // console.error stays active so you can see if the system actually breaks
+}
+
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
