@@ -178,6 +178,17 @@ const Emergency = () => {
                 ))}
             </div>
 
+                    {/* --- DISCLAIMER --- */}
+            <div className="mt-12 p-6 bg-yellow-50 rounded-3xl border border-yellow-100">
+                <div className="flex gap-3">
+                    <AlertCircle className="text-yellow-600 flex-shrink-0" />
+                    <p className="text-xs text-yellow-800 font-bold leading-relaxed">
+                        Safety Tip: Always have your travel insurance details and NIC /passport copy with you. 
+                        In an extreme emergency, contact your embassy first. Suwa Seriya (1990) is a free island-wide service.
+                    </p>
+                </div>
+            </div>
+
             {/* --- SEARCH --- */}
             <div className="mb-6 relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -229,16 +240,7 @@ const Emergency = () => {
                 })}
             </div>
 
-            {/* --- DISCLAIMER --- */}
-            <div className="mt-12 p-6 bg-yellow-50 rounded-3xl border border-yellow-100">
-                <div className="flex gap-3">
-                    <AlertCircle className="text-yellow-600 flex-shrink-0" />
-                    <p className="text-xs text-yellow-800 font-bold leading-relaxed">
-                        Safety Tip: Always have your travel insurance details and passport copy with you. 
-                        In an extreme emergency, contact your embassy first. Suwa Seriya (1990) is a free island-wide service.
-                    </p>
-                </div>
-            </div>
+            
         </div>
     );
 };
