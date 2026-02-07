@@ -128,7 +128,7 @@ const LinkifyText = ({ text }) => {
                     
                     <p className="text-gray-600 leading-relaxed mb-12 text-lg font-medium">
                         We are currently scouting the island for local partners who care about impact as much as you do. 
-                        Your XP is a sign of the mark you've left on Sri Lanka—hold onto it. 
+                        Your XP is a sign of the mark you've left on Sri Lanka, hold onto it. 
                         We’ll be unlocking exclusive rewards at partner cafes, hotels, and workshops very soon.
                     </p>
 
