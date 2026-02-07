@@ -1,9 +1,22 @@
 import React, { useEffect } from 'react';
-import { Award, ShoppingBag, Coffee, Waves, BedSingle, Search, MapPin } from 'lucide-react';
+
+import { useNavigate } from 'react-router-dom'; 
+import { Award, ShoppingBag, Coffee, Waves, BedSingle, Search, MapPin, ChevronRight } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Rewards = () => {
+  const navigate = useNavigate();
   const { currentUser, rewards, redemptions, redeemReward, setShowAuthModal, showToast  } = useSideQuest();
+
+
+
+  const handlePartnerJoin = () => {
+    if (!currentUser) {
+        setShowAuthModal(true);
+    } else {
+        navigate('/partner?tab=create');
+    }
+  };
 
   // --- IMMORTAL REDEMPTION RESUME ---
   React.useEffect(() => {
@@ -161,7 +174,28 @@ const LinkifyText = ({ text }) => {
                         </div>
                     </div>
 
-                    <div className="mt-16 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+
+                    <div className="mt-16 p-8 bg-brand-600 rounded-3xl text-white text-left relative overflow-hidden shadow-xl shadow-brand-100">
+                        <div className="relative z-10">
+                            <h3 className="text-xl font-black mb-2">Own a local spot?</h3>
+                            <p className="text-brand-100 text-sm mb-6 leading-relaxed max-w-md">
+                                Join as a Partner to add your own rewards to the map and connect with travelers who care about impact.
+                            </p>
+                            <button 
+                                onClick={handlePartnerJoin}
+                                className="bg-white text-brand-600 px-6 py-3 rounded-xl font-black text-sm flex items-center hover:bg-brand-50 transition-all transform active:scale-95"
+                            >
+                                {currentUser ? 'Go to Partner Dashboard' : 'Join as a Partner'}
+                                <ChevronRight size={18} className="ml-1" />
+                            </button>
+                        </div>
+                        
+                        {/* Decorative background icon */}
+                        <ShoppingBag size={120} className="absolute -right-8 -bottom-8 text-white/10 -rotate-12" />
+                    </div>
+
+                    {/* Keep the "Scouting in Progress" badge at the very bottom */}
+                    <div className="mt-12 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                         <div className="w-2 h-2 rounded-full bg-brand-500 animate-ping"></div>
                         SideQuest Scouting in Progress
                     </div>
