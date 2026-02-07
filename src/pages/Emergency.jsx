@@ -179,7 +179,7 @@ const Emergency = () => {
             </div>
 
                     {/* --- DISCLAIMER --- */}
-            <div className="mt-12 p-6 bg-yellow-50 rounded-3xl border border-yellow-100">
+                    <div className="mt-12 mb-8 p-6 bg-yellow-50 rounded-3xl border border-yellow-100">
                 <div className="flex gap-3">
                     <AlertCircle className="text-yellow-600 flex-shrink-0" />
                     <p className="text-xs text-yellow-800 font-bold leading-relaxed">
