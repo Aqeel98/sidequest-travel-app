@@ -247,6 +247,8 @@ const Admin = () => {
   const [viewDetailsId, setViewDetailsId] = useState(null);
   const [isWarmed, setIsWarmed] = useState(false);
 
+  const [questSearch, setQuestSearch] = useState('');
+
  // --- IMMORTAL ADMIN RESUME ENGINE ---
  useEffect(() => {
     const pendingAction = localStorage.getItem('sq_admin_deferred');
@@ -305,7 +307,16 @@ const Admin = () => {
   const pendingNewQuests = quests.filter(q => q.status === 'pending_admin');
   const pendingNewRewards = rewards.filter(r => r.status === 'pending_admin');
 
-  const manageableQuests = quests.filter(q => q.status !== 'pending_admin');
+  const manageableQuests = useMemo(() => {
+    return quests
+      .filter(q => q.status !== 'pending_admin')
+      .filter(q => 
+        q.title.toLowerCase().includes(questSearch.toLowerCase()) || 
+        q.location_address.toLowerCase().includes(questSearch.toLowerCase())
+      );
+  }, [quests, questSearch]);
+
+
   const activeRewards = rewards.filter(r => r.status === 'active');  
 
   const handleImmortalAction = (type, id, directFn) => {
@@ -632,13 +643,35 @@ const Admin = () => {
 
       {/* --- 4. QUEST MANAGER TAB --- */}
       {activeTab === 'quests' && (
-  <div className="space-y-4">
-      {/* Title now reflects "Manageable" instead of just "Live" */}
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Quest Database ({manageableQuests.length})</h2>
-      <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-      {manageableQuests.length === 0 ? (
-          <p className="text-gray-400 italic">No quests found in database.</p>
-      ) : (
+        <div className="space-y-4">
+            
+            {/* Header Area: Title + Search Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                <h2 className="text-2xl font-bold text-gray-800">Quest Database ({manageableQuests.length})</h2>
+                
+                <div className="relative w-full md:w-80">
+                    <input 
+                        type="text" 
+                        placeholder="Search title or location..." 
+                        value={questSearch}
+                        onChange={(e) => setQuestSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-100 rounded-2xl focus:border-brand-500 outline-none text-sm transition-all shadow-sm"
+                    />
+                    <div className="absolute left-3 top-3 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100 space-y-4">
+                {manageableQuests.length === 0 ? (
+                    <div className="py-12 text-center">
+                        <p className="text-gray-400 italic">No quests found matching your search.</p>
+                        {questSearch && (
+                            <button onClick={() => setQuestSearch('')} className="text-brand-600 text-xs font-bold mt-2 underline">Clear Search</button>
+                        )}
+                    </div>
+                ) : (
           manageableQuests.map(quest => (
                     <div key={quest.id} className="border-b pb-4 last:border-0">
                         <div className="flex justify-between items-start">
