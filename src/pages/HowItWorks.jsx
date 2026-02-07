@@ -47,7 +47,7 @@ const HowItWorks = () => {
     {
       title: "Create an Experience",
       // UPDATED: Generalized description for any business type
-      desc: "Turn your business into a destination for conscious travelers. Design any type of challenge, activity, or cultural experience that brings people to your location and creates positive impact.",
+      desc: "Turn your business into a destination. Design any mission or cultural experience and set a small reward (like a discount or freebie) to welcome travelers and create a positive impact together.",
       icon: <Users className="text-purple-600" size={32} />,
       color: "bg-purple-50 border-purple-200"
     },

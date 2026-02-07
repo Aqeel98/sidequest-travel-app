@@ -116,7 +116,7 @@ const LinkifyText = ({ text }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {/* Render only activeRewards instead of all rewards */}
         {activeRewards.length === 0 ? (
-            <p className="text-gray-500 col-span-full text-center py-10">No rewards available right now.</p>
+            <p className="text-gray-500 col-span-full text-center py-10">We are currently scouting the island for local partners who care about impact as much as you do. Your XP is a sign of the mark you've left on Sri Lanka hold onto it. We’ll be unlocking exclusive rewards at partner cafes, hotels, and workshops very soon.</p>
         ) : (
             activeRewards.map(reward => {
             const canAfford = currentUser && currentUser.xp >= reward.xp_cost;
