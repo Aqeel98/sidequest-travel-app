@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, Compass, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle } from 'lucide-react'; 
+import { Menu, X, LogOut, Compass, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Zap  } from 'lucide-react'; 
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Navbar = () => {
@@ -34,6 +34,7 @@ const Navbar = () => {
         <nav className="hidden md:flex items-center space-x-2">
           <Link to="/" className={isActive('/')}>Quests</Link>
           <Link to="/map" className={isActive('/map')}>Map</Link>
+          <Link to="/quiz" className={isActive('/quiz')}>Quiz</Link> 
           <Link to="/how-it-works" className={isActive('/how-it-works')}>Guide</Link>
           {currentUser && (
               <Link to="/my-quests" className={isActive('/my-quests')}>My Quests</Link>
@@ -121,6 +122,9 @@ const Navbar = () => {
             
             <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
             <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
+            <Link to="/quiz" className="p-3 rounded-lg hover:bg-brand-50 text-brand-600 font-bold flex items-center" onClick={() => setIsOpen(false)}>
+               <Zap size={18} className="mr-2" fill="currentColor"/> Quiz Game
+            </Link>
             <Link to="/how-it-works" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>How it Works</Link>
             {currentUser && (
               <Link to="/my-quests" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>My Quests</Link>

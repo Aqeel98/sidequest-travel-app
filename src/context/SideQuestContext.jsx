@@ -38,6 +38,8 @@ export const SideQuestProvider = ({ children }) => {
   // Ecosystem content pools
   const [quests, setQuests] = useState([]);
   const [rewards, setRewards] = useState([]); 
+  const [quizBank, setQuizBank] = useState([]); 
+  const [completedQuizIds, setCompletedQuizIds] = useState([]); 
   const [questProgress, setQuestProgress] = useState([]); 
   const [redemptions, setRedemptions] = useState([]);
   
@@ -141,6 +143,47 @@ useEffect(() => {
   }, []);
   
 
+  const fetchQuizHistory = async (userId) => {
+    const { data } = await supabase.from('quiz_completions').select('question_id').eq('user_id', userId);
+    if (data) setCompletedQuizIds(data.map(item => item.question_id));
+  };
+
+  const submitQuizAnswer = async (questionId, selectedIndex) => {
+    if (!currentUser) { setShowAuthModal(true); return { success: false, message: "Login to earn XP!" }; }
+
+    try {
+        // 1. Call the Atomic RPC we created in Step 1
+        const { data, error } = await supabase.rpc('submit_quiz_answer', {
+            question_id_input: questionId,
+            selected_index: selectedIndex
+        });
+
+        if (error) throw error;
+
+        if (data.success) {
+            // 2. INSTANT UI UPDATE: Add XP to the local bar right away
+            setCurrentUser(prev => ({
+                ...prev,
+                xp: prev.xp + data.xp_awarded
+            }));
+            
+            // 3. Mark as completed locally so they can't click again
+            setCompletedQuizIds(prev => [...prev, questionId]);
+            
+            showToast(`Correct! +${data.xp_awarded} XP awarded.`, 'success');
+            return { success: true };
+        } else {
+            showToast(data.message, 'error');
+            return { success: false, message: data.message };
+        }
+    } catch (err) {
+        console.error("Quiz Sync Error:", err);
+        showToast("Connection unstable. Your score will sync shortly.", "info");
+        return { success: false, message: "Network Error" };
+    }
+  };
+
+
 
   // --- 2. THE HARDENED SEQUENTIAL BOOT (Persistence & Guest Logic) ---
   useEffect(() => {
@@ -156,14 +199,22 @@ useEffect(() => {
             // 1. FIRE ALL PUBLIC & AUTH CHECKS AT ONCE
             const questPromise = supabase.from('quests').select('*');
             const rewardPromise = supabase.from('rewards').select('*');
+            const quizPromise = supabase.from('quiz_questions').select('*');
             const sessionPromise = supabase.auth.getSession();
         
             // 2. WAIT FOR ALL THREE TO ARRIVE
-            const [qRes, rRes, sRes] = await Promise.all([questPromise, rewardPromise, sessionPromise]);
+            const [qRes, rRes, quizRes, sRes] = await Promise.all([
+                questPromise, 
+                rewardPromise, 
+                quizPromise, 
+                sessionPromise
+            ]);
         
             if (mounted) {
                 setQuests(qRes.data || []);
                 setRewards(rRes.data || []);
+                setQuizBank(quizRes.data || []);
+
                 const session = sRes.data?.session;
         
                 if (session) {
@@ -210,6 +261,7 @@ useEffect(() => {
         setCurrentUser(null);
         setQuestProgress([]);
         setRedemptions([]);
+        setCompletedQuizIds([]); 
         setUsers([]);
         setShowAuthModal(false); 
         setIsLoading(false);
@@ -434,7 +486,8 @@ useEffect(() => {
              fetchSubmissions(userId, data.role),
              fetchRedemptions(userId, data.role),
              fetchQuests(), 
-             fetchRewards()
+             fetchRewards(),
+             fetchQuizHistory(userId)
           ]);
       }
     } catch (err) {
@@ -1284,7 +1337,7 @@ const approveNewReward = async (id) => {
       addQuest, updateQuest, deleteQuest, approveNewQuest,
       addReward, updateReward, deleteReward, approveNewReward, 
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
-      redeemReward, verifyRedemptionCode,  switchRole, 
+      redeemReward, verifyRedemptionCode,  switchRole, quizBank, completedQuizIds, submitQuizAnswer,
       toast, showToast
     }}>
       {children}

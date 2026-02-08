@@ -27,6 +27,7 @@ import PartnerDashboard from './pages/PartnerDashboard';
 import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
 import InstallBanner from './components/InstallBanner';
+import Quiz from './pages/Quiz';
 
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
@@ -101,6 +102,7 @@ export default function App() {
             <Route path="partner" element={<PartnerDashboard />} />
             <Route path="admin" element={<Admin />} />
             <Route path="emergency" element={<Emergency />} />
+            <Route path="quiz" element={<Quiz />} />
 
           </Route>
         </Routes>
