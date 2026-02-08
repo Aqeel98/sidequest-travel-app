@@ -60,7 +60,7 @@ const HOSPITAL_DATA = [
     { name: "Pottuvil Base Hospital", district: "Ampara", type: "Public", contact: "+94 63 224 8261", lat: 6.8850, lng: 81.8280, note: "CLOSEST HOSPITAL TO ARUGAM BAY SURF POINTS." },
 
 
-    // --- NORTHERN PROVINCE (Jaffna & North) ---
+    // --- NORTHERN PROVINCE (Jaffna ) ---
     { name: "Jaffna Teaching Hospital", district: "Jaffna", type: "Public", contact: "+94 21 222 2261", lat: 9.6640, lng: 80.0190, note: "Main hospital for Jaffna city, Delft Island, and the North coast." },
     { name: "Northern Central Hospital (Pvt)", district: "Jaffna", type: "Private", contact: "+94 21 222 3456", lat: 9.6720, lng: 80.0210, note: "Premier private emergency hospital in Jaffna city." },
     { name: "Vavuniya General Hospital", district: "Vavuniya", type: "Public", contact: "+94 24 222 2261", lat: 8.7510, lng: 80.4980, note: "Major hub on the A9 highway between North and Central zones." },
