@@ -14,7 +14,7 @@ const HOSPITAL_DATA = [
     { name: "Kalutara General Hospital", district: "Kalutara", type: "Public", contact: "+94 34 222 2261", lat: 6.5860, lng: 79.9570, note: "Main hospital for Bentota, Wadduwa, and Beruwala travelers." },
     { name: "Avissawella Base Hospital", district: "Colombo", type: "Public", contact: "+94 36 222 2261", lat: 6.9543, lng: 80.2046, note: "NEAREST TRAUMA CENTER FOR KITULGALA RAFTING ACCIDENTS." },
 
-    // --- SOUTHERN PROVINCE (Galle, Matara, Tangalle, Deep South) ---
+    // --- SOUTHERN PROVINCE (Galle, Matara, Tangalle ) ---
     { name: "Karapitiya Teaching Hospital", district: "Galle", type: "Public", contact: "+94 91 223 2176", lat: 6.0638, lng: 80.2222, note: "Largest public trauma hub in South. Best for serious accidents in Galle and Unawatuna." },
     { name: "Mahamodara Maternity Hospital", district: "Galle", type: "Public", contact: "+94 91 223 2251", lat: 6.0412, lng: 80.2052, note: "Specialized maternal care in the Galle district." },
     { name: "Hemas Hospital Galle", district: "Galle", type: "Private", contact: "+94 91 788 8888", lat: 6.0462, lng: 80.2056, note: "Premium private hospital nearest to Galle Fort with 24/7 ER." },
