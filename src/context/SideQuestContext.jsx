@@ -180,13 +180,36 @@ useEffect(() => {
             showToast(`Correct! +${data.xp_awarded} XP awarded.`, 'success');
             return { success: true };
         } else {
+            if (data.message.includes('already claimed')) {
+                await fetchProfile(currentUser.id, currentUser.email); 
+                setCompletedQuizIds(prev => [...prev, questionId]); 
+                return { success: true }; 
+            }
             showToast(data.message, 'error');
             return { success: false, message: data.message };
         }
     } catch (err) {
         console.error("Quiz Sync Error:", err);
         // If it fails, the user is likely offline. We show an informative toast.
-        showToast("Connection reset. Please tap your answer again.", "info");
+        showToast("Syncing points...", "info");
+        
+        await fetchProfile(currentUser.id, currentUser.email);
+        await fetchQuizHistory(currentUser.id);
+
+        // Check if the question we just tried is now in the "Completed" list
+        const { data: verify } = await supabase
+            .from('quiz_completions')
+            .select('id')
+            .eq('user_id', currentUser.id)
+            .eq('question_id', questionId)
+            .maybeSingle();
+
+        if (verify) {
+            showToast("Points restored from server!", "success");
+            return { success: true };
+        }
+
+        showToast("Connection reset. Please try that answer again.", "info");
         return { success: false, message: "Network Reset" };
     }
 };

@@ -20,7 +20,14 @@ const Quiz = () => {
     useEffect(() => {
     
         if (quizBank.length > 0 && availableQuestions.length === 0) {
+
             const snapshot = quizBank.filter(q => !completedQuizIds.includes(q.id));
+
+            for (let i = snapshot.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [snapshot[i], snapshot[j]] = [snapshot[j], snapshot[i]];
+            }
+
             setAvailableQuestions(snapshot);
         }
     }, [quizBank, completedQuizIds]); 
