@@ -49,9 +49,7 @@ const HOSPITAL_DATA = [
     // --- UVA PROVINCE (Ella & East-Access) ---
     { name: "Badulla General Hospital", district: "Badulla", type: "Public", contact: "+94 55 222 2261", lat: 6.9880, lng: 81.0560, note: "Closest major trauma center for Ella, Haputale, and Diyaluma Falls." },
     { name: "Monaragala General Hospital", district: "Monaragala", type: "Public", contact: "+94 55 227 6161", lat: 6.8710, lng: 81.3520, note: "Primary medical hub for Arugam Bay and Pottuvil travelers." },
-    { name: "Ratnapura Teaching Hospital", district: "Ratnapura", type: "Public", contact: "+94 45 222 2261", lat: 6.6820, lng: 80.3990, note: "Primary hub for Sinharaja Forest hikers." },
     { name: "Embilipitiya General Hospital", district: "Ratnapura", type: "Public", contact: "+94 47 223 0261", lat: 6.3350, lng: 80.8520, note: "NEAREST MAJOR HOSPITAL FOR UDAWALAWE SAFARI." },
-    { name: "Kegalle General Hospital", district: "Kegalle", type: "Public", contact: "+94 35 222 2261", lat: 7.2510, lng: 80.3450, note: "Primary care on the Colombo-Kandy highway." },
 
 
     // --- EASTERN PROVINCE (Arugam Bay, Trinco, Batticaloa) ---
@@ -122,12 +120,15 @@ const Emergency = () => {
     };
 
     const displayHospitals = useMemo(() => {
-        const query = searchQuery.toLowerCase();
+        // .trim() removes spaces from the beginning and end
+        const query = searchQuery.toLowerCase().trim();
         
+        // If query is empty, show everything (sorted by distance if loc is available)
+        if (!query && !userLoc) return HOSPITAL_DATA;
+    
         let filtered = HOSPITAL_DATA.filter(h => 
             h.district.toLowerCase().includes(query) || 
             h.name.toLowerCase().includes(query) ||
-            // FIX: Search inside the note for tourist keywords (Ella, Hanthana, etc.)
             (h.note && h.note.toLowerCase().includes(query)) 
         );
     
