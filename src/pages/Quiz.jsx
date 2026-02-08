@@ -15,13 +15,18 @@ const Quiz = () => {
     const [selectedOption, setSelectedOption] = useState(null);
     const [isCorrect, setIsCorrect] = useState(null); // null, true, false
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [availableQuestions, setAvailableQuestions] = useState([]);
 
-    // Filter out questions the user has already completed for points
-    const availableQuestions = useMemo(() => {
-        return quizBank.filter(q => !completedQuizIds.includes(q.id));
-    }, [quizBank, completedQuizIds]);
+    useEffect(() => {
+    
+        if (quizBank.length > 0 && availableQuestions.length === 0) {
+            const snapshot = quizBank.filter(q => !completedQuizIds.includes(q.id));
+            setAvailableQuestions(snapshot);
+        }
+    }, [quizBank, completedQuizIds]); 
 
     const currentQuestion = availableQuestions[currentIndex];
+    
 
     // Scroll to top on load
     useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -42,6 +47,19 @@ const Quiz = () => {
         setIsSubmitting(false);
     };
 
+
+    useEffect(() => {
+        const savedIndex = localStorage.getItem('sq_quiz_index');
+        if (savedIndex) {
+            setCurrentIndex(parseInt(savedIndex));
+        }
+    }, []);
+    
+    // 2. Save progress whenever the index changes
+    useEffect(() => {
+        localStorage.setItem('sq_quiz_index', currentIndex.toString());
+    }, [currentIndex]);
+
     const nextQuestion = () => {
         setSelectedOption(null);
         setIsCorrect(null);
@@ -50,7 +68,8 @@ const Quiz = () => {
         if (currentIndex < availableQuestions.length - 1) {
             setCurrentIndex(prev => prev + 1);
         } else {
-            // If we hit the end, go back to start of remaining questions
+            localStorage.removeItem('sq_quiz_index');
+            setAvailableQuestions([]); 
             setCurrentIndex(0);
         }
     };

@@ -76,7 +76,8 @@ export const SideQuestProvider = ({ children }) => {
         if (qData) setQuests(qData);
         const { data: rData } = await supabase.from('rewards').select('*');
         if (rData) setRewards(rData);
-
+        const { data: quizData } = await supabase.from('quiz_questions').select('*');
+        if (quizData) setQuizBank(quizData);
         // Refresh User Data
         if (role === 'Admin') {
             const { data: subs } = await supabase.from('submissions').select('*');
@@ -85,6 +86,8 @@ export const SideQuestProvider = ({ children }) => {
             const { data: mySubs } = await supabase.from('submissions').select('*').eq('traveler_id', userId);
             if (mySubs) setQuestProgress(mySubs);
             
+            await fetchQuizHistory(userId);
+
             let redQuery = supabase
             .from('redemptions')
             .select('*, profiles(full_name), rewards(created_by, title)');
@@ -152,24 +155,28 @@ useEffect(() => {
     if (!currentUser) { setShowAuthModal(true); return { success: false, message: "Login to earn XP!" }; }
 
     try {
-        // 1. Call the Atomic RPC we created in Step 1
-        const { data, error } = await supabase.rpc('submit_quiz_answer', {
-            question_id_input: questionId,
-            selected_index: selectedIndex
-        });
+        // --- IMMORTAL WAKE-UP: Ensure connection isn't a zombie ---
+        try {
+            await withTimeout(supabase.auth.getSession(), 2000);
+        } catch(e) {
+            console.warn("SQ-Quiz: Waking up dormant connection...");
+            supabase.realtime.connect(); 
+        }
+
+        // --- ATOMIC RPC CALL with Timeout Shield ---
+        const { data, error } = await withTimeout(
+            supabase.rpc('submit_quiz_answer', {
+                question_id_input: questionId,
+                selected_index: selectedIndex
+            }), 
+            8000 // If no response in 8s, it's a zombie socket
+        );
 
         if (error) throw error;
 
         if (data.success) {
-            // 2. INSTANT UI UPDATE: Add XP to the local bar right away
-            setCurrentUser(prev => ({
-                ...prev,
-                xp: prev.xp + data.xp_awarded
-            }));
-            
-            // 3. Mark as completed locally so they can't click again
+            setCurrentUser(prev => ({ ...prev, xp: prev.xp + data.xp_awarded }));
             setCompletedQuizIds(prev => [...prev, questionId]);
-            
             showToast(`Correct! +${data.xp_awarded} XP awarded.`, 'success');
             return { success: true };
         } else {
@@ -178,10 +185,11 @@ useEffect(() => {
         }
     } catch (err) {
         console.error("Quiz Sync Error:", err);
-        showToast("Connection unstable. Your score will sync shortly.", "info");
-        return { success: false, message: "Network Error" };
+        // If it fails, the user is likely offline. We show an informative toast.
+        showToast("Connection reset. Please tap your answer again.", "info");
+        return { success: false, message: "Network Reset" };
     }
-  };
+};
 
 
 
