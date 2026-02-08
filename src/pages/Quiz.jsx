@@ -16,6 +16,7 @@ const Quiz = () => {
     const [isCorrect, setIsCorrect] = useState(null); // null, true, false
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availableQuestions, setAvailableQuestions] = useState([]);
+    const [xpAnimate, setXpAnimate] = useState(false);
 
     useEffect(() => {
     
@@ -38,20 +39,22 @@ const Quiz = () => {
     // Scroll to top on load
     useEffect(() => { window.scrollTo(0, 0); }, []);
 
-    const handleAnswer = async (index) => {
-        if (isSubmitting || isCorrect !== null) return;
+    const handleAnswer = (index) => {
+        if (isCorrect !== null) return; 
         
         setSelectedOption(index);
-        setIsSubmitting(true);
 
-        const result = await submitQuizAnswer(currentQuestion.id, index);
+        const isCorrectLocal = index === currentQuestion.correct_index;
         
-        if (result.success) {
+        if (isCorrectLocal) {
             setIsCorrect(true);
+            setXpAnimate(true);
+            setTimeout(() => setXpAnimate(false), 600);
         } else {
             setIsCorrect(false);
         }
-        setIsSubmitting(false);
+
+        submitQuizAnswer(currentQuestion.id, index, isCorrectLocal, currentQuestion.xp_reward);
     };
 
 
@@ -146,9 +149,13 @@ const Quiz = () => {
                             <Zap size={20} fill="currentColor" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-brand-700 uppercase tracking-widest">Your Impact</p>
-                            <p className="text-lg font-black text-gray-900 leading-none">{currentUser.xp} XP</p>
-                        </div>
+                    <p className="text-[10px] font-black text-brand-700 uppercase tracking-widest leading-none mb-1">Your Impact</p>
+                     <p className={`text-2xl font-black transition-all duration-300 ${
+                        xpAnimate ? 'scale-125 text-emerald-500' : 'text-gray-900'
+                            }`}>
+                     {currentUser.xp} <span className="text-sm">XP</span>
+                     </p>
+                    </div>
                     </div>
                     <div className="text-right">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</p>

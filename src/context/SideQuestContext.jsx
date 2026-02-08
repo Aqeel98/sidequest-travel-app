@@ -150,68 +150,66 @@ useEffect(() => {
     const { data } = await supabase.from('quiz_completions').select('question_id').eq('user_id', userId);
     if (data) setCompletedQuizIds(data.map(item => item.question_id));
   };
+  const submitQuizAnswer = async (questionId, selectedIndex, isCorrectLocal, xpReward) => {
+    if (!currentUser) { setShowAuthModal(true); return; }
 
-  const submitQuizAnswer = async (questionId, selectedIndex) => {
-    if (!currentUser) { setShowAuthModal(true); return { success: false, message: "Login to earn XP!" }; }
-
-    try {
-        // --- IMMORTAL WAKE-UP: Ensure connection isn't a zombie ---
-        try {
-            await withTimeout(supabase.auth.getSession(), 2000);
-        } catch(e) {
-            console.warn("SQ-Quiz: Waking up dormant connection...");
-            supabase.realtime.connect(); 
-        }
-
-        // --- ATOMIC RPC CALL with Timeout Shield ---
-        const { data, error } = await withTimeout(
-            supabase.rpc('submit_quiz_answer', {
-                question_id_input: questionId,
-                selected_index: selectedIndex
-            }), 
-            8000 // If no response in 8s, it's a zombie socket
-        );
-
-        if (error) throw error;
-
-        if (data.success) {
-            setCurrentUser(prev => ({ ...prev, xp: prev.xp + data.xp_awarded }));
-            setCompletedQuizIds(prev => [...prev, questionId]);
-            showToast(`Correct! +${data.xp_awarded} XP awarded.`, 'success');
-            return { success: true };
-        } else {
-            if (data.message.includes('already claimed')) {
-                await fetchProfile(currentUser.id, currentUser.email); 
-                setCompletedQuizIds(prev => [...prev, questionId]); 
-                return { success: true }; 
-            }
-            showToast(data.message, 'error');
-            return { success: false, message: data.message };
-        }
-    } catch (err) {
-        console.error("Quiz Sync Error:", err);
-        // If it fails, the user is likely offline. We show an informative toast.
-        showToast("Syncing points...", "info");
-        
-        await fetchProfile(currentUser.id, currentUser.email);
-        await fetchQuizHistory(currentUser.id);
-
-        // Check if the question we just tried is now in the "Completed" list
-        const { data: verify } = await supabase
-            .from('quiz_completions')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .eq('question_id', questionId)
-            .maybeSingle();
-
-        if (verify) {
-            showToast("Points restored from server!", "success");
-            return { success: true };
-        }
-
-        showToast("Connection reset. Please try that answer again.", "info");
-        return { success: false, message: "Network Reset" };
+    // --- STEP 1: OPTIMISTIC UPDATE (Instant Feedback) ---
+    // We don't wait for the server. We move the bar and mark the quest done locally.
+    if (isCorrectLocal) {
+        setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpReward }));
+        setCompletedQuizIds(prev => [...prev, questionId]);
+        showToast(`Correct! +${xpReward} XP awarded.`, 'success');
     }
+
+    // --- STEP 2: BACKGROUND HARDENING (Immortal Sync) ---
+    // This runs silently. If the user switched tabs, this handles the "Wake Up."
+    const syncInBackground = async () => {
+        try {
+            // Wake up radio
+            try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){ supabase.realtime.connect(); }
+
+            // Attempt Atomic RPC
+            const { data, error } = await withTimeout(
+                supabase.rpc('submit_quiz_answer', {
+                    question_id_input: questionId,
+                    selected_index: selectedIndex
+                }), 12000 // 12s for rural 4G
+            );
+
+            if (error) {
+                // If already claimed, sync the XP bar to be 100% sure
+                if (error.message.includes('already claimed')) {
+                    await fetchProfile(currentUser.id, currentUser.email);
+                } else { throw error; }
+            }
+            
+            console.log("SQ-Quiz: Background sync successful.");
+        } catch (err) {
+            console.error("SQ-Quiz: Sync failed, attempting Self-Healing...", err);
+            
+            // SELF-HEALING: Check if the server actually finished it
+            const { data: verify } = await supabase
+                .from('quiz_completions')
+                .select('id')
+                .eq('user_id', currentUser.id)
+                .eq('question_id', questionId)
+                .maybeSingle();
+
+            if (verify) {
+                console.log("SQ-Quiz: Verification found. Points are safe.");
+                // Sync the XP bar one last time to match the server
+                await fetchProfile(currentUser.id, currentUser.email);
+            } else {
+                // Only if it REALLY failed (no points on server) do we revert the local XP
+                if (isCorrectLocal) {
+                    showToast("Sync failed. Points will update on next refresh.", "info");
+                }
+            }
+        }
+    };
+
+    syncInBackground(); // Fire and forget!
+    return true; 
 };
 
 
