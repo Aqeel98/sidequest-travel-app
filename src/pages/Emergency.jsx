@@ -3,7 +3,7 @@ import { HeartPulse, Phone, MapPin, Shield, Siren, AlertCircle, Navigation, Sear
 
 // --- DATA: ALL 25 DISTRICTS + YOUR REGIONAL NOTES ---
 const HOSPITAL_DATA = [
-    // --- WESTERN PROVINCE (Colombo & Suburbs) ---
+    // --- WESTERN PROVINCE (Colombo ) ---
     { name: "Colombo National Hospital", district: "Colombo", type: "Public", contact: "+94 11 269 1111", lat: 6.9192, lng: 79.8681, note: "Best public trauma center. Emergency hub for Colombo City and Hanthana area transfers." },
     { name: "Lanka Hospitals (Pvt)", district: "Colombo", type: "Private", contact: "+94 11 543 0000", lat: 6.8920, lng: 79.8770, note: "Top-tier private option. 24/7 ER with English-speaking staff." },
     { name: "Durdans Hospital (Pvt)", district: "Colombo", type: "Private", contact: "+94 11 214 0000", lat: 6.9125, lng: 79.8544, note: "Cardiac and general ER near Colpetty/Bambalapitiya." },
