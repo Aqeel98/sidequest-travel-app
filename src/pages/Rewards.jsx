@@ -140,9 +140,8 @@ const LinkifyText = ({ text }) => {
                     </h2>
                     
                     <p className="text-gray-600 leading-relaxed mb-12 text-lg font-medium">
-                        We are currently scouting the island for local partners who care about impact as much as you do. 
-                        Your XP is a sign of the mark you've left on Sri Lanka, hold onto it. 
-                        We’ll be unlocking exclusive rewards at partner cafes, hotels, and workshops very soon.
+                    We’re scouting Sri Lanka for impact-driven partners. Your XP shows the mark you’ve made. 
+                    Save it to unlock exclusive rewards at cafés, stays, and workshops soon.
                     </p>
 
                     {/* --- COMING SOON GRAPHIC --- */}

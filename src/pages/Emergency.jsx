@@ -183,8 +183,8 @@ const Emergency = () => {
                 <div className="flex gap-3">
                     <AlertCircle className="text-yellow-600 flex-shrink-0" />
                     <p className="text-xs text-yellow-800 font-bold leading-relaxed">
-                        Safety Tip: Always have your travel insurance details and NIC /passport copy with you. 
-                        In an extreme emergency, contact your embassy first. Suwa Seriya (1990) is a free island-wide service.
+                        Safety Tip: Carry your insurance details and a copy of your NIC or passport. 
+                        In emergencies, contact your embassy or call Suwa Seriya (1990), free island-wide support.
                     </p>
                 </div>
             </div>
