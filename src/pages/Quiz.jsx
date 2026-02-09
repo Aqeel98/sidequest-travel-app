@@ -22,32 +22,43 @@ const Quiz = () => {
     const [level2Started, setLevel2Started] = useState(localStorage.getItem('sq_l2_start') === 'true');
 
 
-    const userLevel = useMemo(() => {
-        if (quizBank.length === 0) return 1;
-        
-        const level1Ids = quizBank.filter(q => q.level === 1).map(q => q.id);
-        const isLevel1Done = level1Ids.every(id => completedQuizIds.includes(id));
-        
-        return isLevel1Done ? 2 : 1;
+    const level1RemainingCount = useMemo(() => {
+        if (!quizBank.length) return 0;
+        return quizBank.filter(q => q.level === 1 && !completedQuizIds.includes(q.id)).length;
     }, [quizBank, completedQuizIds]);
 
-    useEffect(() => {
-    
-        if (quizBank.length > 0 && availableQuestions.length === 0) {
+    const userLevel = useMemo(() => {
+        if (quizBank.length === 0) return 1;
+        return (level1RemainingCount === 0) ? 2 : 1;
+    }, [quizBank, level1RemainingCount]);
 
+    const isLevel1Finished = useMemo(() => {
+        const hasLevel1Content = quizBank.some(q => q.level === 1);
+        return hasLevel1Content && level1RemainingCount === 0;
+    }, [quizBank, level1RemainingCount]);
+
+    useEffect(() => {
+
+        if (quizBank.length > 0 && availableQuestions.length === 0) {
             const snapshot = quizBank.filter(q => 
                 q.level === userLevel && 
                 !completedQuizIds.includes(q.id)
             );
 
-            for (let i = snapshot.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [snapshot[i], snapshot[j]] = [snapshot[j], snapshot[i]];
+            if (snapshot.length > 0) {
+                for (let i = snapshot.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [snapshot[i], snapshot[j]] = [snapshot[j], snapshot[i]];
+                }
+                setAvailableQuestions(snapshot);
             }
 
-            setAvailableQuestions(snapshot);
+            if (currentIndex >= snapshot.length) {
+                setCurrentIndex(0);
+                localStorage.setItem('sq_quiz_index', '0');
+            }
         }
-    }, [quizBank, completedQuizIds, userLevel]); 
+    }, [quizBank, userLevel, availableQuestions.length]);
 
     const currentQuestion = availableQuestions[currentIndex];
     
@@ -134,10 +145,6 @@ useEffect(() => {
         }
     };
 
-    const isLevel1Finished = useMemo(() => {
-        const level1Ids = quizBank.filter(q => q.level === 1).map(q => q.id);
-        return level1Ids.length > 0 && level1Ids.every(id => completedQuizIds.includes(id));
-    }, [quizBank, completedQuizIds]);
 
     // --- 1. GUEST CHECK (Keep this first) ---
     if (!currentUser) {
@@ -198,7 +205,13 @@ useEffect(() => {
     }
 
     // --- 3. FINAL TROPHY CHECK  ---
-    const allDone = quizBank.length > 0 && quizBank.every(q => completedQuizIds.includes(q.id));
+    const allDone = useMemo(() => {
+        if (quizBank.length === 0) return false;
+        // If we are on Level 2 and no questions are left in the whole bank
+        const remainingInGame = quizBank.filter(q => !completedQuizIds.includes(q.id)).length;
+        return remainingInGame === 0;
+    }, [quizBank, completedQuizIds]);
+
     if (allDone) {
         return (
             <div className="min-h-screen bg-brand-50 flex items-center justify-center px-4 text-center">
@@ -219,11 +232,15 @@ useEffect(() => {
         );
     }
 
-    // --- 4. LOADING  ---
     if (!currentQuestion) {
         return (
-            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center relative overflow-hidden">
-                 <div className="text-brand-800 font-bold animate-pulse text-xl">Preparing Expedition...</div>
+            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center">
+                <div className="relative">
+                    {/* A subtle spinning compass for the background */}
+                    <Compass size={60} className="text-brand-700/20 animate-spin-slow" />
+                    {/* A pulsing spark in the middle to show life */}
+                    <Sparkles size={24} className="text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                </div>
             </div>
         );
     }
