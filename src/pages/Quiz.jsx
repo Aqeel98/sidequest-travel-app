@@ -86,8 +86,17 @@ const Quiz = () => {
 
     if (!currentUser) {
         return (
-            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
-                <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white">
+            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center relative overflow-hidden">
+
+            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+                <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
+                <Leaf size={300} className="absolute top-10 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
+                <Waves size={350} className="absolute top-1/2 -left-20 text-brand-900 opacity-[0.02] -rotate-12" />
+                <Anchor size={300} className="absolute -bottom-10 -right-10 text-brand-900 opacity-[0.04] -rotate-45" />
+                <Bird size={200} className="absolute bottom-20 left-1/4 text-brand-900 opacity-[0.02] rotate-12" />
+            </div>
+
+            <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white relative z-10">
                     <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Lock className="text-brand-600" size={40} />
                     </div>
@@ -114,10 +123,27 @@ const Quiz = () => {
         );
     }
 
-    if (availableQuestions.length === 0) {
+    if (currentUser && quizBank.length > 0 && !currentQuestion) {
+        return (
+            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center relative overflow-hidden">
+                 <div className="text-brand-800 font-bold animate-pulse text-xl">Preparing Expedition...</div>
+            </div>
+        );
+    }
+
+    if (quizBank.length > 0 && availableQuestions.length === 0) {
         return (
             <div className="min-h-screen bg-brand-50 flex items-center justify-center px-4 text-center">
-                <div className="max-w-md">
+
+            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+                <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
+                <Leaf size={300} className="absolute top-10 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
+                <Waves size={350} className="absolute top-1/2 -left-20 text-brand-900 opacity-[0.02] -rotate-12" />
+                <Anchor size={300} className="absolute -bottom-10 -right-10 text-brand-900 opacity-[0.04] -rotate-45" />
+                <Bird size={200} className="absolute bottom-20 left-1/4 text-brand-900 opacity-[0.02] rotate-12" />
+            </div>
+
+            <div className="max-w-md relative z-10">
                     <div className="bg-white p-10 rounded-[2rem] shadow-2xl border-4 border-white">
                         <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Trophy className="text-yellow-600" size={40} />
