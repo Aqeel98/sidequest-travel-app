@@ -18,63 +18,41 @@ const QuestSkeleton = () => (
   </div>
 );
 
-// Create a stable list of 60 random positions
 const GHOST_ASSETS = [
+  // Section 1: The Trailhead (800px - 2000px)
   { icon: Compass, top: 800, left: 5, size: 80, rot: -12 },
   { icon: Palmtree, top: 950, left: 85, size: 100, rot: 15 },
-  { icon: Mountain, top: 1200, left: 15, size: 70, rot: 45 },
-  { icon: Heart, top: 1400, left: 75, size: 60, rot: -10 },
-  { icon: Anchor, top: 1600, left: 10, size: 90, rot: -45 },
-  { icon: Leaf, top: 1850, left: 90, size: 65, rot: 30 },
-  { icon: Bird, top: 2100, left: 40, size: 55, rot: 12 },
-  { icon: Waves, top: 2300, left: 5, size: 120, rot: 0 },
-  { icon: Backpack, top: 2500, left: 80, size: 75, rot: -15 },
-  { icon: Map, top: 2750, left: 15, size: 85, rot: 10 },
-  { icon: Zap, top: 3000, left: 70, size: 70, rot: 45 },
-  { icon: Ship, top: 3250, left: 12, size: 100, rot: -5 },
-  { icon: Globe, top: 3500, left: 88, size: 80, rot: 20 },
-  { icon: Trees, top: 3800, left: 5, size: 90, rot: -10 },
-  { icon: Tent, top: 4100, left: 82, size: 70, rot: 15 },
-  { icon: Camera, top: 4350, left: 20, size: 60, rot: -12 },
-  { icon: Sun, top: 4600, left: 95, size: 110, rot: 0 },
-  { icon: Moon, top: 4900, left: 8, size: 50, rot: 30 },
-  { icon: Compass, top: 5200, left: 75, size: 90, rot: -20 },
-  { icon: Mountain, top: 5400, left: 25, size: 80, rot: 10 },
-  { icon: Leaf, top: 5700, left: 92, size: 70, rot: -45 },
-  { icon: Anchor, top: 6000, left: 10, size: 100, rot: 15 },
-  // Adding more clusters to make it "Crowded"
-  { icon: Bird, top: 1050, left: 30, size: 40, rot: 45 },
-  { icon: Map, top: 1300, left: 50, size: 60, rot: -30 },
-  { icon: Sparkles, top: 1700, left: 35, size: 80, rot: 0 },
-  { icon: Zap, top: 1950, left: 60, size: 50, rot: 20 },
-  { icon: Heart, top: 2200, left: 25, size: 45, rot: -15 },
-  { icon: Waves, top: 2600, left: 55, size: 130, rot: 10 },
-  { icon: Palmtree, top: 2900, left: 30, size: 90, rot: -20 },
-  { icon: Trees, top: 3150, left: 45, size: 70, rot: 45 },
-  { icon: Ship, top: 3400, left: 65, size: 110, rot: -10 },
-  { icon: Globe, top: 3700, left: 25, size: 60, rot: 15 },
-  { icon: Tent, top: 4000, left: 55, size: 80, rot: -5 },
-  { icon: Camera, top: 4250, left: 40, size: 70, rot: 25 },
-  { icon: Backpack, top: 4500, left: 10, size: 90, rot: -20 },
-  { icon: Sun, top: 4800, left: 60, size: 50, rot: 45 },
-  { icon: Moon, top: 5100, left: 35, size: 70, rot: -15 },
-  { icon: Leaf, top: 5350, left: 5, size: 60, rot: 10 },
-  { icon: Mountain, top: 5600, left: 70, size: 100, rot: -30 },
-  { icon: Anchor, top: 5900, left: 45, size: 80, rot: 20 },
-  { icon: Compass, top: 6200, left: 20, size: 75, rot: 45 },
-  { icon: Bird, top: 6500, left: 85, size: 60, rot: -10 },
-  { icon: Heart, top: 6800, left: 15, size: 90, rot: 30 },
-  { icon: Waves, top: 7100, left: 75, size: 140, rot: -5 },
-  { icon: Zap, top: 7400, left: 40, size: 80, rot: 15 },
-  { icon: Palmtree, top: 7700, left: 10, size: 100, rot: -20 },
-  { icon: Trees, top: 8000, left: 60, size: 80, rot: 10 },
-  { icon: Ship, top: 8300, left: 30, size: 110, rot: 45 },
-  { icon: Globe, top: 8600, left: 90, size: 70, rot: -15 },
-  { icon: Map, top: 8900, left: 5, size: 95, rot: 20 },
-  { icon: Compass, top: 9200, left: 55, size: 85, rot: -30 },
-  { icon: Sun, top: 9500, left: 80, size: 120, rot: 0 }
-];
+  { icon: Cat, top: 1100, left: 15, size: 90, rot: 0 }, // Leopard Silhouette
+  { icon: PawPrint, top: 1150, left: 22, size: 40, rot: 20 }, // Leopard Track
+  { icon: PawPrint, top: 1220, left: 18, size: 35, rot: -10 }, // Leopard Track
+  { icon: Mountain, top: 1400, left: 70, size: 110, rot: 10 },
+  { icon: Gem, top: 1600, left: 10, size: 60, rot: 45 }, // Ratnapura Gem
+  { icon: Trees, top: 1800, left: 50, size: 90, rot: -5 },
+  { icon: Bird, top: 1950, left: 88, size: 70, rot: 12 },
 
+  // Section 2: Mid-Journey (2000px - 4000px)
+  { icon: Waves, top: 2200, left: 5, size: 140, rot: 0 },
+  { icon: Fish, top: 2350, left: 12, size: 60, rot: -20 },
+  { icon: Anchor, top: 2600, left: 80, size: 90, rot: -15 },
+  { icon: Shell, top: 2750, left: 75, size: 50, rot: 30 },
+  { icon: Ship, top: 3000, left: 15, size: 120, rot: 5 },
+  { icon: Backpack, top: 3300, left: 60, size: 80, rot: -12 },
+  { icon: Map, top: 3550, left: 10, size: 90, rot: 10 },
+  { icon: Wind, top: 3800, left: 45, size: 100, rot: 0 },
+
+  // Section 3: Deep Expedition (4000px - 7000px)
+  { icon: Tent, top: 4100, left: 85, size: 90, rot: 15 },
+  { icon: Camera, top: 4300, left: 20, size: 70, rot: -10 },
+  { icon: Feather, top: 4500, left: 55, size: 60, rot: 45 },
+  { icon: Heart, top: 4800, left: 12, size: 85, rot: -5 },
+  { icon: Zap, top: 5100, left: 78, size: 90, rot: 20 },
+  { icon: Globe, top: 5400, left: 5, size: 100, rot: -15 },
+  { icon: Sun, top: 5800, left: 90, size: 130, rot: 0 },
+  { icon: Moon, top: 6200, left: 15, size: 80, rot: 30 },
+  { icon: Gem, top: 6500, left: 50, size: 50, rot: -20 },
+  { icon: PawPrint, top: 6800, left: 82, size: 45, rot: 10 },
+  { icon: Cat, top: 6950, left: 75, size: 100, rot: -5 },
+];
 
 const Home = () => {
   const hasRestored = useRef(false);
@@ -234,13 +212,13 @@ const Home = () => {
 
       {/* --- AESTHETIC HEADER END --- */}
 
-        {/* --- BACKGROUND GHOST ICONS (Sands of Discovery) --- */}
+        {/* --- BACKGROUND GHOST ICONS (Crowded Discovery Trail) --- */}
       <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
           
-          {/* 1. Primary Set (0.08 Opacity for Visibility) */}
+          {/* Loop 1: Primary Discovery */}
           {GHOST_ASSETS.map((asset, idx) => (
               <asset.icon 
-                  key={`primary-${idx}`}
+                  key={`p-${idx}`}
                   size={asset.size}
                   style={{
                       position: 'absolute',
@@ -254,19 +232,36 @@ const Home = () => {
               />
           ))}
 
-          {/* 2. Secondary "Crowd" Set (Slightly Offset to fill gaps) */}
+          {/* Loop 2: The Scatter (Crowded Shift) */}
           {GHOST_ASSETS.map((asset, idx) => (
               <asset.icon 
-                  key={`extra-${idx}`}
-                  size={asset.size * 0.7} 
+                  key={`s-${idx}`}
+                  size={asset.size * 0.7}
                   style={{
                       position: 'absolute',
-                      top: `${asset.top + 500}px`, // Shifted down
-                      left: `${(asset.left + 45) % 100}%`, // Shifted to center/right
-                      transform: `rotate(${asset.rot + 180}deg)`,
+                      top: `${asset.top + 600}px`, // Shifted down
+                      left: `${(asset.left + 40) % 95}%`, // Shifted sideways
+                      transform: `rotate(${asset.rot + 90}deg)`,
                       opacity: 0.06,
                       color: '#5D4037',
                       filter: 'blur(0.6px)'
+                  }}
+              />
+          ))}
+
+          {/* Loop 3: Tiny Details (Maximum Crowd) */}
+          {GHOST_ASSETS.map((asset, idx) => (
+              <asset.icon 
+                  key={`t-${idx}`}
+                  size={asset.size * 0.5}
+                  style={{
+                      position: 'absolute',
+                      top: `${asset.top + 1200}px`, // Shifted far down
+                      left: `${(asset.left + 70) % 95}%`, // Shifted far sideways
+                      transform: `rotate(${asset.rot - 45}deg)`,
+                      opacity: 0.04,
+                      color: '#5D4037',
+                      filter: 'blur(1px)'
                   }}
               />
           ))}

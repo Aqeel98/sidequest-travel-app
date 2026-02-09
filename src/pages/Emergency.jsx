@@ -143,7 +143,9 @@ const Emergency = () => {
     }, [searchQuery, userLoc]);
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 pb-32 bg-gray-50 min-h-screen">
+        <div className="min-h-screen bg-[#E6D5B8] pb-20">
+            <div className="max-w-4xl mx-auto px-4 py-8 pb-32 min-h-screen">
+            
             <h1 className="text-3xl font-black mb-2 text-gray-900 flex items-center tracking-tight">
                 <HeartPulse className="text-red-600 mr-3" size={32} /> Safety & Emergency
             </h1>
@@ -240,7 +242,7 @@ const Emergency = () => {
                     );
                 })}
             </div>
-
+            </div> 
             
         </div>
     );
