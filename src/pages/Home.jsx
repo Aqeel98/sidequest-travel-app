@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, 
   Leaf, Waves, Heart, Bird, Palmtree, Backpack, Map, Zap, Ship, 
-  Globe, Trees, Tent, Camera, Sun, Moon, 
-  Cat, Footprints, Gem, Fish, Shell, Feather, Wind 
+  Globe, Trees, Tent, Camera, Sun, Moon
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -22,39 +21,34 @@ const QuestSkeleton = () => (
 );
 
 const GHOST_ASSETS = [
-  // Section 1: The Trailhead (800px - 2000px)
+  // Section 1: The Trailhead
   { icon: Compass, top: 800, left: 5, size: 80, rot: -12 },
   { icon: Palmtree, top: 950, left: 85, size: 100, rot: 15 },
-  { icon: Cat, top: 1100, left: 15, size: 90, rot: 0 }, // Leopard Silhouette
-  { icon: Footprints, top: 1150, left: 22, size: 40, rot: 20 }, // Leopard Track
-  { icon: Footprints, top: 1220,  left: 18, size: 35, rot: -10 }, // Leopard Track
+  { icon: Bird, top: 1100, left: 15, size: 90, rot: 0 }, 
+  { icon: MapPin, top: 1150, left: 22, size: 40, rot: 20 }, 
+  { icon: MapPin, top: 1220, left: 18, size: 35, rot: -10 }, 
   { icon: Mountain, top: 1400, left: 70, size: 110, rot: 10 },
-  { icon: Gem, top: 1600, left: 10, size: 60, rot: 45 }, // Ratnapura Gem
+  { icon: Sparkles, top: 1600, left: 10, size: 60, rot: 45 }, 
   { icon: Trees, top: 1800, left: 50, size: 90, rot: -5 },
   { icon: Bird, top: 1950, left: 88, size: 70, rot: 12 },
 
-  // Section 2: Mid-Journey (2000px - 4000px)
+  // Section 2: Mid-Journey
   { icon: Waves, top: 2200, left: 5, size: 140, rot: 0 },
-  { icon: Fish, top: 2350, left: 12, size: 60, rot: -20 },
   { icon: Anchor, top: 2600, left: 80, size: 90, rot: -15 },
-  { icon: Shell, top: 2750, left: 75, size: 50, rot: 30 },
   { icon: Ship, top: 3000, left: 15, size: 120, rot: 5 },
   { icon: Backpack, top: 3300, left: 60, size: 80, rot: -12 },
   { icon: Map, top: 3550, left: 10, size: 90, rot: 10 },
-  { icon: Wind, top: 3800, left: 45, size: 100, rot: 0 },
+  { icon: Zap, top: 3800, left: 45, size: 100, rot: 0 },
 
-  // Section 3: Deep Expedition (4000px - 7000px)
+  // Section 3: Deep Expedition
   { icon: Tent, top: 4100, left: 85, size: 90, rot: 15 },
   { icon: Camera, top: 4300, left: 20, size: 70, rot: -10 },
-  { icon: Feather, top: 4500, left: 55, size: 60, rot: 45 },
   { icon: Heart, top: 4800, left: 12, size: 85, rot: -5 },
   { icon: Zap, top: 5100, left: 78, size: 90, rot: 20 },
   { icon: Globe, top: 5400, left: 5, size: 100, rot: -15 },
   { icon: Sun, top: 5800, left: 90, size: 130, rot: 0 },
   { icon: Moon, top: 6200, left: 15, size: 80, rot: 30 },
-  { icon: Gem, top: 6500, left: 50, size: 50, rot: -20 },
-  { icon: Footprints, top: 6800, left: 82, size: 45, rot: 10 },
-  { icon: Cat, top: 6950, left: 75, size: 100, rot: -5 },
+  { icon: Sparkles, top: 6500, left: 50, size: 50, rot: -20 }
 ];
 
 const Home = () => {
