@@ -5,7 +5,7 @@ import {
   MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, 
   Leaf, Waves, Heart, Bird, Palmtree, Backpack, Map, Zap, Ship, 
   Globe, Trees, Tent, Camera, Sun, Moon, 
-  Cat, PawPrint, Gem, Fish, Shell, Feather, Wind 
+  Cat, Footprints, Gem, Fish, Shell, Feather, Wind 
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -26,8 +26,8 @@ const GHOST_ASSETS = [
   { icon: Compass, top: 800, left: 5, size: 80, rot: -12 },
   { icon: Palmtree, top: 950, left: 85, size: 100, rot: 15 },
   { icon: Cat, top: 1100, left: 15, size: 90, rot: 0 }, // Leopard Silhouette
-  { icon: PawPrint, top: 1150, left: 22, size: 40, rot: 20 }, // Leopard Track
-  { icon: PawPrint, top: 1220, left: 18, size: 35, rot: -10 }, // Leopard Track
+  { icon: Footprints, top: 1150, left: 22, size: 40, rot: 20 }, // Leopard Track
+  { icon: Footprints, top: 1220,  left: 18, size: 35, rot: -10 }, // Leopard Track
   { icon: Mountain, top: 1400, left: 70, size: 110, rot: 10 },
   { icon: Gem, top: 1600, left: 10, size: 60, rot: 45 }, // Ratnapura Gem
   { icon: Trees, top: 1800, left: 50, size: 90, rot: -5 },
@@ -53,7 +53,7 @@ const GHOST_ASSETS = [
   { icon: Sun, top: 5800, left: 90, size: 130, rot: 0 },
   { icon: Moon, top: 6200, left: 15, size: 80, rot: 30 },
   { icon: Gem, top: 6500, left: 50, size: 50, rot: -20 },
-  { icon: PawPrint, top: 6800, left: 82, size: 45, rot: 10 },
+  { icon: Footprints, top: 6800, left: 82, size: 45, rot: 10 },
   { icon: Cat, top: 6950, left: 75, size: 100, rot: -5 },
 ];
 
