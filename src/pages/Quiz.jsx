@@ -199,7 +199,7 @@ useEffect(() => {
                     </div>
                     <h2 className="text-3xl font-black text-gray-900 mb-3">Level 1 Complete!</h2>
                     <p className="text-gray-600 mb-8 font-medium leading-relaxed">
-                        Excellent work! You've mastered the basics. Are you ready for the Expert Level? 
+                       You've mastered the basics. Are you ready for the Expert Level? 
                     </p>
                     <button 
                         onClick={() => {
