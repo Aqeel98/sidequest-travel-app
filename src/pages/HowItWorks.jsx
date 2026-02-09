@@ -66,7 +66,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pb-20">
+    <div className="min-h-screen bg-[#E6D5B8] pb-20">
       
       {/* --- HERO SECTION --- */}
       <div className="bg-brand-600 pt-32 pb-20 px-4 text-center relative overflow-hidden">
@@ -133,7 +133,7 @@ const HowItWorks = () => {
 
         {/* --- THE SIDEQUEST PROMISE (Privacy & Trust) --- */}
         {activeTab === 'traveler' && (
-            <div className="mt-12 bg-slate-50 border border-slate-200 rounded-3xl p-8">
+            <div className="mt-12 bg-white/40 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-sm">
                 <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">The SideQuest Promise</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
@@ -179,7 +179,7 @@ const HowItWorks = () => {
 
                 {/* --- THE PARTNER MODEL (Now matching the Promise section colors) --- */}
         {activeTab === 'partner' && (
-            <div className="mt-12 bg-slate-50 border border-slate-200 rounded-3xl p-8">
+            <div className="mt-12 bg-white/40 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-sm">
                 <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">The Partner Model</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     
