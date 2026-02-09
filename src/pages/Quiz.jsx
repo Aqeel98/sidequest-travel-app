@@ -24,23 +24,26 @@ const Quiz = () => {
 
     const level1RemainingCount = useMemo(() => {
         if (!quizBank.length) return 0;
+        // Count questions that are level 1 AND not in the completed list
         return quizBank.filter(q => q.level === 1 && !completedQuizIds.includes(q.id)).length;
     }, [quizBank, completedQuizIds]);
 
     const userLevel = useMemo(() => {
         if (quizBank.length === 0) return 1;
-        return (level1RemainingCount === 0) ? 2 : 1;
-    }, [quizBank, level1RemainingCount]);
+        // Logic: If L1 is done and the user HAS clicked the "Start L2" button
+        if (level1RemainingCount === 0 && level2Started) return 2;
+        return 1;
+    }, [quizBank, level1RemainingCount, level2Started]);
 
     const isLevel1Finished = useMemo(() => {
-        const hasLevel1Content = quizBank.some(q => q.level === 1);
-        return hasLevel1Content && level1RemainingCount === 0;
+        const hasL1 = quizBank.some(q => q.level === 1);
+        return hasL1 && level1RemainingCount === 0;
     }, [quizBank, level1RemainingCount]);
 
     useEffect(() => {
 
         if (quizBank.length > 0 && availableQuestions.length === 0) {
-
+            
             const snapshot = quizBank.filter(q => 
                 q.level === userLevel && 
                 !completedQuizIds.includes(q.id)
@@ -55,14 +58,14 @@ const Quiz = () => {
                 
                 setAvailableQuestions(shuffled);
 
-                if (currentIndex >= shuffled.length) {
+                if (currentIndex !== 0) {
                     setCurrentIndex(0);
                     localStorage.setItem('sq_quiz_index', '0');
                 }
             }
         }
-
-    }, [quizBank, userLevel, completedQuizIds]);
+  
+    }, [quizBank.length, userLevel, availableQuestions.length]);
 
     const currentQuestion = availableQuestions[currentIndex];
     
@@ -202,17 +205,16 @@ useEffect(() => {
                        You've mastered the basics. Are you ready for the Expert Level? 
                     </p>
                     <button 
-                        onClick={() => {
-                            localStorage.setItem('sq_l2_start', 'true');
-                            localStorage.removeItem('sq_quiz_index');
-                            setLevel2Started(true);
-                            setCurrentIndex(0);
-                            setAvailableQuestions([]); 
-                        }} 
-                        className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg"
-                    >
-                        Unlock Level 2
-                    </button>
+        onClick={() => {
+
+            localStorage.setItem('sq_l2_start', 'true');
+            localStorage.setItem('sq_quiz_index', '0');
+            window.location.reload();
+        }} 
+        className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-brand-700 transition-colors"
+    >
+        Unlock Level 2
+    </button>
                 </div>
             </div>
         );
