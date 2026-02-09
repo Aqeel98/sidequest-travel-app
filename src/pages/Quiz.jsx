@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Trophy, HelpCircle, Zap, Sparkles, ChevronRight, 
-  RotateCcw, Brain, MapPin, Award , Lock
+  RotateCcw, Brain, MapPin, Award , Lock, Compass, Leaf, Waves, Anchor, Bird 
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
