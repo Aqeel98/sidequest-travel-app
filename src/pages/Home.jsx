@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, 
   Leaf, Waves, Heart, Bird, Palmtree, Backpack, Map, Zap, Ship, 
-  Globe, Trees, Tent, Camera, Sun, Moon
+  Globe, Trees, Tent, Camera, Sun, Moon, Sparkles
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -25,16 +25,18 @@ const ICON_POOL = [
   Backpack, Map, Zap, Ship, Globe, Trees, Tent, Camera, Sun, Moon, Sparkles
 ];
 
-// Generate 80 scattered artifacts
-const SCATTERED_ICONS = Array.from({ length: 80 }).map((_, i) => ({
+// Generate 150 scattered artifacts for a "Crowded" look
+const SCATTERED_ICONS = Array.from({ length: 150 }).map((_, i) => ({
   Icon: ICON_POOL[i % ICON_POOL.length],
-  // Spreads vertically every 150px-200px so it never looks empty
-  top: 800 + (i * 160), 
-  // Uses a prime-number multiplier to stagger icons horizontally (avoids vertical lines)
-  left: (i * 37.7) % 95, 
-  size: 50 + (i % 4) * 15, // Variations: 50px, 65px, 80px, 95px
-  rot: (i * 45) % 360,
-  opacity: i % 2 === 0 ? 0.08 : 0.05 // Some look deeper in the sand
+  // Tighter vertical spacing (80px instead of 160px)
+  top: 700 + (i * 85), 
+  // Organic horizontal scatter using Sine to fill the "wings" of the screen
+  left: (Math.sin(i) * 45 + 50), 
+  // Varied sizes for depth
+  size: 40 + (i % 5) * 20, 
+  rot: (i * 37) % 360,
+  // Varying opacity creates a "shimmer" effect in the sand
+  opacity: i % 3 === 0 ? 0.09 : 0.05 
 }));
 
 const Home = () => {
@@ -195,8 +197,8 @@ const Home = () => {
 
       {/* --- AESTHETIC HEADER END --- */}
 
-        {/* --- BACKGROUND GHOST ICONS (Full Discovery Sands) --- */}
-      <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+        {/* --- BACKGROUND GHOST ICONS ( --- */}
+        <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
           {SCATTERED_ICONS.map((asset, idx) => (
               <asset.Icon 
                   key={idx}
@@ -208,7 +210,6 @@ const Home = () => {
                       transform: `rotate(${asset.rot}deg)`,
                       opacity: asset.opacity, 
                       color: '#5D4037', // Deep Earth Brown
-                      filter: 'blur(0.5px)' 
                   }}
               />
           ))}
