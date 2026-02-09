@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Trophy, HelpCircle, Zap, Sparkles, ChevronRight, 
-  RotateCcw, Brain, MapPin, Award , Lock, Compass, Leaf, Waves, Anchor, Bird 
+  RotateCcw, Brain, MapPin, Award , Lock, Compass, Leaf, Waves, Anchor, Bird, CheckCircle
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -19,12 +19,26 @@ const Quiz = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availableQuestions, setAvailableQuestions] = useState([]);
     const [xpAnimate, setXpAnimate] = useState(false);
+    const [level2Started, setLevel2Started] = useState(localStorage.getItem('sq_l2_start') === 'true');
+
+
+    const userLevel = useMemo(() => {
+        if (quizBank.length === 0) return 1;
+        
+        const level1Ids = quizBank.filter(q => q.level === 1).map(q => q.id);
+        const isLevel1Done = level1Ids.every(id => completedQuizIds.includes(id));
+        
+        return isLevel1Done ? 2 : 1;
+    }, [quizBank, completedQuizIds]);
 
     useEffect(() => {
     
         if (quizBank.length > 0 && availableQuestions.length === 0) {
 
-            const snapshot = quizBank.filter(q => !completedQuizIds.includes(q.id));
+            const snapshot = quizBank.filter(q => 
+                q.level === userLevel && 
+                !completedQuizIds.includes(q.id)
+            );
 
             for (let i = snapshot.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -33,7 +47,7 @@ const Quiz = () => {
 
             setAvailableQuestions(snapshot);
         }
-    }, [quizBank, completedQuizIds]); 
+    }, [quizBank, completedQuizIds, userLevel]); 
 
     const currentQuestion = availableQuestions[currentIndex];
     
@@ -120,82 +134,96 @@ useEffect(() => {
         }
     };
 
+    const isLevel1Finished = useMemo(() => {
+        const level1Ids = quizBank.filter(q => q.level === 1).map(q => q.id);
+        return level1Ids.length > 0 && level1Ids.every(id => completedQuizIds.includes(id));
+    }, [quizBank, completedQuizIds]);
+
+    // --- 1. GUEST CHECK (Keep this first) ---
     if (!currentUser) {
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center relative overflow-hidden">
-
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
-                <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
-                <Leaf size={300} className="absolute top-10 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
-                <Waves size={350} className="absolute top-1/2 -left-20 text-brand-900 opacity-[0.02] -rotate-12" />
-                <Anchor size={300} className="absolute -bottom-10 -right-10 text-brand-900 opacity-[0.04] -rotate-45" />
-                <Bird size={200} className="absolute bottom-20 left-1/4 text-brand-900 opacity-[0.02] rotate-12" />
-            </div>
-
-            <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white relative z-10">
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+                    <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
+                    <Leaf size={300} className="absolute top-10 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
+                    <Waves size={350} className="absolute top-1/2 -left-20 text-brand-900 opacity-[0.02] -rotate-12" />
+                    <Anchor size={300} className="absolute -bottom-10 -right-10 text-brand-900 opacity-[0.04] -rotate-45" />
+                    <Bird size={200} className="absolute bottom-20 left-1/4 text-brand-900 opacity-[0.02] rotate-12" />
+                </div>
+                <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white relative z-10">
                     <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Lock className="text-brand-600" size={40} />
                     </div>
                     <h2 className="text-3xl font-black text-gray-900 mb-3">Locked Quest</h2>
-                    <p className="text-gray-600 mb-8 font-medium leading-relaxed">
-                        Sri Lankan secrets are earned! Login to play the quiz, earn XP, and unlock real-world rewards.
-                    </p>
-                    <div className="space-y-3">
-                        <button 
-                            onClick={() => setShowAuthModal(true)} 
-                            className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-brand-100"
-                        >
-                            Login to Play
-                        </button>
-                        <button 
-                            onClick={() => navigate('/')} 
-                            className="w-full text-gray-400 font-bold py-2 hover:text-gray-600 transition-colors"
-                        >
-                            Maybe Later
-                        </button>
-                    </div>
+                    <p className="text-gray-600 mb-8 font-medium leading-relaxed">Sri Lankan secrets are earned! Login to play the quiz and earn XP.</p>
+                    <button onClick={() => setShowAuthModal(true)} className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">Login to Play</button>
+                    <button onClick={() => navigate('/')} className="mt-4 text-gray-400 font-bold hover:text-brand-600 block w-full text-center">Maybe Later</button>
                 </div>
             </div>
         );
     }
 
-    if (currentUser && quizBank.length > 0 && !currentQuestion) {
+    // --- 2. LEVEL 1 COMPLETE PROMOTION (Show this when L1 is done but L2 hasn't started) ---
+    if (isLevel1Finished && !level2Started) {
         return (
-            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center relative overflow-hidden">
-                 <div className="text-brand-800 font-bold animate-pulse text-xl">Preparing Expedition...</div>
+            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center relative overflow-hidden">
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+                    <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
+                    <Sparkles size={300} className="absolute top-1/2 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
+                </div>
+                <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white relative z-10">
+                    <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle size={40} className="text-emerald-500" />
+                    </div>
+                    <h2 className="text-3xl font-black text-gray-900 mb-3">Level 1 Complete!</h2>
+                    <p className="text-gray-600 mb-8 font-medium leading-relaxed">
+                        Excellent work! You've mastered the basics. Are you ready for the **Expert Level**? 
+                        The next 60 questions will test your deep knowledge.
+                    </p>
+                    <button 
+                        onClick={() => {
+                            localStorage.setItem('sq_l2_start', 'true');
+                            localStorage.removeItem('sq_quiz_index');
+                            setLevel2Started(true);
+                            setCurrentIndex(0);
+                            setAvailableQuestions([]); 
+                        }} 
+                        className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg"
+                    >
+                        Unlock Level 2
+                    </button>
+                </div>
             </div>
         );
     }
 
-    if (quizBank.length > 0 && availableQuestions.length === 0) {
+    // --- 3. FINAL TROPHY CHECK (Only show when EVERYTHING in the bank is done) ---
+    const allDone = quizBank.length > 0 && quizBank.every(q => completedQuizIds.includes(q.id));
+    if (allDone) {
         return (
             <div className="min-h-screen bg-brand-50 flex items-center justify-center px-4 text-center">
-
-            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
-                <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
-                <Leaf size={300} className="absolute top-10 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
-                <Waves size={350} className="absolute top-1/2 -left-20 text-brand-900 opacity-[0.02] -rotate-12" />
-                <Anchor size={300} className="absolute -bottom-10 -right-10 text-brand-900 opacity-[0.04] -rotate-45" />
-                <Bird size={200} className="absolute bottom-20 left-1/4 text-brand-900 opacity-[0.02] rotate-12" />
-            </div>
-
-            <div className="max-w-md relative z-10">
-                    <div className="bg-white p-10 rounded-[2rem] shadow-2xl border-4 border-white">
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+                    <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
+                </div>
+                <div className="max-w-md relative z-10">
+                    <div className="bg-white p-10 rounded-[2rem] shadow-2xl border-4 border-white text-center">
                         <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Trophy className="text-yellow-600" size={40} />
                         </div>
                         <h2 className="text-3xl font-black text-gray-900 mb-4">Quiz Master!</h2>
-                        <p className="text-gray-600 mb-8 font-medium">
-                            You've answered all available questions! Check back soon as we add more Sri Lankan secrets to the map.
-                        </p>
-                        <button 
-                            onClick={() => navigate('/rewards')} 
-                            className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-brand-100 flex items-center justify-center group"
-                        >
-                            Go Redeem My XP <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        <p className="text-gray-600 mb-8 font-medium">You've answered all available questions! Check back soon for more Sri Lankan secrets.</p>
+                        <button onClick={() => navigate('/rewards')} className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">Go Redeem My XP</button>
                     </div>
                 </div>
+            </div>
+        );
+    }
+
+    // --- 4. LOADING CHECK ---
+    if (!currentQuestion) {
+        return (
+            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center relative overflow-hidden">
+                 <div className="text-brand-800 font-bold animate-pulse text-xl">Preparing Expedition...</div>
             </div>
         );
     }
