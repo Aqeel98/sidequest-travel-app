@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, 
   Leaf, Waves, Heart, Bird, Palmtree, Backpack, Map, Zap, Ship, 
-  Globe, Trees, Tent, Camera, Sun, Moon, Cat, PawPrint, Gem, Fish, Shell, Feather, Wind 
+  Globe, Trees, Tent, Camera, Sun, Moon, 
+  Cat, PawPrint, Gem, Fish, Shell, Feather, Wind 
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
