@@ -410,7 +410,7 @@ useEffect(() => {
         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Expedition Wisdom</span>
     </div>
     
-    {/* The key={quoteIdx} forces the animation to restart every 10 seconds */}
+    {/* The key={quoteIdx} restart every 10 seconds */}
     <p 
         key={quoteIdx} 
         className="text-gray-500 font-medium text-sm italic leading-relaxed animate-in fade-in slide-in-from-bottom-1 duration-1000 max-w-sm"
