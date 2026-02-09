@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, Leaf, Waves, Heart, Bird, Palmtree, Backpack, Map, Zap    } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, PlusCircle,  Compass, Mountain, Anchor, Leaf, Waves, Heart, 
+  Bird, Palmtree, Backpack, Map, Zap, Ship, 
+  Globe, Trees, Tent, Camera, Sun, Moon    } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 
@@ -16,7 +18,62 @@ const QuestSkeleton = () => (
   </div>
 );
 
-
+// Create a stable list of 60 random positions
+const GHOST_ASSETS = [
+  { icon: Compass, top: 800, left: 5, size: 80, rot: -12 },
+  { icon: Palmtree, top: 950, left: 85, size: 100, rot: 15 },
+  { icon: Mountain, top: 1200, left: 15, size: 70, rot: 45 },
+  { icon: Heart, top: 1400, left: 75, size: 60, rot: -10 },
+  { icon: Anchor, top: 1600, left: 10, size: 90, rot: -45 },
+  { icon: Leaf, top: 1850, left: 90, size: 65, rot: 30 },
+  { icon: Bird, top: 2100, left: 40, size: 55, rot: 12 },
+  { icon: Waves, top: 2300, left: 5, size: 120, rot: 0 },
+  { icon: Backpack, top: 2500, left: 80, size: 75, rot: -15 },
+  { icon: Map, top: 2750, left: 15, size: 85, rot: 10 },
+  { icon: Zap, top: 3000, left: 70, size: 70, rot: 45 },
+  { icon: Ship, top: 3250, left: 12, size: 100, rot: -5 },
+  { icon: Globe, top: 3500, left: 88, size: 80, rot: 20 },
+  { icon: Trees, top: 3800, left: 5, size: 90, rot: -10 },
+  { icon: Tent, top: 4100, left: 82, size: 70, rot: 15 },
+  { icon: Camera, top: 4350, left: 20, size: 60, rot: -12 },
+  { icon: Sun, top: 4600, left: 95, size: 110, rot: 0 },
+  { icon: Moon, top: 4900, left: 8, size: 50, rot: 30 },
+  { icon: Compass, top: 5200, left: 75, size: 90, rot: -20 },
+  { icon: Mountain, top: 5400, left: 25, size: 80, rot: 10 },
+  { icon: Leaf, top: 5700, left: 92, size: 70, rot: -45 },
+  { icon: Anchor, top: 6000, left: 10, size: 100, rot: 15 },
+  // Adding more clusters to make it "Crowded"
+  { icon: Bird, top: 1050, left: 30, size: 40, rot: 45 },
+  { icon: Map, top: 1300, left: 50, size: 60, rot: -30 },
+  { icon: Sparkles, top: 1700, left: 35, size: 80, rot: 0 },
+  { icon: Zap, top: 1950, left: 60, size: 50, rot: 20 },
+  { icon: Heart, top: 2200, left: 25, size: 45, rot: -15 },
+  { icon: Waves, top: 2600, left: 55, size: 130, rot: 10 },
+  { icon: Palmtree, top: 2900, left: 30, size: 90, rot: -20 },
+  { icon: Trees, top: 3150, left: 45, size: 70, rot: 45 },
+  { icon: Ship, top: 3400, left: 65, size: 110, rot: -10 },
+  { icon: Globe, top: 3700, left: 25, size: 60, rot: 15 },
+  { icon: Tent, top: 4000, left: 55, size: 80, rot: -5 },
+  { icon: Camera, top: 4250, left: 40, size: 70, rot: 25 },
+  { icon: Backpack, top: 4500, left: 10, size: 90, rot: -20 },
+  { icon: Sun, top: 4800, left: 60, size: 50, rot: 45 },
+  { icon: Moon, top: 5100, left: 35, size: 70, rot: -15 },
+  { icon: Leaf, top: 5350, left: 5, size: 60, rot: 10 },
+  { icon: Mountain, top: 5600, left: 70, size: 100, rot: -30 },
+  { icon: Anchor, top: 5900, left: 45, size: 80, rot: 20 },
+  { icon: Compass, top: 6200, left: 20, size: 75, rot: 45 },
+  { icon: Bird, top: 6500, left: 85, size: 60, rot: -10 },
+  { icon: Heart, top: 6800, left: 15, size: 90, rot: 30 },
+  { icon: Waves, top: 7100, left: 75, size: 140, rot: -5 },
+  { icon: Zap, top: 7400, left: 40, size: 80, rot: 15 },
+  { icon: Palmtree, top: 7700, left: 10, size: 100, rot: -20 },
+  { icon: Trees, top: 8000, left: 60, size: 80, rot: 10 },
+  { icon: Ship, top: 8300, left: 30, size: 110, rot: 45 },
+  { icon: Globe, top: 8600, left: 90, size: 70, rot: -15 },
+  { icon: Map, top: 8900, left: 5, size: 95, rot: 20 },
+  { icon: Compass, top: 9200, left: 55, size: 85, rot: -30 },
+  { icon: Sun, top: 9500, left: 80, size: 120, rot: 0 }
+];
 
 
 const Home = () => {
@@ -178,32 +235,21 @@ const Home = () => {
       {/* --- AESTHETIC HEADER END --- */}
 
         {/* --- BACKGROUND GHOST ICONS (Sands of Discovery) --- */}
-      <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
-          
-          {/* Top Cluster (The Journey Begins) */}
-          <Compass size={90} className="absolute top-[800px] left-[6%] text-brand-900 opacity-[0.03] -rotate-12" />
-          <Palmtree size={100} className="absolute top-[950px] right-[8%] text-brand-900 opacity-[0.02] rotate-12" />
-          
-          {/* Middle Cluster (Highlands & Nature) */}
-          <Mountain size={80} className="absolute top-[1500px] left-[12%] text-brand-900 opacity-[0.03] rotate-45" />
-          <Leaf size={70} className="absolute top-[1800px] right-[10%] text-brand-900 opacity-[0.03] -rotate-12" />
-          <Bird size={60} className="absolute top-[2100px] left-[25%] text-brand-900 opacity-[0.02] rotate-12" />
-
-          {/* Deep Blue Cluster (Marine & Coast) */}
-          <Waves size={120} className="absolute top-[2500px] left-[-20px] text-brand-900 opacity-[0.02] rotate-12" />
-          <Anchor size={90} className="absolute top-[2800px] right-[5%] text-brand-900 opacity-[0.03] -rotate-45" />
-
-          {/* Adventure Cluster (Expedition) */}
-          <Backpack size={75} className="absolute top-[3400px] left-[8%] text-brand-900 opacity-[0.02] rotate-12" />
-          <Map size={90} className="absolute top-[3700px] right-[12%] text-brand-900 opacity-[0.03] -rotate-12" />
-
-          {/* Mission Cluster (Impact & Energy) */}
-          <Heart size={70} className="absolute top-[4300px] left-[15%] text-brand-900 opacity-[0.03] -rotate-12" />
-          <Zap size={80} className="absolute top-[4600px] right-[10%] text-brand-900 opacity-[0.03] rotate-45" />
-          
-          {/* Final Subtle Markers */}
-          <MapPin size={60} className="absolute top-[5200px] left-[50%] text-brand-900 opacity-[0.02] rotate-12" />
-          <Sparkles size={80} className="absolute top-[5600px] right-[15%] text-brand-900 opacity-[0.02] rotate-45" />
+        <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+          {GHOST_ASSETS.map((asset, idx) => (
+              <asset.icon 
+                  key={idx}
+                  size={asset.size}
+                  style={{
+                      position: 'absolute',
+                      top: `${asset.top}px`,
+                      left: `${asset.left}%`,
+                      transform: `rotate(${asset.rot}deg)`,
+                      opacity: 0.02, // Very faint because it is crowded
+                      color: '#2D3748' // Deep brand color (brand-900)
+                  }}
+              />
+          ))}
       </div>
 
       {/* Quest Grid */}
