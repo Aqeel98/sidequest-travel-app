@@ -7,6 +7,8 @@ import {
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Quiz = () => {
+
+
     const navigate = useNavigate();
     const { currentUser, quizBank, completedQuizIds, submitQuizAnswer, showToast, setShowAuthModal } = useSideQuest(); 
 
@@ -35,6 +37,40 @@ const Quiz = () => {
 
     const currentQuestion = availableQuestions[currentIndex];
     
+
+    // --- 10 THOUGHT PROVOKING QUOTES ---
+const EXPLORER_QUOTES = [
+    "Your impact is measured in the stories you leave behind, not the miles you travel.",
+    "Sri Lanka's beauty is a gift from the past; your actions are a gift to its future.",
+    "Ancient irrigation taught us that every drop counts. How will you make your mark?",
+    "Discovery isn't just seeing new lands, it's seeing with new eyes.",
+    "The ocean doesn't separate islands; it connects them. We are all stewards of the same sea.",
+    "Tread lightly on this emerald isle; the ancestors are watching and the future is waiting.",
+    "Sigiriya was built on a dream of height. May your journey reach the same heights of purpose.",
+    "A traveler sees what they see; an adventurer sees what they have come to see.",
+    "Leave the island better than you found it, one quest at a time.",
+    "The map shows you where to go, but your heart decides why you stay.",
+    "The sea turtle returns to its birth beach after thousands of miles. May your journey always lead you back to your purpose.",
+"Ancient cities were built to outlast kings. True impact is building something that the next generation will inherit with pride.",
+"The Yoda Ela canal moves water by mere inches, yet it nourishes entire kingdoms. Great change begins with small, steady steps.",
+"Every destination is a mirror. What you find in the island is a reflection of what you bring within you.",
+"The most beautiful view in Sri Lanka isn't a mountain or a beach; it's the smile of a stranger you've truly helped.",
+"A rainforest takes centuries to grow and a moment to disappear. Be the shield that protects the emerald silence.",
+"Even the hardest granite was once shaped by the hands of dreamers. Your actions today are the carvings of tomorrow.",
+"In a world of fast travel, be the one who lingers. The island reveals its secrets only to those who stop to listen.",
+"Take more than memories; take inspiration. Leave more than footprints; leave an impact.",
+"One island, thousands of stories. You are not just a visitor; you are a character in its unfolding history."
+];
+
+const [quoteIdx, setQuoteIdx] = useState(0);
+
+// --- ROTATION ENGINE (10 SECONDS) ---
+useEffect(() => {
+    const interval = setInterval(() => {
+        setQuoteIdx((prev) => (prev + 1) % EXPLORER_QUOTES.length);
+    }, 10000);
+    return () => clearInterval(interval); // Clean up on tab switch
+}, []);
 
     // Scroll to top on load
     useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -308,11 +344,20 @@ const Quiz = () => {
                     </div>
                 </div>
 
-                {/* --- FUN TIP --- */}
-                <div className="mt-8 flex items-center justify-center gap-2 text-gray-500 font-medium text-sm italic text-center">
-                    <Brain size={16} />
-                    Did you know? SideQuest quizzes help you discover hidden spots on the map.
-                </div>
+                <div className="mt-12 min-h-[60px] flex flex-col items-center justify-center text-center px-6">
+    <div className="flex items-center justify-center gap-2 text-brand-600/50 mb-2">
+        <Brain size={16} />
+        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Expedition Wisdom</span>
+    </div>
+    
+    {/* The key={quoteIdx} forces the animation to restart every 10 seconds */}
+    <p 
+        key={quoteIdx} 
+        className="text-gray-500 font-medium text-sm italic leading-relaxed animate-in fade-in slide-in-from-bottom-1 duration-1000 max-w-sm"
+                      >
+        "{EXPLORER_QUOTES[quoteIdx]}"
+             </p>
+            </div>
             </div>
         </div>
     );
