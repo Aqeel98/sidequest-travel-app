@@ -20,17 +20,15 @@ const Quiz = () => {
     const [availableQuestions, setAvailableQuestions] = useState([]);
     const [xpAnimate, setXpAnimate] = useState(false);
     const [level2Started, setLevel2Started] = useState(localStorage.getItem('sq_l2_start') === 'true');
-
+    
 
     const level1RemainingCount = useMemo(() => {
         if (!quizBank.length) return 0;
-        // Count questions that are level 1 AND not in the completed list
         return quizBank.filter(q => q.level === 1 && !completedQuizIds.includes(q.id)).length;
     }, [quizBank, completedQuizIds]);
 
     const userLevel = useMemo(() => {
         if (quizBank.length === 0) return 1;
-        // Logic: If L1 is done and the user HAS clicked the "Start L2" button
         if (level1RemainingCount === 0 && level2Started) return 2;
         return 1;
     }, [quizBank, level1RemainingCount, level2Started]);
@@ -40,13 +38,20 @@ const Quiz = () => {
         return hasL1 && level1RemainingCount === 0;
     }, [quizBank, level1RemainingCount]);
 
+    // --- 3. FINAL TROPHY CHECK  ---
+    const allDone = useMemo(() => {
+        if (quizBank.length === 0) return false;
+        const remainingInGame = quizBank.filter(q => !completedQuizIds.includes(q.id)).length;
+        return remainingInGame === 0;
+    }, [quizBank, completedQuizIds]);
+
     useEffect(() => {
 
-        if (quizBank.length > 0 && availableQuestions.length === 0) {
-            
+        const isTransitioning = isLevel1Finished && !level2Started;
+
+        if (quizBank.length > 0 && availableQuestions.length === 0 && !isTransitioning && !allDone) {
             const snapshot = quizBank.filter(q => 
-                q.level === userLevel && 
-                !completedQuizIds.includes(q.id)
+                q.level === userLevel && !completedQuizIds.includes(q.id)
             );
 
             if (snapshot.length > 0) {
@@ -55,19 +60,16 @@ const Quiz = () => {
                     const j = Math.floor(Math.random() * (i + 1));
                     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
-                
                 setAvailableQuestions(shuffled);
-
                 if (currentIndex !== 0) {
                     setCurrentIndex(0);
                     localStorage.setItem('sq_quiz_index', '0');
                 }
             }
         }
-  
-    }, [quizBank.length, userLevel, availableQuestions.length]);
+    }, [quizBank.length, userLevel, availableQuestions.length, isLevel1Finished, level2Started, allDone]);
 
-    const currentQuestion = availableQuestions[currentIndex];
+   
     
 
     // --- 10 THOUGHT PROVOKING QUOTES ---
@@ -108,7 +110,7 @@ useEffect(() => {
     useEffect(() => { window.scrollTo(0, 0); }, []);
 
     const handleAnswer = (index) => {
-        if (isCorrect !== null) return; 
+        if (isCorrect !== null || !currentQuestion) return; 
         
         setSelectedOption(index);
 
@@ -137,6 +139,8 @@ useEffect(() => {
     useEffect(() => {
         localStorage.setItem('sq_quiz_index', currentIndex.toString());
     }, [currentIndex]);
+
+    const currentQuestion = availableQuestions[currentIndex];
 
     const nextQuestion = () => {
         setSelectedOption(null);
@@ -188,6 +192,26 @@ useEffect(() => {
         );
     }
 
+    if (allDone) {
+        return (
+            <div className="min-h-screen bg-brand-50 flex items-center justify-center px-4 text-center">
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+                    <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
+                </div>
+                <div className="max-w-md relative z-10">
+                    <div className="bg-white p-10 rounded-[2rem] shadow-2xl border-4 border-white text-center">
+                        <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Trophy className="text-yellow-600" size={40} />
+                        </div>
+                        <h2 className="text-3xl font-black text-gray-900 mb-4">Quiz Master!</h2>
+                        <p className="text-gray-600 mb-8 font-medium">You've answered all available questions! Check back soon for more Sri Lankan secrets.</p>
+                        <button onClick={() => navigate('/rewards')} className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">Go Redeem My XP</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     // --- 2. LEVEL 1 COMPLETE PROMOTION (Show this when L1 is done but L2 hasn't started) ---
     if (isLevel1Finished && !level2Started) {
         return (
@@ -220,33 +244,8 @@ useEffect(() => {
         );
     }
 
-    // --- 3. FINAL TROPHY CHECK  ---
-    const allDone = useMemo(() => {
-        if (quizBank.length === 0) return false;
-        // If we are on Level 2 and no questions are left in the whole bank
-        const remainingInGame = quizBank.filter(q => !completedQuizIds.includes(q.id)).length;
-        return remainingInGame === 0;
-    }, [quizBank, completedQuizIds]);
 
-    if (allDone) {
-        return (
-            <div className="min-h-screen bg-brand-50 flex items-center justify-center px-4 text-center">
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
-                    <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
-                </div>
-                <div className="max-w-md relative z-10">
-                    <div className="bg-white p-10 rounded-[2rem] shadow-2xl border-4 border-white text-center">
-                        <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Trophy className="text-yellow-600" size={40} />
-                        </div>
-                        <h2 className="text-3xl font-black text-gray-900 mb-4">Quiz Master!</h2>
-                        <p className="text-gray-600 mb-8 font-medium">You've answered all available questions! Check back soon for more Sri Lankan secrets.</p>
-                        <button onClick={() => navigate('/rewards')} className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">Go Redeem My XP</button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    
 
     if (!currentQuestion) {
         return (
@@ -254,8 +253,6 @@ useEffect(() => {
                 <div className="relative">
                     {/* A subtle spinning compass for the background */}
                     <Compass size={60} className="text-brand-700/20 animate-spin-slow" />
-                    {/* A pulsing spark in the middle to show life */}
-                    <Sparkles size={24} className="text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                 </div>
             </div>
         );
