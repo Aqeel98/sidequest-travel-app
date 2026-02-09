@@ -219,7 +219,7 @@ useEffect(() => {
         );
     }
 
-    // --- 4. LOADING CHECK ---
+    // --- 4. LOADING  ---
     if (!currentQuestion) {
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center relative overflow-hidden">
