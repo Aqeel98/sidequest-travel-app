@@ -139,8 +139,41 @@ const Quiz = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#E6D5B8] pb-20 pt-10 px-4">
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-[#E6D5B8] pb-20 pt-10 px-4 relative overflow-hidden">
+
+<div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+            {/* Top Left: Compass (Exploration) */}
+            <Compass 
+                size={400} 
+                className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" 
+            />
+            
+            {/* Top Right: Leaf (Environmental Impact) */}
+            <Leaf 
+                size={300} 
+                className="absolute top-10 -right-10 text-brand-900 opacity-[0.03] rotate-45" 
+            />
+            
+            {/* Middle Left: Waves (Marine Life) */}
+            <Waves 
+                size={350} 
+                className="absolute top-1/2 -left-20 text-brand-900 opacity-[0.02] -rotate-12" 
+            />
+
+            {/* Bottom Right: Anchor (Coastal Culture) */}
+            <Anchor 
+                size={300} 
+                className="absolute -bottom-10 -right-10 text-brand-900 opacity-[0.04] -rotate-45" 
+            />
+
+             {/* Bottom Center: Bird (Wildlife) */}
+             <Bird 
+                size={200} 
+                className="absolute bottom-20 left-1/4 text-brand-900 opacity-[0.02] rotate-12" 
+            />
+        </div>
+
+        <div className="max-w-2xl mx-auto relative z-10">
                 
                 {/* --- HEADER: XP PROGRESS --- */}
                 <div className="flex items-center justify-between mb-6 bg-white/50 backdrop-blur-md p-4 rounded-2xl border border-white/50 shadow-sm">
