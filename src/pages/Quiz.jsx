@@ -197,7 +197,7 @@ useEffect(() => {
         );
     }
 
-    // --- 3. FINAL TROPHY CHECK (Only show when EVERYTHING in the bank is done) ---
+    // --- 3. FINAL TROPHY CHECK  ---
     const allDone = quizBank.length > 0 && quizBank.every(q => completedQuizIds.includes(q.id));
     if (allDone) {
         return (
