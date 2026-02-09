@@ -20,36 +20,22 @@ const QuestSkeleton = () => (
   </div>
 );
 
-const GHOST_ASSETS = [
-  // Section 1: The Trailhead
-  { icon: Compass, top: 800, left: 5, size: 80, rot: -12 },
-  { icon: Palmtree, top: 950, left: 85, size: 100, rot: 15 },
-  { icon: Bird, top: 1100, left: 15, size: 90, rot: 0 }, 
-  { icon: MapPin, top: 1150, left: 22, size: 40, rot: 20 }, 
-  { icon: MapPin, top: 1220, left: 18, size: 35, rot: -10 }, 
-  { icon: Mountain, top: 1400, left: 70, size: 110, rot: 10 },
-  { icon: Sparkles, top: 1600, left: 10, size: 60, rot: 45 }, 
-  { icon: Trees, top: 1800, left: 50, size: 90, rot: -5 },
-  { icon: Bird, top: 1950, left: 88, size: 70, rot: 12 },
-
-  // Section 2: Mid-Journey
-  { icon: Waves, top: 2200, left: 5, size: 140, rot: 0 },
-  { icon: Anchor, top: 2600, left: 80, size: 90, rot: -15 },
-  { icon: Ship, top: 3000, left: 15, size: 120, rot: 5 },
-  { icon: Backpack, top: 3300, left: 60, size: 80, rot: -12 },
-  { icon: Map, top: 3550, left: 10, size: 90, rot: 10 },
-  { icon: Zap, top: 3800, left: 45, size: 100, rot: 0 },
-
-  // Section 3: Deep Expedition
-  { icon: Tent, top: 4100, left: 85, size: 90, rot: 15 },
-  { icon: Camera, top: 4300, left: 20, size: 70, rot: -10 },
-  { icon: Heart, top: 4800, left: 12, size: 85, rot: -5 },
-  { icon: Zap, top: 5100, left: 78, size: 90, rot: 20 },
-  { icon: Globe, top: 5400, left: 5, size: 100, rot: -15 },
-  { icon: Sun, top: 5800, left: 90, size: 130, rot: 0 },
-  { icon: Moon, top: 6200, left: 15, size: 80, rot: 30 },
-  { icon: Sparkles, top: 6500, left: 50, size: 50, rot: -20 }
+const ICON_POOL = [
+  Compass, Mountain, Anchor, Leaf, Waves, Heart, Bird, Palmtree, 
+  Backpack, Map, Zap, Ship, Globe, Trees, Tent, Camera, Sun, Moon, Sparkles
 ];
+
+// Generate 80 scattered artifacts
+const SCATTERED_ICONS = Array.from({ length: 80 }).map((_, i) => ({
+  Icon: ICON_POOL[i % ICON_POOL.length],
+  // Spreads vertically every 150px-200px so it never looks empty
+  top: 800 + (i * 160), 
+  // Uses a prime-number multiplier to stagger icons horizontally (avoids vertical lines)
+  left: (i * 37.7) % 95, 
+  size: 50 + (i % 4) * 15, // Variations: 50px, 65px, 80px, 95px
+  rot: (i * 45) % 360,
+  opacity: i % 2 === 0 ? 0.08 : 0.05 // Some look deeper in the sand
+}));
 
 const Home = () => {
   const hasRestored = useRef(false);
@@ -209,56 +195,20 @@ const Home = () => {
 
       {/* --- AESTHETIC HEADER END --- */}
 
-        {/* --- BACKGROUND GHOST ICONS (Crowded Discovery Trail) --- */}
+        {/* --- BACKGROUND GHOST ICONS (Full Discovery Sands) --- */}
       <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
-          
-          {/* Loop 1: Primary Discovery */}
-          {GHOST_ASSETS.map((asset, idx) => (
-              <asset.icon 
-                  key={`p-${idx}`}
+          {SCATTERED_ICONS.map((asset, idx) => (
+              <asset.Icon 
+                  key={idx}
                   size={asset.size}
                   style={{
                       position: 'absolute',
                       top: `${asset.top}px`,
                       left: `${asset.left}%`,
                       transform: `rotate(${asset.rot}deg)`,
-                      opacity: 0.08, 
-                      color: '#5D4037', 
-                      filter: 'blur(0.4px)' 
-                  }}
-              />
-          ))}
-
-          {/* Loop 2: The Scatter (Crowded Shift) */}
-          {GHOST_ASSETS.map((asset, idx) => (
-              <asset.icon 
-                  key={`s-${idx}`}
-                  size={asset.size * 0.7}
-                  style={{
-                      position: 'absolute',
-                      top: `${asset.top + 600}px`, // Shifted down
-                      left: `${(asset.left + 40) % 95}%`, // Shifted sideways
-                      transform: `rotate(${asset.rot + 90}deg)`,
-                      opacity: 0.06,
-                      color: '#5D4037',
-                      filter: 'blur(0.6px)'
-                  }}
-              />
-          ))}
-
-          {/* Loop 3: Tiny Details (Maximum Crowd) */}
-          {GHOST_ASSETS.map((asset, idx) => (
-              <asset.icon 
-                  key={`t-${idx}`}
-                  size={asset.size * 0.5}
-                  style={{
-                      position: 'absolute',
-                      top: `${asset.top + 1200}px`, // Shifted far down
-                      left: `${(asset.left + 70) % 95}%`, // Shifted far sideways
-                      transform: `rotate(${asset.rot - 45}deg)`,
-                      opacity: 0.04,
-                      color: '#5D4037',
-                      filter: 'blur(1px)'
+                      opacity: asset.opacity, 
+                      color: '#5D4037', // Deep Earth Brown
+                      filter: 'blur(0.5px)' 
                   }}
               />
           ))}
