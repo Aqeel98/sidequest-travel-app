@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ArrowRight, Sparkles, PlusCircle  } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, Leaf, Waves, Heart, Bird    } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 
@@ -85,7 +85,7 @@ const Home = () => {
 
   return (
     
-    <div className="pb-12 bg-[#E6D5B8] min-h-screen">
+    <div className="pb-12 bg-[#E6D5B8] min-h-screen relative overflow-hidden">
       
       {/* --- AESTHETIC HEADER START --- */}
 
@@ -177,8 +177,33 @@ const Home = () => {
 
       {/* --- AESTHETIC HEADER END --- */}
 
+        {/* --- BACKGROUND GHOST ICONS (Sands of Discovery) --- */}
+      <div className="absolute inset-0 pointer-events-none select-none z-0">
+          {/* Top Left area */}
+          <Compass size={120} className="absolute top-[800px] left-[5%] text-brand-900 opacity-[0.03] -rotate-12" />
+          
+          {/* Right side near top of grid */}
+          <Mountain size={100} className="absolute top-[1000px] right-[8%] text-brand-900 opacity-[0.03] rotate-12" />
+          
+          {/* Left side middle */}
+          <Anchor size={90} className="absolute top-[1500px] left-[10%] text-brand-900 opacity-[0.02] -rotate-45" />
+          
+          {/* Right side middle */}
+          <Leaf size={110} className="absolute top-[1800px] right-[5%] text-brand-900 opacity-[0.03] rotate-45" />
+
+          {/* Far left bottom-ish */}
+          <Waves size={150} className="absolute top-[2400px] left-[-20px] text-brand-900 opacity-[0.02] rotate-12" />
+
+          {/* Near bottom right */}
+          <Heart size={80} className="absolute top-[2800px] right-[12%] text-brand-900 opacity-[0.03] -rotate-12" />
+          
+          {/* Center scatter */}
+          <Bird size={70} className="absolute top-[2100px] left-[45%] text-brand-900 opacity-[0.02] rotate-12" />
+      </div>
+
       {/* Quest Grid */}
-      <div id="quests-grid" className="max-w-7xl mx-auto px-4 mt-20">
+      <div id="quests-grid" className="max-w-7xl mx-auto px-4 mt-20 relative z-10">
+
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Available Quests</h2>
