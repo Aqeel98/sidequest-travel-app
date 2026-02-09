@@ -40,25 +40,29 @@ const Quiz = () => {
     useEffect(() => {
 
         if (quizBank.length > 0 && availableQuestions.length === 0) {
+
             const snapshot = quizBank.filter(q => 
                 q.level === userLevel && 
                 !completedQuizIds.includes(q.id)
             );
 
             if (snapshot.length > 0) {
-                for (let i = snapshot.length - 1; i > 0; i--) {
+                const shuffled = [...snapshot];
+                for (let i = shuffled.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [snapshot[i], snapshot[j]] = [snapshot[j], snapshot[i]];
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
-                setAvailableQuestions(snapshot);
-            }
+                
+                setAvailableQuestions(shuffled);
 
-            if (currentIndex >= snapshot.length) {
-                setCurrentIndex(0);
-                localStorage.setItem('sq_quiz_index', '0');
+                if (currentIndex >= shuffled.length) {
+                    setCurrentIndex(0);
+                    localStorage.setItem('sq_quiz_index', '0');
+                }
             }
         }
-    }, [quizBank, userLevel, availableQuestions.length]);
+
+    }, [quizBank, userLevel, completedQuizIds]);
 
     const currentQuestion = availableQuestions[currentIndex];
     
@@ -139,9 +143,20 @@ useEffect(() => {
         if (currentIndex < availableQuestions.length - 1) {
             setCurrentIndex(prev => prev + 1);
         } else {
+
             localStorage.removeItem('sq_quiz_index');
-            setAvailableQuestions([]); 
-            setCurrentIndex(0);
+
+            const hasMoreInLevel = quizBank.some(q => 
+                q.level === userLevel && !completedQuizIds.includes(q.id)
+            );
+
+            if (hasMoreInLevel) {
+                setAvailableQuestions([]); 
+                setCurrentIndex(0);
+            } else {
+
+                console.log("SQ-Quiz: Level batch complete. Transitioning UI...");
+            }
         }
     };
 
