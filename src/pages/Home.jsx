@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, Leaf, Waves, Heart, Bird, TreePalm, Backpack, Map, Zap    } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, Leaf, Waves, Heart, Bird, Palmtree, Backpack, Map, Zap    } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 
@@ -177,33 +177,33 @@ const Home = () => {
 
       {/* --- AESTHETIC HEADER END --- */}
 
-        {/* --- BACKGROUND GHOST ICONS (Discovery Trail) --- */}
+        {/* --- BACKGROUND GHOST ICONS (Sands of Discovery) --- */}
       <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
           
-          {/* LEVEL 1: The Departure (Near Header) */}
-          <Compass size={110} className="absolute top-[750px] left-[4%] text-brand-900 opacity-[0.03] -rotate-12" />
-          <TreePalm size={130} className="absolute top-[900px] right-[5%] text-brand-900 opacity-[0.02] rotate-12" />
+          {/* Top Cluster (The Journey Begins) */}
+          <Compass size={90} className="absolute top-[800px] left-[6%] text-brand-900 opacity-[0.03] -rotate-12" />
+          <Palmtree size={100} className="absolute top-[950px] right-[8%] text-brand-900 opacity-[0.02] rotate-12" />
           
-          {/* LEVEL 2: The Ascent (Mountain/Nature) */}
-          <Mountain size={90} className="absolute top-[1400px] left-[10%] text-brand-900 opacity-[0.03] rotate-45" />
-          <Leaf size={80} className="absolute top-[1650px] right-[12%] text-brand-900 opacity-[0.04] -rotate-12" />
-          
-          {/* LEVEL 3: The Deep Blue (Coast/Marine) */}
-          <Anchor size={100} className="absolute top-[2100px] left-[6%] text-brand-900 opacity-[0.03] -rotate-45" />
-          <Waves size={160} className="absolute top-[2300px] right-[-30px] text-brand-900 opacity-[0.02] rotate-12" />
-          <Bird size={70} className="absolute top-[2600px] left-[20%] text-brand-900 opacity-[0.02] rotate-12" />
+          {/* Middle Cluster (Highlands & Nature) */}
+          <Mountain size={80} className="absolute top-[1500px] left-[12%] text-brand-900 opacity-[0.03] rotate-45" />
+          <Leaf size={70} className="absolute top-[1800px] right-[10%] text-brand-900 opacity-[0.03] -rotate-12" />
+          <Bird size={60} className="absolute top-[2100px] left-[25%] text-brand-900 opacity-[0.02] rotate-12" />
 
-          {/* LEVEL 4: The Expedition (Journey) */}
-          <Backpack size={85} className="absolute top-[3100px] right-[8%] text-brand-900 opacity-[0.03] rotate-12" />
-          <Map size={110} className="absolute top-[3450px] left-[5%] text-brand-900 opacity-[0.02] -rotate-12" />
+          {/* Deep Blue Cluster (Marine & Coast) */}
+          <Waves size={120} className="absolute top-[2500px] left-[-20px] text-brand-900 opacity-[0.02] rotate-12" />
+          <Anchor size={90} className="absolute top-[2800px] right-[5%] text-brand-900 opacity-[0.03] -rotate-45" />
 
-          {/* LEVEL 5: The Heart of the Mission (Social Impact) */}
-          <Heart size={80} className="absolute top-[4000px] right-[15%] text-brand-900 opacity-[0.03] -rotate-12" />
-          <Zap size={90} className="absolute top-[4300px] left-[12%] text-brand-900 opacity-[0.03] rotate-45" />
+          {/* Adventure Cluster (Expedition) */}
+          <Backpack size={75} className="absolute top-[3400px] left-[8%] text-brand-900 opacity-[0.02] rotate-12" />
+          <Map size={90} className="absolute top-[3700px] right-[12%] text-brand-900 opacity-[0.03] -rotate-12" />
+
+          {/* Mission Cluster (Impact & Energy) */}
+          <Heart size={70} className="absolute top-[4300px] left-[15%] text-brand-900 opacity-[0.03] -rotate-12" />
+          <Zap size={80} className="absolute top-[4600px] right-[10%] text-brand-900 opacity-[0.03] rotate-45" />
           
-          {/* LEVEL 6: Subtle Scatter (Deep Scroll) */}
-          <MapPin size={60} className="absolute top-[4800px] right-[10%] text-brand-900 opacity-[0.02] rotate-12" />
-          <Sparkles size={100} className="absolute top-[5300px] left-[8%] text-brand-900 opacity-[0.02] rotate-45" />
+          {/* Final Subtle Markers */}
+          <MapPin size={60} className="absolute top-[5200px] left-[50%] text-brand-900 opacity-[0.02] rotate-12" />
+          <Sparkles size={80} className="absolute top-[5600px] right-[15%] text-brand-900 opacity-[0.02] rotate-45" />
       </div>
 
       {/* Quest Grid */}
