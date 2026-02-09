@@ -235,18 +235,38 @@ const Home = () => {
       {/* --- AESTHETIC HEADER END --- */}
 
         {/* --- BACKGROUND GHOST ICONS (Sands of Discovery) --- */}
-        <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+          
+          {/* 1. Primary Set (0.08 Opacity for Visibility) */}
           {GHOST_ASSETS.map((asset, idx) => (
               <asset.icon 
-                  key={idx}
+                  key={`primary-${idx}`}
                   size={asset.size}
                   style={{
                       position: 'absolute',
                       top: `${asset.top}px`,
                       left: `${asset.left}%`,
                       transform: `rotate(${asset.rot}deg)`,
-                      opacity: 0.02, // Very faint because it is crowded
-                      color: '#2D3748' // Deep brand color (brand-900)
+                      opacity: 0.08, 
+                      color: '#5D4037', 
+                      filter: 'blur(0.4px)' 
+                  }}
+              />
+          ))}
+
+          {/* 2. Secondary "Crowd" Set (Slightly Offset to fill gaps) */}
+          {GHOST_ASSETS.map((asset, idx) => (
+              <asset.icon 
+                  key={`extra-${idx}`}
+                  size={asset.size * 0.7} 
+                  style={{
+                      position: 'absolute',
+                      top: `${asset.top + 500}px`, // Shifted down
+                      left: `${(asset.left + 45) % 100}%`, // Shifted to center/right
+                      transform: `rotate(${asset.rot + 180}deg)`,
+                      opacity: 0.06,
+                      color: '#5D4037',
+                      filter: 'blur(0.6px)'
                   }}
               />
           ))}
