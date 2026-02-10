@@ -3,8 +3,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, 
-  Leaf, Waves, Heart, Bird, Palmtree, Backpack, Map, Zap, Ship, 
-  Globe, Trees, Tent, Camera, Sun, Moon
+  Waves,  Bird, Palmtree, Sun, Moon
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -21,23 +20,28 @@ const QuestSkeleton = () => (
 );
 
 const ICON_POOL = [
-  Compass, Mountain, Anchor, Leaf, Waves, Heart, Bird, Palmtree, 
-  Backpack, Map, Zap, Ship, Globe, Trees, Tent, Camera, Sun, Moon, Sparkles
+  Mountain, Anchor, Waves, Bird, Palmtree, Sun, Moon
 ];
 
-// Generate 150 scattered artifacts for a "Crowded" look
-const SCATTERED_ICONS = Array.from({ length: 150 }).map((_, i) => ({
-  Icon: ICON_POOL[i % ICON_POOL.length],
-  // Tighter vertical spacing (80px instead of 160px)
-  top: 700 + (i * 85), 
-  // Organic horizontal scatter using Sine to fill the "wings" of the screen
-  left: (Math.sin(i) * 45 + 50), 
-  // Varied sizes for depth
-  size: 40 + (i % 5) * 20, 
-  rot: (i * 37) % 360,
-  // Varying opacity creates a "shimmer" effect in the sand
-  opacity: i % 3 === 0 ? 0.09 : 0.05 
-}));
+const SCATTERED_ICONS = Array.from({ length: 25 }).map((_, i) => {
+  // Alternates between left gutter (5-12%) and right gutter (88-95%)
+  const isLeft = i % 2 === 0;
+  const horizontalPos = isLeft 
+    ? (5 + (Math.random() * 7)) 
+    : (88 + (Math.random() * 7));
+
+  return {
+    Icon: ICON_POOL[i % ICON_POOL.length],
+    // Starts much lower to clear the teal header (1100px)
+    // Vertical spacing increased (350px) to prevent crowding
+    top: 1100 + (i * 350), 
+    left: horizontalPos, 
+    size: 40 + (i % 3) * 20, 
+    rot: (i * 42) % 360,
+    opacity: 0.04 // Ultra-subtle ghost effect
+  };
+});
+
 
 const Home = () => {
   const hasRestored = useRef(false);
@@ -209,7 +213,8 @@ const Home = () => {
                       left: `${asset.left}%`,
                       transform: `rotate(${asset.rot}deg)`,
                       opacity: asset.opacity, 
-                      color: '#5D4037', // Deep Earth Brown
+                      color: '#5D4037', 
+                      pointerEvents: 'none',
                   }}
               />
           ))}
