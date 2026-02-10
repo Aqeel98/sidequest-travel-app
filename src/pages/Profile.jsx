@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Award, Compass, Globe, CheckCircle, Clock, Leaf, Heart, Flag, Mountain, Map, Anchor, Bird } from 'lucide-react';
+import { Award, Compass, Globe, CheckCircle, Clock, Leaf, Heart, Flag, Mountain, Map, Anchor, Bird, Trophy } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const BADGE_THRESHOLDS = {
@@ -10,10 +10,12 @@ const BADGE_THRESHOLDS = {
     'Community Builder': 2,
     'Cultural Ambassador': 1,
     'Animal Ally': 1,
-    'Adventure Seeker': 2,    // For 'Adventure' category
-    'True Explorer': 2,       // For 'Exploration' category
-    'Ocean Guardian': 1,      // For 'Marine Adventure' category
-    'Wildlife Ranger': 1,     // For 'Wildlife Adventure' category
+    'Adventure Seeker': 2,    
+    'True Explorer': 2,       
+    'Ocean Guardian': 1,    
+    'Wildlife Ranger': 1,    
+    'Sports MVP': 1,
+    'Athletic Champion': 3,
 
 };
 
@@ -110,6 +112,24 @@ const Profile = () => {
        if (categoryCounts['Wildlife Adventure'] >= BADGE_THRESHOLDS['Wildlife Ranger']) {
             badges.push({ name: 'Wildlife Ranger', icon: <Bird size={24} />, color: 'text-lime-600', desc: 'Completed a Wildlife Adventure' });
        }
+       if (categoryCounts['Sports'] >= BADGE_THRESHOLDS['Sports MVP']) {
+        badges.push({ 
+            name: 'Sports MVP', 
+            icon: <Trophy size={24} />, 
+            color: 'text-indigo-500', 
+            desc: 'Completed your first Sports quest' 
+        });
+    }
+    
+    // Tier 2: Athletic Champion (THE NEW ONE)
+    if (categoryCounts['Sports'] >= BADGE_THRESHOLDS['Athletic Champion']) {
+        badges.push({ 
+            name: 'Athletic Champion', 
+            icon: <Zap size={24} />, 
+            color: 'text-indigo-700', 
+            desc: 'Completed 3+ Sports or Active quests' 
+        });
+    }
         return {
             totalXP: currentUser.xp,
             completedQuests,
