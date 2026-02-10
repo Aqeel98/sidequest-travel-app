@@ -388,11 +388,13 @@ const PartnerDashboard = () => {
                                         <option value="Social">Social</option>
                                         <option value="Animal Welfare">Animal Welfare</option>
                                         <option value="Education">Education</option>
+                                        <option value="Sports">Sports</option>
                                         <option value="Cultural">Cultural</option>
                                         <option value="Adventure">Adventure</option>
                                         <option value="Exploration">Exploration</option>
                                         <option value="Marine Adventure">Marine Adventure</option>
                                         <option value="Wildlife Adventure">Wildlife Adventure</option>
+                                        
                                     </select>
                                 </div>
                             ) : (

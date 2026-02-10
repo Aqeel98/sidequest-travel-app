@@ -161,9 +161,8 @@ const handleImageUpload = async (e) => {
         { name: 'title', label: 'Title', type: 'text' },
         { name: 'category', label: 'Category', type: 'select', options: 
         ['Environmental', 'Social', 'Animal Welfare', 'Education', 'Cultural','Adventure',
-        'Exploration',
-        'Marine Adventure',
-        'Wildlife Adventure'] },
+        'Exploration','Marine Adventure',
+        'Wildlife Adventure', 'Sports'] },
         { name: 'xp_value', label: 'XP Value', type: 'number' },
         { name: 'location_address', label: 'Location Name', type: 'text' },
         { name: 'lat', label: 'Latitude (Decimal Only)', type: 'number' },

@@ -73,6 +73,7 @@ const getCategoryColor = (cat) => {
   if (cat === 'Environmental') return 'bg-emerald-100 text-emerald-800';
   if (cat === 'Social') return 'bg-rose-100 text-rose-800';
   if (cat === 'Education') return 'bg-blue-100 text-blue-800';
+  if (cat === 'Sports') return 'bg-indigo-100 text-indigo-800';
   if (cat === 'Animal Welfare') return 'bg-pink-100 text-pink-800';
   return 'bg-gray-100 text-gray-800';
 };
