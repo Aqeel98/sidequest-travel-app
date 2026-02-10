@@ -270,9 +270,7 @@ const Home = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Available Quests</h2>
-            <p className="text-gray-500 mt-2">
-              Curated experiences, sorted by {userLoc ? 'closest distance 📍' : 'highest impact ⭐'}.
-              </p>
+            
           </div>
           <button onClick={() => navigate('/map')} className="hidden md:block text-brand-600 font-bold hover:underline">View All on Map</button>
         </div>
@@ -285,7 +283,7 @@ const Home = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input 
                 type="text"
-                placeholder="Search by name or location (e.g. Ella)..."
+                placeholder="Search by name or location (e.g. Colombo)..."
                 className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-sm focus:ring-4 focus:ring-brand-500/10 outline-none font-medium transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
