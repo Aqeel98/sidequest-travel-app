@@ -134,7 +134,7 @@ const HowItWorks = () => {
         {/* --- THE SIDEQUEST PROMISE (Privacy & Trust) --- */}
         {activeTab === 'traveler' && (
             <div className="mt-12 bg-white/40 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-sm">
-                <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">The SideQuest Promise</h3>
+                <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">Built for your journey</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
 
@@ -145,7 +145,7 @@ const HowItWorks = () => {
                         </div>
                         <h4 className="font-bold text-slate-900 mb-1">Private Exploration</h4>
                         <p className="text-sm text-slate-500">
-                            We value your freedom. SideQuest does not access or store your location data, not even for a moment. You explore the map on your own terms.
+                        You lead the way. SideQuest does not access or store your location data, not even for a moment. You explore the map on your own terms.
                         </p>
                     </div>
 
@@ -156,7 +156,7 @@ const HowItWorks = () => {
                         </div>
                         <h4 className="font-bold text-slate-900 mb-1">Stay Anonymous</h4>
                         <p className="text-sm text-slate-500">
-                            You can sign up with any nickname. We only need an email to save your XP and badges.
+                            You can sign up with any nickname. Only need an email to save your XP and badges.
                         </p>
                     </div>
 
@@ -167,7 +167,7 @@ const HowItWorks = () => {
                         </div>
                         <h4 className="font-bold text-slate-900 mb-1">Instant Recovery</h4>
                         <p className="text-sm text-slate-500">
-                            Forget your password? No problem. We send a secure Magic Link to your email to log you back in instantly.
+                        Jump back in instantly. No passwords to remember. A secure link in your inbox gets you back to the mission right away.
                         </p>
                     </div>
 
