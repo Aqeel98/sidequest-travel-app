@@ -3,7 +3,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, 
-  Waves,  Bird, Palmtree, Sun, Moon
+  Waves,  Bird, Palmtree, Sun, Moon,  Search, Crosshair, Loader2
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
@@ -59,20 +59,64 @@ const Home = () => {
   ];
 
 
+  const [searchQuery, setSearchQuery] = useState(
+    sessionStorage.getItem('sq_home_search') || ""
+);
+  const [userLoc, setUserLoc] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  };
+
+  const findClosest = () => {
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setIsLocating(false);
+            // Auto-scroll to results after locating
+            document.getElementById('quests-grid').scrollIntoView({ behavior: 'smooth' });
+        },
+        () => {
+            alert("Please enable GPS to find nearest quests.");
+            setIsLocating(false);
+        },
+        { enableHighAccuracy: true }
+    );
+  };
+
+
+  
   // Wrapper to save position before leaving
   const handleQuestClick = (questId) => {
     sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
     sessionStorage.setItem('sq_selected_category', selectedCategory); 
+    sessionStorage.setItem('sq_home_search', searchQuery);
     navigate(`/quest/${questId}`);
 };
 
 
   // Filter & Sort Logic
   const displayQuests = activeQuests
-      .filter(q => selectedCategory === 'All' || q.category === selectedCategory)
-      // Sort by XP (Highest to Lowest)
-      .sort((a, b) => (b.xp_value || 0) - (a.xp_value || 0));
-
+  .filter(q => {
+      const matchesCategory = selectedCategory === 'All' || q.category === selectedCategory;
+      const matchesSearch = q.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           q.location_address.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+  })
+  .sort((a, b) => {
+      if (userLoc) {
+          const dA = calculateDistance(userLoc.lat, userLoc.lng, a.lat, a.lng);
+          const dB = calculateDistance(userLoc.lat, userLoc.lng, b.lat, b.lng);
+          return dA - dB;
+      }
+      return (b.xp_value || 0) - (a.xp_value || 0);
+  });
 
 
       // --- SCROLL RESTORATION LOGIC ---
@@ -105,7 +149,7 @@ const Home = () => {
   }, []);
 
 
-
+  
 
   return (
     
@@ -226,10 +270,37 @@ const Home = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Available Quests</h2>
-            <p className="text-gray-500 mt-2">Curated experiences, sorted by highest impact.</p>
+            <p className="text-gray-500 mt-2">
+              Curated experiences, sorted by {userLoc ? 'closest distance 📍' : 'highest impact ⭐'}.
+              </p>
           </div>
           <button onClick={() => navigate('/map')} className="hidden md:block text-brand-600 font-bold hover:underline">View All on Map</button>
         </div>
+
+
+
+
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input 
+                type="text"
+                placeholder="Search by name or location (e.g. Ella)..."
+                className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-sm focus:ring-4 focus:ring-brand-500/10 outline-none font-medium transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+            />
+        </div>
+        <button 
+            onClick={findClosest}
+            disabled={isLocating}
+            className="flex items-center justify-center gap-2 bg-brand-600 text-white px-6 py-4 rounded-2xl font-bold shadow-lg shadow-brand-200 active:scale-95 transition-all whitespace-nowrap disabled:opacity-70"
+        >
+            {isLocating ? <Loader2 className="animate-spin" size={20}/> : <Crosshair size={20}/>}
+            {isLocating ? 'Locating...' : 'Find Closest'}
+        </button>
+    </div>
+
 
           {/* NEW: Partner Quick-Add Floating Button */}
     {/* Only visible to Partners/Admins */}
