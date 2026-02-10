@@ -16,6 +16,7 @@ const QuestDetails = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
 // --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
 const LinkifyText = ({ text }) => {
@@ -206,6 +207,18 @@ const getCategoryColor = (cat) => {
     }
   };
 
+  const getFirstSentence = (text) => {
+    if (!text) return "";
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    return sentences[0];
+};
+
+const getRemainingText = (text) => {
+    if (!text) return "";
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    return sentences.slice(1).join(" ");
+};
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
       <button onClick={() => navigate(-1)} className="text-brand-600 mb-4 font-medium flex items-center hover:underline">
@@ -251,12 +264,54 @@ const getCategoryColor = (cat) => {
           </button>
 
           {/* 1. Mission Brief (Yellow Box) */}
-          <div className="bg-yellow-50 p-6 rounded-2xl mb-6 border border-yellow-200">
-             <h3 className="font-bold text-yellow-800 text-lg mb-2">Mission Brief</h3>
-             <p className="text-yellow-900 leading-relaxed">
-         <LinkifyText text={quest.description} />
-              </p>
-          </div>
+<div className="bg-yellow-50 p-6 rounded-2xl mb-6 border border-yellow-200 shadow-sm">
+    {(() => {
+        // Split the text into Facts and Mission based on the marker
+        const parts = quest.description.split('[MISSION]');
+        const factsPart = parts[0]?.trim();
+        const missionPart = parts[1]?.trim();
+
+        return (
+            <div className="space-y-4">
+                {/* --- FACTS SECTION --- */}
+                <div>
+                    <h3 className="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">The Facts</h3>
+                    <p className="text-yellow-900 leading-relaxed text-sm">
+                        <LinkifyText text={getFirstSentence(factsPart)} />
+                        {isExpanded && (
+                            <span className="animate-in fade-in duration-500">
+                                {" "}<LinkifyText text={getRemainingText(factsPart)} />
+                            </span>
+                        )}
+                    </p>
+                </div>
+
+                {/* --- MISSION SECTION --- */}
+                {missionPart && (
+                    <div className="pt-2 border-t border-yellow-200/50">
+                        <h3 className="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">Your Mission</h3>
+                        <p className="text-yellow-900 leading-relaxed text-sm">
+                            <LinkifyText text={getFirstSentence(missionPart)} />
+                            {isExpanded && (
+                                <span className="animate-in fade-in duration-500">
+                                    {" "}<LinkifyText text={getRemainingText(missionPart)} />
+                                </span>
+                            )}
+                        </p>
+                    </div>
+                )}
+
+                {/* --- READ MORE BUTTON --- */}
+                <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="mt-2 text-xs font-black text-yellow-700 bg-yellow-200/50 px-4 py-2 rounded-full hover:bg-yellow-200 transition-all flex items-center gap-1"
+                >
+                    {isExpanded ? "Show Less" : "Read More & Mission Details"}
+                </button>
+              </div>
+                 );
+                })()}
+                </div>
 
           {/* 2. Traveler Instructions (Blue Box) */}
           {quest.instructions && (
