@@ -186,7 +186,7 @@ const Home = () => {
                      Don't just visit. Connect.
              </span>
               <span className="block">
-              Complete Quests, earn rewards, and leave the island better.
+              Complete quests, earn rewards, and leave the island better than you found it.
                </span>
             </p>
           
