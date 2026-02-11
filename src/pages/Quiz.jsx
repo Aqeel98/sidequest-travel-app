@@ -18,7 +18,7 @@ const Quiz = () => {
     const [isCorrect, setIsCorrect] = useState(null); // null, true, false
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [xpAnimate, setXpAnimate] = useState(false);
-    const [gateOpenedFor, setGateOpenedFor] = useState(parseInt(localStorage.getItem('sq_gate_unlocked')) || 0);
+    const [gateOpenedFor, setGateOpenedFor] = useState(parseInt(localStorage.getItem('sq_gate_unlocked')) || 1);
 
     const userLevel = useMemo(() => {
         const dbLevel = Math.floor(completedQuizIds.length / 10) + 1;
