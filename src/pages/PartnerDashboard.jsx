@@ -24,16 +24,23 @@ const PartnerDashboard = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     const [searchParams] = useSearchParams();
+
+useEffect(() => {
+
     const activeTab = searchParams.get('tab');
-    
-    useEffect(() => {
-        if (activeTab === 'create') {
-            setView('create');
-            setEditingId(null);
-        } else if (activeTab === 'manage' || activeTab === 'verify') {
-            setView('manage');
+    const activeMode = searchParams.get('mode'); 
+
+    if (activeTab === 'create') {
+        setView('create');
+        setEditingId(null);
+ 
+        if (activeMode) {
+            setMode(activeMode); 
         }
-    }, [activeTab]);
+    } else if (activeTab === 'manage' || activeTab === 'verify') {
+        setView('manage');
+    }
+}, [searchParams]);
 
 
     useEffect(() => {
