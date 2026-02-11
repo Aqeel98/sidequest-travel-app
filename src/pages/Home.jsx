@@ -54,8 +54,8 @@ const Home = () => {
 
   const categories = [
       'All', 
-      'Exploration','Adventure','Marine Adventure','Environmental','Wildlife Adventure', 'Animal Welfare', 'Cultural',
-          'Social', 'Education', 'Sports'
+      'Exploration','Adventure','Marine Adventure','Environmental','Wildlife Adventure',
+      'Education', 'Sports','Animal Welfare',  'Cultural','Social'
   ];
 
 
@@ -278,22 +278,25 @@ const Home = () => {
 
 
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input 
-                type="text"
-                placeholder="Search by name or location (e.g. Colombo)..."
-                className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-md border border-white rounded-2xl shadow-sm focus:ring-4 focus:ring-brand-500/10 outline-none font-medium transition-all"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-            />
-        </div>
+        <div className="flex flex-col gap-3 mb-8"> 
+    {/* 1. The Search Input */}
+    <div className="relative w-full group">
+        <Search 
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-600 transition-colors" 
+            size={20} 
+        />
+        <input 
+            type="text"
+            placeholder="Search by name or location..."
+            className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent focus:border-brand-500/30 rounded-2xl shadow-sm outline-none font-semibold text-gray-700 placeholder:text-gray-400 transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+        />
+    </div>
         <button 
             onClick={findClosest}
             disabled={isLocating}
-            className="flex items-center justify-center gap-2 bg-brand-600 text-white px-6 py-4 rounded-2xl font-bold shadow-lg shadow-brand-200 active:scale-95 transition-all whitespace-nowrap disabled:opacity-70"
-        >
+            className="w-full flex items-center justify-center gap-2 bg-brand-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-brand-200 active:scale-[0.98] transition-all disabled:opacity-70"        >
             {isLocating ? <Loader2 className="animate-spin" size={20}/> : <Crosshair size={20}/>}
             {isLocating ? 'Locating...' : 'Find Closest'}
         </button>
