@@ -141,7 +141,15 @@ useEffect(() => {
         localStorage.setItem('sq_quiz_index', currentIndex.toString());
     }, [currentIndex]);
 
-    const currentQuestion = availableQuestions[currentIndex];
+    const [frozenQuestion, setFrozenQuestion] = React.useState(null);
+
+    React.useEffect(() => {
+        if (isCorrect === null && availableQuestions[currentIndex]) {
+            setFrozenQuestion(availableQuestions[currentIndex]);
+        }
+    }, [availableQuestions, currentIndex, isCorrect]);
+
+    const currentQuestion = frozenQuestion;
 
     const nextQuestion = () => {
         setSelectedOption(null);
@@ -228,7 +236,7 @@ useEffect(() => {
 
     // --- 2. DYNAMIC LEVEL PROMOTION ---
 
-    if (completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0 && !allDone && gateOpenedFor < userLevel) {
+    if (gateOpenedFor < userLevel && !allDone && currentUser) {
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
                 <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
@@ -241,19 +249,20 @@ useEffect(() => {
                     </p>
                     <button 
                       onClick={() => {
-                      localStorage.setItem('sq_gate_unlocked', userLevel.toString());
-                      localStorage.setItem('sq_quiz_index', '0');
-                      setGateOpenedFor(userLevel);
-                     setTimeout(() => window.location.reload(), 100);
-                          }} 
+                        localStorage.setItem('sq_gate_unlocked', userLevel.toString());
+                        localStorage.setItem('sq_quiz_index', '0');
+                        setGateOpenedFor(userLevel);
+                        // Force a clean state for the new level
+                        setTimeout(() => window.location.reload(), 100);
+                      }} 
                       className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg"
-                        >
+                    >
                       Unlock Level {userLevel}
                     </button>
                 </div>
-               </div>
-                   );
-                   }
+            </div>
+        );
+    }
 
 
     
