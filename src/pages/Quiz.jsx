@@ -18,25 +18,27 @@ const Quiz = () => {
     const [isCorrect, setIsCorrect] = useState(null); // null, true, false
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availableQuestions, setAvailableQuestions] = useState([]);
-    const [xpAnimate, setXpAnimate] = useState(false);
-    const [level2Started, setLevel2Started] = useState(localStorage.getItem('sq_l2_start') === 'true');
     
-
-    const level1RemainingCount = useMemo(() => {
-        if (!quizBank.length) return 0;
-        return quizBank.filter(q => q.level === 1 && !completedQuizIds.includes(q.id)).length;
-    }, [quizBank, completedQuizIds]);
-
     const userLevel = useMemo(() => {
-        if (quizBank.length === 0) return 1;
-        if (level1RemainingCount === 0 && level2Started) return 2;
-        return 1;
-    }, [quizBank, level1RemainingCount, level2Started]);
+        return Math.floor(completedQuizIds.length / 10) + 1;
+    }, [completedQuizIds.length]);
 
-    const isLevel1Finished = useMemo(() => {
-        const hasL1 = quizBank.some(q => q.level === 1);
-        return hasL1 && level1RemainingCount === 0;
-    }, [quizBank, level1RemainingCount]);
+    const completedInLevelCount = useMemo(() => {
+        return completedQuizIds.length % 10;
+    }, [completedQuizIds.length]);
+
+    const isLevelGateActive = useMemo(() => {
+        // If they finished 10 questions but haven't "reloaded" to clear the availableQuestions
+        return completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0;
+    }, [completedInLevelCount, completedQuizIds.length, availableQuestions.length]);
+
+    const getXpForLevel = (lvl) => {
+        if (lvl <= 3) return 2;
+        if (lvl <= 6) return 4;
+        return 6;
+    };
+
+
 
     // --- 3. FINAL TROPHY CHECK  ---
     const allDone = useMemo(() => {
@@ -45,29 +47,28 @@ const Quiz = () => {
         return remainingInGame === 0;
     }, [quizBank, completedQuizIds]);
 
+    
     useEffect(() => {
-
-        const isTransitioning = isLevel1Finished && !level2Started;
-
-        if (quizBank.length > 0 && availableQuestions.length === 0 && !isTransitioning && !allDone) {
-            const snapshot = quizBank.filter(q => 
+        // Only fetch a new batch if we are empty and not at the 'Level Complete' screen
+        if (quizBank.length > 0 && availableQuestions.length === 0 && !allDone) {
+            
+            const levelPool = quizBank.filter(q => 
                 q.level === userLevel && !completedQuizIds.includes(q.id)
             );
 
-            if (snapshot.length > 0) {
-                const shuffled = [...snapshot];
+            if (levelPool.length > 0) {
+                const shuffled = [...levelPool];
                 for (let i = shuffled.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
-                setAvailableQuestions(shuffled);
-                if (currentIndex !== 0) {
-                    setCurrentIndex(0);
-                    localStorage.setItem('sq_quiz_index', '0');
-                }
+                // Take up to 10 questions to complete the level
+                setAvailableQuestions(shuffled.slice(0, 10 - completedInLevelCount));
+                setCurrentIndex(0);
+                localStorage.setItem('sq_quiz_index', '0');
             }
         }
-    }, [quizBank.length, userLevel, availableQuestions.length, isLevel1Finished, level2Started, allDone]);
+    }, [quizBank, userLevel, completedQuizIds, availableQuestions.length]);
 
    
     
@@ -103,7 +104,7 @@ useEffect(() => {
     const interval = setInterval(() => {
         setQuoteIdx((prev) => (prev + 1) % EXPLORER_QUOTES.length);
     }, 10000);
-    return () => clearInterval(interval); // Clean up on tab switch
+    return () => clearInterval(interval); 
 }, []);
 
     // Scroll to top on load
@@ -124,7 +125,8 @@ useEffect(() => {
             setIsCorrect(false);
         }
 
-        submitQuizAnswer(currentQuestion.id, index, isCorrectLocal, currentQuestion.xp_reward);
+        const xpToAward = getXpForLevel(userLevel);
+        submitQuizAnswer(currentQuestion.id, index, isCorrectLocal, xpToAward);
     };
 
 
@@ -212,33 +214,28 @@ useEffect(() => {
         );
     }
 
-    // --- 2. LEVEL 1 COMPLETE PROMOTION (Show this when L1 is done but L2 hasn't started) ---
-    if (isLevel1Finished && !level2Started) {
+    // --- 2. DYNAMIC LEVEL PROMOTION ---
+    // If the pool is empty but the user hasn't hit 'All Done', it means they finished a Level
+    if (availableQuestions.length === 0 && !allDone && completedQuizIds.length > 0) {
         return (
-            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center relative overflow-hidden">
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
-                    <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
-                    <Sparkles size={300} className="absolute top-1/2 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
-                </div>
-                <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white relative z-10">
+            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
+                <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
                     <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle size={40} className="text-emerald-500" />
                     </div>
-                    <h2 className="text-3xl font-black text-gray-900 mb-3">Level 1 Complete!</h2>
+                    <h2 className="text-3xl font-black text-gray-900 mb-3">Level {userLevel - 1} Complete!</h2>
                     <p className="text-gray-600 mb-8 font-medium leading-relaxed">
-                       You've mastered the basics. Are you ready for the Expert Level? 
+                       You've mastered this tier. Ready for Level {userLevel}? 
                     </p>
                     <button 
-        onClick={() => {
-
-            localStorage.setItem('sq_l2_start', 'true');
-            localStorage.setItem('sq_quiz_index', '0');
-            window.location.reload();
-        }} 
-        className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-brand-700 transition-colors"
-    >
-        Unlock Level 2
-    </button>
+                        onClick={() => {
+                            localStorage.setItem('sq_quiz_index', '0');
+                            window.location.reload(); // Atomic Refresh to kill zombie sockets
+                        }} 
+                        className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-brand-700 transition-colors"
+                    >
+                        Unlock Level {userLevel}
+                    </button>
                 </div>
             </div>
         );
@@ -298,13 +295,13 @@ useEffect(() => {
                             <Zap size={20} fill="currentColor" />
                         </div>
                         <div>
-                    <p className="text-[10px] font-black text-brand-700 uppercase tracking-widest leading-none mb-1">Your Impact</p>
-                     <p className={`text-2xl font-black transition-all duration-300 ${
-                        xpAnimate ? 'scale-125 text-emerald-500' : 'text-gray-900'
-                            }`}>
-                     {currentUser.xp} <span className="text-sm">XP</span>
-                     </p>
-                    </div>
+                  <p className="text-[10px] font-black text-brand-700 uppercase tracking-widest leading-none mb-1">
+                      Level {userLevel}
+                      </p>
+                    <p className={`text-2xl font-black transition-all duration-300 ${xpAnimate ? 'scale-125 text-emerald-500' : 'text-gray-900'}`}>
+                       {currentUser.xp} <span className="text-sm">XP</span>
+                        </p>
+                         </div>
                     </div>
                     <div className="text-right">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</p>
