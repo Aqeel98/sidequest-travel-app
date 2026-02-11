@@ -40,10 +40,16 @@ const Quiz = () => {
     const availableQuestions = useMemo(() => {
         if (!quizBank.length || allDone) return [];
         
-        const pool = quizBank.filter(q => q.level === userLevel && !completedQuizIds.includes(q.id));
+        let pool = quizBank.filter(q => q.level === userLevel && !completedQuizIds.includes(q.id));
         
-        if (completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel) {
-            return [];
+        if (pool.length === 0 && !allDone) {
+            pool = quizBank.filter(q => !completedQuizIds.includes(q.id));
+        }
+        
+        const isRecoveryMode = pool.length > 0 && !pool.every(q => q.level === userLevel);
+
+        if (!isRecoveryMode && completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel) {
+         return [];
         }
 
         const shuffled = [...pool];
@@ -181,7 +187,7 @@ useEffect(() => {
     useEffect(() => {
         let stuckTimer;
 
-        const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0;
+        const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0 && gateOpenedFor >= userLevel;
         const showingPromotion = completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel;
 
         if (isActuallyStuck && !showingPromotion) {
@@ -268,7 +274,7 @@ useEffect(() => {
         );
     }
 
-    if (isLoading || !currentQuestion) {
+    if (isLoading || (quizBank.length > 0 && !currentQuestion && !allDone)) {
         return <div className="min-h-screen bg-[#E6D5B8]" />;
     }
 
