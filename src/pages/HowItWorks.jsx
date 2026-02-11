@@ -45,21 +45,20 @@ const HowItWorks = () => {
 
   const partnerSteps = [
     {
-      title: "Create an Experience",
-      // UPDATED: Generalized description for any business type
-      desc: "Turn your business into a destination. Design any mission or cultural experience and set a small reward (like a discount or freebie) to welcome travelers and create a positive impact together.",
+      title: "Create a Quest",
+      desc: "Found a hidden spot or a meaningful mission? Add it to the map. You do not need to own a business to create a quest. You just need a mission that leaves a positive mark on the island.",
       icon: <Users className="text-purple-600" size={32} />,
       color: "bg-purple-50 border-purple-200"
     },
     {
-      title: "Admin Verification",
-      desc: "Our 'Game Masters' review your Quest to ensure safety and quality. Once approved, it goes LIVE on the map.",
+      title: "List a Reward",
+      desc: "Have a local spot? Offer a small perk like a discount or a freebie to adventurers who have earned XP. You get more visitors while they get a thank you for the impact they have made.",
       icon: <Shield className="text-emerald-600" size={32} />,
       color: "bg-emerald-50 border-emerald-200"
     },
     {
-      title: "Receive Travelers",
-      desc: "Travelers find your Quest, visit your location,  and complete their mission. You get visibility; the island gets impact.",
+      title: "Grow Together",
+      desc: "You can host a quest, offer a reward, or do both. Our Game Masters review every entry to ensure safety and quality. Once approved your location goes live on the map.",
       icon: <Map className="text-brand-600" size={32} />,
       color: "bg-brand-50 border-brand-200"
     }
