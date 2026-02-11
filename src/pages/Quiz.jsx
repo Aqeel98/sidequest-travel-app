@@ -18,6 +18,7 @@ const Quiz = () => {
     const [isCorrect, setIsCorrect] = useState(null); // null, true, false
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availableQuestions, setAvailableQuestions] = useState([]);
+    const [xpAnimate, setXpAnimate] = useState(false);
     
     const userLevel = useMemo(() => {
         return Math.floor(completedQuizIds.length / 10) + 1;
