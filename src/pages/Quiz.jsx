@@ -144,8 +144,12 @@ useEffect(() => {
     const [frozenQuestion, setFrozenQuestion] = React.useState(null);
 
     React.useEffect(() => {
-        if (isCorrect === null && availableQuestions[currentIndex]) {
-            setFrozenQuestion(availableQuestions[currentIndex]);
+        if (isCorrect === null) {
+            if (availableQuestions[currentIndex]) {
+                setFrozenQuestion(availableQuestions[currentIndex]);
+            } else {
+                setFrozenQuestion(null);
+            }
         }
     }, [availableQuestions, currentIndex, isCorrect]);
 
@@ -236,7 +240,7 @@ useEffect(() => {
 
     // --- 2. DYNAMIC LEVEL PROMOTION ---
 
-    if (gateOpenedFor < userLevel && !allDone && currentUser) {
+    if (isCorrect === null && gateOpenedFor < userLevel && !allDone && currentUser) {
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
                 <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
@@ -264,12 +268,9 @@ useEffect(() => {
         );
     }
 
-
-    
-
-                   if (!currentQuestion && !allDone && !isLoading) {
-                    return <div className="min-h-screen bg-[#E6D5B8]" />;
-                }
+    if (isLoading || !currentQuestion) {
+        return <div className="min-h-screen bg-[#E6D5B8]" />;
+    }
 
               return (
                 <div className="min-h-screen bg-[#E6D5B8] pb-20 pt-10 px-4 relative overflow-hidden">
