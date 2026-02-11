@@ -23,12 +23,15 @@ const Quiz = () => {
     const [gateOpenedFor, setGateOpenedFor] = useState(parseInt(localStorage.getItem('sq_gate_unlocked')) || 0);
     
     const userLevel = useMemo(() => {
-        return Math.floor(completedQuizIds.length / 10) + 1;
+        const dbLevel = Math.floor(completedQuizIds.length / 10) + 1;
+        const localUnlocked = parseInt(localStorage.getItem('sq_gate_unlocked')) || 1;
+        return Math.max(dbLevel, localUnlocked);
     }, [completedQuizIds.length]);
 
     const completedInLevelCount = useMemo(() => {
-        return completedQuizIds.length % 10;
-    }, [completedQuizIds.length]);
+        // Calculate progress based strictly on the current level we are playing
+        return quizBank.filter(q => q.level === userLevel && completedQuizIds.includes(q.id)).length;
+    }, [quizBank, userLevel, completedQuizIds]);
 
     const isLevelGateActive = useMemo(() => {
         // If they finished 10 questions but haven't "reloaded" to clear the availableQuestions
@@ -52,12 +55,18 @@ const Quiz = () => {
 
     
     useEffect(() => {
-        if (completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0 && gateOpenedFor < userLevel) {
-            console.log("SQ-Quiz: Level Boundary reached. Waiting for Gatekeeper.");
+        const localUnlocked = parseInt(localStorage.getItem('sq_gate_unlocked')) || 1;
+        const isLevelDone = completedInLevelCount >= 10;
+
+        if (isLevelDone || (completedQuizIds.length > 0 && completedQuizIds.length % 10 === 0 && localUnlocked <= userLevel)) {
+            console.log("SQ-Quiz: Level finished. Waiting for user to click Unlock.");
+            setAvailableQuestions([]); // Keep the tray empty to show celebration
             return; 
         }
 
+        // 2. QUESTION LOADER
         if (quizBank.length > 0 && availableQuestions.length === 0 && !allDone) {
+            // Use the "Smart" userLevel (which is the higher of DB vs Local)
             const levelPool = quizBank.filter(q => 
                 q.level === userLevel && !completedQuizIds.includes(q.id)
             );
@@ -68,6 +77,7 @@ const Quiz = () => {
                     const j = Math.floor(Math.random() * (i + 1));
                     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
+                
                 setAvailableQuestions(shuffled.slice(0, 10 - completedInLevelCount));
                 setCurrentIndex(0);
                 localStorage.setItem('sq_quiz_index', '0');
@@ -177,6 +187,7 @@ useEffect(() => {
     useEffect(() => {
         let stuckTimer;
 
+        // Is the tray empty while we are NOT at a celebration or loading?
         const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0;
         const showingPromotion = completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel;
 
@@ -189,7 +200,6 @@ useEffect(() => {
 
         return () => clearTimeout(stuckTimer); 
     }, [currentQuestion, allDone, isLoading, quizBank.length, completedInLevelCount, gateOpenedFor, userLevel]);
-
 
     // --- 1. GUEST CHECK (Keep this first) ---
     if (!currentUser) {
@@ -249,42 +259,40 @@ useEffect(() => {
                        You've mastered this tier. Ready for Level {userLevel}? 
                     </p>
                     <button 
-                    onClick={() => {
-                        localStorage.setItem('sq_gate_unlocked', userLevel.toString());
-                        localStorage.setItem('sq_quiz_index', '0');
-                        window.location.reload(); 
-                    }} 
-                    className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg"
-                >
-                    Unlock Level {userLevel}
-                </button>
+                      onClick={() => {
+                      localStorage.setItem('sq_gate_unlocked', userLevel.toString());
+                      localStorage.setItem('sq_quiz_index', '0');
+                     setTimeout(() => window.location.reload(), 100);
+                          }} 
+                      className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg"
+                        >
+                      Unlock Level {userLevel}
+                    </button>
                 </div>
-            </div>
-        );
-    }
+               </div>
+                   );
+                   }
 
 
     
 
-    if (!currentQuestion) {
-        return (
-            /* We add min-h-screen and matching background to prevent scroll jumping */
-            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center">
-                <div className="text-center animate-in fade-in duration-500">
-                    <Compass size={60} className="text-brand-700/20 animate-spin-slow mx-auto mb-4" />
-                    <p className="text-brand-700/40 font-bold text-sm tracking-widest uppercase">
-                        {isLoading ? 'Fetching Secrets...' : 'Waking up connections...'}
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-
+                   if (!currentQuestion) {
+                    return (
+                        <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center">
+                            <div className="text-center animate-in fade-in duration-500">
+                                <Compass size={60} className="text-brand-700/20 animate-spin-slow mx-auto mb-4" />
+                                <p className="text-brand-700/40 font-bold text-sm tracking-widest uppercase">
+                                    {isLoading ? 'Fetching Secrets...' : 'Waking up connections...'}
+                                </p>
+                            </div>
+                        </div>
+                    );
+                }
 
     return (
         <div className="min-h-screen bg-[#E6D5B8] pb-20 pt-10 px-4 relative overflow-hidden">
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+
+<div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
 
             <Compass 
                 size={400} 
