@@ -30,7 +30,12 @@ const Quiz = () => {
         return quizBank.filter(q => q.level === userLevel && completedQuizIds.includes(q.id)).length;
     }, [quizBank, userLevel, completedQuizIds]);
 
-
+       // --- 3. FINAL TROPHY CHECK  ---
+       const allDone = useMemo(() => {
+        if (quizBank.length === 0) return false;
+        const remainingInGame = quizBank.filter(q => !completedQuizIds.includes(q.id)).length;
+        return remainingInGame === 0;
+    }, [quizBank, completedQuizIds]);
 
     const availableQuestions = useMemo(() => {
         if (!quizBank.length || allDone) return [];
@@ -65,14 +70,6 @@ const Quiz = () => {
         return 6;
     };
 
-
-
-    // --- 3. FINAL TROPHY CHECK  ---
-    const allDone = useMemo(() => {
-        if (quizBank.length === 0) return false;
-        const remainingInGame = quizBank.filter(q => !completedQuizIds.includes(q.id)).length;
-        return remainingInGame === 0;
-    }, [quizBank, completedQuizIds]);
 
    
 
