@@ -19,6 +19,8 @@ const Quiz = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availableQuestions, setAvailableQuestions] = useState([]);
     const [xpAnimate, setXpAnimate] = useState(false);
+
+    const [gateOpenedFor, setGateOpenedFor] = useState(parseInt(localStorage.getItem('sq_gate_unlocked')) || 0);
     
     const userLevel = useMemo(() => {
         return Math.floor(completedQuizIds.length / 10) + 1;
@@ -50,7 +52,7 @@ const Quiz = () => {
 
     
     useEffect(() => {
-        if (completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0) {
+        if (completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0 && gateOpenedFor < userLevel) {
             console.log("SQ-Quiz: Level Boundary reached. Waiting for Gatekeeper.");
             return; 
         }
@@ -218,8 +220,8 @@ useEffect(() => {
     }
 
     // --- 2. DYNAMIC LEVEL PROMOTION ---
-    
-    if (completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0 && !allDone) {
+
+    if (completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0 && !allDone && gateOpenedFor < userLevel) {
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
                 <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
@@ -231,14 +233,15 @@ useEffect(() => {
                        You've mastered this tier. Ready for Level {userLevel}? 
                     </p>
                     <button 
-                        onClick={() => {
-                            localStorage.setItem('sq_quiz_index', '0');
-                            window.location.reload(); 
-                        }} 
-                        className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-brand-700 transition-colors"
-                    >
-                        Unlock Level {userLevel}
-                    </button>
+                    onClick={() => {
+                        localStorage.setItem('sq_gate_unlocked', userLevel.toString());
+                        localStorage.setItem('sq_quiz_index', '0');
+                        window.location.reload(); 
+                    }} 
+                    className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg"
+                >
+                    Unlock Level {userLevel}
+                </button>
                 </div>
             </div>
         );
@@ -250,7 +253,9 @@ useEffect(() => {
     if (!currentQuestion) {
         // If we are stuck here for more than 3 seconds, force a hard refresh
         setTimeout(() => {
-            if (!currentQuestion && !allDone) {
+            const showingPromotion = completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel;
+            
+            if (!currentQuestion && !allDone && !showingPromotion) {
                 console.warn("SQ-Quiz: Stuck loading. Sanitizing state...");
                 window.location.reload();
             }
