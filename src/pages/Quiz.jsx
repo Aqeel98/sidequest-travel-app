@@ -10,7 +10,7 @@ const Quiz = () => {
 
 
     const navigate = useNavigate();
-    const { currentUser, quizBank, completedQuizIds, submitQuizAnswer, showToast, setShowAuthModal } = useSideQuest(); 
+    const { currentUser, quizBank, completedQuizIds, submitQuizAnswer, showToast, setShowAuthModal, isLoading } = useSideQuest(); 
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showHint, setShowHint] = useState(false);
@@ -251,21 +251,23 @@ useEffect(() => {
     
 
     if (!currentQuestion) {
-        // If we are stuck here for more than 3 seconds, force a hard refresh
+        // --- IMPROVED LOOP BREAKER ---
         setTimeout(() => {
+            const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0;
             const showingPromotion = completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel;
             
-            if (!currentQuestion && !allDone && !showingPromotion) {
-                console.warn("SQ-Quiz: Stuck loading. Sanitizing state...");
+            if (isActuallyStuck && !showingPromotion) {
+                console.warn("SQ-Quiz: Data present but tray empty. Sanitizing state...");
                 window.location.reload();
             }
-        }, 3000);
-
+        }, 15000); // Increased to 8s for rural 4G compatibility
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center">
                 <div className="text-center">
                     <Compass size={60} className="text-brand-700/20 animate-spin-slow mx-auto mb-4" />
-                    <p className="text-brand-700/40 font-bold text-sm">Waking up connections...</p>
+                    <p className="text-brand-700/40 font-bold text-sm tracking-widest uppercase">
+                        {isLoading ? 'Fetching Secrets...' : 'Waking up connections...'}
+                    </p>
                 </div>
             </div>
         );
