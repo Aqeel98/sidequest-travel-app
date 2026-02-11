@@ -58,7 +58,7 @@ const Quiz = () => {
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
     
-        return shuffled.slice(0, 10 - completedInLevelCount); 
+        return isRecoveryMode ? shuffled : shuffled.slice(0, 10 - completedInLevelCount);
 
     }, [quizBank, userLevel, completedQuizIds, allDone, gateOpenedFor, completedInLevelCount]);
 
@@ -115,24 +115,7 @@ useEffect(() => {
     // Scroll to top on load
     useEffect(() => { window.scrollTo(0, 0); }, []);
 
-    const handleAnswer = (index) => {
-        if (isCorrect !== null || !currentQuestion) return; 
-        
-        setSelectedOption(index);
-
-        const isCorrectLocal = index === currentQuestion.correct_index;
-        
-        if (isCorrectLocal) {
-            setIsCorrect(true);
-            setXpAnimate(true);
-            setTimeout(() => setXpAnimate(false), 600);
-        } else {
-            setIsCorrect(false);
-        }
-
-        const xpToAward = getXpForLevel(userLevel);
-        submitQuizAnswer(currentQuestion.id, index, isCorrectLocal, xpToAward);
-    };
+    
 
 
     useEffect(() => {
@@ -160,6 +143,24 @@ useEffect(() => {
     }, [availableQuestions, currentIndex, isCorrect]);
 
     const currentQuestion = frozenQuestion;
+
+    const handleAnswer = (index) => {
+        if (isCorrect !== null || !currentQuestion) return; 
+        
+        setSelectedOption(index);
+        const isCorrectLocal = index === currentQuestion.correct_index;
+        
+        if (isCorrectLocal) {
+            setIsCorrect(true);
+            setXpAnimate(true);
+            setTimeout(() => setXpAnimate(false), 600);
+        } else {
+            setIsCorrect(false);
+        }
+
+        const xpToAward = getXpForLevel(userLevel);
+        submitQuizAnswer(currentQuestion.id, index, isCorrectLocal, xpToAward);
+    };
 
     const nextQuestion = () => {
         setSelectedOption(null);
