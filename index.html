@@ -41,14 +41,18 @@
 
     <script>
       window.addEventListener('error', (e) => {
-        // Detects MIME errors or missing JS files after a new deployment
-        if (e.message?.includes('Failed to load module script') || e.target?.tagName === 'SCRIPT') {
-          const lastReload = localStorage.getItem('sq_last_deploy_reload');
+
+        if (e.message && e.message.includes('Failed to load module script')) {
           const now = Date.now();
-          // Only reload once every 10 seconds to prevent loops
-          if (!lastReload || (now - parseInt(lastReload) > 10000)) {
+          const lastReload = localStorage.getItem('sq_last_deploy_reload');
+
+          if (lastReload && (now - parseInt(lastReload) < 30000)) return;
+    
+          if (navigator.onLine) {
             localStorage.setItem('sq_last_deploy_reload', now.toString());
-            window.location.reload(); 
+            window.location.reload();
+          } else {
+            window.addEventListener('online', () => window.location.reload(), { once: true });
           }
         }
       }, true);

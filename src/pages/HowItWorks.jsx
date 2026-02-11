@@ -17,27 +17,26 @@ const HowItWorks = () => {
   // --- CONTENT DATA ---
   const travelerSteps = [
     {
-      title: "Discover Impact Quests",
-      // UPDATED: Generalized description
-      desc: "Browse the map to find curated activities that matter. Whether it's Conservation, Cultural Exchange, or Animal Welfare, find a quest that matches your vibe nearby.",
+      title: "Find a Quest",
+      desc: "Browse the live map to find missions near you. Whether it is wildlife scouting or cultural discovery, choose a quest that matches your style of adventure.",
       icon: <Map className="text-brand-600" size={32} />,
       color: "bg-brand-50 border-brand-200"
     },
     {
-      title: "Journey with Purpose", 
-      desc: "Follow the map and step into the mission. Move beyond the surface of travel and connect with the heart of the island through actions that leave a lasting, positive mark.",
+      title: "Take Action", 
+      desc: "Follow the map to the location and complete the mission brief. These are small, real-world actions that leave the island a little better than you found it.",
       icon: <HeartHandshake className="text-red-500" size={32} />,
       color: "bg-red-50 border-red-200"
     },
     {
       title: "Snap & Upload",
-      desc: "Take a clear photo as proof of your action. Upload it directly through the app (optimized for 4G).",
+      desc: "Take a clear photo of your impact. Upload it directly through the app even in low-signal areas. Our Game Masters verify every mission to keep the map authentic.",
       icon: <Camera className="text-blue-500" size={32} />,
       color: "bg-blue-50 border-blue-200"
     },
     {
-      title: "Earn & Redeem",
-      desc: "Game Masters verify your proof. You earn XP instantly! Redeem XP in the Marketplace for exclusive rewards, perks, and discounts at our partner locations.",
+      title: "Level Up",
+      desc: "Earn XP instantly for every quest you finish. Use your XP in the Marketplace to unlock rewards and perks at our partner cafes, hotels, and local shops.",
       icon: <Gift className="text-orange-500" size={32} />,
       color: "bg-orange-50 border-orange-200"
     }

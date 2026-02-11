@@ -174,6 +174,22 @@ useEffect(() => {
         }
     };
 
+    useEffect(() => {
+        let stuckTimer;
+
+        const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0;
+        const showingPromotion = completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel;
+
+        if (isActuallyStuck && !showingPromotion) {
+            console.warn("SQ-Quiz: Stalls detected. Sanitizing in 15s...");
+            stuckTimer = setTimeout(() => {
+                window.location.reload();
+            }, 15000); 
+        }
+
+        return () => clearTimeout(stuckTimer); 
+    }, [currentQuestion, allDone, isLoading, quizBank.length, completedInLevelCount, gateOpenedFor, userLevel]);
+
 
     // --- 1. GUEST CHECK (Keep this first) ---
     if (!currentUser) {
@@ -251,19 +267,10 @@ useEffect(() => {
     
 
     if (!currentQuestion) {
-        // --- IMPROVED LOOP BREAKER ---
-        setTimeout(() => {
-            const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0;
-            const showingPromotion = completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel;
-            
-            if (isActuallyStuck && !showingPromotion) {
-                console.warn("SQ-Quiz: Data present but tray empty. Sanitizing state...");
-                window.location.reload();
-            }
-        }, 15000); // Increased to 8s for rural 4G compatibility
         return (
+            /* We add min-h-screen and matching background to prevent scroll jumping */
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center">
-                <div className="text-center">
+                <div className="text-center animate-in fade-in duration-500">
                     <Compass size={60} className="text-brand-700/20 animate-spin-slow mx-auto mb-4" />
                     <p className="text-brand-700/40 font-bold text-sm tracking-widest uppercase">
                         {isLoading ? 'Fetching Secrets...' : 'Waking up connections...'}
@@ -273,10 +280,11 @@ useEffect(() => {
         );
     }
 
+
+
     return (
         <div className="min-h-screen bg-[#E6D5B8] pb-20 pt-10 px-4 relative overflow-hidden">
-
-<div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
 
             <Compass 
                 size={400} 
