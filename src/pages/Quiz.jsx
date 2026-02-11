@@ -50,9 +50,12 @@ const Quiz = () => {
 
     
     useEffect(() => {
-        // Only fetch a new batch if we are empty and not at the 'Level Complete' screen
+        if (completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0) {
+            console.log("SQ-Quiz: Level Boundary reached. Waiting for Gatekeeper.");
+            return; 
+        }
+
         if (quizBank.length > 0 && availableQuestions.length === 0 && !allDone) {
-            
             const levelPool = quizBank.filter(q => 
                 q.level === userLevel && !completedQuizIds.includes(q.id)
             );
@@ -63,13 +66,12 @@ const Quiz = () => {
                     const j = Math.floor(Math.random() * (i + 1));
                     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
-                // Take up to 10 questions to complete the level
                 setAvailableQuestions(shuffled.slice(0, 10 - completedInLevelCount));
                 setCurrentIndex(0);
                 localStorage.setItem('sq_quiz_index', '0');
             }
         }
-    }, [quizBank, userLevel, completedQuizIds, availableQuestions.length]);
+    }, [quizBank, userLevel, completedQuizIds, availableQuestions.length, completedInLevelCount]);
 
    
     
@@ -216,8 +218,8 @@ useEffect(() => {
     }
 
     // --- 2. DYNAMIC LEVEL PROMOTION ---
-    // If the pool is empty but the user hasn't hit 'All Done', it means they finished a Level
-    if (availableQuestions.length === 0 && !allDone && completedQuizIds.length > 0) {
+    
+    if (completedInLevelCount === 0 && completedQuizIds.length > 0 && availableQuestions.length === 0 && !allDone) {
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
                 <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
@@ -231,7 +233,7 @@ useEffect(() => {
                     <button 
                         onClick={() => {
                             localStorage.setItem('sq_quiz_index', '0');
-                            window.location.reload(); // Atomic Refresh to kill zombie sockets
+                            window.location.reload(); 
                         }} 
                         className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:bg-brand-700 transition-colors"
                     >
@@ -246,11 +248,19 @@ useEffect(() => {
     
 
     if (!currentQuestion) {
+        // If we are stuck here for more than 3 seconds, force a hard refresh
+        setTimeout(() => {
+            if (!currentQuestion && !allDone) {
+                console.warn("SQ-Quiz: Stuck loading. Sanitizing state...");
+                window.location.reload();
+            }
+        }, 3000);
+
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center">
-                <div className="relative">
-                    {/* A subtle spinning compass for the background */}
-                    <Compass size={60} className="text-brand-700/20 animate-spin-slow" />
+                <div className="text-center">
+                    <Compass size={60} className="text-brand-700/20 animate-spin-slow mx-auto mb-4" />
+                    <p className="text-brand-700/40 font-bold text-sm">Waking up connections...</p>
                 </div>
             </div>
         );
