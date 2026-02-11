@@ -154,15 +154,16 @@ useEffect(() => {
     if (!currentUser) { setShowAuthModal(true); return; }
 
     // --- STEP 1: OPTIMISTIC UPDATE (Instant Feedback) ---
-    // We don't wait for the server. We move the bar and mark the quest done locally.
+    setCompletedQuizIds(prev => [...prev, questionId]);
+
     if (isCorrectLocal) {
         setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpReward }));
-        setCompletedQuizIds(prev => [...prev, questionId]);
         showToast(`Correct! +${xpReward} XP awarded.`, 'success');
+    } else {
+        showToast(`Incorrect. Moving to next question...`, 'error');
     }
 
     // --- STEP 2: BACKGROUND HARDENING (Immortal Sync) ---
-    // This runs silently. If the user switched tabs, this handles the "Wake Up."
     const syncInBackground = async () => {
         try {
             // Wake up radio
