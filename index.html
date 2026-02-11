@@ -38,6 +38,23 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" media="all">
     
+
+    <script>
+      window.addEventListener('error', (e) => {
+        // Detects MIME errors or missing JS files after a new deployment
+        if (e.message?.includes('Failed to load module script') || e.target?.tagName === 'SCRIPT') {
+          const lastReload = localStorage.getItem('sq_last_deploy_reload');
+          const now = Date.now();
+          // Only reload once every 10 seconds to prevent loops
+          if (!lastReload || (now - parseInt(lastReload) > 10000)) {
+            localStorage.setItem('sq_last_deploy_reload', now.toString());
+            window.location.reload(); 
+          }
+        }
+      }, true);
+    </script>
+
+
 </head>
   <body>
     <div id="root"></div>
