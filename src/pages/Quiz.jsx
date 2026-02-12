@@ -22,45 +22,34 @@ const Quiz = () => {
 
 
 
+
+    const [activeLevel, setActiveLevel] = useState(() => {
+        return parseInt(localStorage.getItem('sq_gate_unlocked')) || 1;
+    });
     
-
-    const userLevel = gateOpenedFor;
-
     const completedInLevelCount = useMemo(() => {
-        return quizBank.filter(q => q.level === userLevel && completedQuizIds.includes(q.id)).length;
-    }, [quizBank, userLevel, completedQuizIds]);
-
-       // --- 3. FINAL TROPHY CHECK  ---
-       const allDone = useMemo(() => {
-        if (quizBank.length === 0) return false;
-        const remainingInGame = quizBank.filter(q => !completedQuizIds.includes(q.id)).length;
-        return remainingInGame === 0;
+        return quizBank.filter(q => q.level === activeLevel && completedQuizIds.includes(q.id)).length;
+    }, [quizBank, activeLevel, completedQuizIds]);
+    
+    const allDone = useMemo(() => {
+        return quizBank.length > 0 && completedQuizIds.length >= quizBank.length;
     }, [quizBank, completedQuizIds]);
-
+    
     const availableQuestions = useMemo(() => {
         if (!quizBank.length || allDone) return [];
-        if (completedInLevelCount >= 10) return [];
-        let pool = quizBank.filter(q => q.level === userLevel && !completedQuizIds.includes(q.id));
         
-        if (pool.length === 0 && !allDone) {
-            pool = quizBank.filter(q => !completedQuizIds.includes(q.id));
-        }
+        const pool = quizBank.filter(q => q.level === activeLevel && !completedQuizIds.includes(q.id));
         
-        const isRecoveryMode = pool.length > 0 && !pool.every(q => q.level === userLevel);
-
-        if (!isRecoveryMode && completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel) {
-         return [];
-        }
-
         const shuffled = [...pool];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
     
-        return isRecoveryMode ? shuffled : shuffled.slice(0, 10 - completedInLevelCount);
-
-    }, [quizBank, userLevel, completedQuizIds, allDone, gateOpenedFor, completedInLevelCount]);
+        return shuffled;
+    }, [quizBank, activeLevel, completedQuizIds, allDone]);
+    
+    const isLevelComplete = completedInLevelCount >= 10;
 
  
 
@@ -165,7 +154,7 @@ useEffect(() => {
             setIsCorrect(false);
         }
 
-        const xpToAward = currentQuestion.xp_reward || 2;
+        const xpToAward = isCorrectLocal ? (currentQuestion.xp_reward || 2) : 0;
         submitQuizAnswer(currentQuestion.id, index, isCorrectLocal, xpToAward);
     };
 
@@ -173,29 +162,13 @@ useEffect(() => {
         setSelectedOption(null);
         setIsCorrect(null);
         setShowHint(false);
-        
-        if (currentIndex < availableQuestions.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-        } else {
-
-            localStorage.removeItem('sq_quiz_index');
-            const hasMoreInLevel = quizBank.some(q => 
-                q.level === userLevel && !completedQuizIds.includes(q.id)
-            );
-
-            if (hasMoreInLevel) {
-                setCurrentIndex(0);
-            } else {
-
-                console.log("SQ-Quiz: Level batch complete. Transitioning UI...");
-            }
-        }
+        setCurrentIndex(0);
     };
 
     useEffect(() => {
         let stuckTimer;
 
-        const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0 && gateOpenedFor >= userLevel;
+        const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0;
         const showingPromotion = completedInLevelCount >= 10;
 
         if (isActuallyStuck && !showingPromotion) {
@@ -206,7 +179,7 @@ useEffect(() => {
         }
 
         return () => clearTimeout(stuckTimer); 
-    }, [currentQuestion, allDone, isLoading, quizBank.length, completedInLevelCount, gateOpenedFor, userLevel]);
+    }, [currentQuestion, allDone, isLoading, quizBank.length, completedInLevelCount, activeLevel]);
 
     // --- 1. GUEST CHECK (Keep this first) ---
     if (!currentUser) {
@@ -261,23 +234,24 @@ useEffect(() => {
                     <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle size={40} className="text-emerald-500" />
                     </div>
-                    <h2 className="text-3xl font-black text-gray-900 mb-3">Level {userLevel} Complete!</h2>
+                    <h2 className="text-3xl font-black text-gray-900 mb-3">Level {activeLevel} Complete!</h2>
                     <p className="text-gray-600 mb-8 font-medium leading-relaxed">
-                         You've mastered this tier. Ready for Level {userLevel + 1}? 
+                         You've mastered this tier. Ready for Level {activeLevel + 1}? 
                     </p>
                     <button 
                              disabled={isPromoting}
                              onClick={async () => {
                            setIsPromoting(true);
+                           const nextLevel = activeLevel + 1; 
                            await new Promise(r => setTimeout(r, 3000)); 
-                           localStorage.setItem('sq_gate_unlocked', (userLevel + 1).toString());
+                           localStorage.setItem('sq_gate_unlocked', nextLevel.toString());
                             localStorage.setItem('sq_quiz_index', '0');
-                            setGateOpenedFor(userLevel + 1);
+                            setActiveLevel(nextLevel);
                           window.location.reload();
                          }} 
                       className={`w-full ${isPromoting ? 'bg-gray-400' : 'bg-brand-600'} text-white py-4 rounded-2xl font-black text-lg shadow-lg`}
                         >
-                    {isPromoting ? "Saving XP..." : `Unlock Level ${userLevel + 1}`}
+                    {isPromoting ? "Saving XP..." : `Unlock Level ${activeLevel + 1}`}
                     </button>
                     </div>
                     </div>
@@ -329,17 +303,28 @@ useEffect(() => {
                         </div>
                         <div>
                   <p className="text-[10px] font-black text-brand-700 uppercase tracking-widest leading-none mb-1">
-                      Level {userLevel}
+                      Level {activeLevel}
                       </p>
                     <p className={`text-2xl font-black transition-all duration-300 ${xpAnimate ? 'scale-125 text-emerald-500' : 'text-gray-900'}`}>
                        {currentUser.xp} <span className="text-sm">XP</span>
                         </p>
                          </div>
                     </div>
-                    <div className="text-right">
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</p>
-                        <p className="text-lg font-black text-gray-900 leading-none">{Math.min(completedInLevelCount + 1, 10)} / 10</p>
-                                        </div>
+                    <div className="text-right flex flex-col items-end gap-2">
+                 <div>
+                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</p>
+              <p className="text-lg font-black text-gray-900 leading-none">
+                 {Math.min(completedInLevelCount + 1, 10)} / 10
+                </p>
+          </div>
+           {/* Small Header Bar */}
+          <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div 
+            className="h-full bg-brand-600 transition-all duration-500" 
+            style={{ width: `${(Math.min(completedInLevelCount + 1, 10) / 10) * 100}%` }}
+               ></div>
+                      </div>
+            </div>
                 </div>
 
                 {/* --- THE QUIZ CARD --- */}

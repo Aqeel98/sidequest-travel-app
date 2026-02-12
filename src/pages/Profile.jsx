@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Award, Compass, Globe, CheckCircle, Clock, Leaf, Heart, Flag, Mountain, Map, Anchor, Bird, Trophy } from 'lucide-react';
+import { Award, Compass, Globe, CheckCircle, Clock, Leaf, Heart, Flag, Mountain, Map, Anchor, Bird, Trophy, Zap } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 
 const BADGE_THRESHOLDS = {
