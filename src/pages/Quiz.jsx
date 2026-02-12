@@ -51,7 +51,10 @@ const Quiz = () => {
     
     const isLevelComplete = completedInLevelCount >= 10;
 
- 
+    const maxDefinedLevel = useMemo(() => {
+        if (!quizBank.length) return 1;
+        return Math.max(...quizBank.map(q => q.level));
+    }, [quizBank]);
 
     
     const isLevelGateActive = useMemo(() => {
@@ -227,7 +230,32 @@ useEffect(() => {
 
     // --- 2. DYNAMIC LEVEL PROMOTION ---
 
+    // --- 2. DYNAMIC LEVEL PROMOTION ---
+
     if (isCorrect === null && completedInLevelCount >= 10 && !allDone && currentUser) {
+        
+        if (activeLevel >= maxDefinedLevel) {
+            return (
+                <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
+                    <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
+                        <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <CheckCircle size={40} className="text-emerald-500" />
+                        </div>
+                        <h2 className="text-3xl font-black text-gray-900 mb-3">Quiz Complete!</h2>
+                        <p className="text-gray-600 mb-8 font-medium leading-relaxed">
+                             You have mastered all {maxDefinedLevel} tiers of the SideQuest Quiz.
+                        </p>
+                        <button 
+                            onClick={() => navigate('/rewards')} 
+                            className={`w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg`}
+                        >
+                            View All Rewards
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
                 <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
