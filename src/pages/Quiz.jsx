@@ -8,24 +8,23 @@ import { useSideQuest } from '../context/SideQuestContext';
 
 const Quiz = () => {
 
-
     const navigate = useNavigate();
     const { currentUser, quizBank, completedQuizIds, submitQuizAnswer, showToast, setShowAuthModal, isLoading } = useSideQuest(); 
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showHint, setShowHint] = useState(false);
     const [selectedOption, setSelectedOption] = useState(null);
-    const [isCorrect, setIsCorrect] = useState(null); // null, true, false
+    const [isCorrect, setIsCorrect] = useState(null); 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [xpAnimate, setXpAnimate] = useState(false);
-    const [gateOpenedFor, setGateOpenedFor] = useState(parseInt(localStorage.getItem('sq_gate_unlocked')) || 1);
+    const [gateOpenedFor, setGateOpenedFor] = useState(parseInt(localStorage.getItem('sq_gate_unlocked')) || 1);   
     const [isPromoting, setIsPromoting] = useState(false);
 
-    const userLevel = useMemo(() => {
-        const dbLevel = Math.floor(completedQuizIds.length / 10) + 1;
-        const localUnlocked = parseInt(localStorage.getItem('sq_gate_unlocked')) || 1;
-        return Math.max(dbLevel, localUnlocked);
-    }, [completedQuizIds.length]);
+
+
+    
+
+    const userLevel = gateOpenedFor;
 
     const completedInLevelCount = useMemo(() => {
         return quizBank.filter(q => q.level === userLevel && completedQuizIds.includes(q.id)).length;
@@ -40,7 +39,7 @@ const Quiz = () => {
 
     const availableQuestions = useMemo(() => {
         if (!quizBank.length || allDone) return [];
-        
+        if (completedInLevelCount >= 10) return [];
         let pool = quizBank.filter(q => q.level === userLevel && !completedQuizIds.includes(q.id));
         
         if (pool.length === 0 && !allDone) {
@@ -116,7 +115,14 @@ useEffect(() => {
     // Scroll to top on load
     useEffect(() => { window.scrollTo(0, 0); }, []);
 
-    
+    useEffect(() => {
+        if (!isLoading && completedQuizIds.length > 0) {
+            const dbLevel = Math.floor(completedQuizIds.length / 10) + 1;
+            const local = parseInt(localStorage.getItem('sq_gate_unlocked')) || 1;
+            // Sync the gate to the highest known level
+            setGateOpenedFor(Math.max(dbLevel, local));
+        }
+    }, [completedQuizIds, isLoading]);
 
 
     useEffect(() => {
@@ -190,7 +196,7 @@ useEffect(() => {
         let stuckTimer;
 
         const isActuallyStuck = !currentQuestion && !allDone && !isLoading && quizBank.length > 0 && gateOpenedFor >= userLevel;
-        const showingPromotion = completedInLevelCount === 0 && completedQuizIds.length > 0 && gateOpenedFor < userLevel;
+        const showingPromotion = completedInLevelCount >= 10;
 
         if (isActuallyStuck && !showingPromotion) {
             console.warn("SQ-Quiz: Stalls detected. Sanitizing in 15s...");
@@ -248,30 +254,30 @@ useEffect(() => {
 
     // --- 2. DYNAMIC LEVEL PROMOTION ---
 
-    if (isCorrect === null && gateOpenedFor < userLevel && !allDone && currentUser) {
+    if (isCorrect === null && completedInLevelCount >= 10 && !allDone && currentUser) {
         return (
             <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
                 <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
                     <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle size={40} className="text-emerald-500" />
                     </div>
-                    <h2 className="text-3xl font-black text-gray-900 mb-3">Level {userLevel - 1} Complete!</h2>
+                    <h2 className="text-3xl font-black text-gray-900 mb-3">Level {userLevel} Complete!</h2>
                     <p className="text-gray-600 mb-8 font-medium leading-relaxed">
-                       You've mastered this tier. Ready for Level {userLevel}? 
+                         You've mastered this tier. Ready for Level {userLevel + 1}? 
                     </p>
                     <button 
                              disabled={isPromoting}
                              onClick={async () => {
                            setIsPromoting(true);
                            await new Promise(r => setTimeout(r, 3000)); 
-                           localStorage.setItem('sq_gate_unlocked', userLevel.toString());
-                           localStorage.setItem('sq_quiz_index', '0');
-                          setGateOpenedFor(userLevel);
+                           localStorage.setItem('sq_gate_unlocked', (userLevel + 1).toString());
+                            localStorage.setItem('sq_quiz_index', '0');
+                            setGateOpenedFor(userLevel + 1);
                           window.location.reload();
                          }} 
                       className={`w-full ${isPromoting ? 'bg-gray-400' : 'bg-brand-600'} text-white py-4 rounded-2xl font-black text-lg shadow-lg`}
                         >
-                    {isPromoting ? "Saving XP..." : `Unlock Level ${userLevel}`}
+                    {isPromoting ? "Saving XP..." : `Unlock Level ${userLevel + 1}`}
                     </button>
                     </div>
                     </div>
@@ -332,8 +338,8 @@ useEffect(() => {
                     </div>
                     <div className="text-right">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</p>
-                        <p className="text-lg font-black text-gray-900 leading-none">{completedInLevelCount + 1} / 10</p>
-                </div>
+                        <p className="text-lg font-black text-gray-900 leading-none">{Math.min(completedInLevelCount + 1, 10)} / 10</p>
+                                        </div>
                 </div>
 
                 {/* --- THE QUIZ CARD --- */}
@@ -417,7 +423,7 @@ useEffect(() => {
                     <div className="h-2 bg-gray-100 w-full">
                     <div 
                          className="h-full bg-brand-600 transition-all duration-500" 
-                         style={{ width: `${((completedInLevelCount + 1) / 10) * 100}%` }}
+                         style={{ width: `${(Math.min(completedInLevelCount + 1, 10) / 10) * 100}%` }}
                     ></div>
                     </div>
                 </div>
