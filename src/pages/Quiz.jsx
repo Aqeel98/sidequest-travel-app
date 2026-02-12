@@ -19,6 +19,7 @@ const Quiz = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [xpAnimate, setXpAnimate] = useState(false);
     const [gateOpenedFor, setGateOpenedFor] = useState(parseInt(localStorage.getItem('sq_gate_unlocked')) || 1);
+    const [isPromoting, setIsPromoting] = useState(false);
 
     const userLevel = useMemo(() => {
         const dbLevel = Math.floor(completedQuizIds.length / 10) + 1;
@@ -259,21 +260,23 @@ useEffect(() => {
                        You've mastered this tier. Ready for Level {userLevel}? 
                     </p>
                     <button 
-                      onClick={() => {
-                        localStorage.setItem('sq_gate_unlocked', userLevel.toString());
-                        localStorage.setItem('sq_quiz_index', '0');
-                        setGateOpenedFor(userLevel);
-                        // Force a clean state for the new level
-                        setTimeout(() => window.location.reload(), 100);
-                      }} 
-                      className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg"
-                    >
-                      Unlock Level {userLevel}
+                             disabled={isPromoting}
+                             onClick={async () => {
+                           setIsPromoting(true);
+                           await new Promise(r => setTimeout(r, 3000)); 
+                           localStorage.setItem('sq_gate_unlocked', userLevel.toString());
+                           localStorage.setItem('sq_quiz_index', '0');
+                          setGateOpenedFor(userLevel);
+                          window.location.reload();
+                         }} 
+                      className={`w-full ${isPromoting ? 'bg-gray-400' : 'bg-brand-600'} text-white py-4 rounded-2xl font-black text-lg shadow-lg`}
+                        >
+                    {isPromoting ? "Saving XP..." : `Unlock Level ${userLevel}`}
                     </button>
-                </div>
-            </div>
-        );
-    }
+                    </div>
+                    </div>
+                 );
+             }
 
     if (isLoading || (quizBank.length > 0 && !currentQuestion && !allDone)) {
         return <div className="min-h-screen bg-[#E6D5B8]" />;

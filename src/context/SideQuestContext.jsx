@@ -209,8 +209,7 @@ useEffect(() => {
         }
     };
 
-    syncInBackground(); // Fire and forget!
-    return true; 
+    return syncInBackground();
 };
 
 
