@@ -31,10 +31,20 @@ const Quiz = () => {
         return quizBank.filter(q => q.level === activeLevel && completedQuizIds.includes(q.id)).length;
     }, [quizBank, activeLevel, completedQuizIds]);
     
+
+    const maxDefinedLevel = useMemo(() => {
+        if (!quizBank.length) return 8;
+        return Math.max(...quizBank.map(q => q.level));
+    }, [quizBank]);
+
     const allDone = useMemo(() => {
-        return quizBank.length > 0 && completedQuizIds.length >= quizBank.length;
-    }, [quizBank, completedQuizIds]);
+        const dbComplete = quizBank.length > 0 && completedQuizIds.length >= quizBank.length;
+        const levelOvershot = activeLevel > maxDefinedLevel && completedQuizIds.length > 0;
+        return dbComplete || levelOvershot;
+    }, [quizBank, completedQuizIds, activeLevel, maxDefinedLevel]);
     
+
+
     const availableQuestions = useMemo(() => {
         if (!quizBank.length || allDone) return [];
         
@@ -51,10 +61,7 @@ const Quiz = () => {
     
     const isLevelComplete = completedInLevelCount >= 10;
 
-    const maxDefinedLevel = useMemo(() => {
-        if (!quizBank.length) return 1;
-        return Math.max(...quizBank.map(q => q.level));
-    }, [quizBank]);
+    
 
     
     const isLevelGateActive = useMemo(() => {
@@ -228,7 +235,6 @@ useEffect(() => {
         );
     }
 
-    // --- 2. DYNAMIC LEVEL PROMOTION ---
 
     // --- 2. DYNAMIC LEVEL PROMOTION ---
 
