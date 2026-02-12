@@ -165,7 +165,7 @@ useEffect(() => {
             setIsCorrect(false);
         }
 
-        const xpToAward = getXpForLevel(userLevel);
+        const xpToAward = currentQuestion.xp_reward || 2;
         submitQuizAnswer(currentQuestion.id, index, isCorrectLocal, xpToAward);
     };
 
