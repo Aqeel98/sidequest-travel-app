@@ -332,8 +332,8 @@ useEffect(() => {
                     </div>
                     <div className="text-right">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</p>
-                        <p className="text-lg font-black text-gray-900 leading-none">{currentIndex + 1} / {availableQuestions.length}</p>
-                    </div>
+                        <p className="text-lg font-black text-gray-900 leading-none">{completedInLevelCount + 1} / 10</p>
+                </div>
                 </div>
 
                 {/* --- THE QUIZ CARD --- */}
@@ -415,10 +415,10 @@ useEffect(() => {
 
                     {/* Footer Graphic */}
                     <div className="h-2 bg-gray-100 w-full">
-                        <div 
-                            className="h-full bg-brand-600 transition-all duration-500" 
-                            style={{ width: `${((currentIndex + 1) / availableQuestions.length) * 100}%` }}
-                        ></div>
+                    <div 
+                         className="h-full bg-brand-600 transition-all duration-500" 
+                         style={{ width: `${((completedInLevelCount + 1) / 10) * 100}%` }}
+                    ></div>
                     </div>
                 </div>
 
