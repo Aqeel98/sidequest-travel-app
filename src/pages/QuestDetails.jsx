@@ -28,7 +28,20 @@ const QuestDetails = () => {
     trackMouse: true
   });
 
+  const [showHint, setShowHint] = useState(false);
 
+  useEffect(() => {
+    const hasSeenHint = localStorage.getItem('sq_swipe_hint_seen');
+    
+    if (!hasSeenHint) {
+      setShowHint(true);
+      const timer = setTimeout(() => {
+        setShowHint(false);
+        localStorage.setItem('sq_swipe_hint_seen', 'true');
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // State
   const [description, setDescription] = useState('');
@@ -449,6 +462,30 @@ const getRemainingText = (text) => {
           )}
         </div>
       </div>
+      {/* --- GHOST SWIPE HINT UI START --- */}
+      {showHint && (
+        <div className="fixed inset-0 z-[1500] pointer-events-none flex items-center justify-between px-6 animate-in fade-in duration-1000">
+          
+          {/* Left Side (Back) */}
+          <div className="flex flex-col items-center gap-2 opacity-60 animate-pulse">
+            <div className="bg-black/20 backdrop-blur-xl p-5 rounded-full border border-white/20 shadow-2xl">
+              <ArrowLeft size={32} className="text-white" />
+            </div>
+            <span className="text-[10px] font-black text-white uppercase tracking-widest drop-shadow-lg">Back</span>
+          </div>
+
+          {/* Right Side (Next) */}
+          <div className="flex flex-col items-center gap-2 opacity-60 animate-pulse">
+            <div className="bg-black/20 backdrop-blur-xl p-5 rounded-full border border-white/20 shadow-2xl">
+              <ArrowLeft size={32} className="text-white rotate-180" />
+            </div>
+            <span className="text-[10px] font-black text-white uppercase tracking-widest drop-shadow-lg">Next</span>
+          </div>
+
+          {/* Background Glow */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20 pointer-events-none"></div>
+        </div>
+      )}
     </div>
   );
 };
