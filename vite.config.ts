@@ -49,6 +49,8 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
+        disableDevLogs: true, 
+        navigateFallbackDenylist: [/^\/api/], 
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/res\.cloudinary\.com\/dtowdaysr\/image\/fetch\/.*sisyjuaspeznyrmipmlo\.supabase\.co.*/i,
