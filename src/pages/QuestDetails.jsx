@@ -2,12 +2,33 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Camera, UploadCloud, CheckCircle, Clock, AlertCircle, Navigation, Loader2, ArrowLeft } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
-import imageCompression from 'browser-image-compression'; // THE 4G FIX
+import imageCompression from 'browser-image-compression'; 
+import { useSwipeable } from 'react-swipeable';
 
 const QuestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { quests, acceptQuest, submitProof, currentUser, questProgress, setShowAuthModal, showToast } = useSideQuest();
+
+  const questSequence = JSON.parse(sessionStorage.getItem('sq_quest_sequence') || '[]');
+  const currentIndex = questSequence.indexOf(Number(id));
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (currentIndex !== -1 && currentIndex < questSequence.length - 1) {
+        const nextId = questSequence[currentIndex + 1];
+        navigate(`/quest/${nextId}`, { replace: true });
+      }
+    },
+    onSwipedRight: () => {
+      navigate(-1);
+    },
+    delta: 70,
+    preventScrollOnSwipe: false,
+    trackMouse: true
+  });
+
+
 
   // State
   const [description, setDescription] = useState('');
@@ -64,6 +85,9 @@ const LinkifyText = ({ text }) => {
   const isStarted = !!currentProgress; 
   const status = currentProgress?.status; 
 
+
+
+  
 // --- HELPER: CATEGORY COLORS ---
 const getCategoryColor = (cat) => {
   if (cat === 'Adventure') return 'bg-orange-100 text-orange-800';
@@ -125,6 +149,8 @@ const getCategoryColor = (cat) => {
   );
 
   // --- ACTIONS ---
+
+
 
   // THE 4G FIX: Compress image BEFORE setting state
   const handleImageSelect = async (e) => {
@@ -220,10 +246,10 @@ const getRemainingText = (text) => {
 };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
-      <button onClick={() => navigate(-1)} className="text-brand-600 mb-4 font-medium flex items-center hover:underline">
-        <ArrowLeft size={18} className="mr-1" /> Back to Explore
-      </button>
+    <div {...handlers} className="max-w-4xl mx-auto px-4 py-8 pb-24 touch-pan-y">
+    <button onClick={() => navigate(-1)} className="text-brand-600 mb-4 font-medium flex items-center hover:underline">
+      <ArrowLeft size={18} className="mr-1" /> Back to Explore
+    </button>
       
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         

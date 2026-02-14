@@ -94,6 +94,8 @@ const Home = () => {
   
   // Wrapper to save position before leaving
   const handleQuestClick = (questId) => {
+    const questSequence = displayQuests.map(q => q.id);
+    sessionStorage.setItem('sq_quest_sequence', JSON.stringify(questSequence));
     sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
     sessionStorage.setItem('sq_selected_category', selectedCategory); 
     sessionStorage.setItem('sq_home_search', searchQuery);
