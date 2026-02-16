@@ -40,16 +40,11 @@ useEffect(() => {
     } else if (activeTab === 'manage' || activeTab === 'verify') {
         setView('manage');
     }
+    if (activeTab) {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }
 }, [searchParams]);
 
-useEffect(() => {
-    if (searchParams.get('tab') === 'verify' && view === 'manage') {
-        setTimeout(() => {
-            const verifyBox = document.querySelector('h3:contains("Verify Traveler Code")')?.parentElement;
-            verifyBox?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    }
-}, [searchParams, view]);
 
 
     useEffect(() => {
