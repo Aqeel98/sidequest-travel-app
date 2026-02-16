@@ -249,6 +249,8 @@ const Admin = () => {
   const [mfaVerifyCode, setMfaVerifyCode] = useState('');
   const [tempFactorId, setTempFactorId] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false); 
+  const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
+  const [isMfaUpdating, setIsMfaUpdating] = useState(false);
   const [viewDetailsId, setViewDetailsId] = useState(null);
   const [isWarmed, setIsWarmed] = useState(false);
 
@@ -384,15 +386,26 @@ const Admin = () => {
     }
   };
 
+  // --- MASTER SECURITY VAULT LOGIC (VERIFIED V3.5) ---
+
   const enrollMFA = async () => {
     setIsUpdating(true);
     try {
+        // STEP 0: SLATE CLEANER
+        // This removes any "Ghost Factors" that are blocking the setup
+        const { data: list } = await supabase.auth.mfa.listFactors();
+        const unverifiedFactors = list?.all?.filter(f => f.status === 'unverified') || [];
+        for (const factor of unverifiedFactors) {
+            await supabase.auth.mfa.unenroll({ factorId: factor.id });
+        }
+
+        // STEP 1: ENROLL
         const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
         if (error) throw error;
         
         setTempFactorId(data.id);
         setMfaQR(data.totp.qr_code);
-        showToast("QR Code Generated. Scan with your app.", "info");
+        showToast("QR Code Ready. Please scan now.", "info");
     } catch (err) {
         showToast(err.message, 'error');
     } finally {
@@ -401,40 +414,47 @@ const Admin = () => {
   };
 
   const verifyMFAEnrollment = async () => {
-    if (!mfaVerifyCode) return;
+    if (!mfaVerifyCode || !tempFactorId) {
+        showToast("Please scan the QR code first.", "error");
+        return;
+    }
     setIsUpdating(true);
     try {
-        console.log("SQ-MFA: Starting verification challenge...");
+        // STEP 2: CHALLENGE
         const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
-        
         if (challenge.error) throw challenge.error;
 
-        console.log("SQ-MFA: Challenge received, submitting code...");
-        const verify = await supabase.auth.mfa.verify({
-          factorId: tempFactorId,
-          challengeId: challenge.data.id,
-          code: mfaVerifyCode
+        // STEP 3: VERIFY (With project-wide timeout)
+        const verifyPromise = supabase.auth.mfa.verify({
+            factorId: tempFactorId,
+            challengeId: challenge.data.id,
+            code: mfaVerifyCode
         });
 
-        if (verify.error) throw verify.error;
+        // Race against 15s timeout to prevent "stuck" buttons
+        const { data, error } = await Promise.race([
+            verifyPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout")), 15000))
+        ]);
 
-        // SUCCESS
-        showToast("2FA Activated & Identity Locked!", "success");
-        console.log("SQ-MFA: Verification successful!");
-        
+        if (error) throw error;
+
+        // SUCCESS HANDSHAKE
+        showToast("IDENTITY LOCKED: 2FA ACTIVATED!", "success");
+        console.log("SQ-Security: MFA Verified and Session Hardened.");
+
         setMfaQR(''); 
         setMfaVerifyCode('');
         
-        // RELOAD
+        // RELOAD: Forces a fresh session with AAL2 status
         setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
-        console.error("SQ-MFA Error:", err.message);
+        console.error("SQ-Security Failure:", err.message);
         showToast(err.message, 'error');
     } finally {
         setIsUpdating(false);
     }
   };
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-black mb-8 text-gray-900 tracking-tight">Game Master Oversight</h1>
@@ -815,51 +835,39 @@ const Admin = () => {
       )}
 
         {/* --- 6. SECURITY VAULT TAB --- */}
-      {activeTab === 'security' && (
-        <div className="max-w-md mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
-            <div className="bg-white p-8 rounded-3xl border shadow-sm">
-                <h3 className="font-bold text-lg mb-4">Master Password Update</h3>
-                <input 
-                    type="password" 
-                    placeholder="New Password" 
-                    value={newPassword} 
-                    onChange={(e) => setNewPassword(e.target.value)} 
-                    className="w-full p-4 bg-gray-50 rounded-2xl border mb-4 outline-none focus:border-red-500" 
-                />
-                <button 
-                  onClick={handlePasswordUpdate} 
-                  disabled={isUpdating}
-                 className={`w-full bg-black text-white font-bold py-4 rounded-2xl ${isUpdating ? 'opacity-50' : ''}`}
-                >
-                   {isUpdating ? 'Updating...' : 'Update Password'}
-                </button>
-            </div>
-
-            <div className="bg-white p-8 rounded-3xl border shadow-sm">
-                <h3 className="font-bold text-lg mb-4">Two-Factor Authentication</h3>
-                {!mfaQR ? (
-                    <button onClick={enrollMFA} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl transition-all active:scale-95">
-                        Enable Google Authenticator
-                    </button>
-                ) : (
-                    <div className="text-center space-y-4">
-                        <img src={mfaQR} alt="QR Code" className="mx-auto border-4 rounded-xl" />
-                        <p className="text-xs text-gray-400 font-medium">Scan this with Google Authenticator or Authy</p>
-                        <input 
-                            type="text" 
-                            placeholder="000000" 
-                            value={mfaVerifyCode} 
-                            onChange={(e) => setMfaVerifyCode(e.target.value)} 
-                            className="w-full p-4 border rounded-2xl text-center text-2xl tracking-[0.5em] font-black outline-none focus:border-green-500" 
-                        />
-                        <button onClick={verifyMFAEnrollment} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl">
-                            Verify & Activate
-                        </button>
-                    </div>
-                )}
-            </div>
+        {activeTab === 'security' && (
+    <div className="max-w-md mx-auto space-y-8 animate-in fade-in zoom-in">
+        {/* PASSWORD BOX */}
+        <div className="bg-white p-8 rounded-3xl border shadow-sm">
+            <h3 className="font-bold text-lg mb-4">Master Password Update</h3>
+            <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border mb-4 outline-none focus:border-red-500" />
+            <button onClick={handlePasswordUpdate} disabled={isUpdating} className={`w-full bg-black text-white font-bold py-4 rounded-2xl ${isUpdating ? 'opacity-50' : ''}`}>
+                {isUpdating ? 'Processing...' : 'Update Password'}
+            </button>
         </div>
-      )}
+
+        {/* MFA BOX */}
+        <div className="bg-white p-8 rounded-3xl border shadow-sm">
+            <h3 className="font-bold text-lg mb-4">Identity Lock (MFA)</h3>
+            {!mfaQR ? (
+                <button onClick={enrollMFA} disabled={isUpdating} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl">
+                    {isUpdating ? 'Clearing Slate...' : 'Enable Google Authenticator'}
+                </button>
+            ) : (
+                <div className="text-center space-y-6">
+                    <div className="p-4 bg-gray-50 rounded-2xl inline-block border-2 border-brand-100">
+                        <img src={mfaQR} alt="QR Code" className="mx-auto" />
+                    </div>
+                    <p className="text-xs text-gray-500 font-medium px-4">Scan the code, then enter the 6 digits from your phone below.</p>
+                    <input type="text" maxLength="6" placeholder="000000" value={mfaVerifyCode} onChange={(e) => setMfaVerifyCode(e.target.value)} className="w-full p-4 border-2 border-brand-100 rounded-2xl text-center text-3xl font-black tracking-[0.5em] focus:border-brand-500 outline-none" />
+                    <button onClick={verifyMFAEnrollment} disabled={isUpdating} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-green-100">
+                        {isUpdating ? 'Verifying Identity...' : 'Verify & Lock Account'}
+                    </button>
+                </div>
+            )}
+        </div>
+    </div>
+)}
 
 
     </div>
