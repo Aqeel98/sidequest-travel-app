@@ -13,6 +13,8 @@ const AuthModal = () => {
   const [password, setPassword] = useState(''); 
   const [name, setName] = useState('');
   const [role, setRole] = useState('Traveler');
+  const [mfaCode, setMfaCode] = useState('');
+const [mfaFactorId, setMfaFactorId] = useState('');
   
   // UI States
   const [loading, setLoading] = useState(false);
@@ -23,28 +25,46 @@ const AuthModal = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return; 
-    
     setLoading(true); 
 
     try {
         if (mode === 'login') {
-            // 1. Existing Login Logic
-            await login(email, password);
+            // STEP 1: Standard Email/Password Check
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+
+            const { data: factors } = await supabase.auth.mfa.listFactors();
+            
+            if (factors?.totp?.length > 0) {
+                setMfaFactorId(factors.totp[0].id);
+                setMode('mfa_challenge'); 
+                setLoading(false);
+                return; // Stop here and wait for the 6-digit code
+            }
+
+            setShowAuthModal(false); 
+        } 
+        else if (mode === 'mfa_challenge') {
+            const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+            if (challenge.error) throw challenge.error;
+
+            const verify = await supabase.auth.mfa.verify({
+                factorId: mfaFactorId,
+                challengeId: challenge.data.id,
+                code: mfaCode
+            });
+
+            if (verify.error) throw verify.error;
+            setShowAuthModal(false);
         } 
         else if (mode === 'signup') {
-            // 2. Existing Signup Logic (Changed 'else' to 'else if')
             await signup(email, password, name, role);
         } 
         else if (mode === 'reset') {
-            // 3. NEW: Password Reset Logic
-            // This sends a "Magic Link" to their inbox.
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                // This automatically detects if you are on localhost or Vercel
                 redirectTo: window.location.origin, 
             });
-            
             if (error) throw error;
-            
             showToast("Check your email for the recovery link!", 'info');
             setMode('login');
         }
@@ -71,15 +91,36 @@ const AuthModal = () => {
                 <X size={24} />
             </button>
             <h2 className="text-3xl font-extrabold text-white mb-1 tracking-tight">
-                {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Join the Quest' : 'Reset Password'}
-            </h2>
-            <p className="text-brand-100 text-sm font-medium">
-                {mode === 'login' ? 'Ready for your next adventure?' : mode === 'signup' ? 'Start your journey of impact.' : 'We will email you a recovery link.'}
-            </p>
+                 {mode === 'login' ? 'Welcome Back' : 
+                  mode === 'signup' ? 'Join the Quest' : 
+                    mode === 'mfa_challenge' ? 'Security Check' : 'Reset Password'}
+                </h2>
+                <p className="text-brand-100 text-sm font-medium">
+                  {mode === 'login' ? 'Ready for your next adventure?' : 
+                   mode === 'signup' ? 'Start your journey of impact.' : 
+                     mode === 'mfa_challenge' ? 'Confirm your identity to continue.' : 'We will email you a recovery link.'}
+                </p>
         </div>
         
         <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-4">
+
+            {mode === 'mfa_challenge' && (
+        <div className="space-y-4 animate-in fade-in zoom-in">
+            <div className="bg-brand-50 p-4 rounded-xl text-center">
+                <p className="text-sm font-bold text-brand-700">Authenticator Code Required</p>
+            </div>
+            <input 
+                type="text" 
+                maxLength="6"
+                className="w-full border-2 border-gray-200 p-4 rounded-xl text-center text-3xl font-black tracking-[0.5em] focus:border-brand-500 outline-none" 
+                placeholder="000000"
+                value={mfaCode}
+                onChange={e => setMfaCode(e.target.value)}
+                autoFocus
+            />
+        </div>
+    )}
                 
                 {mode === 'signup' && (
                     <div>
@@ -93,7 +134,7 @@ const AuthModal = () => {
                         />
                     </div>
                 )}
-
+                {mode !== 'mfa_challenge' && (
                 <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Email</label>
                     <input 
@@ -105,9 +146,10 @@ const AuthModal = () => {
                         required 
                     />
                 </div>
-
+                )}
+                
                 {/* 1. HIDE PASSWORD IF RESETTING */}
-                {mode !== 'reset' && (
+                {mode !== 'reset' && mode !== 'mfa_challenge' && (
                     <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Password</label>
                         <div className="relative">
@@ -174,20 +216,25 @@ const AuthModal = () => {
                             </svg>
                             Processing...
                         </>
-                    ) : (mode === 'login' ? 'Log In' : mode === 'signup' ? 'Start Adventure' : 'Send Reset Link')}
-                </button>
-            </form>
+                ) : (
+                   mode === 'login' ? 'Log In' : 
+                   mode === 'signup' ? 'Start Adventure' : 
+                   mode === 'mfa_challenge' ? 'Verify Identity' : 
+                       'Send Reset Link'
+                    )}        
+                            </button>
+                             </form>
             
             {/* 3. UPDATE FOOTER FOR RESET MODE */}
             <div className="mt-6 text-center text-sm text-gray-600 font-medium">
-                {mode === 'reset' ? (
-                    <button 
-                        type="button"
-                        onClick={() => setMode('login')} 
-                        className="flex items-center justify-center w-full text-gray-500 hover:text-brand-600"
-                    >
-                        <ArrowLeft size={16} className="mr-1" /> Back to Login
-                    </button>
+            {(mode === 'reset' || mode === 'mfa_challenge') ? (
+             <button 
+                type="button"
+               onClick={() => setMode('login')} 
+               className="flex items-center justify-center w-full text-gray-500 hover:text-brand-600"
+                 >
+                 <ArrowLeft size={16} className="mr-1" /> Back to Login
+             </button>
                 ) : (
                     <>
                         {mode === 'login' ? "New to SideQuest? " : "Already have an account? "}

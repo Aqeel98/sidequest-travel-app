@@ -243,6 +243,11 @@ const Admin = () => {
 
   const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
   const [editingId, setEditingId] = useState(null);
+  // --- SECURITY VAULT STATE ---
+  const [newPassword, setNewPassword] = useState('');
+  const [mfaQR, setMfaQR] = useState('');
+  const [mfaVerifyCode, setMfaVerifyCode] = useState('');
+  const [tempFactorId, setTempFactorId] = useState(null);
   const [viewDetailsId, setViewDetailsId] = useState(null);
   const [isWarmed, setIsWarmed] = useState(false);
 
@@ -357,6 +362,32 @@ const Admin = () => {
   const handleDeleteQuest = (id) => { if(window.confirm('Are you sure you want to delete this quest?')) deleteQuest(id); };
   const handleDeleteReward = (id) => { if(window.confirm('Are you sure you want to delete this reward?')) deleteReward(id); };
 
+
+  // --- SECURITY VAULT LOGIC ---
+  const handlePasswordUpdate = async () => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) showToast(error.message, 'error');
+    else { showToast("Master Password Updated!", "success"); setNewPassword(''); }
+  };
+
+  const enrollMFA = async () => {
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+    if (error) { showToast(error.message, 'error'); return; }
+    setTempFactorId(data.id);
+    setMfaQR(data.totp.qr_code);
+  };
+
+  const verifyMFAEnrollment = async () => {
+    const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
+    const verify = await supabase.auth.mfa.verify({
+      factorId: tempFactorId,
+      challengeId: challenge.data.id,
+      code: mfaVerifyCode
+    });
+    if (verify.error) showToast(verify.error.message, 'error');
+    else { showToast("2FA Activated successfully!", "success"); setMfaQR(''); setMfaVerifyCode(''); }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-black mb-8 text-gray-900 tracking-tight">Game Master Oversight</h1>
@@ -380,6 +411,9 @@ const Admin = () => {
         </button>
         <button onClick={() => setActiveTab('rewards')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'rewards' ? 'border-b-4 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}>
           Reward Manager
+        </button>
+        <button onClick={() => setActiveTab('security')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'security' ? 'border-b-4 border-red-500 text-red-600' : 'text-gray-500 hover:text-red-600'}`}>
+          Security Vault
         </button>
       </div>
 
@@ -730,7 +764,53 @@ const Admin = () => {
                 </div>
             ))}
         </div>
+        
       )}
+
+        {/* --- 6. SECURITY VAULT TAB --- */}
+      {activeTab === 'security' && (
+        <div className="max-w-md mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4">
+            <div className="bg-white p-8 rounded-3xl border shadow-sm">
+                <h3 className="font-bold text-lg mb-4">Master Password Update</h3>
+                <input 
+                    type="password" 
+                    placeholder="New Password" 
+                    value={newPassword} 
+                    onChange={(e) => setNewPassword(e.target.value)} 
+                    className="w-full p-4 bg-gray-50 rounded-2xl border mb-4 outline-none focus:border-red-500" 
+                />
+                <button onClick={handlePasswordUpdate} className="w-full bg-black text-white font-bold py-4 rounded-2xl transition-all active:scale-95">
+                    Update Password
+                </button>
+            </div>
+
+            <div className="bg-white p-8 rounded-3xl border shadow-sm">
+                <h3 className="font-bold text-lg mb-4">Two-Factor Authentication</h3>
+                {!mfaQR ? (
+                    <button onClick={enrollMFA} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl transition-all active:scale-95">
+                        Enable Google Authenticator
+                    </button>
+                ) : (
+                    <div className="text-center space-y-4">
+                        <img src={mfaQR} alt="QR Code" className="mx-auto border-4 rounded-xl" />
+                        <p className="text-xs text-gray-400 font-medium">Scan this with Google Authenticator or Authy</p>
+                        <input 
+                            type="text" 
+                            placeholder="000000" 
+                            value={mfaVerifyCode} 
+                            onChange={(e) => setMfaVerifyCode(e.target.value)} 
+                            className="w-full p-4 border rounded-2xl text-center text-2xl tracking-[0.5em] font-black outline-none focus:border-green-500" 
+                        />
+                        <button onClick={verifyMFAEnrollment} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl">
+                            Verify & Activate
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+      )}
+
+
     </div>
   );
 };
