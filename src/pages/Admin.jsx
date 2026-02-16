@@ -364,28 +364,51 @@ const Admin = () => {
 
 
   // --- SECURITY VAULT LOGIC ---
-  const handlePasswordUpdate = async () => {
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) showToast(error.message, 'error');
-    else { showToast("Master Password Updated!", "success"); setNewPassword(''); }
-  };
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const enrollMFA = async () => {
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
-    if (error) { showToast(error.message, 'error'); return; }
-    setTempFactorId(data.id);
-    setMfaQR(data.totp.qr_code);
+  const handlePasswordUpdate = async () => {
+    if (!newPassword) return;
+    setIsUpdating(true);
+    try {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+        
+        showToast("Master Password Updated Successfully!", "success");
+        setNewPassword('');
+        // Optional: Force a small delay then reload to refresh the session
+        setTimeout(() => window.location.reload(), 2000);
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        setIsUpdating(false);
+    }
   };
 
   const verifyMFAEnrollment = async () => {
-    const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
-    const verify = await supabase.auth.mfa.verify({
-      factorId: tempFactorId,
-      challengeId: challenge.data.id,
-      code: mfaVerifyCode
-    });
-    if (verify.error) showToast(verify.error.message, 'error');
-    else { showToast("2FA Activated successfully!", "success"); setMfaQR(''); setMfaVerifyCode(''); }
+    setIsUpdating(true);
+    try {
+        const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
+        if (challenge.error) throw challenge.error;
+
+        const verify = await supabase.auth.mfa.verify({
+          factorId: tempFactorId,
+          challengeId: challenge.data.id,
+          code: mfaVerifyCode
+        });
+
+        if (verify.error) throw verify.error;
+
+        showToast("2FA Activated & Identity Locked!", "success");
+        setMfaQR(''); 
+        setMfaVerifyCode('');
+        
+        // Refresh to ensure the UI knows you are now "MFA Verified"
+        setTimeout(() => window.location.reload(), 2000);
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        setIsUpdating(false);
+    }
   };
 
   return (
