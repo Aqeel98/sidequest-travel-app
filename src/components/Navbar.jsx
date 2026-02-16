@@ -48,25 +48,31 @@ const Navbar = () => {
                Partner <ChevronDown size={14} className={`transition-transform ${isPartnerMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
-           {isPartnerMenuOpen && (
-            <div className="absolute top-full left-0 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 mt-1 animate-in fade-in zoom-in-95 duration-200">
-            <Link to="/partner?tab=verify" className="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors">
-                <CheckCircle size={18} className="mr-3 text-brand-500" /> Verify Traveler Code
-            </Link>
-            <Link to="/partner?tab=manage" className="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors">
-                <LayoutDashboard size={18} className="mr-3 text-blue-500" /> My Content (Quests)
-            </Link>
-            
-            <div className="border-t border-gray-50 my-1"></div>
-        
-            <Link to="/partner?tab=create&mode=quest" className="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                <PlusCircle size={18} className="mr-3 text-emerald-500" /> Add New Quest
-            </Link>
-            <Link to="/partner?tab=create&mode=reward" className="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors">
-                <Gift size={18} className="mr-3 text-orange-500" /> Add New Reward
-            </Link>
+            {isPartnerMenuOpen && (
+    <div className="absolute top-full left-0 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 mt-1 animate-in fade-in zoom-in-95 duration-200">
+        {/* 1. Add New Quest */}
+        <Link to="/partner?tab=create&mode=quest" className="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+            <PlusCircle size={18} className="mr-3 text-emerald-500" /> Add New Quest
+        </Link>
+
+        {/* 2. Add New Reward */}
+        <Link to="/partner?tab=create&mode=reward" className="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors">
+            <Gift size={18} className="mr-3 text-orange-500" /> Add New Reward
+        </Link>
+
+        <div className="border-t border-gray-50 my-1"></div>
+
+        {/* 3. My Content */}
+        <Link to="/partner?tab=manage" className="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+            <LayoutDashboard size={18} className="mr-3 text-blue-500" /> My Content (Quests/Rewards)
+        </Link>
+
+        {/* 4. Verify Code */}
+        <Link to="/partner?tab=verify" className="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors">
+            <CheckCircle size={18} className="mr-3 text-brand-500" /> Verify Traveler Code
+        </Link>
         </div>
-              )}
+          )}
              </div>
                 )}
 
@@ -142,23 +148,27 @@ const Navbar = () => {
             </Link>
 
             {/* MOBILE PARTNER SECTION */}
-            {(currentUser?.role === 'Partner' || currentUser?.role === 'Admin') && (
-            <div className="bg-brand-50/50 rounded-xl p-1 border border-brand-100 mt-2">
-            <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest px-3 pt-2 mb-1">Partner Toolkit</p>
-            <Link to="/partner?tab=verify" className="p-3 rounded-lg hover:bg-white flex items-center font-bold text-brand-600" onClick={() => setIsOpen(false)}>
-                <CheckCircle size={18} className="mr-3"/> Verify Traveler Code
-            </Link>
-            <Link to="/partner?tab=manage" className="p-3 rounded-lg hover:bg-white flex items-center" onClick={() => setIsOpen(false)}>
-                <LayoutDashboard size={18} className="mr-3 text-blue-500"/> My Content
-            </Link>
-            <Link to="/partner?tab=create&mode=quest" className="p-3 rounded-lg hover:bg-white flex items-center" onClick={() => setIsOpen(false)}>
-                <PlusCircle size={18} className="mr-3 text-emerald-500"/> Add New Quest
-            </Link>
-            <Link to="/partner?tab=create&mode=reward" className="p-3 rounded-lg hover:bg-white flex items-center" onClick={() => setIsOpen(false)}>
-                <Gift size={18} className="mr-3 text-orange-500"/> Add New Reward
-            </Link>
-        </div>
-          )}
+{(currentUser?.role === 'Partner' || currentUser?.role === 'Admin') && (
+    <div className="bg-brand-50/50 rounded-xl p-1 border border-brand-100 mt-2">
+        <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest px-3 pt-2 mb-1">Partner Toolkit</p>
+        
+        <Link to="/partner?tab=create&mode=quest" className="p-3 rounded-lg hover:bg-white flex items-center" onClick={() => setIsOpen(false)}>
+            <PlusCircle size={18} className="mr-3 text-emerald-500"/> Add New Quest
+        </Link>
+        
+        <Link to="/partner?tab=create&mode=reward" className="p-3 rounded-lg hover:bg-white flex items-center" onClick={() => setIsOpen(false)}>
+            <Gift size={18} className="mr-3 text-orange-500"/> Add New Reward
+        </Link>
+        
+        <Link to="/partner?tab=manage" className="p-3 rounded-lg hover:bg-white flex items-center" onClick={() => setIsOpen(false)}>
+            <LayoutDashboard size={18} className="mr-3 text-blue-500"/> My Content
+        </Link>
+
+        <Link to="/partner?tab=verify" className="p-3 rounded-lg hover:bg-white flex items-center font-bold text-brand-600" onClick={() => setIsOpen(false)}>
+            <CheckCircle size={18} className="mr-3"/> Verify Traveler Code
+        </Link>
+    </div>
+)}
 
       {currentUser?.role === 'Admin' && (
        <Link to="/admin" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Admin Panel</Link>

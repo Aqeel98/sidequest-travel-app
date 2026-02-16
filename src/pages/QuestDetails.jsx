@@ -23,8 +23,8 @@ const QuestDetails = () => {
     onSwipedRight: () => {
       navigate(-1);
     },
-    delta: 70,
-    preventScrollOnSwipe: false,
+    delta: 60,
+    preventScrollOnSwipe: true,
     trackMouse: true
   });
 
@@ -260,9 +260,29 @@ const getRemainingText = (text) => {
 
   return (
     <div {...handlers} className="max-w-4xl mx-auto px-4 py-8 pb-24 touch-pan-y">
-    <button onClick={() => navigate(-1)} className="text-brand-600 mb-4 font-medium flex items-center hover:underline">
-      <ArrowLeft size={18} className="mr-1" /> Back to Explore
+    <div className="flex items-center justify-between mb-4">
+    {/* Back Label */}
+    <button onClick={() => navigate(-1)} className="text-brand-600 font-bold flex items-center hover:underline text-sm md:text-base">
+        <ArrowLeft size={18} className="mr-1" /> 
+        <span className="md:hidden">Swipe back to Explore</span>
+        <span className="hidden md:inline">Back to Explore</span>
     </button>
+
+    {/* Next Label (Only if next exists) */}
+    {currentIndex !== -1 && currentIndex < questSequence.length - 1 && (
+        <button 
+            onClick={() => {
+                const nextId = questSequence[currentIndex + 1];
+                navigate(`/quest/${nextId}`, { replace: true });
+            }}
+            className="text-brand-600 font-bold flex items-center hover:underline text-sm md:text-base opacity-90 hover:opacity-100 transition-opacity"
+        >
+            <span className="md:hidden">Swipe for Next</span>
+            <span className="hidden md:inline">Next Quest</span>
+            <ArrowLeft size={18} className="ml-1 rotate-180" />
+        </button>
+    )}
+</div>
       
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         
@@ -462,6 +482,35 @@ const getRemainingText = (text) => {
           )}
         </div>
       </div>
+
+                          {/* DESKTOP EDGE NAVIGATION (Hidden on Mobile) */}
+      <div className="hidden md:block">
+        {/* Back Arrow */}
+        <button 
+          onClick={() => navigate(-1)}
+          className="fixed left-8 top-1/2 -translate-y-1/2 z-[1000] p-4 rounded-full bg-white/40 backdrop-blur-md border border-white/20 text-gray-800 hover:bg-white hover:scale-110 transition-all shadow-xl group"
+          title="Back to Explore"
+        >
+          <ArrowLeft size={28} className="group-hover:-translate-x-1 transition-transform" />
+        </button>
+
+        {/* Next Arrow (Only if a next quest exists) */}
+        {currentIndex !== -1 && currentIndex < questSequence.length - 1 && (
+          <button 
+            onClick={() => {
+              const nextId = questSequence[currentIndex + 1];
+              navigate(`/quest/${nextId}`, { replace: true });
+            }}
+            className="fixed right-8 top-1/2 -translate-y-1/2 z-[1000] p-4 rounded-full bg-white/40 backdrop-blur-md border border-white/20 text-gray-800 hover:bg-white hover:scale-110 transition-all shadow-xl group"
+            title="Next Quest"
+          >
+            <ArrowLeft size={28} className="rotate-180 group-hover:translate-x-1 transition-transform" />
+          </button>
+        )}
+      </div>
+
+
+
       {/* --- GHOST SWIPE HINT UI START --- */}
       {showHint && (
         <div className="fixed inset-0 z-[1500] pointer-events-none flex items-center justify-between px-6 animate-in fade-in duration-1000">

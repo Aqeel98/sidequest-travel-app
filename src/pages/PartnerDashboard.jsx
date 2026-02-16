@@ -42,6 +42,15 @@ useEffect(() => {
     }
 }, [searchParams]);
 
+useEffect(() => {
+    if (searchParams.get('tab') === 'verify' && view === 'manage') {
+        setTimeout(() => {
+            const verifyBox = document.querySelector('h3:contains("Verify Traveler Code")')?.parentElement;
+            verifyBox?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }
+}, [searchParams, view]);
+
 
     useEffect(() => {
         if (editingId) return;

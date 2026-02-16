@@ -14,7 +14,7 @@ const Rewards = () => {
     if (!currentUser) {
         setShowAuthModal(true);
     } else {
-        navigate('/partner?tab=create');
+      navigate('/partner?tab=create&mode=reward');
     }
   };
 
