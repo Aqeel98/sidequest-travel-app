@@ -248,6 +248,7 @@ const Admin = () => {
   const [mfaQR, setMfaQR] = useState('');
   const [mfaVerifyCode, setMfaVerifyCode] = useState('');
   const [tempFactorId, setTempFactorId] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false); 
   const [viewDetailsId, setViewDetailsId] = useState(null);
   const [isWarmed, setIsWarmed] = useState(false);
 
@@ -363,19 +364,18 @@ const Admin = () => {
   const handleDeleteReward = (id) => { if(window.confirm('Are you sure you want to delete this reward?')) deleteReward(id); };
 
 
-  // --- SECURITY VAULT LOGIC ---
-  const [isUpdating, setIsUpdating] = useState(false);
-
+  // --- SECURITY VAULT LOGIC (HARDENED) ---
+  
   const handlePasswordUpdate = async () => {
-    if (!newPassword) return;
+    if (!newPassword) { showToast("Please enter a password", "info"); return; }
     setIsUpdating(true);
     try {
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) throw error;
         
-        showToast("Master Password Updated Successfully!", "success");
+        showToast("Master Password Updated!", "success");
         setNewPassword('');
-        // Optional: Force a small delay then reload to refresh the session
+        // Wait 2 seconds for toast, then reload to clear session
         setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
         showToast(err.message, 'error');
@@ -384,7 +384,24 @@ const Admin = () => {
     }
   };
 
+  const enrollMFA = async () => {
+    setIsUpdating(true);
+    try {
+        const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+        if (error) throw error;
+        
+        setTempFactorId(data.id);
+        setMfaQR(data.totp.qr_code);
+        showToast("QR Code Generated. Scan with your app.", "info");
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        setIsUpdating(false);
+    }
+  };
+
   const verifyMFAEnrollment = async () => {
+    if (!mfaVerifyCode) return;
     setIsUpdating(true);
     try {
         const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
@@ -402,7 +419,7 @@ const Admin = () => {
         setMfaQR(''); 
         setMfaVerifyCode('');
         
-        // Refresh to ensure the UI knows you are now "MFA Verified"
+        // Wait 2 seconds for toast, then reload
         setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
         showToast(err.message, 'error');
@@ -802,8 +819,12 @@ const Admin = () => {
                     onChange={(e) => setNewPassword(e.target.value)} 
                     className="w-full p-4 bg-gray-50 rounded-2xl border mb-4 outline-none focus:border-red-500" 
                 />
-                <button onClick={handlePasswordUpdate} className="w-full bg-black text-white font-bold py-4 rounded-2xl transition-all active:scale-95">
-                    Update Password
+                <button 
+                  onClick={handlePasswordUpdate} 
+                  disabled={isUpdating}
+                 className={`w-full bg-black text-white font-bold py-4 rounded-2xl ${isUpdating ? 'opacity-50' : ''}`}
+                >
+                   {isUpdating ? 'Updating...' : 'Update Password'}
                 </button>
             </div>
 
