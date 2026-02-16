@@ -29,23 +29,23 @@ const [mfaFactorId, setMfaFactorId] = useState('');
 
     try {
         if (mode === 'login') {
-            // STEP 1: Standard Email/Password Check
+            // 1. Log in
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
-
-            const { data: factors } = await supabase.auth.mfa.listFactors();
-
-            const verifiedFactors = factors?.all?.filter(f => f.status === 'verified') || [];
-            
-            if (verifiedFactors.length > 0) {
-                setMfaFactorId(verifiedFactors[0].id);
-                setMode('mfa_challenge'); // Switches UI to the 6-digit code box
+        
+            // 2. DIRECT CHECK: Get factors directly from the user data we just received
+            const factors = data.user?.factors || [];
+            const isVerified = factors.some(f => f.status === 'verified');
+        
+            if (isVerified) {
+                setMfaFactorId(verifiedFactor.id);
+                setMode('mfa_challenge'); 
                 setLoading(false);
-                return; // Stops here!
+                return; 
             }
-
+        
             setShowAuthModal(false); 
-        } 
+        }
         else if (mode === 'mfa_challenge') {
             const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
             if (challenge.error) throw challenge.error;

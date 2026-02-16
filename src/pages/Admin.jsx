@@ -421,56 +421,36 @@ const Admin = () => {
 
 
   const verifyMFAEnrollment = async () => {
-    if (!mfaVerifyCode || !tempFactorId) {
-        showToast("Please scan the QR code first.", "error");
-        return;
-    }
+    if (!mfaVerifyCode || !tempFactorId) return;
     setIsUpdating(true);
-    let successHandled = false; // Prevents double-firing
-
-    // Helper to finish the process
-    const triggerSuccess = () => {
-        if (successHandled) return;
-        successHandled = true;
-        showToast("IDENTITY LOCKED: 2FA ACTIVATED!", "success");
-        setMfaQR(''); 
-        setMfaVerifyCode('');
-        setTimeout(() => window.location.reload(), 1000);
-    };
-
-    // This catches the "MFA_CHALLENGE_VERIFIED" log you saw!
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === 'MFA_CHALLENGE_VERIFIED') {
-            console.log("SQ-Security: Success confirmed via background event!");
-            triggerSuccess();
-        }
-    });
     
     try {
-        // 2. Challenge
-        const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
-        if (challenge.error) throw challenge.error;
+        const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
+        if (cErr) throw cErr;
 
-        // 3. Verify
-        const verify = await supabase.auth.mfa.verify({
+        // This line waits for the server to confirm the save is 100% complete
+        const { error: vErr } = await supabase.auth.mfa.verify({
             factorId: tempFactorId,
-            challengeId: challenge.data.id,
+            challengeId: challenge.id,
             code: mfaVerifyCode
         });
 
-        if (verify.error) throw verify.error;
+        if (vErr) throw vErr;
 
-        triggerSuccess();
+        // SUCCESS: Now we know the database is updated
+        showToast("IDENTITY LOCKED!", "success");
+        setMfaQR(''); 
+        setMfaVerifyCode('');
+        
+        // Wait 3 full seconds to let the session settle, then reload
+        setTimeout(() => { window.location.reload(); }, 3000);
 
     } catch (err) {
-        if (!successHandled) {
-            console.error("SQ-Security Error:", err);
-            showToast(err.message, 'error');
-            setIsUpdating(false);
-        }
+        showToast(err.message, 'error');
+        setIsUpdating(false);
     }
   };
-
+  
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-black mb-8 text-gray-900 tracking-tight">Game Master Oversight</h1>
