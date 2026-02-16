@@ -391,21 +391,27 @@ const Admin = () => {
   const enrollMFA = async () => {
     setIsUpdating(true);
     try {
-        // STEP 0: SLATE CLEANER
-        // This removes any "Ghost Factors" that are blocking the setup
+        // STEP 0: SLATE CLEANER (Kept from your previous code - very good logic)
         const { data: list } = await supabase.auth.mfa.listFactors();
+
         const unverifiedFactors = list?.all?.filter(f => f.status === 'unverified') || [];
+        
+
         for (const factor of unverifiedFactors) {
             await supabase.auth.mfa.unenroll({ factorId: factor.id });
         }
 
-        // STEP 1: ENROLL
-        const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+        // STEP 1: ENROLL (Added Friendly Name for better Supabase support)
+        const { data, error } = await supabase.auth.mfa.enroll({ 
+            factorType: 'totp',
+            friendlyName: 'SideQuestAdminDevice' 
+        });
+        
         if (error) throw error;
         
         setTempFactorId(data.id);
         setMfaQR(data.totp.qr_code);
-        showToast("QR Code Ready. Please scan now.", "info");
+        showToast("QR Code Ready. Scan with your app.", "info");
     } catch (err) {
         showToast(err.message, 'error');
     } finally {
@@ -424,29 +430,28 @@ const Admin = () => {
         const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
         if (challenge.error) throw challenge.error;
 
-        // STEP 3: VERIFY (With project-wide timeout)
+        // STEP 3: VERIFY (Increased to 60 seconds to survive slow network)
         const verifyPromise = supabase.auth.mfa.verify({
             factorId: tempFactorId,
             challengeId: challenge.data.id,
             code: mfaVerifyCode
         });
 
-        // Race against 15s timeout to prevent "stuck" buttons
         const { data, error } = await Promise.race([
             verifyPromise,
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout")), 15000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Network Timeout: Trying to reach server...")), 60000))
         ]);
 
         if (error) throw error;
 
         // SUCCESS HANDSHAKE
         showToast("IDENTITY LOCKED: 2FA ACTIVATED!", "success");
-        console.log("SQ-Security: MFA Verified and Session Hardened.");
+        console.log("SQ-Security: MFA Verified.");
 
         setMfaQR(''); 
         setMfaVerifyCode('');
         
-        // RELOAD: Forces a fresh session with AAL2 status
+        // RELOAD
         setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
         console.error("SQ-Security Failure:", err.message);
@@ -455,6 +460,7 @@ const Admin = () => {
         setIsUpdating(false);
     }
   };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-black mb-8 text-gray-900 tracking-tight">Game Master Oversight</h1>

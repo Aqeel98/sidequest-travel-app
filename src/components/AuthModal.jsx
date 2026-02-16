@@ -34,12 +34,14 @@ const [mfaFactorId, setMfaFactorId] = useState('');
             if (error) throw error;
 
             const { data: factors } = await supabase.auth.mfa.listFactors();
+
+            const verifiedFactors = factors?.all?.filter(f => f.status === 'verified') || [];
             
-            if (factors?.totp?.length > 0) {
-                setMfaFactorId(factors.totp[0].id);
-                setMode('mfa_challenge'); 
+            if (verifiedFactors.length > 0) {
+                setMfaFactorId(verifiedFactors[0].id);
+                setMode('mfa_challenge'); // Switches UI to the 6-digit code box
                 setLoading(false);
-                return; // Stop here and wait for the 6-digit code
+                return; // Stops here!
             }
 
             setShowAuthModal(false); 
