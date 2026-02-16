@@ -251,7 +251,7 @@ useEffect(() => {
                     await fetchProfile(session.user.id, session.user.email);
                 } else {
                     console.log("SQ-Step 2: No session. Guest mode active.");
-                    setShowAuthModal(false);
+                  //  setShowAuthModal(false);
                 }
             }
           } catch (error) {
