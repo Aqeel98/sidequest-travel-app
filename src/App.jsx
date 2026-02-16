@@ -14,6 +14,7 @@ import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
 import { Compass, CheckCircle, AlertCircle, Info } from 'lucide-react'; 
+import { Analytics } from "@vercel/analytics/react";
 
 // Pages
 import Home from './pages/Home';
@@ -107,6 +108,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      <Analytics />
       <SpeedInsights />
     </SideQuestProvider>
   );
