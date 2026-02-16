@@ -1,10 +1,10 @@
-if (import.meta.env.PROD) {
-  console.log = () => {};
-  console.debug = () => {};
-  console.warn = () => {};
-  console.info = () => {};
+//if (import.meta.env.PROD) {
+ // console.log = () => {};
+  //console.debug = () => {};
+  //console.warn = () => {};
+//console.info = () => {};
   // console.error stays active so you can see if the system actually breaks
-}
+//}
 
 
 import React from 'react';

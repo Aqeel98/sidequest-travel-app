@@ -404,9 +404,12 @@ const Admin = () => {
     if (!mfaVerifyCode) return;
     setIsUpdating(true);
     try {
+        console.log("SQ-MFA: Starting verification challenge...");
         const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
+        
         if (challenge.error) throw challenge.error;
 
+        console.log("SQ-MFA: Challenge received, submitting code...");
         const verify = await supabase.auth.mfa.verify({
           factorId: tempFactorId,
           challengeId: challenge.data.id,
@@ -415,13 +418,17 @@ const Admin = () => {
 
         if (verify.error) throw verify.error;
 
+        // SUCCESS
         showToast("2FA Activated & Identity Locked!", "success");
+        console.log("SQ-MFA: Verification successful!");
+        
         setMfaQR(''); 
         setMfaVerifyCode('');
         
-        // Wait 2 seconds for toast, then reload
+        // RELOAD
         setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
+        console.error("SQ-MFA Error:", err.message);
         showToast(err.message, 'error');
     } finally {
         setIsUpdating(false);
