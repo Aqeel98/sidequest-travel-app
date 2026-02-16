@@ -426,13 +426,32 @@ const Admin = () => {
         return;
     }
     setIsUpdating(true);
+    let successHandled = false; // Prevents double-firing
+
+    // Helper to finish the process
+    const triggerSuccess = () => {
+        if (successHandled) return;
+        successHandled = true;
+        showToast("IDENTITY LOCKED: 2FA ACTIVATED!", "success");
+        setMfaQR(''); 
+        setMfaVerifyCode('');
+        setTimeout(() => window.location.reload(), 1000);
+    };
+
+    // This catches the "MFA_CHALLENGE_VERIFIED" log you saw!
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'MFA_CHALLENGE_VERIFIED') {
+            console.log("SQ-Security: Success confirmed via background event!");
+            triggerSuccess();
+        }
+    });
     
     try {
-        // 1. Challenge
+        // 2. Challenge
         const challenge = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
         if (challenge.error) throw challenge.error;
 
-        // 2. Verify (Standard Await - No artificial timeouts)
+        // 3. Verify
         const verify = await supabase.auth.mfa.verify({
             factorId: tempFactorId,
             challengeId: challenge.data.id,
@@ -441,19 +460,14 @@ const Admin = () => {
 
         if (verify.error) throw verify.error;
 
-        // 3. Success
-        showToast("IDENTITY LOCKED: 2FA ACTIVATED!", "success");
-        setMfaQR(''); 
-        setMfaVerifyCode('');
-        
-        // Force reload to update session security level
-        setTimeout(() => window.location.reload(), 1000);
+        triggerSuccess();
 
     } catch (err) {
-        console.error("SQ-Security Error:", err);
-        showToast(err.message, 'error');
-    } finally {
-        setIsUpdating(false);
+        if (!successHandled) {
+            console.error("SQ-Security Error:", err);
+            showToast(err.message, 'error');
+            setIsUpdating(false);
+        }
     }
   };
 
