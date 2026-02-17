@@ -39,7 +39,7 @@
       "source": "/index.html",
       "headers": [
         {
-          "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate, s-maxage=0" 
+          "key": "Cache-Control", "value": "no-cache, must-revalidate, s-maxage=0" 
         }
       ]
     }

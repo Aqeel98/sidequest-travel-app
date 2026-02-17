@@ -37,36 +37,35 @@
     <link rel="preconnect" href="https://sisyjuaspeznyrmipmlo.supabase.co">
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" media="all">
-    
+    <link rel="canonical" href="https://www.sidequest.lk/" />
 
     <script>
       (function(){
-        const CURRENT_APP_VERSION = '3.5.9';
+        const CURRENT_APP_VERSION = '3.6.0';
         const savedVersion = localStorage.getItem('sq_app_version');
-        if (savedVersion && savedVersion !== CURRENT_APP_VERSION) {
+        const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent);
+      
+        if (!isBot && savedVersion !== CURRENT_APP_VERSION) {
           if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(regs => {
-              for (let r of regs) r.unregister();
+            navigator.serviceWorker.getRegistrations().then(rs => {
+              for (let r of rs) r.unregister();
             });
           }
           if ('caches' in window) {
-            caches.keys().then(keys => {
-              for (let k of keys) caches.delete(k);
+            caches.keys().then(ks => {
+              for (let k of ks) caches.delete(k);
             });
           }
           localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
-          window.location.replace(window.location.origin + window.location.pathname + '?v=' + CURRENT_APP_VERSION + '&t=' + Date.now());
+          window.location.replace(window.location.origin + window.location.pathname + '?v=' + CURRENT_APP_VERSION);
           return;
         }
+        
         localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
+      
         window.addEventListener('error', (e) => {
           if (e.message && (e.message.includes('module script') || e.message.includes('chunk'))) {
-            const lastSync = localStorage.getItem('sq_deploy_sync');
-            const now = Date.now();
-            if (!lastSync || (now - parseInt(lastSync) > 10000)) {
-              localStorage.setItem('sq_deploy_sync', now.toString());
               window.location.reload(true);
-            }
           }
         }, true);
       })();

@@ -76,7 +76,7 @@ const MainLayout = () => {
   const { isLoading, currentUser } = useSideQuest();
 
   useEffect(() => {
-    const v = '3.5.9';
+    const v = '3.6.0';
     const checkUpdate = async () => {
       try {
         const res = await fetch('/index.html?cb=' + Date.now(), { cache: 'no-store' });
