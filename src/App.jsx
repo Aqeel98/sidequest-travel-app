@@ -77,6 +77,7 @@ const MainLayout = () => {
 
   useEffect(() => {
     const v = '3.6.0';
+    if (window.location.search.includes('v=' + v)) return;
     const checkUpdate = async () => {
       try {
         const res = await fetch('/index.html?cb=' + Date.now(), { cache: 'no-store' });

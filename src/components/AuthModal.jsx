@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 
 
 const AuthModal = () => {
-  const { showAuthModal, setShowAuthModal, login, signup, showToast  } = useSideQuest();
+  const { showAuthModal, setShowAuthModal, logout, login, signup, showToast  } = useSideQuest();
   
   // --- INTERNAL STATE ---
   const [mode, setMode] = useState('login'); 
@@ -21,6 +21,16 @@ const [mfaFactorId, setMfaFactorId] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
   if (!showAuthModal) return null; 
+
+  const handleExit = async () => {
+    if (mode === 'mfa_challenge') {
+      // If they exit during MFA, we MUST wipe the partial session
+      await logout(); 
+      setMode('login');
+    }
+    setShowAuthModal(false);
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,12 +96,18 @@ const [mfaFactorId, setMfaFactorId] = useState('');
         
         {/* Header */}
         <div className="bg-brand-600 p-6 text-center relative">
-            <button 
-                onClick={() => setShowAuthModal(false)} 
-                className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
-                disabled={loading}
-            >
-                <X size={24} />
+        <button 
+          onClick={async () => {
+        if (mode === 'mfa_challenge') {
+            await supabase.auth.signOut();
+            setMode('login');
+        }
+        setShowAuthModal(false);
+           }} 
+          className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+         disabled={loading}
+        >
+             <X size={24} />
             </button>
             <h2 className="text-3xl font-extrabold text-white mb-1 tracking-tight">
                  {mode === 'login' ? 'Welcome Back' : 
@@ -232,12 +248,17 @@ const [mfaFactorId, setMfaFactorId] = useState('');
             <div className="mt-6 text-center text-sm text-gray-600 font-medium">
             {(mode === 'reset' || mode === 'mfa_challenge') ? (
              <button 
-                type="button"
-               onClick={() => setMode('login')} 
-               className="flex items-center justify-center w-full text-gray-500 hover:text-brand-600"
-                 >
-                 <ArrowLeft size={16} className="mr-1" /> Back to Login
-             </button>
+             type="button"
+             onClick={async () => {
+                 if (mode === 'mfa_challenge') {
+                     await supabase.auth.signOut();
+                 }
+                 setMode('login');
+             }} 
+             className="flex items-center justify-center w-full text-gray-500 hover:text-brand-600"
+         >
+             <ArrowLeft size={16} className="mr-1" /> Back to Login
+         </button>
                 ) : (
                     <>
                         {mode === 'login' ? "New to SideQuest? " : "Already have an account? "}
