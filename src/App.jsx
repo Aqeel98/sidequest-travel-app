@@ -73,41 +73,43 @@ const Toast = () => {
 
 // --- MAIN LAYOUT WRAPPER ---
 const MainLayout = () => {
-    const { isLoading, currentUser } = useSideQuest();
+  const { isLoading, currentUser } = useSideQuest();
 
-    // --- 2. ADMIN CONSOLE RESTORATION ---
-    useEffect(() => {
-        if (import.meta.env.PROD) {
-            const isAdmin = currentUser?.role === 'Admin' || currentUser?.email === ADMIN_EMAIL;
-            
-            if (isAdmin) {
-                // Restore for Admin
-                console.log = originalConsole.log;
-                console.debug = originalConsole.debug;
-                console.warn = originalConsole.warn;
-                console.info = originalConsole.info;
-                console.log("%c SQ-DEBUG: Admin Oversight Active ", "background: #000; color: #00ff00; font-weight: bold;");
-            } else {
-                // Keep Muted for everyone else
-                console.log = () => {};
-                console.debug = () => {};
-                console.warn = () => {};
-                console.info = () => {};
-            }
-        }
-    }, [currentUser]);
+  useEffect(() => {
+      const v = '3.5.9';
+      if (localStorage.getItem('sq_app_version') !== v) {
+          window.location.reload();
+      }
+  }, []);
 
-    if (isLoading) return <LoadingScreen />;
+  useEffect(() => {
+      if (import.meta.env.PROD) {
+          const isAdmin = currentUser?.role === 'Admin' || currentUser?.email === 'sidequestsrilanka@gmail.com';
+          if (isAdmin) {
+              console.log = originalConsole.log;
+              console.debug = originalConsole.debug;
+              console.warn = originalConsole.warn;
+              console.info = originalConsole.info;
+          } else {
+              console.log = () => {};
+              console.debug = () => {};
+              console.warn = () => {};
+              console.info = () => {};
+          }
+      }
+  }, [currentUser]);
 
-    return (
-        <div className="min-h-screen bg-gray-50 pt-20 font-sans text-gray-900">
-            <Navbar />
-            <InstallBanner />
-            <Toast />
-            <AuthModal />
-            <Outlet />
-        </div>
-    );
+  if (isLoading) return <LoadingScreen />;
+
+  return (
+      <div className="min-h-screen bg-gray-50 pt-20 font-sans text-gray-900">
+          <Navbar />
+          <InstallBanner />
+          <Toast />
+          <AuthModal />
+          <Outlet />
+      </div>
+  );
 };
 
 export default function App() {

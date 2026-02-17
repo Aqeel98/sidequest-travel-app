@@ -40,48 +40,38 @@
     
 
     <script>
-      const CURRENT_APP_VERSION = '3.5.7'; 
-      const savedVersion = localStorage.getItem('sq_app_version');
+      (function() {
+        const CURRENT_APP_VERSION = '3.5.9'; 
+        const savedVersion = localStorage.getItem('sq_app_version');
     
-      if (savedVersion && savedVersion !== CURRENT_APP_VERSION) {
-          console.log("SQ-System: Version mismatch. Performing deep reload...");
-    
-          if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(registrations => {
-                  for (let registration of registrations) {
-                      registration.unregister();
-                  }
-              });
-          }
-    
-          if ('caches' in window) {
-              caches.keys().then(names => {
-                  for (let name of names) caches.delete(name);
-              });
-          }
-    
-          localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
-          
-          window.location.href = window.location.pathname + '?v=' + CURRENT_APP_VERSION;
-      } else {
-          localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
-      }
-    
-      window.addEventListener('error', (e) => {
-        if (e.message && e.message.includes('Failed to load module script')) {
-          const now = Date.now();
-          const lastReload = localStorage.getItem('sq_last_deploy_reload');
-    
-          if (lastReload && (now - parseInt(lastReload) < 30000)) return;
-    
-          if (navigator.onLine) {
-            localStorage.setItem('sq_last_deploy_reload', now.toString());
-            window.location.href = window.location.pathname + '?retry=' + now;
-          } else {
-            window.addEventListener('online', () => window.location.reload(), { once: true });
-          }
+        if (savedVersion && savedVersion !== CURRENT_APP_VERSION) {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) registration.unregister();
+                });
+            }
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    for (let name of names) caches.delete(name);
+                });
+            }
+            localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
+            window.location.replace(window.location.pathname + '?u=' + Date.now());
+        } else {
+            localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
         }
-      }, true);
+    
+        window.addEventListener('error', (e) => {
+          if (e.message && (e.message.includes('Failed to load module script') || e.message.includes('Loading chunk'))) {
+              const now = Date.now();
+              const lastReload = localStorage.getItem('sq_deploy_sync');
+              if (!lastReload || (now - parseInt(lastReload) > 30000)) {
+                  localStorage.setItem('sq_deploy_sync', now.toString());
+                  window.location.replace(window.location.pathname + '?s=' + now);
+              }
+          }
+        }, true);
+      })();
     </script>
 
 
