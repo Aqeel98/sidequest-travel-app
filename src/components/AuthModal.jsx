@@ -35,9 +35,9 @@ const [mfaFactorId, setMfaFactorId] = useState('');
         
             // 2. DIRECT CHECK: Get factors directly from the user data we just received
             const factors = data.user?.factors || [];
-            const isVerified = factors.some(f => f.status === 'verified');
+            const verifiedFactor = factors.find(f => f.status === 'verified');
         
-            if (isVerified) {
+            if (verifiedFactor) {
                 setMfaFactorId(verifiedFactor.id);
                 setMode('mfa_challenge'); 
                 setLoading(false);

@@ -428,7 +428,6 @@ const Admin = () => {
         const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
         if (cErr) throw cErr;
 
-        // This line waits for the server to confirm the save is 100% complete
         const { error: vErr } = await supabase.auth.mfa.verify({
             factorId: tempFactorId,
             challengeId: challenge.id,
@@ -437,19 +436,19 @@ const Admin = () => {
 
         if (vErr) throw vErr;
 
-        // SUCCESS: Now we know the database is updated
+        await supabase.auth.refreshSession(); 
+
         showToast("IDENTITY LOCKED!", "success");
         setMfaQR(''); 
         setMfaVerifyCode('');
         
-        // Wait 3 full seconds to let the session settle, then reload
-        setTimeout(() => { window.location.reload(); }, 3000);
+        setTimeout(() => { window.location.reload(); }, 2000);
 
     } catch (err) {
         showToast(err.message, 'error');
         setIsUpdating(false);
     }
-  };
+};
   
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">

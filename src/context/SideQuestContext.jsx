@@ -251,7 +251,7 @@ useEffect(() => {
                     await fetchProfile(session.user.id, session.user.email);
                 } else {
                     console.log("SQ-Step 2: No session. Guest mode active.");
-                  //  setShowAuthModal(false);
+                    setShowAuthModal(false);
                 }
             }
           } catch (error) {
@@ -284,7 +284,7 @@ useEffect(() => {
             console.log("SQ-System: Hydrating local user state from database...");
             await fetchProfile(session.user.id, session.user.email);
           }
-          setShowAuthModal(false); 
+        //  setShowAuthModal(false); 
       } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
         console.log("SQ-System: Authentication purged. Cleaning all local data pools.");
         setCurrentUser(null);
@@ -474,13 +474,18 @@ useEffect(() => {
   };
 
   // --- 5. DATA SYNC & ZOMBIE REPAIR LOGIC ---
-  const fetchProfile = async (userId, userEmail) => {
+  // --- 5. DATA SYNC & ZOMBIE REPAIR LOGIC ---
+const fetchProfile = async (userId, userEmail) => {
     try {
       console.log("SQ-Profile: Initiating database handshake for:", userEmail);
       
+      // 1. Fetch from Public Profiles Table
       let { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
       
-      // ZOMBIE USER REPAIR
+      // 2. Fetch from Auth (This contains the MFA factors for the Admin)
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+  
+      // 3. ZOMBIE USER REPAIR (Keep your existing logic)
       if (!data) {
           console.log("SQ-Profile: CRITICAL - Profile record missing. Repairing database integrity...");
           const newProfile = { 
@@ -500,17 +505,25 @@ useEffect(() => {
           if (!createError) {
               data = repaired;
               console.log("SQ-Profile: Database record successfully repaired.");
-          } else {
-              console.error("SQ-Profile: Manual repair failed ->", createError.message);
           }
       }
-
+  
       if (data) {
           if (data.email === ADMIN_EMAIL) data.role = 'Admin';
           
-          setCurrentUser(data);
+          // 4. THE FIX: Merge DB data with Auth factors
+          // Normal users will just have an empty array for factors
+          const mergedUser = {
+              ...data,
+              factors: authUser?.factors || [],
+              app_metadata: authUser?.app_metadata || {},
+              user_metadata: authUser?.user_metadata || {}
+          };
+  
+          setCurrentUser(mergedUser); // State now includes MFA info
           subscribeToProfileChanges(userId);
           
+          // 5. Trigger background data syncs
           await Promise.all([
              fetchSubmissions(userId, data.role),
              fetchRedemptions(userId, data.role),
