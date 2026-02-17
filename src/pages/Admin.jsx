@@ -421,32 +421,44 @@ const Admin = () => {
 
 
   const verifyMFAEnrollment = async () => {
-    if (!mfaVerifyCode || !tempFactorId) return;
+    if (!mfaVerifyCode || !tempFactorId) {
+        showToast("Please enter the 6-digit code.", "error");
+        return;
+    }
+    
     setIsUpdating(true);
     
     try {
-        const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
-        if (cErr) throw cErr;
+        // 1. Create the challenge
+        const challengeRes = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
+        
+        if (challengeRes.error) throw challengeRes.error;
+        if (!challengeRes.data) throw new Error("Connection lost. Please try again.");
 
-        const { error: vErr } = await supabase.auth.mfa.verify({
+        // 2. Verify the code
+        const verifyRes = await supabase.auth.mfa.verify({
             factorId: tempFactorId,
-            challengeId: challenge.id,
+            challengeId: challengeRes.data.id,
             code: mfaVerifyCode
         });
 
-        if (vErr) throw vErr;
+        if (verifyRes.error) throw verifyRes.error;
 
         await supabase.auth.refreshSession(); 
 
         showToast("IDENTITY LOCKED!", "success");
+        
         setMfaQR(''); 
         setMfaVerifyCode('');
-        
-        setTimeout(() => { window.location.reload(); }, 2000);
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
 
     } catch (err) {
-        showToast(err.message, 'error');
-        setIsUpdating(false);
+        console.error("MFA Error:", err.message);
+        showToast(err.message || "Invalid code. Try again.", 'error');
+        setIsUpdating(false); 
     }
 };
   
