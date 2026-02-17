@@ -1,13 +1,4 @@
-{/* if (import.meta.env.PROD) {
-  console.log = () => {};
-  console.debug = () => {};
-  console.warn = () => {};
-  console.info = () => {};
-   console.error //stays active so you can see if the system actually breaks
-    } */}
-
-
-import React from 'react';
+import React, { useEffect } from 'react'; // Added useEffect here
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
@@ -29,6 +20,18 @@ import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
 import InstallBanner from './components/InstallBanner';
 import Quiz from './pages/Quiz';
+
+// --- 1. CONSOLE SHIELD ENGINE ---
+const originalConsole = { ...console };
+const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
+
+if (import.meta.env.PROD) {
+  console.log = () => {};
+  console.debug = () => {};
+  console.warn = () => {};
+  console.info = () => {};
+  // console.error stays active
+}
 
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
@@ -57,7 +60,6 @@ const Toast = () => {
   };
 
   return (
-      // FIX: z-[2000] ensures notifications float above everything (including Login Modal)
       <div className="fixed top-24 right-4 z-[2000] animate-in slide-in-from-right duration-300">
           <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-md border ${styles[toast.type] || styles.info}`}>
               {icons[toast.type]}
@@ -71,7 +73,29 @@ const Toast = () => {
 
 // --- MAIN LAYOUT WRAPPER ---
 const MainLayout = () => {
-    const { isLoading } = useSideQuest();
+    const { isLoading, currentUser } = useSideQuest();
+
+    // --- 2. ADMIN CONSOLE RESTORATION ---
+    useEffect(() => {
+        if (import.meta.env.PROD) {
+            const isAdmin = currentUser?.role === 'Admin' || currentUser?.email === ADMIN_EMAIL;
+            
+            if (isAdmin) {
+                // Restore for Admin
+                console.log = originalConsole.log;
+                console.debug = originalConsole.debug;
+                console.warn = originalConsole.warn;
+                console.info = originalConsole.info;
+                console.log("%c SQ-DEBUG: Admin Oversight Active ", "background: #000; color: #00ff00; font-weight: bold;");
+            } else {
+                // Keep Muted for everyone else
+                console.log = () => {};
+                console.debug = () => {};
+                console.warn = () => {};
+                console.info = () => {};
+            }
+        }
+    }, [currentUser]);
 
     if (isLoading) return <LoadingScreen />;
 
@@ -82,7 +106,6 @@ const MainLayout = () => {
             <Toast />
             <AuthModal />
             <Outlet />
-            
         </div>
     );
 };
@@ -104,7 +127,6 @@ export default function App() {
             <Route path="admin" element={<Admin />} />
             <Route path="emergency" element={<Emergency />} />
             <Route path="quiz" element={<Quiz />} />
-
           </Route>
         </Routes>
       </BrowserRouter>

@@ -271,11 +271,12 @@ useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
-      // CRITICAL GUARD: If the boot sequence is currently handshaking, ignore these events.
-      if (isInitialBoot.current) {
-          console.log("SQ-System: Ignoring background auth event during boot lock:", event);
-          return;
-      }
+      if (isInitialBoot.current) return;
+
+      if (event === 'MFA_CHALLENGE_VERIFIED') {
+      console.log("SQ-System: MFA Verified event detected. Handing control to Admin UI.");
+      return; 
+     }
 
       console.log("SQ-System: Post-Boot Auth Event Handshake ->", event);
 
