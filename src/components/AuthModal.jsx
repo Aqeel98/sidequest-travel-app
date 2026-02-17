@@ -61,6 +61,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
         } 
         else if (mode === 'signup') {
             await signup(email, password, name, role);
+            setShowAuthModal(false); 
         } 
         else if (mode === 'reset') {
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
