@@ -76,10 +76,23 @@ const MainLayout = () => {
   const { isLoading, currentUser } = useSideQuest();
 
   useEffect(() => {
-      const v = '3.5.9';
-      if (localStorage.getItem('sq_app_version') !== v) {
-          window.location.reload();
-      }
+    const v = '3.5.9';
+    const checkUpdate = async () => {
+      try {
+        const res = await fetch('/index.html?cb=' + Date.now(), { cache: 'no-store' });
+        const html = await res.text();
+        if (html.includes("const CURRENT_APP_VERSION = '" + v + "'") === false) {
+          window.location.reload(true);
+        }
+      } catch (e) {}
+    };
+
+    checkUpdate(); // Run on mount
+
+    const handleWake = () => { if (document.visibilityState === 'visible') checkUpdate(); };
+    document.addEventListener('visibilitychange', handleWake);
+    
+    return () => document.removeEventListener('visibilitychange', handleWake);
   }, []);
 
   useEffect(() => {
