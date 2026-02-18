@@ -42,9 +42,21 @@
     <script>
       (function(){
         const CURRENT_APP_VERSION = '3.6.0';
-        const savedVersion = localStorage.getItem('sq_app_version');
-        const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent);
-      
+        const isBot = /bot|googlebot|crawler|spider|robot|crawling|Lighthouse|Chrome-Lighthouse/i.test(navigator.userAgent);
+        
+        const storageAvailable = (function() {
+       try {
+      var x = '__storage_test__';
+      localStorage.setItem(x, x);
+      localStorage.removeItem(x);
+      return true;
+       } catch (e) { return false; }
+      })();
+
+
+  const savedVersion = storageAvailable ? localStorage.getItem('sq_app_version') : CURRENT_APP_VERSION;
+
+
         if (!isBot && savedVersion !== CURRENT_APP_VERSION) {
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(rs => {
@@ -56,12 +68,13 @@
               for (let k of ks) caches.delete(k);
             });
           }
-          localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
+          if (storageAvailable) localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
+          
           window.location.replace(window.location.origin + window.location.pathname + '?v=' + CURRENT_APP_VERSION);
           return;
         }
         
-        localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
+        if (storageAvailable) localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
       
         window.addEventListener('error', (e) => {
           if (e.message && (e.message.includes('module script') || e.message.includes('chunk'))) {
