@@ -150,22 +150,23 @@ useEffect(() => {
 
     const currentQuestion = frozenQuestion;
 
-    const handleAnswer = (index) => {
-        if (isCorrect !== null || !currentQuestion) return; 
+    const handleAnswer = async (index) => {
+        if (selectedOption !== null || !currentQuestion || isSubmitting) return; 
         
+        setIsSubmitting(true);
         setSelectedOption(index);
-        const isCorrectLocal = index === currentQuestion.correct_index;
+
+        const result = await submitQuizAnswer(currentQuestion.id, index, currentQuestion.xp_reward || 2);
         
-        if (isCorrectLocal) {
+        if (result === true) {
             setIsCorrect(true);
             setXpAnimate(true);
             setTimeout(() => setXpAnimate(false), 600);
-        } else {
+        } else if (result === false) {
             setIsCorrect(false);
         }
-
-        const xpToAward = isCorrectLocal ? (currentQuestion.xp_reward || 2) : 0;
-        submitQuizAnswer(currentQuestion.id, index, isCorrectLocal, xpToAward);
+        
+        setIsSubmitting(false);
     };
 
     const nextQuestion = () => {

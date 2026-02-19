@@ -76,7 +76,7 @@ export const SideQuestProvider = ({ children }) => {
         if (qData) setQuests(qData);
         const { data: rData } = await supabase.from('rewards').select('*');
         if (rData) setRewards(rData);
-        const { data: quizData } = await supabase.from('quiz_questions').select('*');
+        const { data: quizData } = await supabase.from('view_quiz_public').select('*');
         if (quizData) setQuizBank(quizData);
         // Refresh User Data
         if (role === 'Admin') {
@@ -150,67 +150,74 @@ useEffect(() => {
     const { data } = await supabase.from('quiz_completions').select('question_id').eq('user_id', userId);
     if (data) setCompletedQuizIds(data.map(item => item.question_id));
   };
-  const submitQuizAnswer = async (questionId, selectedIndex, isCorrectLocal, xpReward) => {
-    if (!currentUser) { setShowAuthModal(true); return; }
+  const submitQuizAnswer = async (questionId, selectedIndex, xpAmount) => { 
+    if (!currentUser) { setShowAuthModal(true); return null; }
 
-    // --- STEP 1: OPTIMISTIC UPDATE (Instant Feedback) ---
-    setCompletedQuizIds(prev => [...prev, questionId]);
+    try {
+        console.log("SQ-Quiz: Initiating Secure Server Handshake...");
 
-    if (isCorrectLocal) {
-        setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpReward }));
-        showToast(`Correct! +${xpReward} XP awarded.`, 'success');
-    } else {
-        showToast(`Incorrect. Moving to next question...`, 'error');
-    }
-
-    // --- STEP 2: BACKGROUND HARDENING (Immortal Sync) ---
-    const syncInBackground = async () => {
-        try {
-            // Wake up radio
-            try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){ supabase.realtime.connect(); }
-
-            // Attempt Atomic RPC
-            const { data, error } = await withTimeout(
-                supabase.rpc('submit_quiz_answer', {
-                    question_id_input: questionId,
-                    selected_index: selectedIndex
-                }), 12000 // 12s for rural 4G
-            );
-
-            if (error) {
-                // If already claimed, sync the XP bar to be 100% sure
-                if (error.message.includes('already claimed')) {
-                    await fetchProfile(currentUser.id, currentUser.email);
-                } else { throw error; }
-            }
-            
-            console.log("SQ-Quiz: Background sync successful.");
-        } catch (err) {
-            console.error("SQ-Quiz: Sync failed, attempting Self-Healing...", err);
-            
-            // SELF-HEALING: Check if the server actually finished it
-            const { data: verify } = await supabase
-                .from('quiz_completions')
-                .select('id')
-                .eq('user_id', currentUser.id)
-                .eq('question_id', questionId)
-                .maybeSingle();
-
-            if (verify) {
-                console.log("SQ-Quiz: Verification found. Points are safe.");
-                // Sync the XP bar one last time to match the server
-                await fetchProfile(currentUser.id, currentUser.email);
-            } else {
-                // Only if it REALLY failed (no points on server) do we revert the local XP
-                if (isCorrectLocal) {
-                    showToast("Sync failed. Points will update on next refresh.", "info");
-                }
-            }
+        // 1. WAKE UP CONNECTION (Your Immortal Sync Logic)
+        try { 
+            await withTimeout(supabase.auth.getSession(), 2000); 
+        } catch(e){ 
+            supabase.realtime.connect(); 
         }
-    };
 
-    return syncInBackground();
-};
+        // 2. ATTEMPT ATOMIC RPC (Grading + XP Awarding on Server)
+        const { data: result, error } = await withTimeout(
+            supabase.rpc('submit_quiz_answer', {
+                question_id_input: questionId,
+                selected_index: selectedIndex
+            }), 12000 // 12s for rural 4G
+        );
+
+        if (error) {
+            // Handle "Already Claimed" if it comes back as an error
+            if (error.message.includes('already claimed')) {
+                setCompletedQuizIds(prev => [...prev, questionId]);
+                return true; 
+            }
+            throw error;
+        }
+
+        // 3. PROCESS THE RESULT
+        if (result === 'success' || result === 'already claimed') {
+            setCompletedQuizIds(prev => [...prev, questionId]);
+            
+            if (result === 'success') {
+                setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpAmount })); 
+                showToast(`Correct! +${xpAmount} XP`, 'success');
+            } else {
+                showToast("Points already claimed.", 'info');
+            }
+            return true; // Tells Quiz.jsx: Show GREEN
+        } else {
+            showToast("Incorrect answer.", 'error');
+            return false; // Tells Quiz.jsx: Show RED
+        }
+
+    } catch (err) {
+        console.error("SQ-Quiz: Sync failed, attempting Self-Healing...", err);
+        
+        // 4. SELF-HEALING (Verify if the server actually saved it despite timeout)
+        const { data: verify } = await supabase
+            .from('quiz_completions')
+            .select('id')
+            .eq('user_id', currentUser.id)
+            .eq('question_id', questionId)
+            .maybeSingle();
+
+        if (verify) {
+            console.log("SQ-Quiz: Verification found. Points are safe.");
+            setCompletedQuizIds(prev => [...prev, questionId]);
+            await fetchProfile(currentUser.id, currentUser.email);
+            return true;
+        } else {
+            showToast("Sync failed. Check your connection.", "error");
+            return null;
+        }
+    }
+  };
 
 
 
@@ -228,7 +235,7 @@ useEffect(() => {
             // 1. FIRE ALL PUBLIC & AUTH CHECKS AT ONCE
             const questPromise = supabase.from('quests').select('*');
             const rewardPromise = supabase.from('rewards').select('*');
-            const quizPromise = supabase.from('quiz_questions').select('*');
+            const quizPromise = supabase.from('view_quiz_public').select('*');
             const sessionPromise = supabase.auth.getSession();
         
             // 2. WAIT FOR ALL THREE TO ARRIVE
