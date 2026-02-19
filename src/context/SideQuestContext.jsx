@@ -152,20 +152,25 @@ useEffect(() => {
   };
 
 
-  const submitQuizAnswer = async (questionId, selectedIndex, xpAmount) => { 
-    if (!currentUser) { setShowAuthModal(true); return; }
+  const submitQuizAnswer = async (questionId, selectedIndex, xpAmount, isCorrect) => { 
+    if (!currentUser) { 
+        setShowAuthModal(true); 
+        return; 
+    }
 
-    // 1. INSTANT UI UPDATE (The "Dopamine" part)
-    setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpAmount }));
     setCompletedQuizIds(prev => [...prev, questionId]);
+    if (isCorrect) {
+        setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpAmount }));
+    }
 
-    // 2. ROBUST BACKGROUND SYNC (The "Immortal" part)
     const performRobustSync = async () => {
         try {
-            // A. Wake up connection (Same as your old code)
-            try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){ supabase.realtime.connect(); }
+            try { 
+                await withTimeout(supabase.auth.getSession(), 2000); 
+            } catch(e) { 
+                supabase.realtime.connect(); 
+            }
 
-            // B. Atomic RPC
             const { data: result, error } = await withTimeout(
                 supabase.rpc('submit_quiz_answer', {
                     question_id_input: questionId,
@@ -175,12 +180,7 @@ useEffect(() => {
 
             if (error && !error.message.includes('already claimed')) throw error;
 
-            console.log("SQ-Quiz: Server synced successfully.");
-
         } catch (err) {
-            console.warn("SQ-Quiz: Primary sync failed, initiating Self-Healing...");
-            
-            // C. Self-Healing (Check if it saved anyway)
             const { data: verify } = await supabase
                 .from('quiz_completions')
                 .select('id')
@@ -189,14 +189,15 @@ useEffect(() => {
                 .maybeSingle();
 
             if (!verify) {
-                setCurrentUser(prev => ({ ...prev, xp: prev.xp - xpAmount }));
+                if (isCorrect) {
+                    setCurrentUser(prev => ({ ...prev, xp: prev.xp - xpAmount }));
+                }
                 setCompletedQuizIds(prev => prev.filter(id => id !== questionId));
-                showToast("Sync failed. XP will be added on next login.", "error");
             }
         }
     };
 
-    performRobustSync(); // Run the robust logic without 'awaiting' it
+    performRobustSync();
 };
 
 
