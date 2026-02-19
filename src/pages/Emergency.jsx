@@ -181,16 +181,7 @@ const Emergency = () => {
                 ))}
             </div>
 
-                    {/* --- DISCLAIMER --- */}
-                    <div className="mt-12 mb-8 p-6 bg-yellow-50 rounded-3xl border border-yellow-100">
-                <div className="flex gap-3">
-                    <AlertCircle className="text-yellow-600 flex-shrink-0" />
-                    <p className="text-xs text-yellow-800 font-bold leading-relaxed">
-                        Safety Tip: Carry your insurance details and a copy of your NIC or passport. 
-                        In emergencies, contact your embassy or call Suwa Seriya (1990), free island-wide support.
-                    </p>
-                </div>
-            </div>
+                   
 
             {/* --- SEARCH --- */}
             <div className="mb-6 relative">
