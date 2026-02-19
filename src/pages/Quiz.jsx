@@ -150,23 +150,24 @@ useEffect(() => {
 
     const currentQuestion = frozenQuestion;
 
-    const handleAnswer = async (index) => {
-        if (selectedOption !== null || !currentQuestion || isSubmitting) return; 
+    const handleAnswer = (index) => {
+        if (selectedOption !== null || !currentQuestion) return; 
         
-        setIsSubmitting(true);
         setSelectedOption(index);
-
-        const result = await submitQuizAnswer(currentQuestion.id, index, currentQuestion.xp_reward || 2);
-        
-        if (result === true) {
-            setIsCorrect(true);
+    
+        const isActuallyCorrect = index === currentQuestion.correct_index;
+        setIsCorrect(isActuallyCorrect);
+    
+        if (isActuallyCorrect) {
             setXpAnimate(true);
+            setCurrentUser(prev => ({ ...prev, xp: prev.xp + (currentQuestion.xp_reward || 2) }));
+            showToast(`Correct! +${currentQuestion.xp_reward || 2} XP`, 'success');
             setTimeout(() => setXpAnimate(false), 600);
-        } else if (result === false) {
-            setIsCorrect(false);
+        } else {
+            showToast("Incorrect answer.", 'error');
         }
-        
-        setIsSubmitting(false);
+    
+        submitQuizAnswer(currentQuestion.id, index);
     };
 
     const nextQuestion = () => {

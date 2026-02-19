@@ -150,75 +150,28 @@ useEffect(() => {
     const { data } = await supabase.from('quiz_completions').select('question_id').eq('user_id', userId);
     if (data) setCompletedQuizIds(data.map(item => item.question_id));
   };
-  const submitQuizAnswer = async (questionId, selectedIndex, xpAmount) => { 
-    if (!currentUser) { setShowAuthModal(true); return null; }
 
-    try {
-        console.log("SQ-Quiz: Initiating Secure Server Handshake...");
 
-        // 1. WAKE UP CONNECTION (Your Immortal Sync Logic)
-        try { 
-            await withTimeout(supabase.auth.getSession(), 2000); 
-        } catch(e){ 
-            supabase.realtime.connect(); 
-        }
-
-        // 2. ATTEMPT ATOMIC RPC (Grading + XP Awarding on Server)
-        const { data: result, error } = await withTimeout(
-            supabase.rpc('submit_quiz_answer', {
-                question_id_input: questionId,
-                selected_index: selectedIndex
-            }), 12000 // 12s for rural 4G
-        );
-
-        if (error) {
-            // Handle "Already Claimed" if it comes back as an error
-            if (error.message.includes('already claimed')) {
-                setCompletedQuizIds(prev => [...prev, questionId]);
-                return true; 
-            }
-            throw error;
-        }
-
-        // 3. PROCESS THE RESULT
-        if (result === 'success' || result === 'already claimed') {
-            setCompletedQuizIds(prev => [...prev, questionId]);
-            
-            if (result === 'success') {
-                setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpAmount })); 
-                showToast(`Correct! +${xpAmount} XP`, 'success');
-            } else {
-                showToast("Points already claimed.", 'info');
-            }
-            return true; // Tells Quiz.jsx: Show GREEN
-        } else {
-            showToast("Incorrect answer.", 'error');
-            return false; // Tells Quiz.jsx: Show RED
-        }
-
-    } catch (err) {
-        console.error("SQ-Quiz: Sync failed, attempting Self-Healing...", err);
-        
-        // 4. SELF-HEALING (Verify if the server actually saved it despite timeout)
-        const { data: verify } = await supabase
-            .from('quiz_completions')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .eq('question_id', questionId)
-            .maybeSingle();
-
-        if (verify) {
-            console.log("SQ-Quiz: Verification found. Points are safe.");
-            setCompletedQuizIds(prev => [...prev, questionId]);
-            await fetchProfile(currentUser.id, currentUser.email);
-            return true;
-        } else {
-            showToast("Sync failed. Check your connection.", "error");
-            return null;
-        }
+  const submitQuizAnswer = async (questionId, selectedIndex) => { 
+    if (!currentUser) { 
+        setShowAuthModal(true); 
+        return; 
     }
-  };
 
+    // Move this here for an instant Progress Bar update
+    setCompletedQuizIds(prev => [...prev, questionId]);
+
+    supabase.rpc('submit_quiz_answer', {
+        question_id_input: questionId,
+        selected_index: selectedIndex
+    }).then(({ data, error }) => {
+        if (error) {
+            console.warn("SQ-Quiz Sync: Connection delayed.");
+            // Optional: Remove ID from completed if you want to force a retry on error
+            // setCompletedQuizIds(prev => prev.filter(id => id !== questionId));
+        }
+    });
+  };
 
 
   // --- 2. THE HARDENED SEQUENTIAL BOOT (Persistence & Guest Logic) ---
