@@ -152,26 +152,52 @@ useEffect(() => {
   };
 
 
-  const submitQuizAnswer = async (questionId, selectedIndex) => { 
-    if (!currentUser) { 
-        setShowAuthModal(true); 
-        return; 
-    }
+  const submitQuizAnswer = async (questionId, selectedIndex, xpAmount) => { 
+    if (!currentUser) { setShowAuthModal(true); return; }
 
-    // Move this here for an instant Progress Bar update
+    // 1. INSTANT UI UPDATE (The "Dopamine" part)
+    setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpAmount }));
     setCompletedQuizIds(prev => [...prev, questionId]);
 
-    supabase.rpc('submit_quiz_answer', {
-        question_id_input: questionId,
-        selected_index: selectedIndex
-    }).then(({ data, error }) => {
-        if (error) {
-            console.warn("SQ-Quiz Sync: Connection delayed.");
-            // Optional: Remove ID from completed if you want to force a retry on error
-            // setCompletedQuizIds(prev => prev.filter(id => id !== questionId));
+    // 2. ROBUST BACKGROUND SYNC (The "Immortal" part)
+    const performRobustSync = async () => {
+        try {
+            // A. Wake up connection (Same as your old code)
+            try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){ supabase.realtime.connect(); }
+
+            // B. Atomic RPC
+            const { data: result, error } = await withTimeout(
+                supabase.rpc('submit_quiz_answer', {
+                    question_id_input: questionId,
+                    selected_index: selectedIndex
+                }), 12000
+            );
+
+            if (error && !error.message.includes('already claimed')) throw error;
+
+            console.log("SQ-Quiz: Server synced successfully.");
+
+        } catch (err) {
+            console.warn("SQ-Quiz: Primary sync failed, initiating Self-Healing...");
+            
+            // C. Self-Healing (Check if it saved anyway)
+            const { data: verify } = await supabase
+                .from('quiz_completions')
+                .select('id')
+                .eq('user_id', currentUser.id)
+                .eq('question_id', questionId)
+                .maybeSingle();
+
+            if (!verify) {
+                setCurrentUser(prev => ({ ...prev, xp: prev.xp - xpAmount }));
+                setCompletedQuizIds(prev => prev.filter(id => id !== questionId));
+                showToast("Sync failed. XP will be added on next login.", "error");
+            }
         }
-    });
-  };
+    };
+
+    performRobustSync(); // Run the robust logic without 'awaiting' it
+};
 
 
   // --- 2. THE HARDENED SEQUENTIAL BOOT (Persistence & Guest Logic) ---

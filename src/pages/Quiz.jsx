@@ -155,21 +155,22 @@ useEffect(() => {
         
         setSelectedOption(index);
     
+        // 1. LOCAL CHECK (The "Old Way" - 0ms)
         const isActuallyCorrect = index === currentQuestion.correct_index;
         setIsCorrect(isActuallyCorrect);
     
         if (isActuallyCorrect) {
             setXpAnimate(true);
-            setCurrentUser(prev => ({ ...prev, xp: prev.xp + (currentQuestion.xp_reward || 2) }));
             showToast(`Correct! +${currentQuestion.xp_reward || 2} XP`, 'success');
             setTimeout(() => setXpAnimate(false), 600);
+            
+            // 2. TRIGGER BACKGROUND SYNC
+            submitQuizAnswer(currentQuestion.id, index, currentQuestion.xp_reward || 2);
         } else {
             showToast("Incorrect answer.", 'error');
         }
-    
-        submitQuizAnswer(currentQuestion.id, index);
     };
-
+    
     const nextQuestion = () => {
         setSelectedOption(null);
         setIsCorrect(null);
