@@ -103,7 +103,7 @@ const EXPLORER_QUOTES = [
 
 const [quoteIdx, setQuoteIdx] = useState(0);
 
-// --- ROTATION ENGINE (10 SECONDS) ---
+// --- ROTATION ENGINE  ---
 useEffect(() => {
     const interval = setInterval(() => {
         setQuoteIdx((prev) => (prev + 1) % EXPLORER_QUOTES.length);

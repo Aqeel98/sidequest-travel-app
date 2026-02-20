@@ -215,7 +215,6 @@ useEffect(() => {
 
             if (error && !error.message.includes('already claimed')) throw error;
 
-            // SUCCESS: Remove from local buffer
             const currentBuffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
             const filtered = currentBuffer.filter(i => i.questionId !== questionId);
             localStorage.setItem('sq_pending_quiz', JSON.stringify(filtered));
@@ -229,12 +228,10 @@ useEffect(() => {
                 .maybeSingle();
 
             if (verify) {
-                // Even if the RPC failed, the data is on the server. Clear the buffer.
                 const currentBuffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
                 const filtered = currentBuffer.filter(i => i.questionId !== questionId);
                 localStorage.setItem('sq_pending_quiz', JSON.stringify(filtered));
             } else {
-                // Truly failed/Offline: Keep in buffer. recoveryEngine will handle it.
                 console.warn("SQ-Vault: Sync postponed. Result stored in device memory.");
             }
         }
