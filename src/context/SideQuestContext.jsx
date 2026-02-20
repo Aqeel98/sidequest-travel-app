@@ -144,7 +144,8 @@ useEffect(() => {
         window.removeEventListener("online", handleOnline);
     };
   }, []);
-  
+
+
 
   const fetchQuizHistory = async (userId) => {
     const { data } = await supabase.from('quiz_completions').select('question_id').eq('user_id', userId);
@@ -152,16 +153,50 @@ useEffect(() => {
   };
 
 
+  const recoverPendingSyncs = async (userId) => {
+    const buffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
+    if (buffer.length === 0) return;
+
+    console.log(`SQ-Vault: Recovering ${buffer.length} unsynced items...`);
+
+    for (const item of buffer) {
+        try {
+            const { error } = await supabase.rpc('submit_quiz_answer', {
+                question_id_input: item.questionId,
+                selected_index: item.selectedIndex
+            });
+            if (!error || error.message.includes('already claimed')) {
+                const currentBuffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
+                const filtered = currentBuffer.filter(i => i.questionId !== item.questionId);
+                localStorage.setItem('sq_pending_quiz', JSON.stringify(filtered));
+            }
+        } catch (e) { break; } 
+    }
+    fetchQuizHistory(userId);
+  };
+
+  useEffect(() => {
+    if (!isLoading && currentUser?.id) {
+        recoverPendingSyncs(currentUser.id);
+    }
+  }, [isLoading, currentUser?.id]);
+
   const submitQuizAnswer = async (questionId, selectedIndex, xpAmount, isCorrect) => { 
     if (!currentUser) { 
         setShowAuthModal(true); 
         return; 
     }
 
+    // 1. INSTANT LOCAL UI UPDATE
     setCompletedQuizIds(prev => [...prev, questionId]);
     if (isCorrect) {
         setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpAmount }));
     }
+
+    // 2. SAVE TO PERSISTENCE BUFFER (Resilience for Reloads/Offline)
+    const pendingSyncs = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
+    pendingSyncs.push({ questionId, selectedIndex, xpAmount, isCorrect });
+    localStorage.setItem('sq_pending_quiz', JSON.stringify(pendingSyncs));
 
     const performRobustSync = async () => {
         try {
@@ -180,6 +215,11 @@ useEffect(() => {
 
             if (error && !error.message.includes('already claimed')) throw error;
 
+            // SUCCESS: Remove from local buffer
+            const currentBuffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
+            const filtered = currentBuffer.filter(i => i.questionId !== questionId);
+            localStorage.setItem('sq_pending_quiz', JSON.stringify(filtered));
+
         } catch (err) {
             const { data: verify } = await supabase
                 .from('quiz_completions')
@@ -188,11 +228,14 @@ useEffect(() => {
                 .eq('question_id', questionId)
                 .maybeSingle();
 
-            if (!verify) {
-                if (isCorrect) {
-                    setCurrentUser(prev => ({ ...prev, xp: prev.xp - xpAmount }));
-                }
-                setCompletedQuizIds(prev => prev.filter(id => id !== questionId));
+            if (verify) {
+                // Even if the RPC failed, the data is on the server. Clear the buffer.
+                const currentBuffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
+                const filtered = currentBuffer.filter(i => i.questionId !== questionId);
+                localStorage.setItem('sq_pending_quiz', JSON.stringify(filtered));
+            } else {
+                // Truly failed/Offline: Keep in buffer. recoveryEngine will handle it.
+                console.warn("SQ-Vault: Sync postponed. Result stored in device memory.");
             }
         }
     };
@@ -205,8 +248,9 @@ useEffect(() => {
   useEffect(() => {
     let mounted = true;
     
-    // NOTE: Realtime subscription removed from here. 
+
     
+    // NOTE: Realtime subscription removed from here. 
         const bootSequence = async () => {
           try {
             console.log("SQ-Step 1: Initiating Hardened Parallel Boot...");
