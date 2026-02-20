@@ -465,7 +465,7 @@ const getRemainingText = (text) => {
                     <textarea 
                         className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                         rows="3"
-                        placeholder="I loved helping out here because..."
+                        placeholder="Tell us about your experience..."
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                     ></textarea>

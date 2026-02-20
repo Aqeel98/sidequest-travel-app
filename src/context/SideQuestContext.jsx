@@ -120,6 +120,8 @@ useEffect(() => {
             // 2. FORCE REALTIME RECONNECT (The Socket Jumper)
             supabase.realtime.connect(); 
 
+            await recoverPendingSyncs(userRef.current.id);
+
             // 3. Refresh Data
             await refreshFullState(userRef.current.id, userRef.current.role);
         }
