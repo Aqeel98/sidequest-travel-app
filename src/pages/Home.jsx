@@ -32,13 +32,11 @@ const SCATTERED_ICONS = Array.from({ length: 25 }).map((_, i) => {
 
   return {
     Icon: ICON_POOL[i % ICON_POOL.length],
-    // Starts much lower to clear the teal header (1100px)
-    // Vertical spacing increased (350px) to prevent crowding
     top: 1100 + (i * 350), 
     left: horizontalPos, 
-    size: 40 + (i % 3) * 20, 
+    size: 60 + (i % 3) * 20,
     rot: (i * 42) % 360,
-    opacity: 0.04 // Ultra-subtle ghost effect
+    opacity: 0.08
   };
 });
 
