@@ -34,7 +34,7 @@ const SCATTERED_ICONS = Array.from({ length: 25 }).map((_, i) => {
     Icon: ICON_POOL[i % ICON_POOL.length],
     top: 1100 + (i * 350), 
     left: horizontalPos, 
-    size: 80 + (i % 3) * 20,
+    size: 120 + (i % 3) * 20,
     rot: (i * 42) % 360,
     opacity: 0.08
   };
