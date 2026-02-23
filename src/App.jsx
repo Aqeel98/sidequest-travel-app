@@ -72,11 +72,12 @@ const Toast = () => {
 };
 
 // --- MAIN LAYOUT WRAPPER ---
+//////////////////////CHANGE VERSION HERE////////////////////
 const MainLayout = () => {
   const { isLoading, currentUser } = useSideQuest();
 
   useEffect(() => {
-    const v = '3.6.0';
+    const v = '3.6.1';
     if (window.location.search.includes('v=' + v)) return;
     const checkUpdate = async () => {
       try {

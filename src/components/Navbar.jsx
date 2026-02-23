@@ -115,22 +115,24 @@ const Navbar = () => {
 
       {/* Mobile  */}
       {isOpen && (
-        <div className="md:hidden bg-white border-t p-4 flex flex-col space-y-2 shadow-xl animate-in slide-in-from-top-5">
-            {currentUser ? (
-                <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border-b mb-2">
-                    <div>
-                        <span className="text-xs text-gray-400 font-medium">{currentUser.role}</span>
-                        <p className="text-sm font-bold text-gray-800">{currentUser.full_name || currentUser.email.split('@')[0]}</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full font-bold text-xs shadow-md">
-                        ⭐ {currentUser.xp} XP
-                    </div>
-                </Link>
-            ) : (
-                <button onClick={() => { setShowAuthModal(true); setIsOpen(false); }} className="w-full bg-gray-900 text-white px-6 py-2.5 rounded-full font-bold hover:bg-gray-800 transition-all mb-2">
-                    Login
-                </button>
-            )}
+  <div className="md:hidden bg-white border-t shadow-xl animate-in slide-in-from-top-5 max-h-[85vh] overflow-y-auto">
+    <div className="p-4 flex flex-col space-y-2"> 
+        
+        {currentUser ? (
+            <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border-b mb-2">
+                <div>
+                    <span className="text-xs text-gray-400 font-medium">{currentUser.role}</span>
+                    <p className="text-sm font-bold text-gray-800">{currentUser.full_name || currentUser.email.split('@')[0]}</p>
+                </div>
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full font-bold text-xs shadow-md">
+                    ⭐ {currentUser.xp} XP
+                </div>
+            </Link>
+        ) : (
+            <button onClick={() => { setShowAuthModal(true); setIsOpen(false); }} className="w-full bg-gray-900 text-white px-6 py-2.5 rounded-full font-bold hover:bg-gray-800 transition-all mb-2">
+                Login
+            </button>
+        )}
             
             <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
             <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
@@ -179,6 +181,7 @@ const Navbar = () => {
                     Logout
                 </button>
             )}
+        </div>
         </div>
       )}
     </header>
