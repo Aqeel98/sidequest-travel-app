@@ -170,8 +170,8 @@ const Profile = () => {
             </div>
 
             {/* --- LEVEL CARD START --- */}
-            <div className="bg-brand-900 text-white rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden">
-                {/* Background Glow Effect */}
+            <div className="bg-[#107870] text-white rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden">
+                                {/* Background Glow Effect */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
                 
                 <div className="relative z-10 flex items-center justify-between gap-6">
