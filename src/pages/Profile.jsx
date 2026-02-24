@@ -176,15 +176,16 @@ const Profile = () => {
                 
                 <div className="relative z-10 flex items-center justify-between gap-6">
                     <div>
-                        <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Current Rank</p>
-                        <h2 className="text-4xl font-black text-white">Level {level}</h2>
-                        <p className="text-xs text-gray-400 mt-1">{100 - progressPercent} XP to next level</p>
+                    <p className="text-white/80 text-xs font-bold uppercase tracking-widest mb-1">Current Rank</p>
+                    <h2 className="text-4xl font-black text-white">Level {level}</h2>
+                    <p className="text-white/80 text-xs mt-1">{100 - progressPercent} XP to next level</p>
+                
                     </div>
 
                     <div className="flex-1 max-w-[200px]">
                         <div className="flex justify-between text-xs font-bold mb-1">
-                            <span className="text-yellow-400">{Math.round(progressPercent)}%</span>
-                            <span className="text-gray-300">Level {level + 1}</span>
+                        <span className="text-white">{Math.round(progressPercent)}%</span>
+                            <span className="text-white/80">Level {level + 1}</span>
                                                     </div>
                         <div className="w-full bg-gray-700 h-3 rounded-full overflow-hidden border border-gray-600">
                             <div 
