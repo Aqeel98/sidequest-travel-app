@@ -184,11 +184,11 @@ const Profile = () => {
                     <div className="flex-1 max-w-[200px]">
                         <div className="flex justify-between text-xs font-bold mb-1">
                             <span className="text-yellow-400">{Math.round(progressPercent)}%</span>
-                            <span className="text-gray-500">Level {level + 1}</span>
-                        </div>
+                            <span className="text-gray-300">Level {level + 1}</span>
+                                                    </div>
                         <div className="w-full bg-gray-700 h-3 rounded-full overflow-hidden border border-gray-600">
                             <div 
-                                className="bg-gradient-to-r from-yellow-400 to-orange-500 h-full rounded-full transition-all duration-1000" 
+                                className="bg-gradient-to-r from-brand-300 to-brand-500 h-full rounded-full transition-all duration-1000"
                                 style={{ width: `${progressPercent}%` }}
                             ></div>
                         </div>
