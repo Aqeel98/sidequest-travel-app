@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Camera, UploadCloud, CheckCircle, Clock, AlertCircle, Navigation, Loader2, ArrowLeft } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
-import imageCompression from 'browser-image-compression'; 
+import imageCompression from 'browser-image-compression';
 import { useSwipeable } from 'react-swipeable';
+import SEO from '../components/SEO';
 
 const QuestDetails = () => {
   const { id } = useParams();
@@ -32,7 +33,7 @@ const QuestDetails = () => {
   // State
   const [description, setDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null); 
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -52,11 +53,11 @@ const LinkifyText = ({ text }) => {
       parts.push(text.substring(lastIndex, match.index));
     }
     parts.push(
-      <a 
+      <a
         key={match.index}
-        href={match[2]} 
-        target="_blank" 
-        rel="noreferrer" 
+        href={match[2]}
+        target="_blank"
+        rel="noreferrer"
         className="text-blue-600 underline font-bold hover:text-blue-800"
       >
         {match[1]}
@@ -64,29 +65,29 @@ const LinkifyText = ({ text }) => {
     );
     lastIndex = markdownLinkRegex.lastIndex;
   }
-  
+
   if (lastIndex < text.length) {
     parts.push(text.substring(lastIndex));
   }
 
   return <span className="whitespace-pre-line">{parts.length > 0 ? parts : text}</span>;
 };
-  
+
   // 1. SAFE LOOKUP
   const questId = Number(id);
   const quest = useMemo(() => quests.find(q => q.id === questId), [quests, questId]);
-  
+
   // 2. Determine Status
-  const currentProgress = useMemo(() => 
+  const currentProgress = useMemo(() =>
     questProgress.find(p => p.traveler_id === currentUser?.id && p.quest_id === questId),
     [questProgress, currentUser, questId]
   );
-  const isStarted = !!currentProgress; 
-  const status = currentProgress?.status; 
+  const isStarted = !!currentProgress;
+  const status = currentProgress?.status;
 
 
 
-  
+
 // --- HELPER: CATEGORY COLORS ---
 const getCategoryColor = (cat) => {
   if (cat === 'Adventure') return 'bg-orange-100 text-orange-800';
@@ -116,12 +117,12 @@ const getCategoryColor = (cat) => {
               if (Number(id) === questId) {
                   localStorage.removeItem('sq_auto_proof');
                   setIsSubmitting(true);
-                  
+
                   try {
                       const res = await fetch(imageString);
                       const blob = await res.blob();
                       const file = new File([blob], "proof.jpg", { type: "image/jpeg" });
-                      
+
                       await submitProof(questId, note, file);
                       navigate('/my-quests');
                   } catch (e) { console.error(e); }
@@ -156,24 +157,24 @@ const getCategoryColor = (cat) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setIsCompressing(true); 
+    setIsCompressing(true);
 
     try {
         const options = {
-            maxSizeMB: 0.8,          
-            maxWidthOrHeight: 1280,  
+            maxSizeMB: 0.8,
+            maxWidthOrHeight: 1280,
             useWebWorker: false // ✅ FIX: Must be false for Mobile stability
         };
 
         const compressedBlob = await imageCompression(file, options);
-        
+
         // ✅ FIX: Convert Blob to File (Supabase strict mode)
-        const compressedFile = new File([compressedBlob], file.name, { 
-            type: file.type 
+        const compressedFile = new File([compressedBlob], file.name, {
+            type: file.type
         });
 
         const url = URL.createObjectURL(compressedFile);
-        
+
         setPreviewUrl(url);
         setSelectedFile(compressedFile);
     } catch (error) {
@@ -209,8 +210,8 @@ const getCategoryColor = (cat) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedFile) return alert("Please upload a photo!");
-    
-    setIsSubmitting(true); 
+
+    setIsSubmitting(true);
 
     try {
         // Convert the already compressed file to Base64
@@ -244,19 +245,27 @@ const getRemainingText = (text) => {
     return sentences.slice(1).join(" ");
 };
 
+  const factsPart = quest.description.split('[MISSION]')[0]?.trim();
+  const shortDesc = getFirstSentence(factsPart);
+
   return (
     <div {...handlers} className="max-w-4xl mx-auto px-4 py-8 pb-24 touch-pan-y">
+    <SEO
+      title={quest.title}
+      description={shortDesc || `Complete the ${quest.title} quest at ${quest.location_address}.`}
+      image={quest.image}
+    />
     <div className="flex items-center justify-between mb-4">
     {/* Back Label */}
     <button onClick={() => navigate(-1)} className="text-brand-600 font-bold flex items-center hover:underline text-sm md:text-base">
-        <ArrowLeft size={18} className="mr-1" /> 
+        <ArrowLeft size={18} className="mr-1" />
         <span className="md:hidden">Swipe back to Explore</span>
         <span className="hidden md:inline">Back to Explore</span>
     </button>
 
     {/* Next Label (Only if next exists) */}
     {currentIndex !== -1 && currentIndex < questSequence.length - 1 && (
-        <button 
+        <button
             onClick={() => {
                 const nextId = questSequence[currentIndex + 1];
                 navigate(`/quest/${nextId}`, { replace: true });
@@ -269,24 +278,24 @@ const getRemainingText = (text) => {
         </button>
     )}
 </div>
-      
+
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-        
+
         {/* HERO IMAGE (Protected) */}
         {/* onContextMenu prevents Right-Click Menu */}
         <div className="relative h-80" onContextMenu={(e) => e.preventDefault()}>
-            <img 
-              src={quest.image || 'https://via.placeholder.com/800x400'} 
+            <img
+              src={quest.image || 'https://via.placeholder.com/800x400'}
               // select-none prevents highlighting, pointer-events-none stops dragging (on some browsers)
-              className="w-full h-full object-cover select-none" 
+              className="w-full h-full object-cover select-none"
               alt={quest.title}
               // draggable="false" stops the "drag to desktop" action
               draggable="false"
             />
-            
+
             {/* INVISIBLE SHIELD: Sits on top of the image so clicks hit this div, not the image */}
             <div className="absolute inset-0 z-0"></div>
-              
+
             <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg ${getCategoryColor(quest.category)}`}>
                 {quest.category}
             </div>
@@ -301,7 +310,7 @@ const getRemainingText = (text) => {
         </div>
 
         <div className="p-8">
-          <button 
+          <button
                 onClick={handleOpenMaps}
                 className="w-full mb-8 bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl font-bold hover:bg-blue-100 transition flex items-center justify-center"
              >
@@ -347,7 +356,7 @@ const getRemainingText = (text) => {
                 )}
 
                 {/* --- READ MORE BUTTON --- */}
-                <button 
+                <button
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="mt-2 text-xs font-black text-yellow-700 bg-yellow-200/50 px-4 py-2 rounded-full hover:bg-yellow-200 transition-all flex items-center gap-1"
                 >
@@ -372,7 +381,7 @@ const getRemainingText = (text) => {
           <div className="bg-gray-50 p-4 rounded-2xl mb-8 border border-gray-200">
              <h4 className="font-bold text-gray-700 text-xs uppercase tracking-widest mb-2">Submission Proof Required</h4>
              <p className="text-sm text-gray-600 flex items-center gap-2 italic font-medium whitespace-pre-line">
-                <Camera size={18} className="text-brand-500" /> 
+                <Camera size={18} className="text-brand-500" />
                 {quest.proof_requirements || "Upload a photo of your activity to earn XP."}
              </p>
           </div>
@@ -385,9 +394,9 @@ const getRemainingText = (text) => {
           )}
 
           {currentUser && !isStarted && (
-            <button 
-                onClick={handleAccept} 
-                disabled={isAccepting} 
+            <button
+                onClick={handleAccept}
+                disabled={isAccepting}
                 className="w-full bg-brand-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-brand-700 transition-all flex items-center justify-center gap-2 shadow-lg"
             >
                 {isAccepting ? <Loader2 className="animate-spin"/> : 'Accept Quest '}
@@ -412,7 +421,7 @@ const getRemainingText = (text) => {
 
           {(status === 'in_progress' || status === 'rejected') && (
             <form onSubmit={handleSubmit} className="border-t pt-6">
-                
+
                 {status === 'rejected' && (
                     <div className="mb-6 bg-red-50 p-4 rounded-lg flex items-center text-red-700 border border-red-200">
                         <AlertCircle className="mr-2" />
@@ -421,13 +430,13 @@ const getRemainingText = (text) => {
                 )}
 
                 <h3 className="text-xl font-bold mb-4">Submit Your Proof</h3>
-                
+
                 <div className="mb-4">
                     <div className={`relative w-full h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${previewUrl ? 'border-brand-500 bg-white' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}>
-                        <input 
-                            type="file" 
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
-                            accept="image/*" 
+                        <input
+                            type="file"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                            accept="image/*"
                             onChange={handleImageSelect}
                         />
                         {isCompressing ? (
@@ -448,7 +457,7 @@ const getRemainingText = (text) => {
 
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">My Experience (Optional)</label>
-                    <textarea 
+                    <textarea
                         className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                         rows="3"
                         placeholder="Tell us about your experience..."
@@ -457,9 +466,9 @@ const getRemainingText = (text) => {
                     ></textarea>
                 </div>
 
-                <button 
-                    type="submit" 
-                    disabled={isSubmitting || isCompressing || !selectedFile} 
+                <button
+                    type="submit"
+                    disabled={isSubmitting || isCompressing || !selectedFile}
                     className="w-full bg-brand-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-brand-700 flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-50"
                 >
                     {isSubmitting ? <><Loader2 className="animate-spin"/> Uploading...</> : <><UploadCloud size={20}/> Submit Proof</>}
@@ -472,7 +481,7 @@ const getRemainingText = (text) => {
                           {/* DESKTOP EDGE NAVIGATION (Hidden on Mobile) */}
       <div className="hidden md:block">
         {/* Back Arrow */}
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="fixed left-8 top-1/2 -translate-y-1/2 z-[1000] p-4 rounded-full bg-white/40 backdrop-blur-md border border-white/20 text-gray-800 hover:bg-white hover:scale-110 transition-all shadow-xl group"
           title="Back to Explore"
@@ -482,7 +491,7 @@ const getRemainingText = (text) => {
 
         {/* Next Arrow (Only if a next quest exists) */}
         {currentIndex !== -1 && currentIndex < questSequence.length - 1 && (
-          <button 
+          <button
             onClick={() => {
               const nextId = questSequence[currentIndex + 1];
               navigate(`/quest/${nextId}`, { replace: true });
@@ -497,8 +506,8 @@ const getRemainingText = (text) => {
 
 
 
-      
-     
+
+
     </div>
   );
 };

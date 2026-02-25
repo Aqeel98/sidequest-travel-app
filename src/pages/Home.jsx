@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor, 
+import {
+  MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor,
   Waves,  Bird, Palmtree, Sun, Moon,  Search, Crosshair, Loader2
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import SEO from '../components/SEO';
 
 
 const QuestSkeleton = () => (
@@ -26,14 +27,14 @@ const ICON_POOL = [
 const SCATTERED_ICONS = Array.from({ length: 25 }).map((_, i) => {
   // Alternates between left gutter (5-12%) and right gutter (88-95%)
   const isLeft = i % 2 === 0;
-  const horizontalPos = isLeft 
-    ? (5 + (Math.random() * 7)) 
+  const horizontalPos = isLeft
+    ? (5 + (Math.random() * 7))
     : (88 + (Math.random() * 7));
 
   return {
     Icon: ICON_POOL[i % ICON_POOL.length],
-    top: 1100 + (i * 350), 
-    left: horizontalPos, 
+    top: 1100 + (i * 350),
+    left: horizontalPos,
     size: 200 + (i % 3) * 20,
     rot: (i * 42) % 360,
     opacity: 0.08
@@ -43,7 +44,7 @@ const SCATTERED_ICONS = Array.from({ length: 25 }).map((_, i) => {
 
 const Home = () => {
   const hasRestored = useRef(false);
-  const { quests, isLoading, currentUser } = useSideQuest(); 
+  const { quests, isLoading, currentUser } = useSideQuest();
   const navigate = useNavigate();
   const activeQuests = quests.filter(quest => quest.status === 'active');
   const [selectedCategory, setSelectedCategory] = useState(
@@ -51,7 +52,7 @@ const Home = () => {
 );
 
   const categories = [
-      'All', 
+      'All',
       'Exploration','Adventure','Marine Adventure','Environmental','Wildlife Adventure',
       'Education', 'Sports','Animal Welfare',  'Cultural','Social'
   ];
@@ -89,13 +90,13 @@ const Home = () => {
   };
 
 
-  
+
   // Wrapper to save position before leaving
   const handleQuestClick = (questId) => {
     const questSequence = displayQuests.map(q => q.id);
     sessionStorage.setItem('sq_quest_sequence', JSON.stringify(questSequence));
     sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
-    sessionStorage.setItem('sq_selected_category', selectedCategory); 
+    sessionStorage.setItem('sq_selected_category', selectedCategory);
     sessionStorage.setItem('sq_home_search', searchQuery);
     navigate(`/quest/${questId}`);
 };
@@ -105,7 +106,7 @@ const Home = () => {
   const displayQuests = activeQuests
   .filter(q => {
       const matchesCategory = selectedCategory === 'All' || q.category === selectedCategory;
-      const matchesSearch = q.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch = q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            q.location_address.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
   })
@@ -127,7 +128,7 @@ const Home = () => {
           if (savedPosition) {
             window.scrollTo({ top: parseInt(savedPosition), behavior: 'instant' });
           }
-          hasRestored.current = true; 
+          hasRestored.current = true;
         }
       }, [displayQuests.length]);
 
@@ -140,26 +141,27 @@ const Home = () => {
 
     // Attach listener to save scroll on clicks (navigation)
     window.addEventListener('beforeunload', handleScrollSave);
-    
+
     return () => {
       // Save position when component unmounts (navigating to Quest Details)
-      handleScrollSave(); 
+      handleScrollSave();
       window.removeEventListener('beforeunload', handleScrollSave);
     };
   }, []);
 
 
-  
+
 
   return (
-    
+
     <div className="pb-12 bg-[#E6D5B8] min-h-screen relative overflow-hidden">
-      
+      <SEO />
+
       {/* --- AESTHETIC HEADER START --- */}
 
 
       <div className="relative bg-brand-600 overflow-hidden">
-        
+
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
             <div className="absolute -top-20 -right-20 w-[600px] h-[600px] rounded-full bg-brand-400 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/4 left-[10%] w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
@@ -172,7 +174,7 @@ const Home = () => {
             <Sparkles size={16} className="text-yellow-300" />
             <span>Discover the unseen Sri Lanka</span>
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-white mb-8 tracking-tight leading-[1.1]">
                                Adventure with <br/>
              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-100 to-white">
@@ -189,15 +191,15 @@ const Home = () => {
               Complete quests, earn rewards, and leave the island better than you found it.
                </span>
             </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
+            <button
               onClick={() => document.getElementById('quests-grid').scrollIntoView({ behavior: 'smooth' })}
               className="bg-white text-brand-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl hover:shadow-white/20 transition-all transform hover:-translate-y-1 flex items-center justify-center"
             >
               Explore Quests
             </button>
-            <button 
+            <button
               onClick={() => navigate('/map')}
               className="bg-brand-700/50 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-brand-700/70 transition-all flex items-center justify-center"
             >
@@ -208,34 +210,34 @@ const Home = () => {
 
      {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
-  
+
   {/* 1. TALLER SAND BASE */}
   <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
 
-  <svg 
-    className="relative block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]" 
-    viewBox="0 0 1200 320" 
+  <svg
+    className="relative block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
+    viewBox="0 0 1200 320"
     preserveAspectRatio="none"
   >
-    
+
     {/* 2. GHOST WAVE (Added as requested - Sits behind main foam) */}
     {/* This creates the "Double Wave" look */}
-    <path 
-      d="M0,0 L1200,0 L1200,130 C900,180 600,90 300,160 L0,120 Z" 
+    <path
+      d="M0,0 L1200,0 L1200,130 C900,180 600,90 300,160 L0,120 Z"
       className="fill-white/30 animate-wave-roll"
       style={{ animationDuration: '15s', animationDelay: '-5s' }}
     ></path>
 
     {/* 3. WHITE FOAM */}
-    <path 
-      d="M0,0 L1200,0 L1200,120 C900,160 600,80 300,140 L0,100 Z" 
+    <path
+      d="M0,0 L1200,0 L1200,120 C900,160 600,80 300,140 L0,100 Z"
       className="fill-white animate-wave-roll"
       style={{ animationDuration: '10s', animationDelay: '-2s' }}
     ></path>
 
     {/* 4. TURQUOISE WATER (Matched to Header) */}
-    <path 
-      d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z" 
+    <path
+      d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z"
       className="fill-brand-600 animate-wave-roll"
       style={{ animationDuration: '10s' }}
     ></path>
@@ -248,7 +250,7 @@ const Home = () => {
         {/* --- BACKGROUND GHOST ICONS ( --- */}
         <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
           {SCATTERED_ICONS.map((asset, idx) => (
-              <asset.Icon 
+              <asset.Icon
                   key={idx}
                   size={asset.size}
                   style={{
@@ -256,8 +258,8 @@ const Home = () => {
                       top: `${asset.top}px`,
                       left: `${asset.left}%`,
                       transform: `rotate(${asset.rot}deg)`,
-                      opacity: asset.opacity, 
-                      color: '#5D4037', 
+                      opacity: asset.opacity,
+                      color: '#5D4037',
                       pointerEvents: 'none',
                   }}
               />
@@ -270,7 +272,7 @@ const Home = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Available Quests</h2>
-            
+
           </div>
           <button onClick={() => navigate('/map')} className="hidden md:block text-brand-600 font-bold hover:underline">View All on Map</button>
         </div>
@@ -278,14 +280,14 @@ const Home = () => {
 
 
 
-        <div className="flex flex-col gap-3 mb-8"> 
+        <div className="flex flex-col gap-3 mb-8">
     {/* 1. The Search Input */}
     <div className="relative w-full group">
-        <Search 
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-600 transition-colors" 
-            size={20} 
+        <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-600 transition-colors"
+            size={20}
         />
-        <input 
+        <input
             type="text"
             placeholder="Search by name or location..."
             className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent focus:border-brand-500/30 rounded-2xl shadow-sm outline-none font-semibold text-gray-700 placeholder:text-gray-400 transition-all"
@@ -293,7 +295,7 @@ const Home = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
         />
     </div>
-        <button 
+        <button
             onClick={findClosest}
             disabled={isLocating}
             className="w-full flex items-center justify-center gap-2 bg-brand-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-brand-200 active:scale-[0.98] transition-all disabled:opacity-70"        >
@@ -339,7 +341,7 @@ const Home = () => {
 
         {/* --- THE GRID --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
+
             {/* 1. LOADING STATE: Shown ONLY if we have zero data in cache */}
             {isLoading && displayQuests.length === 0 && (
                 <>
@@ -351,31 +353,31 @@ const Home = () => {
             {/* 2. DATA STATE */}
 
             {displayQuests.map((quest, index) => (
-                <div 
-                key={quest.id} 
+                <div
+                key={quest.id}
                 onClick={() => handleQuestClick(quest.id)}
                 className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm overflow-hidden cursor-pointer h-[450px]"
-                style={{ 
+                style={{
                     contentVisibility: 'auto', // Browser keeps the pixels ready
                     containIntrinsicSize: '450px', // Prevents layout jumping
                 }}
             >
                     {/* Image Section */}
                     <div className="relative h-64 overflow-hidden bg-[#D9C9A8]" onContextMenu={(e) => e.preventDefault()}>
-                        <img 
-                            src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"} 
-                            alt={quest.title} 
-                            loading={index < 12 ? "eager" : "lazy"} 
+                        <img
+                            src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"}
+                            alt={quest.title}
+                            loading={index < 12 ? "eager" : "lazy"}
                             fetchpriority={index < 12 ? "high" : "low"}
-                            //decoding="async" 
+                            //decoding="async"
                             draggable="false"
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                            style={{ 
-                              backgroundColor: '#D9C9A8',      
-                              transform: 'translateZ(0)',     
-                              backfaceVisibility: 'hidden',   
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            style={{
+                              backgroundColor: '#D9C9A8',
+                              transform: 'translateZ(0)',
+                              backfaceVisibility: 'hidden',
                               WebkitBackfaceVisibility: 'hidden',
-                              contentVisibility: 'auto'       
+                              contentVisibility: 'auto'
                           }}
                         />
 
@@ -386,7 +388,7 @@ const Home = () => {
                             ⭐ {quest.xp_value} XP
                         </div>
                     </div>
-                    
+
                     {/* Content Section */}
                     <div className="p-6">
                         <div className="flex items-center gap-2 mb-3">
@@ -406,20 +408,20 @@ const Home = () => {
                                 {quest.category}
                             </span>
                         </div>
-                        
+
                         <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-brand-600 transition-colors">
                             {quest.title}
                         </h3>
-                        
+
                         <div className="flex items-center text-gray-500 text-sm mt-4">
-                            <MapPin size={16} className="mr-1.5 text-gray-400" /> 
+                            <MapPin size={16} className="mr-1.5 text-gray-400" />
                             {quest.location_address}
                         </div>
                     </div>
                 </div>
             ))}
         </div>
-       
+
       </div>
     </div>
   );
