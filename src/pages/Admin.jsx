@@ -1,51 +1,52 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
 
-import { supabase } from '../supabaseClient'; 
-import { 
-  PlusCircle, Edit, Trash2, Check, MapPin, Award, 
-  UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon 
+import { supabase } from '../supabaseClient';
+import {
+  PlusCircle, Edit, Trash2, Check, MapPin, Award,
+  UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon
 } from 'lucide-react';
+import { validatePassword } from '../utils/security';
 
 
 // --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
 const LinkifyText = ({ text }) => {
     if (!text) return null;
-  
+
     // Regex for [Text](URL)
     const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-    
+
     const parts = [];
     let lastIndex = 0;
     let match;
-  
+
     while ((match = markdownLinkRegex.exec(text)) !== null) {
       // Add text before the link
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index));
       }
-      
+
       // Add the clickable link
       parts.push(
-        <a 
+        <a
           key={match.index}
-          href={match[2]} 
-          target="_blank" 
-          rel="noreferrer" 
+          href={match[2]}
+          target="_blank"
+          rel="noreferrer"
           className="text-blue-600 underline font-bold hover:text-blue-800"
         >
           {match[1]}
         </a>
       );
-      
+
       lastIndex = markdownLinkRegex.lastIndex;
     }
-    
+
     // Add remaining text
     if (lastIndex < text.length) {
       parts.push(text.substring(lastIndex));
     }
-  
+
     return <span className="whitespace-pre-line">{parts.length > 0 ? parts : text}</span>;
   };
 
@@ -87,7 +88,7 @@ const EditForm = ({ item, onSave, onCancel, type }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-// --- HELPER: 
+// --- HELPER:
 const optimizeImage = (file) => {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -122,7 +123,7 @@ const handleImageUpload = async (e) => {
     if (!file) return;
 
     setUploading(true);
-    console.log("SQ-Admin: Optimizing..."); 
+    console.log("SQ-Admin: Optimizing...");
 
     try {
         // ✅ FIX: Optimize locally first
@@ -131,20 +132,20 @@ const handleImageUpload = async (e) => {
         // Upload the SMALL optimized file
         const { error: uploadError } = await supabase.storage
           .from('quest-images')
-          .upload(optimizedFile.name, optimizedFile, { 
-              cacheControl: '3600', 
-              upsert: false 
+          .upload(optimizedFile.name, optimizedFile, {
+              cacheControl: '3600',
+              upsert: false
           });
-        
+
         if (uploadError) throw uploadError;
 
         // 3. Get URL
         const { data } = supabase.storage.from('quest-images').getPublicUrl(optimizedFile.name);
         const finalUrl = data.publicUrl;
-        
+
         setFormData(prev => ({ ...prev, image: finalUrl }));
         setPreviewUrl(finalUrl);
-        
+
         console.log("SQ-Admin: Success!");
         alert("Image updated! Don't forget to click 'Save Changes'.");
 
@@ -159,7 +160,7 @@ const handleImageUpload = async (e) => {
 
     const fields = type === 'quest' ? [
         { name: 'title', label: 'Title', type: 'text' },
-        { name: 'category', label: 'Category', type: 'select', options: 
+        { name: 'category', label: 'Category', type: 'select', options:
         ['Environmental', 'Social', 'Animal Welfare', 'Education', 'Cultural','Adventure',
         'Exploration','Marine Adventure',
         'Wildlife Adventure', 'Sports'] },
@@ -171,7 +172,7 @@ const handleImageUpload = async (e) => {
         { name: 'description', label: 'Impact Description', type: 'textarea' },
         { name: 'instructions', label: 'Traveler Instructions', type: 'textarea' },
         { name: 'proof_requirements', label: 'Proof Requirements', type: 'textarea' },
-    ] : [ 
+    ] : [
         { name: 'title', label: 'Reward Title', type: 'text' },
         { name: 'xp_cost', label: 'XP Cost', type: 'number' },
         { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending_admin'] },
@@ -202,13 +203,13 @@ const handleImageUpload = async (e) => {
                             {field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
                     ) : (
-                        <input 
-    type={field.type} 
-    name={field.name} 
+                        <input
+    type={field.type}
+    name={field.name}
     step={field.name === 'lat' || field.name === 'lng' ? "any" : "1"}
-    value={formData[field.name] || ''} 
-    onChange={handleChange} 
-    className="mt-1 w-full border p-2 rounded text-sm" 
+    value={formData[field.name] || ''}
+    onChange={handleChange}
+    className="mt-1 w-full border p-2 rounded text-sm"
 />
                     )}
                 </div>
@@ -235,10 +236,10 @@ const handleImageUpload = async (e) => {
 
 // --- MAIN ADMIN DASHBOARD ---
 const Admin = () => {
-  const { 
+  const {
     currentUser, questProgress, quests, rewards, users, redemptions,
-    approveSubmission, rejectSubmission, approveNewQuest, approveNewReward, 
-    updateQuest, deleteQuest, updateReward, deleteReward, showToast 
+    approveSubmission, rejectSubmission, approveNewQuest, approveNewReward,
+    updateQuest, deleteQuest, updateReward, deleteReward, showToast
   } = useSideQuest();
 
   const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
@@ -248,7 +249,7 @@ const Admin = () => {
   const [mfaQR, setMfaQR] = useState('');
   const [mfaVerifyCode, setMfaVerifyCode] = useState('');
   const [tempFactorId, setTempFactorId] = useState(null);
-  const [isUpdating, setIsUpdating] = useState(false); 
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
   const [isMfaUpdating, setIsMfaUpdating] = useState(false);
   const [viewDetailsId, setViewDetailsId] = useState(null);
@@ -263,7 +264,7 @@ const Admin = () => {
       const resume = async () => {
         try {
           const { type, id, data } = JSON.parse(pendingAction);
-          localStorage.removeItem('sq_admin_deferred'); 
+          localStorage.removeItem('sq_admin_deferred');
 
           let success = false;
           if (type === 'APPROVE_SUBMISSION') { await approveSubmission(id); success = true; }
@@ -299,7 +300,7 @@ const Admin = () => {
     const approved = questProgress.filter(p => p.status === 'approved');
     const pending = questProgress.filter(p => p.status === 'pending');
     const totalXP = users.reduce((sum, u) => sum + (u.xp || 0), 0);
-    
+
     const categories = approved.reduce((acc, p) => {
         const q = quests.find(quest => quest.id === p.quest_id);
         const cat = q?.category || 'Other';
@@ -317,30 +318,30 @@ const Admin = () => {
   const manageableQuests = useMemo(() => {
     return quests
       .filter(q => q.status !== 'pending_admin')
-      .filter(q => 
-        q.title.toLowerCase().includes(questSearch.toLowerCase()) || 
+      .filter(q =>
+        q.title.toLowerCase().includes(questSearch.toLowerCase()) ||
         q.location_address.toLowerCase().includes(questSearch.toLowerCase())
       );
   }, [quests, questSearch]);
 
 
-  const activeRewards = rewards.filter(r => r.status === 'active');  
+  const activeRewards = rewards.filter(r => r.status === 'active');
 
   const handleImmortalAction = (type, id, directFn) => {
     if (isWarmed) {
-       
+
         directFn(id);
     } else {
-      
+
         showToast("Refreshing network connection...", "info");
         localStorage.setItem('sq_admin_deferred', JSON.stringify({ type, id }));
         window.location.reload();
     }
   };
-  
-  
+
+
   // Handlers
-  const handleSaveQuest = (id, fields) => { 
+  const handleSaveQuest = (id, fields) => {
     // Save payload to hardware memory
     localStorage.setItem('sq_admin_deferred', JSON.stringify({
         type: 'QUEST',
@@ -351,7 +352,7 @@ const Admin = () => {
     window.location.reload();
   };
 
-  const handleSaveReward = (id, fields) => { 
+  const handleSaveReward = (id, fields) => {
     // Save payload to hardware memory
     localStorage.setItem('sq_admin_deferred', JSON.stringify({
         type: 'REWARD',
@@ -361,20 +362,27 @@ const Admin = () => {
     // Kill Zombie Sockets with a hard refresh
     window.location.reload();
   };
-  
+
   const handleDeleteQuest = (id) => { if(window.confirm('Are you sure you want to delete this quest?')) deleteQuest(id); };
   const handleDeleteReward = (id) => { if(window.confirm('Are you sure you want to delete this reward?')) deleteReward(id); };
 
 
   // --- SECURITY VAULT LOGIC (HARDENED) ---
-  
+
   const handlePasswordUpdate = async () => {
     if (!newPassword) { showToast("Please enter a password", "info"); return; }
+
+    const { isValid, message } = validatePassword(newPassword);
+    if (!isValid) {
+        showToast(message, 'error');
+        return;
+    }
+
     setIsUpdating(true);
     try {
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) throw error;
-        
+
         showToast("Master Password Updated!", "success");
         setNewPassword('');
         // Wait 2 seconds for toast, then reload to clear session
@@ -394,20 +402,20 @@ const Admin = () => {
         // 1. CLEANUP (Fix: Define variables properly before using them)
         const { data: list } = await supabase.auth.mfa.listFactors();
         const unverifiedFactors = list?.all?.filter(f => f.status === 'unverified') || [];
-        
+
         // Loop through and delete any junk factors
         for (const factor of unverifiedFactors) {
             await supabase.auth.mfa.unenroll({ factorId: factor.id });
         }
 
         // 2. ENROLL
-        const { data, error } = await supabase.auth.mfa.enroll({ 
+        const { data, error } = await supabase.auth.mfa.enroll({
             factorType: 'totp',
-            friendlyName: 'SideQuestAdmin' 
+            friendlyName: 'SideQuestAdmin'
         });
-        
+
         if (error) throw error;
-        
+
         setTempFactorId(data.id);
         setMfaQR(data.totp.qr_code);
         showToast("QR Code Ready. Scan with your app.", "info");
@@ -423,7 +431,7 @@ const Admin = () => {
   const verifyMFAEnrollment = async () => {
     if (!mfaVerifyCode || !tempFactorId) return;
     setIsUpdating(true);
-    
+
     try {
         const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: tempFactorId });
         if (cErr) throw cErr;
@@ -437,10 +445,10 @@ const Admin = () => {
         if (vErr) throw vErr;
 
         showToast("IDENTITY LOCKED!", "success");
-        
+
         console.log("SQ-Security: Verified. Forcing Hard Reload...");
-        
-        setMfaQR(''); 
+
+        setMfaQR('');
         setMfaVerifyCode('');
 
         setTimeout(() => {
@@ -450,10 +458,10 @@ const Admin = () => {
     } catch (err) {
         console.error("MFA Error:", err.message);
         showToast(err.message || "Invalid code.", 'error');
-        setIsUpdating(false); 
+        setIsUpdating(false);
     }
 };
-  
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-black mb-8 text-gray-900 tracking-tight">Game Master Oversight</h1>
@@ -506,8 +514,8 @@ const Admin = () => {
                                     <span>{count} Quests</span>
                                 </div>
                                 <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                    <div 
-                                        className="bg-brand-500 h-full rounded-full transition-all duration-1000" 
+                                    <div
+                                        className="bg-brand-500 h-full rounded-full transition-all duration-1000"
                                         style={{ width: `${stats.approvedCount > 0 ? (count / stats.approvedCount) * 100 : 0}%` }}
                                     ></div>
                                 </div>
@@ -525,24 +533,24 @@ const Admin = () => {
                             {users.length} Users
                         </span>
                     </div>
-                    
+
                     <div className="overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                         {users
                             // 1. Sort users by XP (Highest to Lowest)
                             .sort((a, b) => (b.xp || 0) - (a.xp || 0))
                             .map((user, index) => (
-                            
+
                             <div key={user.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 hover:border-brand-200 transition-colors group">
                                 <div className="flex items-center gap-3">
                                     {/* Rank Badge */}
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${
-                                        index === 0 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 
-                                        index === 1 ? 'bg-gray-200 text-gray-700 border border-gray-300' : 
+                                        index === 0 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                                        index === 1 ? 'bg-gray-200 text-gray-700 border border-gray-300' :
                                         index === 2 ? 'bg-orange-100 text-orange-800 border border-orange-200' : 'bg-white border text-gray-400'
                                     }`}>
                                         {index + 1}
                                     </div>
-                                    
+
                                     {/* User Info */}
                                     <div>
                                         <p className="font-bold text-sm text-gray-900 leading-tight">
@@ -560,7 +568,7 @@ const Admin = () => {
                                 </div>
                             </div>
                         ))}
-                        
+
                         {users.length === 0 && (
                             <p className="text-center text-gray-400 text-sm py-10">No users found.</p>
                         )}
@@ -600,8 +608,8 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="flex gap-2 h-fit">
-                  <button 
-                        onClick={() => handleImmortalAction('APPROVE_SUBMISSION', progress.id, approveSubmission)} 
+                  <button
+                        onClick={() => handleImmortalAction('APPROVE_SUBMISSION', progress.id, approveSubmission)}
                         className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 font-medium transition"
                     >
                         Approve
@@ -637,8 +645,8 @@ const Admin = () => {
                         <button onClick={() => setEditingId(editingId === quest.id ? null : quest.id)} className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg hover:bg-yellow-200 font-medium transition flex items-center">
                             <Edit size={18} className="mr-1"/> Edit
                         </button>
-                        <button 
-                            onClick={() => handleImmortalAction('APPROVE_NEW_QUEST', quest.id, approveNewQuest)} 
+                        <button
+                            onClick={() => handleImmortalAction('APPROVE_NEW_QUEST', quest.id, approveNewQuest)}
                             className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium transition flex items-center"
                         >
                             <Check size={18} className="mr-1"/> Approve
@@ -653,7 +661,7 @@ const Admin = () => {
                         <EditForm item={quest} onSave={handleSaveQuest} onCancel={() => setEditingId(null)} type="quest" />
                     </div>
                 )}
-                
+
 
                 {isDetailsOpen && (
                     <div className="mt-4 pt-4 border-t border-gray-200 bg-white p-4 rounded-lg">
@@ -701,8 +709,8 @@ const Admin = () => {
                             <button onClick={() => setViewDetailsId(isDetailsOpen ? null : reward.id)} className="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-medium hover:bg-orange-200">{isDetailsOpen ? 'Hide' : 'View Details'}</button>
                             {/* EDIT BUTTON */}
                             <button onClick={() => setEditingId(editingId === reward.id ? null : reward.id)} className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg flex items-center hover:bg-blue-200"><Edit size={16} /></button>
-                            <button 
-                                onClick={() => handleImmortalAction('APPROVE_NEW_REWARD', reward.id, approveNewReward)} 
+                            <button
+                                onClick={() => handleImmortalAction('APPROVE_NEW_REWARD', reward.id, approveNewReward)}
                                 className="bg-green-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-green-600 shadow-sm"
                             >
                                 <Check size={16} className="mr-1"/> Approve
@@ -731,7 +739,7 @@ const Admin = () => {
                                     </a>
                                 </div>
                             )}
-                        
+
                         </div>
                     )}
                 </div>
@@ -743,15 +751,15 @@ const Admin = () => {
       {/* --- 4. QUEST MANAGER TAB --- */}
       {activeTab === 'quests' && (
         <div className="space-y-4">
-            
+
             {/* Header Area: Title + Search Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                 <h2 className="text-2xl font-bold text-gray-800">Quest Database ({manageableQuests.length})</h2>
-                
+
                 <div className="relative w-full md:w-80">
-                    <input 
-                        type="text" 
-                        placeholder="Search title or location..." 
+                    <input
+                        type="text"
+                        placeholder="Search title or location..."
                         value={questSearch}
                         onChange={(e) => setQuestSearch(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-100 rounded-2xl focus:border-brand-500 outline-none text-sm transition-all shadow-sm"
@@ -830,7 +838,7 @@ const Admin = () => {
                 </div>
             ))}
         </div>
-        
+
       )}
 
         {/* --- 6. SECURITY VAULT TAB --- */}
