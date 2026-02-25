@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'; // Added useEffect here
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { HelmetProvider } from 'react-helmet-async';
 import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
@@ -78,6 +79,9 @@ const MainLayout = () => {
 
   useEffect(() => {
     const v = '3.6.1';
+    // Skip version check for bots to avoid reload loops
+    if (navigator.userAgent.match(/bot|googlebot|crawler|spider|robot|crawling/i)) return;
+
     if (window.location.search.includes('v=' + v)) return;
     const checkUpdate = async () => {
       try {
@@ -129,10 +133,11 @@ const MainLayout = () => {
 
 export default function App() {
   return (
-    <SideQuestProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
+    <HelmetProvider>
+      <SideQuestProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="map" element={<MapPage />} />
             <Route path="how-it-works" element={<HowItWorks />} />
@@ -144,11 +149,12 @@ export default function App() {
             <Route path="admin" element={<Admin />} />
             <Route path="emergency" element={<Emergency />} />
             <Route path="quiz" element={<Quiz />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-      <Analytics />
-      <SpeedInsights />
-    </SideQuestProvider>
+            </Route>
+          </Routes>
+        </BrowserRouter>
+        <Analytics />
+        <SpeedInsights />
+      </SideQuestProvider>
+    </HelmetProvider>
   );
 }
