@@ -54,7 +54,7 @@ const Home = () => {
   const categories = [
       'All',
       'Exploration','Adventure','Marine Adventure','Environmental','Wildlife Adventure',
-      'Education', 'Sports & Recreation ','Animal Welfare',  'Cultural','Social'
+      'Education', 'Sports & Recreation','Animal Welfare',  'Cultural','Social'
   ];
 
 
