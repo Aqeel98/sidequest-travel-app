@@ -54,7 +54,7 @@ const Home = () => {
   const categories = [
       'All',
       'Exploration','Adventure','Marine Adventure','Environmental','Wildlife Adventure',
-      'Education', 'Sports','Animal Welfare',  'Cultural','Social'
+      'Education', 'Sports & Recreation ','Animal Welfare',  'Cultural','Social'
   ];
 
 
@@ -397,7 +397,7 @@ const Home = () => {
                                 quest.category === 'Social' ? 'bg-rose-100 text-rose-700' :
                                 quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
                                 quest.category === 'Education' ? 'bg-blue-100 text-blue-700' :
-                                quest.category === 'Sports' ? 'bg-indigo-100 text-indigo-700' :
+                                quest.category === 'Sports & Recreation' ? 'bg-indigo-100 text-indigo-700' :
                                 quest.category === 'Cultural' ? 'bg-violet-100 text-violet-700' :
                                 quest.category === 'Adventure' ? 'bg-orange-100 text-orange-800' :
                                 quest.category === 'Exploration' ? 'bg-yellow-100 text-yellow-800' :

@@ -112,7 +112,7 @@ const Profile = () => {
        if (categoryCounts['Wildlife Adventure'] >= BADGE_THRESHOLDS['Wildlife Ranger']) {
             badges.push({ name: 'Wildlife Ranger', icon: <Bird size={24} />, color: 'text-lime-600', desc: 'Completed a Wildlife Adventure' });
        }
-       if (categoryCounts['Sports'] >= BADGE_THRESHOLDS['Sports MVP']) {
+       if (categoryCounts['Sports & Recreation'] >= BADGE_THRESHOLDS['Sports MVP']) {
         badges.push({ 
             name: 'Sports MVP', 
             icon: <Trophy size={24} />, 
@@ -122,12 +122,12 @@ const Profile = () => {
     }
     
     // Tier 2: Athletic Champion (THE NEW ONE)
-    if (categoryCounts['Sports'] >= BADGE_THRESHOLDS['Athletic Champion']) {
+    if (categoryCounts['Sports & Recreation'] >= BADGE_THRESHOLDS['Athletic Champion']) {
         badges.push({ 
             name: 'Athletic Champion', 
             icon: <Zap size={24} />, 
             color: 'text-indigo-700', 
-            desc: 'Completed 3+ Sports or Active quests' 
+            desc: 'Completed 3+ Sports & Recreation quests' 
         });
     }
         return {
