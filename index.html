@@ -1,61 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="apple-touch-icon" href="https://www.sidequest.lk/sq-v4-apple.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SideQuest | Adventure with Impact</title>
-    <meta name="description" content="Discover meaningful quests across Sri Lanka." />
-    <meta name="robots" content="index, follow" />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="SideQuest Sri Lanka" />
-    <meta property="og:url" content="https://www.sidequest.lk" />
-    <meta property="og:title" content="SideQuest | Adventure with Impact" />
-    <meta property="og:description" content="Discover meaningful quests across Sri Lanka." />
-    <link rel="icon" type="image/png" sizes="96x96" href="https://www.sidequest.lk/favicon-96x96.png">
-    <link rel="icon" href="https://www.sidequest.lk/favicon.ico">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="SideQuest">
-    <meta name="mobile-web-app-capable" content="yes">  
-    <meta name="theme-color" content="#ffffff" />
+<head>
+<meta charset="UTF-8" />
+<link rel="apple-touch-icon" href="https://sidequest.lk/sq-v4-apple.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "url": "https://www.sidequest.lk",
-        "logo": "https://www.sidequest.lk/sq-v4-apple.png",
-        "name": "SideQuest Sri Lanka",
-        "sameAs": ["https://www.instagram.com/sidequest.lk"]
-      }
-    </script>
+<title>SideQuest | Adventure with Impact</title>
+<meta name="description" content="Discover meaningful quests across Sri Lanka." />
+<meta name="robots" content="index, follow" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://sisyjuaspeznyrmipmlo.supabase.co">
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" media="all">
-    <link rel="canonical" href="https://www.sidequest.lk/" />
+<link rel="canonical" href="https://sidequest.lk/" />
 
-    <script>
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="SideQuest Sri Lanka" />
+<meta property="og:url" content="https://sidequest.lk/" />
+<meta property="og:title" content="SideQuest | Adventure with Impact" />
+<meta property="og:description" content="Discover meaningful quests across Sri Lanka." />
+<meta property="og:image" content="https://sidequest.lk/sq-v4-apple.png" />
+
+<link rel="icon" type="image/png" sizes="96x96" href="https://sidequest.lk/favicon-96x96.png">
+<link rel="icon" href="https://sidequest.lk/favicon.ico">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SideQuest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff" />
+
+<script type="application/ld+json">
+{
+"@context": "https://schema.org",
+"@type": "Organization",
+"url": "https://sidequest.lk",
+"logo": "https://sidequest.lk/sq-v4-apple.png",
+"name": "SideQuest Sri Lanka",
+"sameAs": ["https://www.instagram.com/sidequest.lk"]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://sisyjuaspeznyrmipmlo.supabase.co">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" media="all">
+
+<script>
       (function(){
         const CURRENT_APP_VERSION = '3.6.1';
+        
         const isBot = /bot|googlebot|crawler|spider|robot|crawling|Lighthouse|Chrome-Lighthouse/i.test(navigator.userAgent);
         
         const storageAvailable = (function() {
-       try {
-      var x = '__storage_test__';
-      localStorage.setItem(x, x);
-      localStorage.removeItem(x);
-      return true;
-       } catch (e) { return false; }
-      })();
+          try {
+            var x = '__storage_test__';
+            localStorage.setItem(x, x);
+            localStorage.removeItem(x);
+            return true;
+          } catch (e) { return false; }
+        })();
 
-
-  const savedVersion = storageAvailable ? localStorage.getItem('sq_app_version') : CURRENT_APP_VERSION;
-
+        const savedVersion = storageAvailable ? localStorage.getItem('sq_app_version') : CURRENT_APP_VERSION;
 
         if (!isBot && savedVersion !== CURRENT_APP_VERSION) {
           if ('serviceWorker' in navigator) {
@@ -82,11 +86,11 @@
           }
         }, true);
       })();
-      </script>
-
+      
+</script>
 </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
+</body>
 </html>
