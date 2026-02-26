@@ -757,6 +757,7 @@ const fetchProfile = async (userId, userEmail) => {
 
         const cleanPayload = {
             title: formData.title || "Untitled",
+            contact_phone: formData.contact_phone || "",
             description: formData.description || "",
             category: formData.category || "General",
             xp_value: parseInt(formData.xp_value) || 0,
@@ -792,7 +793,7 @@ const updateQuest = async (id, updates) => {
         
         // 1. DATA PREP (Keep exact logic)
         const { 
-            title, description, category, xp_value, 
+            title, contact_phone, description, category, xp_value, 
             location_address, lat, lng, instructions, 
             proof_requirements, image, status 
         } = updates;
@@ -802,7 +803,7 @@ const updateQuest = async (id, updates) => {
             : 'pending_admin';
 
         const cleanPayload = {
-            title, description, category,
+            title, contact_phone, description, category,
             xp_value: parseInt(xp_value) || 0,
             location_address,
             lat: parseFloat(lat) || 0,
@@ -1063,6 +1064,7 @@ const deleteQuest = async (id) => {
         
         const cleanPayload = {
             title: formData.title, 
+            contact_phone: formData.contact_phone || "",
             description: formData.description,
             map_link: formData.map_link || "",
             xp_cost: parseInt(formData.xp_cost) || 0, 
@@ -1090,7 +1092,7 @@ const updateReward = async (id, updates) => {
         console.log(`SQ-Market: Accurate Linear Update for Reward ID: ${id}`);
         
         // 1. DATA SHIELD: Pick ONLY Reward columns
-        const { title, description, xp_cost, image, status } = updates;
+        const { title,contact_phone, description, xp_cost, image, status } = updates;
         
         // 2. STATUS LOGIC:
        
@@ -1100,6 +1102,7 @@ const updateReward = async (id, updates) => {
         
         const cleanPayload = {
             title,
+            contact_phone, 
             description,
             map_link: updates.map_link || "",
             image,
