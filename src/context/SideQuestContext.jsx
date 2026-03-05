@@ -48,6 +48,7 @@ export const SideQuestProvider = ({ children }) => {
   
   // UI State Management
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [partnerRequests, setPartnerRequests] = useState([]);
 
   // --- NOTIFICATION SYSTEM (State Only) ---
   // We removed the visual renderer here to prevent "Double Toasts" with App.jsx
@@ -631,9 +632,29 @@ const fetchProfile = async (userId, userEmail) => {
     }
   };
 
-  const signup = async (email, password, name, role) => {
+  const signup = async (email, password, name, role, inviteCode) => {
     try {
         console.log(`SQ-Auth: Registering new adventurer account as: ${role}`);
+
+        // PARTNER INVITE GATE
+        if (role === 'Partner') {
+            const { data: codeData, error: codeError } = await supabase
+                .from('invite_codes')
+                .select('code, is_used')
+                .eq('code', inviteCode)
+                .maybeSingle();
+
+            if (codeError) throw codeError;
+            if (!codeData) {
+                showToast("Invalid invite code. Contact the Game Masters.", 'error');
+                throw new Error("Invalid invite code.");
+            }
+            if (codeData.is_used) {
+                showToast("This invite code has already been used.", 'error');
+                throw new Error("Invite code already used.");
+            }
+        }
+
         const { data, error } = await supabase.auth.signUp({ email, password });
         
         if (error) throw error;
@@ -662,14 +683,65 @@ const fetchProfile = async (userId, userEmail) => {
                 await fetchSubmissions(data.user.id, createdProfile.role);
                 console.log("SQ-Auth: Identity Hydration complete.");
             }
-
-            // ✅ UI FIX: Replaced alert with showToast
+            // CONSUME INVITE CODE
+            if (role === 'Partner' && inviteCode) {
+                await supabase
+                    .from('invite_codes')
+                    .update({ is_used: true })
+                    .eq('code', inviteCode);
+            }
             showToast(`Welcome to SideQuest, ${name}! Your profile is ready.`, 'success');
+            return true;
         }
     } catch (err) {
         console.error("SQ-Auth: Registration Halted ->", err.message);
-        // ✅ UI FIX: Handle errors gracefully with Toast
-        showToast(err.message, 'error'); 
+        if (!err.message.includes('invite code')) {
+            showToast(err.message, 'error');
+        }
+        return false;
+    }
+  };
+
+  const submitPartnerRequest = async (formData) => {
+    try {
+        const { error } = await supabase
+            .from('partner_requests')
+            .insert([{
+                business_name: formData.business_name,
+                whatsapp: formData.whatsapp,
+                email: formData.email
+            }]);
+        if (error) throw error;
+        showToast("Game Masters have received your request. We will WhatsApp you with a code.", 'success');
+        return true;
+    } catch (err) {
+        console.error("SQ-Partner-Request:", err.message);
+        showToast(err.message, 'error');
+        return false;
+    }
+  };
+
+  const generateInviteCode = async () => {
+    try {
+        const digits = Math.floor(1000 + Math.random() * 9000);
+        const code = `SQ${digits}`;
+        
+        const { error } = await supabase
+            .from('invite_codes')
+            .insert([{
+                code: code,
+                is_used: false,
+                created_by: currentUser.id
+            }]);
+        
+        if (error) throw error;
+        
+        showToast(`Invite Code Generated: ${code}`, 'success');
+        return code;
+    } catch (err) {
+        console.error("SQ-Invite-Generate:", err.message);
+        showToast(err.message, 'error');
+        return null;
     }
   };
 
@@ -1410,6 +1482,7 @@ const approveNewReward = async (id) => {
       users, quests, questProgress, redemptions, rewards,
       showAuthModal, setShowAuthModal,
       login, signup, logout,
+      submitPartnerRequest, generateInviteCode, partnerRequests,
       addQuest, updateQuest, deleteQuest, approveNewQuest,
       addReward, updateReward, deleteReward, approveNewReward, 
       acceptQuest, submitProof, approveSubmission, rejectSubmission,

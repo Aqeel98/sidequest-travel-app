@@ -236,11 +236,12 @@ const handleImageUpload = async (e) => {
 
 // --- MAIN ADMIN DASHBOARD ---
 const Admin = () => {
-  const {
-    currentUser, questProgress, quests, rewards, users, redemptions,
-    approveSubmission, rejectSubmission, approveNewQuest, approveNewReward,
-    updateQuest, deleteQuest, updateReward, deleteReward, showToast
-  } = useSideQuest();
+    const {
+        currentUser, questProgress, quests, rewards, users, redemptions,
+        approveSubmission, rejectSubmission, approveNewQuest, approveNewReward,
+        updateQuest, deleteQuest, updateReward, deleteReward, showToast,
+        generateInviteCode, partnerRequests
+      } = useSideQuest();
 
   const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
   const [editingId, setEditingId] = useState(null);
@@ -256,6 +257,10 @@ const Admin = () => {
   const [isWarmed, setIsWarmed] = useState(false);
 
   const [questSearch, setQuestSearch] = useState('');
+  const [generatedCode, setGeneratedCode] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [partnerRequestsData, setPartnerRequestsData] = useState([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
  // --- IMMORTAL ADMIN RESUME ENGINE ---
  useEffect(() => {
@@ -284,7 +289,24 @@ const Admin = () => {
     }
   }, [currentUser?.id]);
 
+  useEffect(() => {
+    const fetchPartnerRequests = async () => {
+      setIsLoadingRequests(true);
+      try {
+        const { data, error } = await supabase
+          .from('partner_requests')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error) setPartnerRequestsData(data || []);
+      } catch (e) {
+        console.error("SQ-Admin: Failed to fetch partner requests", e);
+      } finally {
+        setIsLoadingRequests(false);
+      }
+    };
 
+    if (currentUser?.role === 'Admin') fetchPartnerRequests();
+  }, [currentUser?.role]);
 
   if (currentUser?.role !== 'Admin') {
     return (
@@ -488,6 +510,9 @@ const Admin = () => {
         </button>
         <button onClick={() => setActiveTab('security')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'security' ? 'border-b-4 border-red-500 text-red-600' : 'text-gray-500 hover:text-red-600'}`}>
           Security Vault
+        </button>
+        <button onClick={() => setActiveTab('partnerOversight')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'partnerOversight' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
+          Partner Oversight
         </button>
       </div>
 
@@ -839,6 +864,114 @@ const Admin = () => {
             ))}
         </div>
 
+      )}
+
+        {/* --- NEW: PARTNER OVERSIGHT TAB --- */}
+      {activeTab === 'partnerOversight' && (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+          {/* SECTION 1: INVITE GENERATOR */}
+          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-xl mb-2 text-gray-900">Invite Code Generator</h3>
+            <p className="text-sm text-gray-500 mb-6">Generate a unique code to share with a verified partner via WhatsApp.</p>
+            
+            <button
+              onClick={async () => {
+                setIsGenerating(true);
+                const code = await generateInviteCode();
+                if (code) setGeneratedCode(code);
+                setIsGenerating(false);
+              }}
+              disabled={isGenerating}
+              className={`bg-teal-600 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-md ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-teal-700 active:scale-95'}`}
+            >
+              {isGenerating ? 'Generating...' : '⚡ Generate New Code'}
+            </button>
+
+            {generatedCode && (
+              <div className="mt-6 bg-teal-50 border-2 border-teal-200 rounded-2xl p-6 text-center animate-in fade-in zoom-in duration-300">
+                <p className="text-xs font-bold text-teal-500 uppercase tracking-widest mb-2">New Invite Code</p>
+                <p className="text-5xl font-black text-teal-700 tracking-widest font-mono">{generatedCode}</p>
+                <p className="text-xs text-teal-400 mt-3">Share this code via WhatsApp. It can only be used once.</p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedCode);
+                    showToast("Code copied to clipboard!", 'success');
+                  }}
+                  className="mt-4 bg-white border border-teal-200 text-teal-600 px-6 py-2 rounded-xl text-sm font-bold hover:bg-teal-50 transition-all"
+                >
+                  Copy Code
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* SECTION 2: REQUEST MANAGER */}
+          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="font-bold text-xl text-gray-900">Partner Requests</h3>
+                <p className="text-sm text-gray-500 mt-1">Businesses that have requested an invite.</p>
+              </div>
+              <span className="bg-teal-50 text-teal-700 font-black px-3 py-1 rounded-full text-sm border border-teal-100">
+                {partnerRequestsData.filter(r => r.status === 'pending').length} Pending
+              </span>
+            </div>
+
+            {isLoadingRequests ? (
+              <p className="text-center text-gray-400 py-10">Loading requests...</p>
+            ) : partnerRequestsData.length === 0 ? (
+              <p className="text-center text-gray-400 py-10 border border-dashed rounded-2xl">No requests yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {partnerRequestsData.map(request => (
+                  <div key={request.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-bold text-gray-900">{request.business_name}</p>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                          request.status === 'pending'
+                            ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                            : 'bg-green-50 text-green-600 border-green-200'
+                        }`}>
+                          {request.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500">📱 {request.whatsapp}</p>
+                      <p className="text-sm text-gray-500">✉️ {request.email}</p>
+                      <p className="text-xs text-gray-400 mt-1">{new Date(request.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          const { error } = await supabase
+                            .from('partner_requests')
+                            .update({ status: 'contacted' })
+                            .eq('id', request.id);
+                          if (!error) {
+                            setPartnerRequestsData(prev =>
+                              prev.map(r => r.id === request.id ? { ...r, status: 'contacted' } : r)
+                            );
+                            showToast("Marked as contacted.", 'success');
+                          }
+                        }}
+                        disabled={request.status === 'contacted'}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                          request.status === 'contacted'
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-teal-500 text-white hover:bg-teal-600'
+                        }`}
+                      >
+                        {request.status === 'contacted' ? '✓ Contacted' : 'Mark Contacted'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
       )}
 
         {/* --- 6. SECURITY VAULT TAB --- */}

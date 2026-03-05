@@ -14,6 +14,7 @@ const AuthModal = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState('Traveler');
+  const [inviteCode, setInviteCode] = useState('');
   const [mfaCode, setMfaCode] = useState('');
 const [mfaFactorId, setMfaFactorId] = useState('');
 
@@ -77,8 +78,8 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                 setLoading(false);
                 return;
             }
-            await signup(email, password, name, role);
-            setShowAuthModal(false);
+            const success = await signup(email, password, name, role, inviteCode);
+            if (success) setShowAuthModal(false);
         }
         else if (mode === 'reset') {
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -218,7 +219,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                              <button
                                 type="button"
                                 key={r}
-                                onClick={() => setRole(r)}
+                                onClick={() => { setRole(r); setInviteCode(''); }}
                                 className={`p-2 rounded-xl border-2 text-sm font-bold transition-all ${role === r ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-100 hover:border-gray-200 text-gray-400'}`}
                              >
                                 {r}
@@ -226,10 +227,26 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                         ))}
                     </div>
                 )}
+                
+                {mode === 'signup' && role === 'Partner' && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Invite Code</label>
+                        <input
+                            type="text"
+                            maxLength="6"
+                            placeholder="SQ1111"
+                            value={inviteCode}
+                            onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                            className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-brand-500 outline-none font-mono font-bold tracking-widest text-center uppercase"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">6-character code provided by the Game Masters.</p>
+                    </div>
+                )}
 
-                <button
+
+                    <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || (mode === 'signup' && role === 'Partner' && inviteCode.length !== 6)}
                     className={`w-full text-white py-3.5 rounded-xl font-bold text-lg transition-all mt-4 shadow-lg flex items-center justify-center ${
                         loading ? 'bg-brand-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700 active:scale-95 shadow-brand-200'
                     }`}

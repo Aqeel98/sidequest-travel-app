@@ -11,7 +11,10 @@ const HowItWorks = () => {
     window.scrollTo(0, 0);
   }, []);
   const navigate = useNavigate();
-  const { setShowAuthModal, currentUser } = useSideQuest(); 
+  const { setShowAuthModal, currentUser, submitPartnerRequest, showToast } = useSideQuest(); 
+  const [requestForm, setRequestForm] = useState({ business_name: '', whatsapp: '', email: '' });
+  const [requestSubmitted, setRequestSubmitted] = useState(false);
+  const [isRequestLoading, setIsRequestLoading] = useState(false); 
   const [activeTab, setActiveTab] = useState('traveler');
 
   // --- CONTENT DATA ---
@@ -285,23 +288,79 @@ const HowItWorks = () => {
             ) : (
                 <div className="flex flex-col items-center">
                     <p className="text-gray-600 mb-6 max-w-lg mx-auto leading-relaxed">
-                        Join our network of regenerative businesses. Simply create an account and select <strong>"Partner"</strong> as your role to access the dashboard immediately.
+                        We hand-pick our partners to maintain quality. Request an invite and our Game Masters will WhatsApp you a code to unlock your dashboard.
                     </p>
                     
-                    {currentUser ? (
-                         <button 
+                    {currentUser?.role === 'Partner' || currentUser?.role === 'Admin' ? (
+                        <button
                             onClick={() => navigate('/partner')}
                             className="bg-purple-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-purple-700 hover:shadow-xl transition-all flex items-center justify-center"
                         >
                             Go to Partner Dashboard <Users className="ml-2" />
                         </button>
+                    ) : requestSubmitted ? (
+                        <div className="bg-green-50 border border-green-200 rounded-3xl p-8 max-w-md mx-auto text-center">
+                            <div className="text-4xl mb-3">🎮</div>
+                            <h4 className="font-black text-green-800 text-lg mb-2">Request Received!</h4>
+                            <p className="text-green-700 text-sm leading-relaxed">
+                                Game Masters have received your request. We will WhatsApp you with a code.
+                            </p>
+                        </div>
                     ) : (
-                        <button 
-                            onClick={() => setShowAuthModal(true)}
-                            className="bg-purple-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-purple-700 hover:shadow-xl transition-all flex items-center justify-center"
-                        >
-                            Create Partner Account <Users className="ml-2" />
-                        </button>
+                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 max-w-md mx-auto w-full">
+                            <h4 className="font-black text-gray-800 text-lg mb-6 text-left">Request an Invite</h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Business Name</label>
+                                    <input
+                                        type="text"
+                                        value={requestForm.business_name}
+                                        onChange={e => setRequestForm(prev => ({ ...prev, business_name: e.target.value }))}
+                                        placeholder="Your business name"
+                                        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-purple-500 outline-none transition-all"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">WhatsApp Number</label>
+                                    <input
+                                        type="tel"
+                                        value={requestForm.whatsapp}
+                                        onChange={e => setRequestForm(prev => ({ ...prev, whatsapp: e.target.value.replace(/[^0-9+]/g, '') }))}
+                                        placeholder="+94771234567"
+                                        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-purple-500 outline-none transition-all"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Email</label>
+                                    <input
+                                        type="email"
+                                        value={requestForm.email}
+                                        onChange={e => setRequestForm(prev => ({ ...prev, email: e.target.value }))}
+                                        placeholder="you@example.com"
+                                        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-purple-500 outline-none transition-all"
+                                        required
+                                    />
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        if (!requestForm.business_name || !requestForm.whatsapp || !requestForm.email) {
+                                            showToast("Please fill in all fields.", 'error');
+                                            return;
+                                        }
+                                        setIsRequestLoading(true);
+                                        const success = await submitPartnerRequest(requestForm);
+                                        if (success) setRequestSubmitted(true);
+                                        setIsRequestLoading(false);
+                                    }}
+                                    disabled={isRequestLoading}
+                                    className={`w-full bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${isRequestLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700 active:scale-95'}`}
+                                >
+                                    {isRequestLoading ? 'Sending...' : 'Request Invite'}
+                                </button>
+                            </div>
+                        </div>
                     )}
                 </div>
             )}
