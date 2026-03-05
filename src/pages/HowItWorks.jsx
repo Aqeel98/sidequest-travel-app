@@ -294,7 +294,7 @@ const HowItWorks = () => {
                     {currentUser?.role === 'Partner' || currentUser?.role === 'Admin' ? (
                         <button
                             onClick={() => navigate('/partner')}
-                            className="bg-purple-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-purple-700 hover:shadow-xl transition-all flex items-center justify-center"
+                            className="text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all flex items-center justify-center" style={{ backgroundColor: '#107870' }}
                         >
                             Go to Partner Dashboard <Users className="ml-2" />
                         </button>
@@ -355,7 +355,7 @@ const HowItWorks = () => {
                                         setIsRequestLoading(false);
                                     }}
                                     disabled={isRequestLoading}
-                                    className={`w-full bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${isRequestLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700 active:scale-95'}`}
+                                    className={`w-full text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${isRequestLoading ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`} style={{ backgroundColor: isRequestLoading ? '#0d6b60' : '#107870' }}
                                 >
                                     {isRequestLoading ? 'Sending...' : 'Request Invite'}
                                 </button>
