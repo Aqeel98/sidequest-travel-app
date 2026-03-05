@@ -49,6 +49,7 @@ export const SideQuestProvider = ({ children }) => {
   // UI State Management
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [partnerRequests, setPartnerRequests] = useState([]);
+  const [questSuggestions, setQuestSuggestions] = useState([]);
 
   // --- NOTIFICATION SYSTEM (State Only) ---
   // We removed the visual renderer here to prevent "Double Toasts" with App.jsx
@@ -178,11 +179,63 @@ useEffect(() => {
     fetchQuizHistory(userId);
   };
 
+  const recoverPendingSuggestions = async (userId) => {
+    const data = localStorage.getItem('sq_pending_suggestion');
+    if (!data) return;
+
+    console.log("SQ-Vault: Recovering unsynced suggestion...");
+    const { form, imageString } = JSON.parse(data);
+
+    try {
+        let photoUrl = null;
+
+        if (imageString) {
+            const res = await fetch(imageString);
+            const blob = await res.blob();
+            const file = new File([blob], `suggest_${Date.now()}.jpg`, { type: "image/jpeg" });
+
+            const { error: upErr } = await withTimeout(
+                supabase.storage.from('quest-images').upload(file.name, file), 
+                45000
+            );
+            if (upErr) throw upErr;
+
+            const { data: urlData } = supabase.storage.from('quest-images').getPublicUrl(file.name);
+            photoUrl = urlData.publicUrl;
+        }
+
+        const { error: dbErr } = await withTimeout(
+            supabase.from('quest_suggestions').insert({
+                submitted_by: userId,
+                quest_name: form.quest_name,
+                description: form.description,
+                maps_link: form.maps_link || null,
+                photo_url: photoUrl
+            }), 12000
+        );
+
+        if (dbErr) throw dbErr;
+
+        localStorage.removeItem('sq_pending_suggestion');
+        
+        // Refresh local suggestions list
+        const { data: updated } = await supabase.from('quest_suggestions').select('*').order('created_at', { ascending: false });
+        if (updated) setQuestSuggestions(updated);
+
+    } catch (err) {
+        console.warn("SQ-Vault: Sync postponed. Signal too weak.", err.message);
+    }
+  };
+
   useEffect(() => {
     if (!isLoading && currentUser?.id) {
         recoverPendingSyncs(currentUser.id);
+        recoverPendingSuggestions(currentUser.id);
     }
   }, [isLoading, currentUser?.id]);
+
+  
+
 
   const submitQuizAnswer = async (questionId, selectedIndex, xpAmount, isCorrect) => { 
     if (!currentUser) { 
@@ -555,14 +608,22 @@ const fetchProfile = async (userId, userEmail) => {
           setCurrentUser(mergedUser); // State now includes MFA info
           subscribeToProfileChanges(userId);
           
-          // 5. Trigger background data syncs
           await Promise.all([
-             fetchSubmissions(userId, data.role),
-             fetchRedemptions(userId, data.role),
-             fetchQuests(), 
-             fetchRewards(),
-             fetchQuizHistory(userId)
-          ]);
+            fetchSubmissions(userId, data.role),
+            fetchRedemptions(userId, data.role),
+            fetchQuests(), 
+            fetchRewards(),
+            fetchQuizHistory(userId)
+         ]);
+   
+         let suggestionQuery = supabase.from('quest_suggestions').select('*');
+          
+          if (data.role !== 'Admin') {
+              suggestionQuery = suggestionQuery.eq('submitted_by', userId);
+          }
+          
+          const { data: suggestionsData } = await suggestionQuery.order('created_at', { ascending: false });
+          if (suggestionsData) setQuestSuggestions(suggestionsData);
       }
     } catch (err) {
       console.error("SQ-Profile: Critical profile handshake failure.", err);
@@ -636,24 +697,25 @@ const fetchProfile = async (userId, userEmail) => {
     try {
         console.log(`SQ-Auth: Registering new adventurer account as: ${role}`);
 
-        // PARTNER INVITE GATE
-        if (role === 'Partner') {
-            const { data: codeData, error: codeError } = await supabase
-                .from('invite_codes')
+        // PARTNER INVITE GATE (Hardened)
+if (role === 'Partner') {
+    try {
+        const { data: codeData, error: codeError } = await withTimeout(
+            supabase.from('invite_codes')
                 .select('code, is_used')
                 .eq('code', inviteCode)
-                .maybeSingle();
+                .maybeSingle(),
+            8000 // 8 second shield
+        );
 
-            if (codeError) throw codeError;
-            if (!codeData) {
-                showToast("Invalid invite code. Contact the Game Masters.", 'error');
-                throw new Error("Invalid invite code.");
-            }
-            if (codeData.is_used) {
-                showToast("This invite code has already been used.", 'error');
-                throw new Error("Invite code already used.");
-            }
-        }
+        if (codeError) throw codeError;
+        if (!codeData) throw new Error("Invalid invite code.");
+        if (codeData.is_used) throw new Error("Invite code already used.");
+    } catch (e) {
+        showToast(e.message, 'error');
+        return false;
+    }
+}
 
         const { data, error } = await supabase.auth.signUp({ email, password });
         
@@ -702,6 +764,8 @@ const fetchProfile = async (userId, userEmail) => {
     }
   };
 
+
+
   const submitPartnerRequest = async (formData) => {
     try {
         const { error } = await supabase
@@ -718,6 +782,40 @@ const fetchProfile = async (userId, userEmail) => {
         console.error("SQ-Partner-Request:", err.message);
         showToast(err.message, 'error');
         return false;
+    }
+  };
+
+  const approveQuestSuggestion = async (id) => {
+    try {
+      const { error } = await withTimeout(
+        supabase.from('quest_suggestions').update({ status: 'approved' }).eq('id', id),
+        10000
+      );
+      if (error) throw error;
+      
+      setQuestSuggestions(prev => prev.map(s =>
+        s.id === id ? { ...s, status: 'approved', xp_awarded: true } : s
+      ));
+      showToast("Approved! 50 XP awarded.", 'success');
+    } catch (err) {
+      showToast(err.message === "Connection Timeout" ? "Signal weak. Try again." : err.message, 'error');
+    }
+  };
+
+  const rejectQuestSuggestion = async (id) => {
+    try {
+      const { error } = await withTimeout(
+        supabase.from('quest_suggestions').update({ status: 'rejected' }).eq('id', id),
+        10000
+      );
+      if (error) throw error;
+      
+      setQuestSuggestions(prev => prev.map(s =>
+        s.id === id ? { ...s, status: 'rejected' } : s
+      ));
+      showToast("Suggestion rejected.", 'info');
+    } catch (err) {
+      showToast(err.message === "Connection Timeout" ? "Signal weak. Try again." : err.message, 'error');
     }
   };
 
@@ -1483,6 +1581,7 @@ const approveNewReward = async (id) => {
       showAuthModal, setShowAuthModal,
       login, signup, logout,
       submitPartnerRequest, generateInviteCode, partnerRequests,
+      questSuggestions, approveQuestSuggestion, rejectQuestSuggestion,
       addQuest, updateQuest, deleteQuest, approveNewQuest,
       addReward, updateReward, deleteReward, approveNewReward, 
       acceptQuest, submitProof, approveSubmission, rejectSubmission,

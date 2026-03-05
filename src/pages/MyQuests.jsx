@@ -163,7 +163,7 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
 
 // --- MAIN PAGE COMPONENT ---
 const MyQuests = () => {
-  const { currentUser, questProgress, quests, submitProof, setShowAuthModal, showToast } = useSideQuest();
+  const { currentUser, questProgress, quests, submitProof, setShowAuthModal, showToast, questSuggestions } = useSideQuest();
 
   useEffect(() => {
     const pendingProof = localStorage.getItem('sq_auto_proof');
@@ -254,6 +254,63 @@ const MyQuests = () => {
             })}
           </div>
       )}
+    {/* --- MY QUEST SUGGESTIONS --- */}
+    <div className="mt-12">
+        <h2 className="text-2xl font-extrabold mb-6 text-gray-900">My Quest Suggestions</h2>
+
+        {questSuggestions.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+            <div className="text-4xl mb-3">📍</div>
+            <p className="text-gray-500 font-medium">You haven't suggested any quests yet.</p>
+            <p className="text-gray-400 text-sm mt-1">Use the map to suggest a hidden gem. Earn 50 XP if approved!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {questSuggestions.map(s => (
+              <div key={s.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition hover:shadow-md">
+                <div className="flex gap-4 items-start">
+                  {s.photo_url ? (
+                    <img src={s.photo_url} alt={s.quest_name} className="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-shrink-0" />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-2xl flex-shrink-0">📍</div>
+                  )}
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight">{s.quest_name}</h3>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{s.description}</p>
+                    {s.maps_link && (
+                      <a href={s.maps_link} target="_blank" rel="noreferrer" className="text-xs font-bold mt-1 inline-block underline" style={{ color: '#107870' }}>
+                        View on Maps →
+                      </a>
+                    )}
+                    <p className="text-xs text-gray-400 mt-2">{new Date(s.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  {s.status === 'pending' && (
+                    <span className="flex items-center gap-1 bg-yellow-50 text-yellow-600 border border-yellow-200 px-3 py-1.5 rounded-full text-xs font-black uppercase">
+                      ⏳ Under Review
+                    </span>
+                  )}
+                  {s.status === 'approved' && (
+                    <div className="text-center">
+                      <span className="flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-black uppercase">
+                        ✅ Approved
+                      </span>
+                      <p className="text-xs font-black text-emerald-500 mt-1">+50 XP Awarded!</p>
+                    </div>
+                  )}
+                  {s.status === 'rejected' && (
+                    <span className="flex items-center gap-1 bg-red-50 text-red-500 border border-red-200 px-3 py-1.5 rounded-full text-xs font-black uppercase">
+                      ✕ Not Approved
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 };

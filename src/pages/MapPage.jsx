@@ -18,10 +18,16 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 };
 
 const MapPage = () => {
-  const { quests, questProgress, currentUser } = useSideQuest();
+  const { quests, questProgress, currentUser, setShowAuthModal, showToast, optimizeImage } = useSideQuest();
   const navigate = useNavigate();
 
   const [showClosest, setShowClosest] = useState(false);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [suggestForm, setSuggestForm] = useState({ quest_name: '', description: '', maps_link: '' });
+  const [suggestImage, setSuggestImage] = useState(null);
+  const [suggestPreview, setSuggestPreview] = useState(null);
+  const [isSuggestSubmitting, setIsSuggestSubmitting] = useState(false);
+  const [suggestSuccess, setSuggestSuccess] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
 
@@ -142,6 +148,181 @@ const MapPage = () => {
         onManualLocate={handleManualLocate}
         isLocating={isLocating}
       />
+
+      {/* --- SUGGEST A QUEST BUTTON --- */}
+      <div className="absolute bottom-6 left-4 z-[1000]">
+        <button
+          onClick={() => {
+            if (!currentUser) { setShowAuthModal(true); return; }
+            setShowSuggestModal(true);
+            setSuggestSuccess(false);
+            setSuggestForm({ quest_name: '', description: '', maps_link: '' });
+            setSuggestImage(null);
+            setSuggestPreview(null);
+          }}
+          className="flex items-center gap-2 bg-white/90 backdrop-blur-md border border-white/20 px-5 py-3 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
+          style={{ color: '#107870' }}
+        >
+          <span className="text-lg">📍</span>
+          <span className="font-bold text-sm tracking-tight">Suggest a Quest</span>
+        </button>
+      </div>
+
+      {/* --- SUGGEST A QUEST MODAL --- */}
+      {showSuggestModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1200] flex items-end md:items-center justify-center p-4">
+          <div className="bg-white rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl animate-in slide-in-from-bottom-4 md:zoom-in duration-300">
+
+            {/* Header */}
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">Suggest a Quest</h2>
+                  <p className="text-xs text-gray-400 mt-1 font-medium">Help grow the SideQuest map. Earn 50 XP if approved.</p>
+                </div>
+                <button
+                  onClick={() => setShowSuggestModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {suggestSuccess ? (
+              <div className="p-10 text-center">
+                <div className="text-5xl mb-4">🎯</div>
+                <h3 className="text-xl font-black text-gray-900 mb-2">Quest Suggestion Submitted!</h3>
+                <p className="text-gray-500 text-sm mb-6">Game Masters will review your suggestion. You'll earn 50 XP if it gets approved.</p>
+                <button
+                  onClick={() => setShowSuggestModal(false)}
+                  className="w-full text-white py-3 rounded-2xl font-bold transition-all"
+                  style={{ backgroundColor: '#107870' }}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+
+                {/* Quest Name */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Quest Name *</label>
+                  <input
+                    type="text"
+                    value={suggestForm.quest_name}
+                    onChange={e => setSuggestForm(p => ({ ...p, quest_name: e.target.value }))}
+                    placeholder="e.g. Hidden waterfall near Ella"
+                    className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none transition-all text-sm"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Description *</label>
+                  <textarea
+                    value={suggestForm.description}
+                    onChange={e => setSuggestForm(p => ({ ...p, description: e.target.value }))}
+                    placeholder="Describe the location and why it would make a great quest..."
+                    className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none transition-all text-sm resize-none"
+                    rows="3"
+                  />
+                </div>
+
+                {/* Google Maps Link */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Google Maps Link</label>
+                  <input
+                    type="url"
+                    value={suggestForm.maps_link}
+                    onChange={e => setSuggestForm(p => ({ ...p, maps_link: e.target.value }))}
+                    placeholder="https://maps.google.com/..."
+                    className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none transition-all text-sm"
+                  />
+                </div>
+
+                {/* Photo Upload */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Photo</label>
+                  <div className="flex items-center gap-4">
+                    {suggestPreview ? (
+                      <img src={suggestPreview} alt="Preview" className="w-16 h-16 object-cover rounded-xl border-2 border-gray-100" />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-xl">📷</div>
+                    )}
+                    <label className="cursor-pointer bg-gray-50 border-2 border-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all">
+                      {suggestImage ? 'Change Photo' : 'Upload Photo'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          setSuggestImage(file);
+                          setSuggestPreview(URL.createObjectURL(file));
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  // --- IMMORTAL SUBMISSION INTERCEPTOR ---
+              onClick={async () => {
+             if (!suggestForm.quest_name || !suggestForm.description) {
+              showToast("Please fill in quest name and description.", 'error');
+            return;
+           }
+  
+           setIsSuggestSubmitting(true);
+           showToast("Saving to device memory...", "info");
+
+         try {
+         let imageString = null;
+         if (suggestImage) {
+          // 1. Shrink the image locally first
+          const optimizedFile = await optimizeImage(suggestImage);
+          
+          // 2. Convert to string for storage
+          imageString = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.readAsDataURL(optimizedFile);
+          });
+       }
+
+      // 3. Save everything to localStorage
+      const payload = {
+          form: suggestForm,
+          imageString,
+          type: 'auto_suggestion'
+      };
+      localStorage.setItem('sq_pending_suggestion', JSON.stringify(payload));
+
+      // 4. THE PURGE: Refresh the page to kill "Zombie Sockets"
+      window.location.reload();
+
+         } catch (err) {
+      console.error("SQ-Submit-Error:", err);
+      showToast("Device busy. Try again.", 'error');
+      setIsSuggestSubmitting(false);
+        }
+          }}
+                  disabled={isSuggestSubmitting}
+                  className={`w-full text-white py-4 rounded-2xl font-bold text-base transition-all shadow-lg ${isSuggestSubmitting ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
+                  style={{ backgroundColor: '#107870' }}
+                >
+                  {isSuggestSubmitting ? 'Submitting...' : 'Submit Quest Suggestion 📍'}
+                </button>
+
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
 
       {showClosest && (
         <ClosestQuestsOverlay
