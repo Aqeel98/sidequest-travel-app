@@ -240,6 +240,14 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                             className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-brand-500 outline-none font-mono font-bold tracking-widest text-center uppercase"
                         />
                         <p className="text-xs text-gray-400 mt-1">6-character code provided by the Game Masters.</p>
+                        <button
+                            type="button"
+                            onClick={() => { setShowAuthModal(false); window.location.href = '/guide?tab=partner'; }}
+                            className="text-xs font-bold mt-2 underline"
+                            style={{ color: '#107870' }}
+                        >
+                            Don't have a code? Request an invite →
+                        </button>
                     </div>
                 )}
 

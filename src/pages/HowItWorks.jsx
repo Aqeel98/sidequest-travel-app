@@ -15,7 +15,10 @@ const HowItWorks = () => {
   const [requestForm, setRequestForm] = useState({ business_name: '', whatsapp: '', email: '' });
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [isRequestLoading, setIsRequestLoading] = useState(false); 
-  const [activeTab, setActiveTab] = useState('traveler');
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') === 'partner' ? 'partner' : 'traveler';
+  });
 
   // --- CONTENT DATA ---
   const travelerSteps = [
