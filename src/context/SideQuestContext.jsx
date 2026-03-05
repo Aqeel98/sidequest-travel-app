@@ -872,10 +872,12 @@ if (role === 'Partner') {
   };
 
   const logout = async () => {
+    showToast("Signing out ...", "info");
+
     try {
         const version = localStorage.getItem('sq_app_version');
 
-        await supabase.auth.signOut();
+        supabase.auth.signOut(); 
 
         const userKeys = [
             'sq_pending_quiz', 
@@ -889,14 +891,12 @@ if (role === 'Partner') {
 
         if (version) localStorage.setItem('sq_app_version', version);
 
-        showToast("Signing out safely...", "info");
-
         setTimeout(() => {
-            window.location.replace(window.location.origin);
-        }, 500);
+            window.location.href = window.location.origin;
+        }, 600);
 
     } catch (error) {
-        window.location.replace('/');
+        window.location.href = '/';
     }
   };
 
