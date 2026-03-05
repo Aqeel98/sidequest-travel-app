@@ -1586,7 +1586,7 @@ const approveNewReward = async (id) => {
       addReward, updateReward, deleteReward, approveNewReward, 
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
       redeemReward, verifyRedemptionCode,  switchRole, quizBank, completedQuizIds, submitQuizAnswer,
-      toast, showToast
+      toast, showToast, optimizeImage
     }}>
       {children}
     </SideQuestContext.Provider>
