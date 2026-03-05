@@ -541,6 +541,34 @@ useEffect(() => {
             setRedemptions(prev => prev.filter(r => r.id !== payload.old.id));
         }
     })
+
+    
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'quest_suggestions' }, (payload) => {
+    const myId = userRef.current?.id;
+    const myRole = userRef.current?.role;
+    code
+    Code
+    if (myRole !== 'Admin' && payload.new.submitted_by !== myId) return;
+    
+    if (payload.eventType === 'UPDATE') {
+        setQuestSuggestions(prev => prev.map(s => s.id === payload.new.id ? { ...s, ...payload.new } : s));
+        
+        if (payload.new.submitted_by === myId) {
+            if (payload.new.status === 'approved') {
+                showToast("Your suggested spot was approved! +50 XP ⭐", 'success');
+            } else if (payload.new.status === 'rejected') {
+                showToast("Suggestion update: Review 'My Quests' for details.", 'info');
+            }
+        }
+    } 
+    else if (payload.eventType === 'INSERT') {
+        setQuestSuggestions(prev => {
+            if (prev.find(s => s.id === payload.new.id)) return prev;
+            return [payload.new, ...prev];
+        });
+    }
+    })
+
     .subscribe();
   };
 
@@ -845,8 +873,6 @@ if (role === 'Partner') {
 
   const logout = async () => {
     try {
-        console.log("SQ-Auth: Initiating secure session reset...");
-        
         const version = localStorage.getItem('sq_app_version');
 
         await supabase.auth.signOut();
@@ -859,19 +885,18 @@ if (role === 'Partner') {
             'sq_admin_deferred'
         ];
         userKeys.forEach(key => localStorage.removeItem(key));
-        sessionStorage.clear(); // Safe to clear entirely
+        sessionStorage.clear();
 
         if (version) localStorage.setItem('sq_app_version', version);
 
         showToast("Signing out safely...", "info");
 
         setTimeout(() => {
-            window.location.href = window.location.origin;
+            window.location.replace(window.location.origin);
         }, 500);
 
     } catch (error) {
-        console.error("SQ-Auth: Sign-out failure ->", error.message);
-        window.location.href = '/';
+        window.location.replace('/');
     }
   };
 
