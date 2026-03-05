@@ -845,22 +845,33 @@ if (role === 'Partner') {
 
   const logout = async () => {
     try {
-        console.log("SQ-Auth: Initiating secure system purge...");
+        console.log("SQ-Auth: Initiating secure session reset...");
         
+        const version = localStorage.getItem('sq_app_version');
+
         await supabase.auth.signOut();
 
-        localStorage.clear();
-        sessionStorage.clear();
+        const userKeys = [
+            'sq_pending_quiz', 
+            'sq_pending_suggestion', 
+            'sq_auto_proof',
+            'sq_partner_draft',
+            'sq_admin_deferred'
+        ];
+        userKeys.forEach(key => localStorage.removeItem(key));
+        sessionStorage.clear(); // Safe to clear entirely
+
+        if (version) localStorage.setItem('sq_app_version', version);
 
         showToast("Signing out safely...", "info");
 
         setTimeout(() => {
-            window.location.replace('/');
-        }, 800);
+            window.location.href = window.location.origin;
+        }, 500);
 
     } catch (error) {
         console.error("SQ-Auth: Sign-out failure ->", error.message);
-        window.location.replace('/');
+        window.location.href = '/';
     }
   };
 
