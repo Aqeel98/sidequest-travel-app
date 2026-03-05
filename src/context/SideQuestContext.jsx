@@ -845,12 +845,22 @@ if (role === 'Partner') {
 
   const logout = async () => {
     try {
-        console.log("SQ-Auth: Initiating secure sign-out...");
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-        console.log("SQ-Auth: Session terminated successfully.");
+        console.log("SQ-Auth: Initiating secure system purge...");
+        
+        await supabase.auth.signOut();
+
+        localStorage.clear();
+        sessionStorage.clear();
+
+        showToast("Signing out safely...", "info");
+
+        setTimeout(() => {
+            window.location.replace('/');
+        }, 800);
+
     } catch (error) {
         console.error("SQ-Auth: Sign-out failure ->", error.message);
+        window.location.replace('/');
     }
   };
 
