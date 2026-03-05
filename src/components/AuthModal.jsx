@@ -3,6 +3,7 @@ import { X, Lock, Eye, EyeOff, Mail, ArrowLeft } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
 import { validatePassword } from '../utils/security';
+import { useNavigate } from 'react-router-dom';
 
 
 const AuthModal = () => {
@@ -18,6 +19,7 @@ const AuthModal = () => {
   const [mfaCode, setMfaCode] = useState('');
 const [mfaFactorId, setMfaFactorId] = useState('');
 
+
   // UI States
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +34,8 @@ const [mfaFactorId, setMfaFactorId] = useState('');
     }
     setShowAuthModal(false);
   };
+
+  const navigate = useNavigate();
 
 
   const handleSubmit = async (e) => {
@@ -242,7 +246,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                         <p className="text-xs text-gray-400 mt-1">6-character code provided by the Game Masters.</p>
                         <button
                             type="button"
-                            onClick={() => { setShowAuthModal(false); window.location.href = '/guide?tab=partner'; }}
+                            onClick={() => { setShowAuthModal(false); navigate('/how-it-works?tab=partner'); }}
                             className="text-xs font-bold mt-2 underline"
                             style={{ color: '#107870' }}
                         >

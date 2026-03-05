@@ -8,8 +8,16 @@ import { useSideQuest } from '../context/SideQuestContext';
 
 const HowItWorks = () => {
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'partner') {
+      setTimeout(() => {
+        document.getElementById('partner-cta')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, []);
+  
   const navigate = useNavigate();
   const { setShowAuthModal, currentUser, submitPartnerRequest, showToast } = useSideQuest(); 
   const [requestForm, setRequestForm] = useState({ business_name: '', whatsapp: '', email: '' });
@@ -278,7 +286,7 @@ const HowItWorks = () => {
         </div>
 
         {/* --- CTA --- */}
-        <div className="mt-16 text-center pb-12">
+        <div id="partner-cta" className="mt-16 text-center pb-12">
             <h3 className="text-2xl font-bold text-gray-800 mb-6">Ready to start?</h3>
             
             {activeTab === 'traveler' ? (
