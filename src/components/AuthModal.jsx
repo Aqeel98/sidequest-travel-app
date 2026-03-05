@@ -24,18 +24,18 @@ const [mfaFactorId, setMfaFactorId] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const navigate = useNavigate();
+
   if (!showAuthModal) return null;
 
   const handleExit = async () => {
+
     if (mode === 'mfa_challenge') {
-      // If they exit during MFA, we MUST wipe the partial session
       await logout();
       setMode('login');
     }
     setShowAuthModal(false);
   };
-
-  const navigate = useNavigate();
 
 
   const handleSubmit = async (e) => {
