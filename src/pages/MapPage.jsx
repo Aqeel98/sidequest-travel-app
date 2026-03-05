@@ -231,15 +231,30 @@ const MapPage = () => {
 
                 {/* Google Maps Link */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Google Maps Link</label>
-                  <input
-                    type="url"
-                    value={suggestForm.maps_link}
-                    onChange={e => setSuggestForm(p => ({ ...p, maps_link: e.target.value }))}
-                    placeholder="https://maps.google.com/..."
-                    className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none transition-all text-sm"
-                  />
-                </div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">
+                 Google Maps Link
+               </label>
+    
+           <div className="flex gap-2">
+            <input 
+            type="url" 
+            value={suggestForm.maps_link}
+            onChange={e => setSuggestForm(p => ({ ...p, maps_link: e.target.value }))}
+            placeholder="Paste Link here..."
+            className="flex-1 border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none transition-all text-sm"
+            />
+            <button 
+            type="button"
+            onClick={() => window.open('https://www.google.com/maps', '_blank')}
+            className="bg-gray-50 border-2 border-gray-100 text-gray-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors shadow-sm whitespace-nowrap"
+              >
+            Open Maps 📍
+              </button>
+           </div>
+             <p className="text-[10px] text-gray-400 mt-2 italic leading-tight">
+              Click "Open Maps", find the spot, select "Share", and copy the link here.
+                  </p>
+              </div>
 
                 {/* Photo Upload */}
                 <div>

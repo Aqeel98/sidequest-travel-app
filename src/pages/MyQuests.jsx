@@ -294,7 +294,7 @@ const MyQuests = () => {
                   {s.status === 'approved' && (
                     <div className="text-center">
                       <span className="flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-black uppercase">
-                        ✅ Approved
+                         Approved
                       </span>
                       <p className="text-xs font-black text-emerald-500 mt-1">+50 XP Awarded!</p>
                     </div>
