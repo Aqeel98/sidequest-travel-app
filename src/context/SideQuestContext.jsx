@@ -877,7 +877,11 @@ if (role === 'Partner') {
     try {
         const version = localStorage.getItem('sq_app_version');
 
-        supabase.auth.signOut(); 
+        try {
+            await withTimeout(supabase.auth.signOut(), 2500);
+        } catch (e) {
+            console.warn("SQ-Auth: Network dead, continuing with local purge.");
+        }
 
         const userKeys = [
             'sq_pending_quiz', 
@@ -893,13 +897,12 @@ if (role === 'Partner') {
 
         setTimeout(() => {
             window.location.href = window.location.origin;
-        }, 600);
+        }, 500);
 
     } catch (error) {
         window.location.href = '/';
     }
   };
-
   // --- 7. QUEST & IMPACT ACTIONS ---
 
   const optimizeImage = (file) => {
