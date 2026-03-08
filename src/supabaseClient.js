@@ -10,5 +10,14 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,   
     autoRefreshToken: true, 
     detectSessionInUrl: true 
+  },
+
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  },
+  global: {
+    headers: { 'x-application-name': 'sidequest' },
   }
 })

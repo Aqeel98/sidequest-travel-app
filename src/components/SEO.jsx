@@ -3,13 +3,13 @@ import { Helmet } from 'react-helmet-async';
 
 export default function SEO({ title, description, name, type, image, url }) {
   
-  const cleanPath = window.location.pathname;
+  const cleanPath = window.location.pathname.split('?')[0].split('#')[0];
   const baseDomain = 'https://sidequest.lk'; 
   const currentUrl = url || `${baseDomain}${cleanPath}`;
 
   const siteTitle = 'SideQuest | Adventure with Impact';
   const siteDescription = 'Discover meaningful quests across Sri Lanka. Join the community, complete impactful quests, and earn rewards.';
-  const defaultImage = 'https://www.sidequest.lk/sq-v4-apple.png';
+  const defaultImage = 'https://sidequest.lk/sq-v4-apple.png';
 
   const metaTitle = title ? `${title} | SideQuest` : siteTitle;
   const metaDescription = description || siteDescription;
@@ -17,8 +17,6 @@ export default function SEO({ title, description, name, type, image, url }) {
 
   return (
     <Helmet>
-      {/* 
-      */}
       <title>{metaTitle}</title>
       <meta name='description' content={metaDescription} />
       <link rel="canonical" href={currentUrl} />
