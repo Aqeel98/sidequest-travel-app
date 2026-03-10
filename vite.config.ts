@@ -11,7 +11,7 @@ export default defineConfig({
       injectRegister: 'inline',
       includeAssets: ['favicon.ico', 'favicon-96x96.png', 'sq-v4-apple.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'SideQuest v3.6.1',
+        name: 'SideQuest',
         short_name: 'SideQuest',
         description: 'Discover meaningful quests across Sri Lanka.',
         theme_color: '#ffffff',
