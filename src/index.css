@@ -72,7 +72,7 @@ body {
     left: 0;
     width: 40px;
     height: 40px;
-    border: 3px solid #EF4444; 
+    border: 3px solid #107870; 
     border-radius: 50%;
     transform: scale(1);
     animation: pulse-animation 2s infinite;

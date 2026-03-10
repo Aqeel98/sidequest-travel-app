@@ -56,7 +56,7 @@ return L.divIcon({
       width: 36px; height: 36px;
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
-      border: 3px solid white;
+      border: 3px solid #107870;
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
       display: flex; align-items: center; justify-content: center;
       font-size: 18px;
