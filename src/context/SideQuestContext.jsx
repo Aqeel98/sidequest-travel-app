@@ -64,7 +64,7 @@ export const SideQuestProvider = ({ children }) => {
   const isInitialBoot = useRef(true);
 
   // MASTER SECURITY CONSTANT
-  const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
+  //const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
   // --- 1.5 PWA AUTO-RECONNECT LOGIC ---
   
@@ -546,8 +546,6 @@ useEffect(() => {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'quest_suggestions' }, (payload) => {
     const myId = userRef.current?.id;
     const myRole = userRef.current?.role;
-    code
-    Code
     if (myRole !== 'Admin' && payload.new.submitted_by !== myId) return;
     
     if (payload.eventType === 'UPDATE') {
@@ -587,7 +585,6 @@ useEffect(() => {
   };
 
   // --- 5. DATA SYNC & ZOMBIE REPAIR LOGIC ---
-  // --- 5. DATA SYNC & ZOMBIE REPAIR LOGIC ---
 const fetchProfile = async (userId, userEmail) => {
     try {
       console.log("SQ-Profile: Initiating database handshake for:", userEmail);
@@ -605,7 +602,7 @@ const fetchProfile = async (userId, userEmail) => {
               id: userId, 
               email: userEmail, 
               full_name: userEmail.split('@')[0], 
-              role: userEmail === ADMIN_EMAIL ? 'Admin' : 'Traveler',
+              role: 'Traveler',
               xp: 0
           };
           
@@ -622,8 +619,7 @@ const fetchProfile = async (userId, userEmail) => {
       }
   
       if (data) {
-          if (data.email === ADMIN_EMAIL) data.role = 'Admin';
-          
+                    
           // 4. THE FIX: Merge DB data with Auth factors
           // Normal users will just have an empty array for factors
           const mergedUser = {
