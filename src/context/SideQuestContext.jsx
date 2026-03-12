@@ -746,7 +746,7 @@ if (role === 'Partner') {
         if (error) throw error;
 
         if (data.user) {
-            const finalRole = email === ADMIN_EMAIL ? 'Admin' : role;
+            const finalRole = role;
             const newProfile = { 
                 id: data.user.id, 
                 email: email, 
