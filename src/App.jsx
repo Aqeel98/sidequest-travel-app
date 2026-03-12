@@ -24,7 +24,7 @@ import Quiz from './pages/Quiz';
 
 // --- 1. CONSOLE SHIELD ENGINE ---
 const originalConsole = { ...console };
-const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
+//const ADMIN_EMAIL = 'sidequestsrilanka@gmail.com';
 
 if (import.meta.env.PROD) {
   console.log = () => {};
@@ -103,8 +103,9 @@ const MainLayout = () => {
 
   useEffect(() => {
       if (import.meta.env.PROD) {
-          const isAdmin = currentUser?.role === 'Admin' || currentUser?.email === 'sidequestsrilanka@gmail.com';
-          if (isAdmin) {
+        const isAdmin = currentUser?.role === 'Admin';
+        
+        if (isAdmin) {
               console.log = originalConsole.log;
               console.debug = originalConsole.debug;
               console.warn = originalConsole.warn;
