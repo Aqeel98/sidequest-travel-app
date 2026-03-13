@@ -22,7 +22,16 @@ export default {
           800: '#115e59',
           900: '#134e4a',
         }
-      }
+      },
+      keyframes: {
+        'pulse-slow': {
+          '0%, 100%': { opacity: '1', borderColor: 'rgba(45,212,191,0.6)' },
+          '50%':       { opacity: '0.85', borderColor: 'rgba(45,212,191,1)' },
+        },
+      },
+      animation: {
+        'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
+      },
     },
   },
   plugins: [],

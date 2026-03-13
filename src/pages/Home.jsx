@@ -3,7 +3,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor,
-  Waves,  Bird, Palmtree, Sun, Moon,  Search, Crosshair, Loader2
+  Waves,  Bird, Palmtree, Sun, Moon,  Search, Crosshair, Loader2, Trophy
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 import SEO from '../components/SEO';
@@ -44,7 +44,7 @@ const SCATTERED_ICONS = Array.from({ length: 25 }).map((_, i) => {
 
 const Home = () => {
   const hasRestored = useRef(false);
-  const { quests, isLoading, currentUser } = useSideQuest();
+  const { quests, isLoading, currentUser, isHuntActive, setShowAuthModal } = useSideQuest();
   const navigate = useNavigate();
   const activeQuests = quests.filter(quest => quest.status === 'active');
   const [selectedCategory, setSelectedCategory] = useState(
@@ -191,6 +191,25 @@ const Home = () => {
               Complete quests, earn rewards, and leave the island better than you found it.
                </span>
             </p>
+
+          {isHuntActive && (
+            <button
+              onClick={() => currentUser ? navigate('/hunt') : setShowAuthModal(true)}
+              className="w-full max-w-lg mx-auto mb-6 flex items-center gap-4
+                bg-brand-900/80 backdrop-blur-md border-2 border-teal-400/60 rounded-2xl
+                px-6 py-4 hover:border-teal-300 hover:bg-brand-800/90 transition-all
+                shadow-lg shadow-teal-500/20 group animate-pulse-slow"
+            >
+              <div className="w-12 h-12 rounded-full bg-teal-400/20 flex items-center justify-center flex-shrink-0">
+                <Trophy size={24} className="text-teal-300" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-xs font-bold text-teal-400 uppercase tracking-widest">Live Now</p>
+                <p className="text-white font-extrabold text-lg leading-tight">Unlock Colombo Hunt</p>
+              </div>
+              <ArrowRight size={20} className="text-teal-300 group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button

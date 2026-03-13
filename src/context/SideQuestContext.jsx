@@ -51,6 +51,13 @@ export const SideQuestProvider = ({ children }) => {
   const [partnerRequests, setPartnerRequests] = useState([]);
   const [questSuggestions, setQuestSuggestions] = useState([]);
 
+  // --- HUNT STATE ---
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [isHuntActive, setIsHuntActive] = useState(false);
+  const [huntRoute, setHuntRoute] = useState([]);
+  const [huntProgress, setHuntProgress] = useState(null);
+  const [huntCompletions, setHuntCompletions] = useState([]);
+
   // --- NOTIFICATION SYSTEM (State Only) ---
   // We removed the visual renderer here to prevent "Double Toasts" with App.jsx
   const [toast, setToast] = useState(null); 
@@ -333,6 +340,8 @@ useEffect(() => {
                 if (session) {
                     console.log("SQ-Step 2: Session found, hydrating profile...");
                     await fetchProfile(session.user.id, session.user.email);
+                    await fetchActiveEvent();
+                    if (activeEvent) await fetchHuntData(activeEvent.id);
                 } else {
                     console.log("SQ-Step 2: No session. Guest mode active.");
                     setShowAuthModal(false);
@@ -567,6 +576,13 @@ useEffect(() => {
     }
     })
 
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'hunt_progress' }, (payload) => {
+        const myId = userRef.current?.id;
+        if (payload.new?.captain_id === myId) {
+          setHuntProgress(prev => ({ ...prev, ...payload.new }));
+        }
+      })
+
     .subscribe();
   };
 
@@ -697,6 +713,138 @@ const fetchProfile = async (userId, userEmail) => {
   const fetchQuests = async () => {
     const { data } = await supabase.from('quests').select('*');
     if (data) setQuests(data);
+  };
+
+  const fetchLeaderboard = async () => {
+    if (!activeEvent) return [];
+    try {
+      const { data } = await supabase
+        .from('view_hunt_leaderboard')
+        .select('*')
+        .eq('event_id', activeEvent.id)
+        .order('rank', { ascending: true });
+      return data || [];
+    } catch (e) {
+      console.warn('SQ-Hunt: fetchLeaderboard failed', e);
+      return [];
+    }
+  };
+
+  const enterStopUnlockCode = async (stopId, code) => {
+    if (!activeEvent) return 'NO_EVENT';
+    try {
+      const { data: result, error } = await supabase.rpc('enter_stop_unlock_code', {
+        event_id_input: activeEvent.id,
+        stop_id_input: stopId,
+        code_input: code,
+      });
+      if (error) throw error;
+
+      if (result === 'OK') {
+        const completedStop = huntRoute.find(r => r.stop.id === stopId);
+        if (completedStop) {
+          setHuntCompletions(prev => [...prev, { stop_id: stopId, step_number: completedStop.step_number }]);
+          setHuntProgress(prev => ({
+            ...prev,
+            stops_completed: (prev?.stops_completed || 0) + 1,
+            xp_earned: (prev?.xp_earned || 0) + (completedStop.stop.xp_value || 50),
+          }));
+          setCurrentUser(prev => ({ ...prev, xp: prev.xp + (completedStop.stop.xp_value || 50) }));
+        }
+        await fetchHuntData(activeEvent.id);
+      }
+      return result;
+    } catch (e) {
+      console.error('SQ-Hunt: enterStopUnlockCode error', e);
+      return 'ERROR';
+    }
+  };
+
+  const enterHuntAccessCode = async (code) => {
+    if (!activeEvent) return 'EVENT_NOT_FOUND';
+    try {
+      const { data: result, error } = await supabase.rpc('enter_hunt_access_code', {
+        event_id_input: activeEvent.id,
+        code_input: code,
+      });
+      if (error) throw error;
+
+      if (result === 'OK') {
+        setCurrentUser(prev => ({
+          ...prev,
+          hunt_access: [...(prev.hunt_access || []), activeEvent.id],
+        }));
+        await fetchHuntData(activeEvent.id);
+      } else if (result === 'WRONG_CODE') {
+        showToast('Incorrect code. Check with a Game Master.', 'error');
+      } else if (result === 'EVENT_NOT_ACTIVE') {
+        showToast('The hunt is not live yet.', 'info');
+      } else if (result === 'NO_ROUTES_LEFT') {
+        showToast('All team slots are taken. Contact the organiser.', 'error');
+      }
+      return result;
+    } catch (e) {
+      console.error('SQ-Hunt: enterHuntAccessCode error', e);
+      showToast('Network error. Try again.', 'error');
+      return 'ERROR';
+    }
+  };
+
+  const fetchHuntData = async (eventId) => {
+    if (!eventId) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: progressData } = await supabase
+        .from('hunt_progress')
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('captain_id', user.id)
+        .maybeSingle();
+
+      if (!progressData) return;
+      setHuntProgress(progressData);
+
+      const { data: routeData } = await supabase
+        .from('hunt_routes')
+        .select('*, stop:hunt_stops(*)')
+        .eq('event_id', eventId)
+        .eq('route_number', progressData.route_number)
+        .order('step_number', { ascending: true });
+
+      if (routeData) setHuntRoute(routeData);
+
+      const { data: completionData } = await supabase
+        .from('hunt_completions')
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('captain_id', user.id);
+
+      if (completionData) setHuntCompletions(completionData);
+    } catch (e) {
+      console.warn('SQ-Hunt: fetchHuntData failed', e);
+    }
+  };
+
+  const fetchActiveEvent = async () => {
+    try {
+      const { data } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        setActiveEvent(data);
+        setIsHuntActive(true);
+      } else {
+        setActiveEvent(null);
+        setIsHuntActive(false);
+      }
+    } catch (e) {
+      console.warn('SQ-Hunt: fetchActiveEvent failed', e);
+    }
   };
 
   const fetchRewards = async () => {
@@ -1631,7 +1779,10 @@ const approveNewReward = async (id) => {
       addReward, updateReward, deleteReward, approveNewReward, 
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
       redeemReward, verifyRedemptionCode,  switchRole, quizBank, completedQuizIds, submitQuizAnswer,
-      toast, showToast, optimizeImage
+      toast, showToast, optimizeImage,
+      activeEvent, isHuntActive,
+      huntRoute, huntProgress, huntCompletions,
+      enterHuntAccessCode, enterStopUnlockCode, fetchHuntData, fetchLeaderboard,
     }}>
       {children}
     </SideQuestContext.Provider>

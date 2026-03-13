@@ -21,6 +21,9 @@ import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
 import InstallBanner from './components/InstallBanner';
 import Quiz from './pages/Quiz';
+import HuntDashboard from './pages/HuntDashboard';
+import HuntStop from './pages/HuntStop';
+import Leaderboard from './pages/Leaderboard';
 
 // --- 1. CONSOLE SHIELD ENGINE ---
 const originalConsole = { ...console };
@@ -78,7 +81,7 @@ const MainLayout = () => {
   const { isLoading, currentUser } = useSideQuest();
 
   useEffect(() => {
-    const v = '3.6.1';
+    const v = '3.7.0';
     // Skip version check for bots to avoid reload loops
     if (navigator.userAgent.match(/bot|googlebot|crawler|spider|robot|crawling/i)) return;
 
@@ -150,6 +153,9 @@ export default function App() {
             <Route path="admin" element={<Admin />} />
             <Route path="emergency" element={<Emergency />} />
             <Route path="quiz" element={<Quiz />} />
+            <Route path="hunt" element={<HuntDashboard />} />
+            <Route path="hunt/:stopId" element={<HuntStop />} />
+            <Route path="leaderboard" element={<Leaderboard />} />
             </Route>
           </Routes>
         </BrowserRouter>
