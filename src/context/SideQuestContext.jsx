@@ -334,14 +334,30 @@ useEffect(() => {
                 setQuests(qRes.data || []);
                 setRewards(rRes.data || []);
                 setQuizBank(quizRes.data || []);
-
+            
+                // ✅ Fetch event for ALL visitors (logged in or not)
+                const { data: eventData } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('is_active', true)
+                    .limit(1)
+                    .maybeSingle();
+            
+                if (eventData) {
+                    setActiveEvent(eventData);
+                    setIsHuntActive(true);
+                } else {
+                    setActiveEvent(null);
+                    setIsHuntActive(false);
+                }
+            
                 const session = sRes.data?.session;
-        
+            
                 if (session) {
                     console.log("SQ-Step 2: Session found, hydrating profile...");
                     await fetchProfile(session.user.id, session.user.email);
-                    await fetchActiveEvent();
-                    if (activeEvent) await fetchHuntData(activeEvent.id);
+                    // ✅ Only fetch hunt data if logged in (needs captain_id)
+                    if (eventData) await fetchHuntData(eventData.id);
                 } else {
                     console.log("SQ-Step 2: No session. Guest mode active.");
                     setShowAuthModal(false);
