@@ -411,11 +411,9 @@ useEffect(() => {
       console.log("SQ-System: Post-Boot Auth Event Handshake ->", event);
 
       if (session) {
-        if (!currentUser) {
+        if (!userRef.current) {
             console.log("SQ-System: Hydrating local user state from database...");
             await fetchProfile(session.user.id, session.user.email);
-        } else {
-            if (activeEvent) await fetchHuntData(activeEvent.id);
         }
         //  setShowAuthModal(false); 
       } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
