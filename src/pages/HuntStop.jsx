@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSideQuest } from '../context/SideQuestContext';
 import { MapPin, ArrowLeft, Loader2 } from 'lucide-react';
@@ -13,6 +13,7 @@ const HuntStop = () => {
 
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const isSubmitting = useRef(false);
 
   const routeRow = huntRoute.find(r => r.stop.id === stopId);
   const stop = routeRow?.stop;
@@ -21,10 +22,13 @@ const HuntStop = () => {
   const activeStepIndex = huntRoute.findIndex(r => !completedStopIds.has(r.stop.id));
   const activeStop = huntRoute[activeStepIndex]?.stop;
 
-  if (!stop || activeStop?.id !== stopId) {
+  useEffect(() => {
+  if (huntRoute.length > 0 && (!stop || activeStop?.id !== stopId)) {
     navigate('/hunt');
-    return null;
   }
+}, [stop, activeStop, stopId, huntRoute.length]);
+  
+  if (!stop || activeStop?.id !== stopId) return null;
 
   const stepNumber = routeRow.step_number;
   const totalStops = huntRoute.length;
@@ -32,10 +36,13 @@ const HuntStop = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (code.trim().length < 4) return;
+    if (isSubmitting.current) return;
+    isSubmitting.current = true;
     setLoading(true);
 
     const result = await enterStopUnlockCode(stopId, code.trim());
     setLoading(false);
+    isSubmitting.current = false;
 
     if (result === 'OK') {
       showToast(`Stop cleared! +${stop.xp_value || 50} XP`, 'success');

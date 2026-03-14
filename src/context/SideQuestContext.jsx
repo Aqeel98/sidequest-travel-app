@@ -112,8 +112,31 @@ export const SideQuestProvider = ({ children }) => {
         const { data: redData } = await redQuery;
         if (redData) setRedemptions(redData);
 
+        }  
 
+        const { data: eventData } = await supabase
+            .from('events')
+            .select('*')
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle();
+
+        if (eventData) {
+            setActiveEvent(eventData);
+            setIsHuntActive(true);
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('hunt_access')
+                .eq('id', userId)
+                .maybeSingle();
+            if (profileData?.hunt_access?.includes(eventData.id)) {
+                await fetchHuntData(eventData.id);
+            }
+        } else {
+            setActiveEvent(null);
+            setIsHuntActive(false);
         }
+
         console.log("SQ-PWA: Data synced.");
     } catch (e) { console.warn("SQ-PWA: Background refresh failed", e); }
 };
@@ -755,19 +778,35 @@ const fetchProfile = async (userId, userEmail) => {
         code_input: code,
       });
       if (error) throw error;
-
+  
       if (result === 'OK') {
-        const completedStop = huntRoute.find(r => r.stop.id === stopId);
-        if (completedStop) {
-          setHuntCompletions(prev => [...prev, { stop_id: stopId, step_number: completedStop.step_number }]);
-          setHuntProgress(prev => ({
-            ...prev,
-            stops_completed: (prev?.stops_completed || 0) + 1,
-            xp_earned: (prev?.xp_earned || 0) + (completedStop.stop.xp_value || 50),
-          }));
-          setCurrentUser(prev => ({ ...prev, xp: prev.xp + (completedStop.stop.xp_value || 50) }));
-        }
-        await fetchHuntData(activeEvent.id);
+        // ✅ Force a full re-fetch from DB instead of local state update
+        const { data: { user } } = await supabase.auth.getUser();
+  
+        // Fetch fresh completions
+        const { data: completionData } = await supabase
+          .from('hunt_completions')
+          .select('*')
+          .eq('event_id', activeEvent.id)
+          .eq('captain_id', user.id);
+        if (completionData) setHuntCompletions(completionData);
+  
+        // Fetch fresh progress
+        const { data: progressData } = await supabase
+          .from('hunt_progress')
+          .select('*')
+          .eq('event_id', activeEvent.id)
+          .eq('captain_id', user.id)
+          .maybeSingle();
+        if (progressData) setHuntProgress(progressData);
+  
+        // Fetch fresh profile XP
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (profileData) setCurrentUser(prev => ({ ...prev, ...profileData }));
       }
       return result;
     } catch (e) {

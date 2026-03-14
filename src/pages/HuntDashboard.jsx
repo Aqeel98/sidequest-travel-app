@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSideQuest } from '../context/SideQuestContext';
 import HuntStopCard from '../components/HuntStopCard';
 import HuntCodeModal from '../components/HuntCodeModal';
@@ -6,7 +6,7 @@ import { Trophy, CheckCircle2 } from 'lucide-react';
 
 const HuntDashboard = () => {
   const {
-    currentUser, activeEvent, isHuntActive,
+    currentUser, activeEvent, isHuntActive, isLoading,
     huntRoute, huntProgress, huntCompletions,
     fetchLeaderboard, fetchHuntData,
   } = useSideQuest();
@@ -15,6 +15,20 @@ const HuntDashboard = () => {
   const [totalTeams, setTotalTeams] = useState(null);
 
   const hasAccess = activeEvent && currentUser?.hunt_access?.includes(activeEvent.id);
+
+  // ✅ FIX 5 — Screen wake lock
+  useEffect(() => {
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (e) {}
+    };
+    requestWakeLock();
+    return () => { if (wakeLock) wakeLock.release(); };
+  }, []);
 
   useEffect(() => {
     if (activeEvent && hasAccess) fetchHuntData(activeEvent.id);
@@ -42,6 +56,18 @@ const HuntDashboard = () => {
   }
 
   if (!hasAccess) return <HuntCodeModal />;
+
+  // ✅ FIX 3 — Loading state
+  if (isLoading || (hasAccess && huntRoute.length === 0)) {
+    return (
+      <div className="min-h-screen bg-brand-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full border-4 border-teal-400/30 border-t-teal-400 animate-spin mx-auto mb-4" />
+          <p className="text-white/50 text-sm">Loading your route...</p>
+        </div>
+      </div>
+    );
+  }
 
   const completedStopIds = new Set(huntCompletions.map(c => c.stop_id));
   const activeStepIndex = huntRoute.findIndex(r => !completedStopIds.has(r.stop.id));
