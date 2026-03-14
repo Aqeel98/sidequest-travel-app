@@ -146,15 +146,17 @@ useEffect(() => {
     // Helper: What to do when the app wakes up
     const handleWakeUp = async () => {
         if (userRef.current) {
-            // 1. Wake up Auth (in case token expired)
+            if (window.location.pathname.startsWith('/hunt')) {
+                window.location.reload();
+                return;
+            }
+    
             try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){}
             
-            // 2. FORCE REALTIME RECONNECT (The Socket Jumper)
             supabase.realtime.connect(); 
-
+    
             await recoverPendingSyncs(userRef.current.id);
-
-            // 3. Refresh Data
+    
             await refreshFullState(userRef.current.id, userRef.current.role);
         }
     };
