@@ -146,10 +146,6 @@ useEffect(() => {
     // Helper: What to do when the app wakes up
     const handleWakeUp = async () => {
         if (userRef.current) {
-            if (window.location.pathname.startsWith('/hunt')) {
-                window.location.reload();
-                return;
-            }
     
             try { await withTimeout(supabase.auth.getSession(), 2000); } catch(e){}
             

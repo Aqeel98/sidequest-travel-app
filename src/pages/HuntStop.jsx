@@ -46,7 +46,9 @@ const HuntStop = () => {
 
     if (result === 'OK') {
       showToast(`Stop cleared! +${stop.xp_value || 50} XP`, 'success');
-      setTimeout(() => navigate('/hunt'), 800);
+      setTimeout(() => {
+        window.location.href = '/hunt';
+      }, 800);
     } else if (result === 'WRONG_CODE') {
       showToast('Incorrect code. Check with your SideQuest Assistant.', 'error');
       setCode('');
