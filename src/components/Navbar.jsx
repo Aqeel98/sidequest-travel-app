@@ -153,7 +153,7 @@ const Navbar = () => {
             <Link to="/rewards" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Rewards</Link>
             {isHuntActive && currentUser?.hunt_access?.includes(activeEvent?.id) && (
     <Link to="/hunt" className="p-3 rounded-lg hover:bg-teal-50 text-teal-600 font-bold flex items-center" onClick={() => setIsOpen(false)}>
-      <Trophy size={18} className="mr-2" /> Hunt
+      <Trophy size={18} className="mr-2" /> Colombo Hunt
     </Link>
   )}
             <Link to="/emergency" className="p-3 rounded-lg hover:bg-red-50 text-red-500 font-bold flex items-center" onClick={() => setIsOpen(false)}>
