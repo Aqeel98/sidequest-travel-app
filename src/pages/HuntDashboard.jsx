@@ -57,8 +57,7 @@ const HuntDashboard = () => {
 
   if (!hasAccess) return <HuntCodeModal />;
 
-  // ✅ FIX 3 — Loading state
-  if (isLoading || (hasAccess && huntRoute.length === 0)) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-brand-900 flex items-center justify-center">
         <div className="text-center">
