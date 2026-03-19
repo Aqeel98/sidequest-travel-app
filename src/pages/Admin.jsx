@@ -7,7 +7,7 @@ import {
   UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon
 } from 'lucide-react';
 import { validatePassword } from '../utils/security';
-import HuntAdminTab from './HuntAdminTab';
+import HuntAdminTab from './HuntAdminTab.jsx';
 
 
 
