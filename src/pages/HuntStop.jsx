@@ -84,17 +84,14 @@ const HuntStop = () => {
           <p className="text-white/80 text-base leading-relaxed">{stop.challenge}</p>
         </div>
 
-        <a
-          href={`https://www.google.com/maps/dir/?api=1&destination=${stop.lat},${stop.lng}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full
-            bg-white/10 hover:bg-white/15 border border-white/20
-            text-white font-bold py-4 rounded-2xl transition-all mb-6"
-        >
-          <MapPin size={18} className="text-teal-400" />
-          Open in Google Maps
-        </a>
+        <div className="bg-white/5 rounded-2xl p-5 mb-6 border border-white/10">
+          <p className="text-white/50 text-xs uppercase tracking-widest font-bold mb-2">Coordinates</p>
+          <p className="text-white font-mono font-black text-xl tracking-wide">
+            {stop.lat}, {stop.lng}
+          </p>
+          <p className="text-white/30 text-xs mt-2">Search these coordinates to find your location.</p>
+        </div>
+
       </div>
 
       <div className="sticky bottom-4">

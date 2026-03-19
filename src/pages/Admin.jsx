@@ -7,6 +7,8 @@ import {
   UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon
 } from 'lucide-react';
 import { validatePassword } from '../utils/security';
+import HuntAdminTab from './HuntAdminTab';
+
 
 
 // --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
@@ -515,6 +517,9 @@ const Admin = () => {
         <button onClick={() => setActiveTab('partnerOversight')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'partnerOversight' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
           Partner Oversight
         </button>
+        <button onClick={() => setActiveTab('hunt')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'hunt' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
+        Hunt Manager
+      </button>
       </div>
 
       {/* --- 0. DASHBOARD TAB --- */}
@@ -1079,6 +1084,10 @@ const Admin = () => {
     </div>
 )}
 
+
+{activeTab === 'hunt' && (
+        <HuntAdminTab showToast={showToast} />
+      )}
 
     </div>
   );
