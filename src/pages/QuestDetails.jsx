@@ -187,7 +187,6 @@ const getCategoryColor = (cat) => {
 
   const handleOpenMaps = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${quest.lat},${quest.lng}`;
-    
     window.open(url, '_blank');
   };
 

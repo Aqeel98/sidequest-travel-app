@@ -123,32 +123,19 @@ const Home = () => {
       // --- SCROLL RESTORATION LOGIC ---
 
       useLayoutEffect(() => {
-        if (displayQuests.length > 0 && !hasRestored.current) {
+        if (!isLoading && displayQuests.length > 0 && !hasRestored.current) {
           const savedPosition = sessionStorage.getItem('homeScrollPos');
           if (savedPosition) {
-            window.scrollTo({ top: parseInt(savedPosition), behavior: 'instant' });
+            requestAnimationFrame(() => {
+              window.scrollTo({ top: parseInt(savedPosition), behavior: 'instant' });
+            });
           }
           hasRestored.current = true;
         }
-      }, [displayQuests.length]);
+      }, [displayQuests.length, isLoading]);
 
 
-  useEffect(() => {
-    // 2. Save position when LEAVING this page
-    const handleScrollSave = () => {
-      sessionStorage.setItem('homeScrollPos', window.scrollY.toString());
-    };
-
-    // Attach listener to save scroll on clicks (navigation)
-    window.addEventListener('beforeunload', handleScrollSave);
-
-    return () => {
-      // Save position when component unmounts (navigating to Quest Details)
-      handleScrollSave();
-      window.removeEventListener('beforeunload', handleScrollSave);
-    };
-  }, []);
-
+  
 
 
 
