@@ -186,13 +186,10 @@ const getCategoryColor = (cat) => {
   };
 
   const handleOpenMaps = () => {
-    const query = (quest.title && quest.location_address)
-      ? `${quest.title} ${quest.location_address} Sri Lanka`
-      : `${quest.lat},${quest.lng}`;
-
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    const url = `https://www.google.com/maps/search/?api=1&query=${quest.lat},${quest.lng}`;
+    
     window.open(url, '_blank');
-};
+  };
 
   const handleAccept = async () => {
     if (!currentUser) return setShowAuthModal(true);
