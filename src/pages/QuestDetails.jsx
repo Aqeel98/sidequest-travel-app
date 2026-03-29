@@ -186,10 +186,8 @@ const getCategoryColor = (cat) => {
   };
 
   const handleOpenMaps = () => {
-      const url = (quest.lat && quest.lng)
-        ? `https://www.google.com/maps/dir/?api=1&destination=${quest.lat},${quest.lng}`
-        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(quest.location_address)}`;
-      window.open(url, '_blank');
+    const url = `https://www.google.com/maps/search/?api=1&query=${quest.lat},${quest.lng}`;
+    window.open(url, '_blank');
   };
 
   const handleAccept = async () => {
