@@ -24,6 +24,7 @@ import Quiz from './pages/Quiz';
 import HuntDashboard from './pages/HuntDashboard';
 import HuntStop from './pages/HuntStop';
 import Leaderboard from './pages/Leaderboard';
+import TravelAgency from './pages/TravelAgency';
 
 // --- 1. CONSOLE SHIELD ENGINE ---
 const originalConsole = { ...console };

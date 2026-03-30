@@ -198,19 +198,33 @@ const Home = () => {
             </button>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+         {/* --- HERO ACTIONS (Explore, Plan, Map) --- */}
+         <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center items-center">
+            
+            {/* 1. THE AGENCY (Monetization) */}
+            <button
+              onClick={() => navigate('/plan-trip')}
+              className="w-full sm:w-auto bg-[#107870] text-white px-10 py-4 rounded-full font-black text-lg hover:opacity-95 shadow-xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 border-b-4 border-[#0a4d47]"
+            >
+              <Sparkles size={20} /> Plan My Trip
+            </button>
+
+            {/* 2. THE GRID (Engagement) */}
             <button
               onClick={() => document.getElementById('quests-grid').scrollIntoView({ behavior: 'smooth' })}
-              className="bg-white text-brand-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl hover:shadow-white/20 transition-all transform hover:-translate-y-1 flex items-center justify-center"
+              className="w-full sm:w-auto bg-white text-[#0D9488] px-10 py-4 rounded-full font-black text-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
             >
-              Explore Quests
+              <Compass size={20} /> Explore Nearby
             </button>
+
+            {/* 3. THE MAP (Spatial Discovery) */}
             <button
               onClick={() => navigate('/map')}
-              className="bg-brand-700/50 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-brand-700/70 transition-all flex items-center justify-center"
+              className="w-full sm:w-auto bg-brand-700/40 backdrop-blur-md border-2 border-white/30 text-white px-10 py-4 rounded-full font-black text-lg hover:bg-brand-700/60 transition-all flex items-center justify-center gap-2"
             >
-              View Map <ArrowRight size={20} className="ml-2" />
+              <MapPin size={20} /> View Map
             </button>
+
           </div>
         </div>
 
