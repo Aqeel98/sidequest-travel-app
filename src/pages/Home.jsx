@@ -179,48 +179,55 @@ const Home = () => {
                </span>
             </p>
 
+          {/* --- LIVE HUNT BANNER (WITH MOVING MAZE) --- */}
           {isHuntActive && (
             <button
               onClick={() => currentUser ? navigate('/hunt') : setShowAuthModal(true)}
-              className="w-full max-w-lg mx-auto mb-6 flex items-center gap-4
-                bg-brand-900/80 backdrop-blur-md border-2 border-teal-400/60 rounded-2xl
-                px-6 py-4 hover:border-teal-300 hover:bg-brand-800/90 transition-all
-                shadow-lg shadow-teal-500/20 group animate-pulse-slow"
+              className="w-full max-w-lg mx-auto mb-10 relative overflow-hidden flex items-center gap-5
+                bg-[#0a4d47] border border-[#2DD4BF]/30 rounded-3xl
+                px-8 py-5 hover:border-[#2DD4BF]/60 transition-all group shadow-2xl"
             >
-              <div className="w-12 h-12 rounded-full bg-teal-400/20 flex items-center justify-center flex-shrink-0">
-                <Trophy size={24} className="text-teal-300" />
+              {/* The Animated Maze Background Layer */}
+              <div className="absolute inset-0 animate-maze opacity-40 pointer-events-none"></div>
+              
+              <div className="relative z-10 w-12 h-12 rounded-2xl bg-[#2DD4BF]/10 flex items-center justify-center flex-shrink-0 border border-[#2DD4BF]/20">
+                <Trophy size={22} className="text-[#2DD4BF]" />
               </div>
-              <div className="flex-1 text-left">
-                <p className="text-xs font-bold text-teal-400 uppercase tracking-widest">Live Now</p>
-                <p className="text-white font-extrabold text-lg leading-tight">Unlock Colombo Hunt</p>
+              
+              <div className="relative z-10 flex-1 text-left">
+                <p className="text-[10px] font-black text-[#2DD4BF] uppercase tracking-[0.2em] mb-0.5">Live Now</p>
+                <p className="text-white font-extrabold text-xl tracking-tight">Unlock Colombo Hunt</p>
               </div>
-              <ArrowRight size={20} className="text-teal-300 group-hover:translate-x-1 transition-transform" />
+              
+              <ArrowRight size={20} className="relative z-10 text-[#2DD4BF] group-hover:translate-x-1 transition-transform" />
             </button>
           )}
 
-         {/* --- HERO ACTIONS (Explore, Plan, Map) --- */}
-         {/* --- MINIMALIST HERO ACTIONS --- */}
-         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10">
+          {/* --- DISTINCT ACTION BUTTONS --- */}
+          <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
             
+            {/* 1. PLAN MY TRIP: The Primary Solid Pill */}
             <button
               onClick={() => navigate('/plan-trip')}
-              className="bg-white text-[#0D9488] px-10 py-3.5 rounded-full font-bold transition-all hover:bg-opacity-90"
+              className="w-full md:w-auto bg-white text-[#107870] px-12 py-4 rounded-full font-black text-base shadow-xl hover:shadow-white/10 transition-all active:scale-95"
             >
               Plan My Trip
             </button>
 
+            {/* 2. EXPLORE QUESTS: The Glassmorphism Pill */}
             <button
               onClick={() => document.getElementById('quests-grid').scrollIntoView({ behavior: 'smooth' })}
-              className="border border-white/40 text-white px-10 py-3.5 rounded-full font-bold transition-all hover:bg-white/10"
+              className="w-full md:w-auto bg-white/10 backdrop-blur-md border-2 border-white/20 text-white px-10 py-[14px] rounded-full font-bold text-base hover:bg-white/20 transition-all"
             >
               Explore Quests
             </button>
 
+            {/* 3. VIEW MAP: The Minimalist Outline Pill */}
             <button
               onClick={() => navigate('/map')}
-              className="border border-white/40 text-white px-10 py-3.5 rounded-full font-bold transition-all hover:bg-white/10 flex items-center gap-2"
+              className="w-full md:w-auto border border-white/40 text-white/90 px-10 py-4 rounded-full font-medium text-base hover:text-white transition-all flex items-center justify-center gap-2 group"
             >
-              View Map <ArrowRight size={18} />
+              View Map <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
 
           </div>

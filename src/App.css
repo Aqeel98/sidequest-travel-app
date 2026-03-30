@@ -15,3 +15,14 @@ body {
   padding: 0;
   background-color: #f9fafb; /* gray-50 */
 }
+
+@keyframes mazeMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+
+.animate-maze {
+  /* High-end circuit/maze pattern via SVG */
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M54.62 0H60v5.38L54.62 0zM5.38 0H0v5.38L5.38 0zM30 24.62L54.62 0h-5.38L30 19.24 10.76 0H5.38L30 24.62zm0 10.76L5.38 60h5.38L30 40.76 49.24 60h5.38L30 35.38zM0 54.62V60h5.38L0 54.62zm60 0V60h-5.38L60 54.62z' fill='%232dd4bf' fill-opacity='0.07' fill-rule='evenodd'/%3E%3C/svg%3E");
+  animation: mazeMove 12s linear infinite;
+}
