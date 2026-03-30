@@ -157,6 +157,7 @@ export default function App() {
             <Route path="hunt" element={<HuntDashboard />} />
             <Route path="hunt/:stopId" element={<HuntStop />} />
             <Route path="leaderboard" element={<Leaderboard />} />
+            <Route path="plan-trip" element={<TravelAgency />} />
             </Route>
           </Routes>
         </BrowserRouter>

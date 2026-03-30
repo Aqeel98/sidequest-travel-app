@@ -199,30 +199,28 @@ const Home = () => {
           )}
 
          {/* --- HERO ACTIONS (Explore, Plan, Map) --- */}
-         <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center items-center">
+         {/* --- MINIMALIST HERO ACTIONS --- */}
+         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10">
             
-            {/* 1. THE AGENCY (Monetization) */}
             <button
               onClick={() => navigate('/plan-trip')}
-              className="w-full sm:w-auto bg-[#107870] text-white px-10 py-4 rounded-full font-black text-lg hover:opacity-95 shadow-xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 border-b-4 border-[#0a4d47]"
+              className="bg-white text-[#0D9488] px-10 py-3.5 rounded-full font-bold transition-all hover:bg-opacity-90"
             >
-              <Sparkles size={20} /> Plan My Trip
+              Plan My Trip
             </button>
 
-            {/* 2. THE GRID (Engagement) */}
             <button
               onClick={() => document.getElementById('quests-grid').scrollIntoView({ behavior: 'smooth' })}
-              className="w-full sm:w-auto bg-white text-[#0D9488] px-10 py-4 rounded-full font-black text-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+              className="border border-white/40 text-white px-10 py-3.5 rounded-full font-bold transition-all hover:bg-white/10"
             >
-              <Compass size={20} /> Explore Nearby
+              Explore Quests
             </button>
 
-            {/* 3. THE MAP (Spatial Discovery) */}
             <button
               onClick={() => navigate('/map')}
-              className="w-full sm:w-auto bg-brand-700/40 backdrop-blur-md border-2 border-white/30 text-white px-10 py-4 rounded-full font-black text-lg hover:bg-brand-700/60 transition-all flex items-center justify-center gap-2"
+              className="border border-white/40 text-white px-10 py-3.5 rounded-full font-bold transition-all hover:bg-white/10 flex items-center gap-2"
             >
-              <MapPin size={20} /> View Map
+              View Map <ArrowRight size={18} />
             </button>
 
           </div>
