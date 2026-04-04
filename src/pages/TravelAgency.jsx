@@ -16,18 +16,10 @@ const TravelAgency = () => {
   const [selectedDistricts, setSelectedDistricts] = useState([]);
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [isMatching, setIsMatching] = useState(false);
+  const [tier, setTier] = useState('driver');
 
-  // --- LOGIC: DYNAMIC PRICE CALCULATOR ---
-  const calculateTierPrice = (basePrice, days, tierType) => {
-    if (!travelSettings) return 0;
-    const driverCost = parseFloat(travelSettings.driver_day_rate_usd) * days;
-    const markup = tierType === 'essential' 
-        ? parseFloat(travelSettings.essential_markup_usd) * days 
-        : tierType === 'full' 
-        ? parseFloat(travelSettings.full_markup_usd) * days 
-        : 0;
-    return Math.round(parseFloat(basePrice) + markup);
-  };
+ 
+  
 
   // --- LOGIC: AI MATCHER ---
   const handleAiMatch = () => {
@@ -189,23 +181,52 @@ const TravelAgency = () => {
               <h2 className="text-3xl font-black text-gray-900 mb-2 leading-tight">{selectedTrip.title}</h2>
               <p className="text-xs font-black uppercase text-[#107870] mb-8 tracking-widest">{selectedTrip.duration_days} Day Journey</p>
               
-              <div className="space-y-4 mb-12">
-                 {[
-                   { id: 'driver', label: 'Driver Only', icon: Car },
-                   { id: 'essential', label: 'Essential Pack', icon: Zap },
-                   { id: 'full', label: 'Full All-Inclusive', icon: Sparkles },
-                 ].map((tier) => (
-                   <button key={tier.id} className="w-full text-left p-6 rounded-[2rem] border-2 border-gray-100 hover:border-[#107870] transition-all group flex justify-between items-center bg-gray-50/50 hover:bg-white shadow-sm">
-                      <div className="flex items-center gap-4">
-                        <tier.icon size={24} className="text-[#107870]"/>
-                        <span className="font-bold text-gray-800 text-lg">{tier.label}</span>
-                      </div>
-                      <span className="font-black text-xl text-gray-900">${calculateTierPrice(selectedTrip.price_usd, selectedTrip.duration_days, tier.id)}</span>
-                   </button>
-                 ))}
-              </div>
-              <button onClick={() => showToast("Proceeding to Stripe Payment...", "success")} className="w-full bg-[#107870] text-white py-6 rounded-[2rem] font-black text-xl shadow-xl active:scale-95 transition-all">Confirm & Pay</button>
-           </div>
+              <div className="space-y-4 mb-10 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+   {[
+     { id: 'driver', label: 'Driver Only', icon: Car, price: selectedTrip.price_usd },
+     { id: 'essential', label: 'Essential Pack', icon: Zap, price: selectedTrip.price_essential_usd },
+     { id: 'full', label: 'Full All-Inclusive', icon: Sparkles, price: selectedTrip.price_full_usd },
+   ].map((item) => (
+     <button 
+       key={item.id} 
+       onClick={() => setTier(item.id)} 
+       className={`w-full text-left p-6 rounded-[2rem] border-2 transition-all group flex justify-between items-center shadow-sm ${
+         tier === item.id 
+         ? 'border-[#107870] bg-[#107870]/5' // Highlighted state
+         : 'border-gray-100 bg-gray-50/50 hover:bg-white'
+       }`}
+     >
+        <div className="flex items-center gap-4">
+          <item.icon size={24} className={tier === item.id ? 'text-[#107870]' : 'text-gray-400'}/>
+          <span className={`font-bold text-lg ${tier === item.id ? 'text-[#107870]' : 'text-gray-800'}`}>
+            {item.label}
+          </span>
+        </div>
+        
+        <div className="text-right">
+            <span className={`font-black text-xl block ${tier === item.id ? 'text-[#107870]' : 'text-gray-900'}`}>
+                ${Math.round(item.price)}
+            </span>
+            {tier === item.id && <span className="text-[9px] font-black uppercase text-[#107870] animate-pulse">Selected</span>}
+        </div>
+     </button>
+   ))}
+</div>
+
+{/* ADD ITINERARY PREVIEW BELOW TIERS */}
+<div className="mb-10 p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
+    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Trip Itinerary</h4>
+    <p className="text-sm text-gray-600 leading-relaxed italic line-clamp-3">
+        {selectedTrip.itinerary_json?.text || selectedTrip.itinerary_json || "Standard schedule applies."}
+    </p>
+</div>
+<button 
+  onClick={() => showToast(`Booking ${selectedTrip.title} (${tier} tier) via Stripe...`, "success")}
+  className="w-full bg-[#107870] text-white py-6 rounded-[2rem] font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
+>
+  Confirm & Pay
+</button>           
+</div>
         </div>
       )}
     </div>
