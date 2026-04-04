@@ -199,14 +199,14 @@ const handleImageUpload = async (e) => {
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
                     {field.type === 'textarea' ? (
-    <textarea 
-        name={field.name} 
-        value={formData[field.name] || ''} 
-        onChange={handleChange} 
-        className="mt-1 w-full border p-2 rounded text-sm outline-none focus:border-teal-500" 
-        rows="3" 
-    />
-                      ) : field.type === 'select' ? (
+             <textarea 
+             name={field.name} 
+             value={formData[field.name] || ''} 
+            onChange={handleChange} 
+            className="mt-1 w-full border p-2 rounded text-sm outline-none focus:border-teal-500" 
+            rows="3" 
+             />
+              ) : field.type === 'select' ? (
                         <select 
                          name={field.name} 
                          value={formData[field.name] || ''} 
@@ -257,7 +257,7 @@ const Admin = () => {
       } = useSideQuest();
 
   const [activeTab, setActiveTab] = useState('dashboard'); 
-  const [pkgForm, setPkgForm] = useState({ title: '', days: 5, vibe: 'Surf', price: 450, itinerary: '' });
+  const [pkgForm, setPkgForm] = useState({ title: '', days: 5, vibe: 'Surf', price: 450,  price_essential: 800, price_full: 1200,itinerary: '' });
   const [pkgImage, setPkgImage] = useState(null);
   const [pkgPreview, setPkgPreview] = useState(null);
   const [isPublishing, setIsPublishing] = useState(false);// Default changed to dashboard
@@ -404,8 +404,10 @@ const handlePublishPackage = async () => {
       duration_days: parseInt(pkgForm.days),
       vibe_tags: [pkgForm.vibe],
       image_url: finalImageUrl,
-      price_usd: parseFloat(pkgForm.price), // Matches the 'Simplified Lean SQL'
-      itinerary_json: { text: pkgForm.itinerary } // Saving as JSON object
+      price_usd: parseFloat(pkgForm.price), 
+      price_essential_usd: parseFloat(pkgForm.price_essential), 
+      price_full_usd: parseFloat(pkgForm.price_full), 
+      itinerary_json: { text: pkgForm.itinerary } 
     }]);
 
     if (error) throw error;
@@ -943,14 +945,15 @@ const handlePublishPackage = async () => {
 
       )}
 
-      {/* --- 7. TRAVEL MANAGER TAB --- */}
+   {/* --- 7. TRAVEL MANAGER TAB --- */}
 {activeTab === 'travel' && (
   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    
+    {/* A. PACKAGE CREATOR SECTION */}
     <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
       <h3 className="text-2xl font-black text-gray-900 mb-2">Package Creator</h3>
-      <p className="text-sm text-gray-500 mb-8 font-medium">Define your 3, 5, or 7-day trips and upload high-res thumbnails.</p>
+      <p className="text-sm text-gray-500 mb-8 font-medium">Define your trips and upload high-res thumbnails.</p>
       
-      {/* PACKAGE FORM */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-8 rounded-[2rem] border border-gray-200">
          <div className="space-y-4">
             <div>
@@ -969,92 +972,86 @@ const handlePublishPackage = async () => {
                 <input 
                    type="number" 
                    value={pkgForm.days} 
-                  onChange={(e) => setPkgForm({...pkgForm, days: e.target.value})} 
-                   placeholder="5"  className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none font-bold" />
+                   onChange={(e) => setPkgForm({...pkgForm, days: e.target.value})} 
+                   placeholder="5"  
+                   className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none font-bold" 
+                />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vibe</label>
                 <select 
-                 value={pkgForm.vibe} 
+                   value={pkgForm.vibe} 
                    onChange={(e) => setPkgForm({...pkgForm, vibe: e.target.value})} 
-                   className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none font-bold appearance-none bg-white">
+                   className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none font-bold appearance-none bg-white"
+                >
                    <option value="Surf">Surf</option>
-                  <option value="Zen">Zen</option>
-                  <option value="Extreme">Extreme</option>
-                  <option value="Culture">Culture</option>
+                   <option value="Zen">Zen</option>
+                   <option value="Extreme">Extreme</option>
+                   <option value="Culture">Culture</option>
                 </select>
               </div>
             </div>
             <div className="mt-4">
-    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Itinerary (Day-by-Day Schedule)</label>
-    <textarea 
-        value={pkgForm.itinerary} 
-        onChange={(e) => setPkgForm({...pkgForm, itinerary: e.target.value})} 
-        rows="4" 
-        placeholder="Day 1: Arrival at BIA... Day 2: Morning Surf..." 
-        className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-medium text-sm"
-    ></textarea>
-</div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Itinerary (Day-by-Day Schedule)</label>
+                <textarea 
+                    value={pkgForm.itinerary} 
+                    onChange={(e) => setPkgForm({...pkgForm, itinerary: e.target.value})} 
+                    rows="4" 
+                    placeholder="Day 1: Arrival... Day 2: Morning Surf..." 
+                    className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-medium text-sm"
+                ></textarea>
+            </div>
          </div>
 
-         {/* THUMBNAIL UPLOAD AREA - FIXED */}
-         <div 
-            onClick={() => document.getElementById('pkg-upload-input').click()}
-            className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-[2rem] p-6 bg-white hover:bg-gray-50 transition-colors cursor-pointer group relative overflow-hidden h-64"
-         >
-            {pkgPreview ? (
-                <img src={pkgPreview} alt="Preview" className="w-full h-full object-cover" />
-            ) : (
-                <>
-                    <UploadCloud size={48} className="text-gray-300 group-hover:text-[#107870] transition-colors mb-2" />
-                    <p className="text-xs font-black text-gray-400 uppercase">Upload Package Thumbnail</p>
-                    <p className="text-[9px] text-gray-300 mt-1 italic text-center">Auto-optimized to 1200px (4:3 ratio)</p>
-                </>
-            )}
-            
-            {/* The actual hidden file selector */}
-            <input 
-                id="pkg-upload-input"
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
-                onChange={(e) => {
+         <div className="space-y-6">
+            {/* THUMBNAIL UPLOAD AREA */}
+            <div 
+                onClick={() => document.getElementById('pkg-upload-input').click()}
+                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-[2rem] p-6 bg-white hover:bg-gray-50 transition-colors cursor-pointer group relative overflow-hidden h-64"
+            >
+                {pkgPreview ? (
+                    <img src={pkgPreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                    <>
+                        <UploadCloud size={48} className="text-gray-300 group-hover:text-[#107870] transition-colors mb-2" />
+                        <p className="text-xs font-black text-gray-400 uppercase">Upload Package Thumbnail</p>
+                    </>
+                )}
+                <input id="pkg-upload-input" type="file" className="hidden" accept="image/*" onChange={(e) => {
                     const file = e.target.files[0];
-                    if (file) {
-                        setPkgImage(file); 
-                        setPkgPreview(URL.createObjectURL(file));
-                    }
-                }}
-            />
-         </div>
+                    if (file) { setPkgImage(file); setPkgPreview(URL.createObjectURL(file)); }
+                }} />
+            </div>
 
-         <div className="col-span-full">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Price Per Person (Driver Only - Base Price)</label>
-            <input 
-               type="number" 
-               value={pkgForm.price} 
-               onChange={(e) => setPkgForm({...pkgForm, price: e.target.value})} 
-               placeholder="450" 
-             className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-teal-500 font-black text-xl text-[#107870]" 
-            />
-             
+            <div className="grid grid-cols-1 gap-4">
+                <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Tier 1 Price ($)</label>
+                    <input type="number" value={pkgForm.price} onChange={e => setPkgForm({...pkgForm, price: e.target.value})} className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-bold" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div>
+                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Tier 2 ($$)</label>
+                       <input type="number" value={pkgForm.price_essential} onChange={e => setPkgForm({...pkgForm, price_essential: e.target.value})} className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-bold" />
+                   </div>
+                   <div>
+                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Tier 3 ($$$)</label>
+                       <input type="number" value={pkgForm.price_full} onChange={e => setPkgForm({...pkgForm, price_full: e.target.value})} className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-bold" />
+                   </div>
+                </div>
+            </div>
          </div>
 
          <button 
-    onClick={handlePublishPackage}
-    disabled={isPublishing || !pkgForm.title}
-    className="col-span-full bg-[#107870] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-teal-900/10 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
->
-    {isPublishing ? (
-        <>Wait a moment...</>
-    ) : (
-        <>Publish Travel Package </>
-    )}
-</button>
+            onClick={handlePublishPackage}
+            disabled={isPublishing || !pkgForm.title}
+            className="col-span-full bg-[#107870] text-white py-5 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+         >
+            {isPublishing ? "Wait a moment..." : "Publish Travel Package ⚡"}
+         </button>
       </div>
     </div>
 
-    {/* PRICING BRAIN (Control Panel) */}
+    {/* B. PRICING BRAIN SECTION */}
     <div className="bg-gray-900 p-8 rounded-[2.5rem] text-white">
        <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-teal-400"><Zap size={20}/> Global Pricing Brain</h3>
        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1072,9 +1069,38 @@ const handlePublishPackage = async () => {
           </div>
        </div>
     </div>
-  </div>
-)}
 
+    {/* C. INVENTORY SECTION */}
+    <div className="mt-12 px-2">
+        <h3 className="text-xl font-black text-gray-800 mb-6">Live Inventory ({travelPackages.length})</h3>
+        <div className="space-y-4">
+            {travelPackages.map(pkg => (
+                <div key={pkg.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <img src={pkg.image_url} className="w-16 h-16 rounded-2xl object-cover border" alt="" />
+                        <div>
+                            <p className="font-bold text-gray-900">{pkg.title}</p>
+                            <p className="text-xs text-gray-400 uppercase font-bold">{pkg.duration_days} Days · ${pkg.price_usd}</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={async () => {
+                            if(window.confirm("Delete this package?")) {
+                                await supabase.from('travel_packages').delete().eq('id', pkg.id);
+                                window.location.reload();
+                            }
+                        }} 
+                        className="p-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                    >
+                        <Trash2 size={20} />
+                    </button>
+                </div>
+            ))}
+        </div>
+    </div>
+
+  </div> 
+)}
 
 
         {/* --- NEW: PARTNER OVERSIGHT TAB --- */}
@@ -1250,7 +1276,6 @@ const handlePublishPackage = async () => {
     </div>
   )}
 </div>
-
 </div>
 )}
 
@@ -1296,8 +1321,8 @@ const handlePublishPackage = async () => {
         <HuntAdminTab showToast={showToast} />
       )}
 
-    </div>
-  );
-};
+      </div>
+    );
+  };
 
 export default Admin;
