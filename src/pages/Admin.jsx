@@ -199,9 +199,19 @@ const handleImageUpload = async (e) => {
                 <div key={field.name}>
                     <label className="block text-xs font-medium text-gray-700">{field.label}</label>
                     {field.type === 'textarea' ? (
-                        <textarea name={field.name} value={formData[field.name] || ''} onChange={handleChange} className="mt-1 w-full border p-2 rounded text-sm" rows="3" />
-                    ) : field.type === 'select' ? (
-                        <select name={field.name} value={formData[field.name] || ''} onChange={handleChange} className="mt-1 w-full border p-2 rounded text-sm">
+    <textarea 
+        name={field.name} 
+        value={formData[field.name] || ''} 
+        onChange={handleChange} 
+        className="mt-1 w-full border p-2 rounded text-sm outline-none focus:border-teal-500" 
+        rows="3" 
+    />
+                      ) : field.type === 'select' ? (
+                        <select 
+                         name={field.name} 
+                         value={formData[field.name] || ''} 
+                         onChange={(e) => setFormData({...formData, [field.name]: e.target.value})} 
+                         className="mt-1 w-full border p-2 rounded text-sm">
                             {field.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
                     ) : (
@@ -239,14 +249,18 @@ const handleImageUpload = async (e) => {
 // --- MAIN ADMIN DASHBOARD ---
 const Admin = () => {
     const {
-        currentUser, questProgress, quests, rewards, users, redemptions,
+        currentUser, questProgress, quests, rewards, users, redemptions,travelPackages, travelSettings,
         approveSubmission, rejectSubmission, approveNewQuest, approveNewReward,
         updateQuest, deleteQuest, updateReward, deleteReward, showToast,
         generateInviteCode, partnerRequests,
         questSuggestions, approveQuestSuggestion, rejectQuestSuggestion
       } = useSideQuest();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
+  const [activeTab, setActiveTab] = useState('dashboard'); 
+  const [pkgForm, setPkgForm] = useState({ title: '', days: 5, vibe: 'Surf', price: 450, itinerary: '' });
+  const [pkgImage, setPkgImage] = useState(null);
+  const [pkgPreview, setPkgPreview] = useState(null);
+  const [isPublishing, setIsPublishing] = useState(false);// Default changed to dashboard
   const [editingId, setEditingId] = useState(null);
   // --- SECURITY VAULT STATE ---
   const [newPassword, setNewPassword] = useState('');
@@ -320,11 +334,13 @@ const Admin = () => {
     );
   }
 
-  // --- ECOSYSTEM LOGIC (The Accuracy Update) ---
+  // --- ECOSYSTEM LOGIC ---
   const stats = useMemo(() => {
     const approved = questProgress.filter(p => p.status === 'approved');
     const pending = questProgress.filter(p => p.status === 'pending');
     const totalXP = users.reduce((sum, u) => sum + (u.xp || 0), 0);
+    
+    const packageCount = travelPackages?.length || 0; 
 
     const categories = approved.reduce((acc, p) => {
         const q = quests.find(quest => quest.id === p.quest_id);
@@ -333,8 +349,8 @@ const Admin = () => {
         return acc;
     }, {});
 
-    return { approvedCount: approved.length, pendingCount: pending.length, totalXP, redemptionCount: redemptions.length, userCount: users.length, categories };
-  }, [questProgress, quests, users, redemptions]);
+    return { approvedCount: approved.length, pendingCount: pending.length, totalXP, redemptionCount: redemptions.length, userCount: users.length, packageCount, categories };
+  }, [questProgress, quests, users, redemptions, travelPackages]); // Added travelPackages to dependencies
 
   const pendingSubmissions = questProgress.filter(p => p.status === 'pending');
   const pendingNewQuests = quests.filter(q => q.status === 'pending_admin');
@@ -364,7 +380,52 @@ const Admin = () => {
     }
   };
 
+// --- HANDLER: PUBLISH TRAVEL PACKAGE ---
+const handlePublishPackage = async () => {
+  if (!pkgForm.title) return showToast("Trip title is required", "error");
+  setIsPublishing(true);
 
+  try {
+    let finalImageUrl = null;
+
+    // 1. Upload Thumbnail
+    if (pkgImage) {
+      const optimized = await optimizeImage(pkgImage);
+      const fileName = `pkg_${Date.now()}.jpg`;
+      const { error: upErr } = await supabase.storage.from('quest-images').upload(fileName, optimized);
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('quest-images').getPublicUrl(fileName);
+      finalImageUrl = data.publicUrl;
+    }
+
+    // 2. Save to travel_packages table
+    const { error } = await supabase.from('travel_packages').insert([{
+      title: pkgForm.title,
+      duration_days: parseInt(pkgForm.days),
+      vibe_tags: [pkgForm.vibe],
+      image_url: finalImageUrl,
+      price_usd: parseFloat(pkgForm.price), // Matches the 'Simplified Lean SQL'
+      itinerary_json: { text: pkgForm.itinerary } // Saving as JSON object
+    }]);
+
+    if (error) throw error;
+
+    showToast("Package Published Successfully!", "success");
+    
+    // 3. Reset Form
+    setPkgForm({ title: '', days: 5, vibe: 'Surf', price: 450, itinerary: '' });
+    setPkgImage(null);
+    setPkgPreview(null);
+    
+    // 4. Refresh Page (Immortal Pattern)
+    window.location.reload();
+
+  } catch (err) {
+    showToast(err.message, "error");
+  } finally {
+    setIsPublishing(false);
+  }
+};
   // Handlers
   const handleSaveQuest = (id, fields) => {
     // Save payload to hardware memory
@@ -514,9 +575,19 @@ const Admin = () => {
         <button onClick={() => setActiveTab('security')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'security' ? 'border-b-4 border-red-500 text-red-600' : 'text-gray-500 hover:text-red-600'}`}>
           Security Vault
         </button>
+
         <button onClick={() => setActiveTab('partnerOversight')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'partnerOversight' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
           Partner Oversight
         </button>
+
+        <button 
+          onClick={() => setActiveTab('travel')} 
+         className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'travel' ? 'border-b-4 border-[#107870] text-[#107870]' : 'text-gray-500 hover:text-[#107870]'}`}
+        >
+        Travel Manager
+        </button>
+
+
         <button onClick={() => setActiveTab('hunt')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'hunt' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
         Hunt Manager
       </button>
@@ -872,6 +943,140 @@ const Admin = () => {
 
       )}
 
+      {/* --- 7. TRAVEL MANAGER TAB --- */}
+{activeTab === 'travel' && (
+  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+      <h3 className="text-2xl font-black text-gray-900 mb-2">Package Creator</h3>
+      <p className="text-sm text-gray-500 mb-8 font-medium">Define your 3, 5, or 7-day trips and upload high-res thumbnails.</p>
+      
+      {/* PACKAGE FORM */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-8 rounded-[2rem] border border-gray-200">
+         <div className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Trip Title</label>
+              <input 
+                 type="text" 
+                 value={pkgForm.title} 
+                 onChange={(e) => setPkgForm({...pkgForm, title: e.target.value})} 
+                 placeholder="e.g. Southern Surf Loop" 
+                 className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-teal-500 font-bold" 
+               />          
+             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Days</label>
+                <input 
+                   type="number" 
+                   value={pkgForm.days} 
+                  onChange={(e) => setPkgForm({...pkgForm, days: e.target.value})} 
+                   placeholder="5"  className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none font-bold" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vibe</label>
+                <select 
+                 value={pkgForm.vibe} 
+                   onChange={(e) => setPkgForm({...pkgForm, vibe: e.target.value})} 
+                   className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none font-bold appearance-none bg-white">
+                   <option value="Surf">Surf</option>
+                  <option value="Zen">Zen</option>
+                  <option value="Extreme">Extreme</option>
+                  <option value="Culture">Culture</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-4">
+    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Itinerary (Day-by-Day Schedule)</label>
+    <textarea 
+        value={pkgForm.itinerary} 
+        onChange={(e) => setPkgForm({...pkgForm, itinerary: e.target.value})} 
+        rows="4" 
+        placeholder="Day 1: Arrival at BIA... Day 2: Morning Surf..." 
+        className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-medium text-sm"
+    ></textarea>
+</div>
+         </div>
+
+         {/* THUMBNAIL UPLOAD AREA - FIXED */}
+         <div 
+            onClick={() => document.getElementById('pkg-upload-input').click()}
+            className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-[2rem] p-6 bg-white hover:bg-gray-50 transition-colors cursor-pointer group relative overflow-hidden h-64"
+         >
+            {pkgPreview ? (
+                <img src={pkgPreview} alt="Preview" className="w-full h-full object-cover" />
+            ) : (
+                <>
+                    <UploadCloud size={48} className="text-gray-300 group-hover:text-[#107870] transition-colors mb-2" />
+                    <p className="text-xs font-black text-gray-400 uppercase">Upload Package Thumbnail</p>
+                    <p className="text-[9px] text-gray-300 mt-1 italic text-center">Auto-optimized to 1200px (4:3 ratio)</p>
+                </>
+            )}
+            
+            {/* The actual hidden file selector */}
+            <input 
+                id="pkg-upload-input"
+                type="file" 
+                className="hidden" 
+                accept="image/*" 
+                onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        setPkgImage(file); 
+                        setPkgPreview(URL.createObjectURL(file));
+                    }
+                }}
+            />
+         </div>
+
+         <div className="col-span-full">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Price Per Person (Driver Only - Base Price)</label>
+            <input 
+               type="number" 
+               value={pkgForm.price} 
+               onChange={(e) => setPkgForm({...pkgForm, price: e.target.value})} 
+               placeholder="450" 
+             className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-teal-500 font-black text-xl text-[#107870]" 
+            />
+             
+         </div>
+
+         <button 
+    onClick={handlePublishPackage}
+    disabled={isPublishing || !pkgForm.title}
+    className="col-span-full bg-[#107870] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-teal-900/10 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+>
+    {isPublishing ? (
+        <>Wait a moment...</>
+    ) : (
+        <>Publish Travel Package </>
+    )}
+</button>
+      </div>
+    </div>
+
+    {/* PRICING BRAIN (Control Panel) */}
+    <div className="bg-gray-900 p-8 rounded-[2.5rem] text-white">
+       <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-teal-400"><Zap size={20}/> Global Pricing Brain</h3>
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
+             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Driver Day Rate</p>
+             <p className="text-2xl font-black">$70</p>
+          </div>
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
+             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Essential Markup</p>
+             <p className="text-2xl font-black">+$80</p>
+          </div>
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
+             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Full Markup</p>
+             <p className="text-2xl font-black">+$140</p>
+          </div>
+       </div>
+    </div>
+  </div>
+)}
+
+
+
         {/* --- NEW: PARTNER OVERSIGHT TAB --- */}
       {activeTab === 'partnerOversight' && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -1048,6 +1253,8 @@ const Admin = () => {
 
 </div>
 )}
+
+
 
         {/* --- 6. SECURITY VAULT TAB --- */}
         {activeTab === 'security' && (

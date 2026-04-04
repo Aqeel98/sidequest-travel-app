@@ -34,6 +34,11 @@ export const SideQuestProvider = ({ children }) => {
       userRef.current = currentUser;
   }, [currentUser]);
 
+
+  const [travelPackages, setTravelPackages] = useState([]);
+  const [travelSettings, setTravelSettings] = useState(null);
+  const [myBookings, setMyBookings] = useState([]);
+
     
   // Ecosystem content pools
   const [quests, setQuests] = useState([]);
@@ -42,6 +47,7 @@ export const SideQuestProvider = ({ children }) => {
   const [completedQuizIds, setCompletedQuizIds] = useState([]); 
   const [questProgress, setQuestProgress] = useState([]); 
   const [redemptions, setRedemptions] = useState([]);
+
   
   // Administrative data pools
   const [users, setUsers] = useState([]); 
@@ -136,6 +142,7 @@ export const SideQuestProvider = ({ children }) => {
             setActiveEvent(null);
             setIsHuntActive(false);
         }
+        await fetchTravelEcosystem(userId);
 
         console.log("SQ-PWA: Data synced.");
     } catch (e) { console.warn("SQ-PWA: Background refresh failed", e); }
@@ -350,7 +357,9 @@ useEffect(() => {
                 quizPromise, 
                 sessionPromise
             ]);
-        
+            
+            await fetchTravelEcosystem(sRes.data?.session?.user.id);
+            
             if (mounted) {
                 setQuests(qRes.data || []);
                 setRewards(rRes.data || []);
@@ -619,6 +628,16 @@ useEffect(() => {
           setHuntProgress(prev => ({ ...prev, ...payload.new }));
         }
       })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'travel_bookings' }, (payload) => {
+        const myId = userRef.current?.id;
+        if (payload.new.traveler_id === myId) {
+          setMyBookings(prev => prev.map(b => b.id === payload.new.id ? { ...b, ...payload.new } : b));
+          if (payload.new.driver_id) {
+            showToast("Your SideQuest Driver has been assigned!", "success");
+          }
+        }
+      })
+
 
     .subscribe();
   };
@@ -635,6 +654,41 @@ useEffect(() => {
         .subscribe();
       
       return () => supabase.removeChannel(channel);
+  };
+
+  const fetchTravelEcosystem = async (userId) => {
+    try {
+        const [pkgs, settings] = await Promise.all([
+            supabase.from('travel_packages').select('*').eq('is_active', true),
+            supabase.from('travel_settings').select('*').single()
+        ]);
+        if (pkgs.data) setTravelPackages(pkgs.data);
+        if (settings.data) setTravelSettings(settings.data);
+        if (userId) {
+            const { data: bookings } = await supabase
+                .from('travel_bookings')
+                .select('*, travel_packages(*)')
+                .eq('traveler_id', userId);
+            if (bookings) setMyBookings(bookings);
+        }
+    } catch (e) { console.error("SQ-Travel Error:", e); }
+  };
+
+
+  const createTravelBooking = async (bookingData) => {
+    try {
+        const { data, error } = await withTimeout(
+            supabase.from('travel_bookings').insert([bookingData]).select().single(),
+            15000
+        );
+        if (error) throw error;
+        
+        setMyBookings(prev => [...prev, data]);
+        return data;
+    } catch (e) {
+        showToast("Booking failed: " + e.message, "error");
+        return null;
+    }
   };
 
   // --- 5. DATA SYNC & ZOMBIE REPAIR LOGIC ---
@@ -1823,7 +1877,7 @@ const approveNewReward = async (id) => {
   return (
     <SideQuestContext.Provider value={{
       currentUser, isLoading, 
-      users, quests, questProgress, redemptions, rewards,
+      users, quests, questProgress, redemptions, rewards,travelPackages, travelSettings, myBookings, createTravelBooking,
       showAuthModal, setShowAuthModal,
       login, signup, logout,
       submitPartnerRequest, generateInviteCode, partnerRequests,
