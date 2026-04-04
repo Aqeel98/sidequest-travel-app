@@ -4,14 +4,14 @@ import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
 import {
   PlusCircle, Edit, Trash2, Check, MapPin, Award,
-  UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon
+  UploadCloud, Info, Gift, CheckCircle, BarChart2, Zap, Users as UsersIcon
 } from 'lucide-react';
 import { validatePassword } from '../utils/security';
 import HuntAdminTab from './HuntAdminTab.jsx';
 
 
 
-// --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
+// CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
 const LinkifyText = ({ text }) => {
     if (!text) return null;
 
@@ -253,7 +253,7 @@ const Admin = () => {
         approveSubmission, rejectSubmission, approveNewQuest, approveNewReward,
         updateQuest, deleteQuest, updateReward, deleteReward, showToast,
         generateInviteCode, partnerRequests,
-        questSuggestions, approveQuestSuggestion, rejectQuestSuggestion
+        questSuggestions, approveQuestSuggestion, rejectQuestSuggestion, optimizeImage
       } = useSideQuest();
 
   const [activeTab, setActiveTab] = useState('dashboard'); 
