@@ -258,6 +258,7 @@ const Admin = () => {
 
   const [activeTab, setActiveTab] = useState('dashboard'); 
   const [pkgForm, setPkgForm] = useState({ title: '', days: 5, vibe: 'Surf', price: 450,  price_essential: 800, price_full: 1200,itinerary: '' });
+  const [editingPkgId, setEditingPkgId] = useState(null);
   const [pkgImage, setPkgImage] = useState(null);
   const [pkgPreview, setPkgPreview] = useState(null);
   const [isPublishing, setIsPublishing] = useState(false);// Default changed to dashboard
@@ -379,7 +380,21 @@ const Admin = () => {
         window.location.reload();
     }
   };
-
+ // 2. Save to travel_packages table
+ const startEditPackage = (pkg) => {
+  setEditingPkgId(pkg.id);
+  setPkgForm({
+      title: pkg.title,
+      days: pkg.duration_days,
+      vibe: pkg.vibe_tags[0] || 'Surf',
+      price: pkg.price_usd,
+      price_essential: pkg.price_essential_usd || 0,
+      price_full: pkg.price_full_usd || 0,
+      itinerary: pkg.itinerary_json?.text || pkg.itinerary_json || ''
+  });
+  setPkgPreview(pkg.image_url);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 // --- HANDLER: PUBLISH TRAVEL PACKAGE ---
 const handlePublishPackage = async () => {
   if (!pkgForm.title) return showToast("Trip title is required", "error");
@@ -398,17 +413,22 @@ const handlePublishPackage = async () => {
       finalImageUrl = data.publicUrl;
     }
 
-    // 2. Save to travel_packages table
-    const { error } = await supabase.from('travel_packages').insert([{
+   
+
+    const payload = {
       title: pkgForm.title,
       duration_days: parseInt(pkgForm.days),
       vibe_tags: [pkgForm.vibe],
-      image_url: finalImageUrl,
+      image_url: finalImageUrl || pkgPreview, // Keep old image if no new one uploaded
       price_usd: parseFloat(pkgForm.price), 
       price_essential_usd: parseFloat(pkgForm.price_essential), 
       price_full_usd: parseFloat(pkgForm.price_full), 
       itinerary_json: { text: pkgForm.itinerary } 
-    }]);
+    };
+
+    const { error } = editingPkgId 
+      ? await supabase.from('travel_packages').update(payload).eq('id', editingPkgId)
+      : await supabase.from('travel_packages').insert([payload]);
 
     if (error) throw error;
 
@@ -429,6 +449,9 @@ const handlePublishPackage = async () => {
   }
 };
   // Handlers
+
+  
+
   const handleSaveQuest = (id, fields) => {
     // Save payload to hardware memory
     localStorage.setItem('sq_admin_deferred', JSON.stringify({
@@ -1046,7 +1069,7 @@ const handlePublishPackage = async () => {
             disabled={isPublishing || !pkgForm.title}
             className="col-span-full bg-[#107870] text-white py-5 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
          >
-            {isPublishing ? "Wait a moment..." : "Publish Travel Package ⚡"}
+      {isPublishing ? "Wait a moment..." : (editingPkgId ? "Update Travel Package ⚡" : "Publish Travel Package ⚡")}
          </button>
       </div>
     </div>
@@ -1083,6 +1106,12 @@ const handlePublishPackage = async () => {
                             <p className="text-xs text-gray-400 uppercase font-bold">{pkg.duration_days} Days · ${pkg.price_usd}</p>
                         </div>
                     </div>
+                    <button 
+                     onClick={() => startEditPackage(pkg)}
+                    className="p-4 text-[#107870] hover:bg-teal-50 rounded-2xl transition-all"
+                   >
+                     <Edit size={20} />
+                     </button>
                     <button 
                         onClick={async () => {
                             if(window.confirm("Delete this package?")) {
