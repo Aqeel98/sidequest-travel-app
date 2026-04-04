@@ -4,7 +4,7 @@ import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
 import {
   PlusCircle, Edit, Trash2, Check, MapPin, Award,
-  UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon
+  UploadCloud, Info, Gift, CheckCircle, BarChart2, Zap, Users as UsersIcon
 } from 'lucide-react';
 import { validatePassword } from '../utils/security';
 import HuntAdminTab from './HuntAdminTab.jsx';
