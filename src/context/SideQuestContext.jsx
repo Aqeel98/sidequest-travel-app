@@ -675,18 +675,39 @@ useEffect(() => {
   };
 
 
-  const createTravelBooking = async (bookingData) => {
+  // --- 5.5 SECURE BOOKING ENGINE (Phase 5 - Deployment Ready) ---
+  const initiateTravelBooking = async (pkg, tier, startDate) => {
+    if (!currentUser) {
+        setShowAuthModal(true);
+        return null;
+    }
+
     try {
-        const { data, error } = await withTimeout(
-            supabase.from('travel_bookings').insert([bookingData]).select().single(),
-            15000
-        );
+        // 1. Calculate the price (Server will re-verify this later)
+        let finalPrice = pkg.price_usd; 
+        if (tier === 'essential') finalPrice = pkg.price_essential_usd;
+        else if (tier === 'full') finalPrice = pkg.price_full_usd;
+
+        // 2. Create the booking as PENDING
+        const { data, error } = await supabase
+            .from('travel_bookings')
+            .insert([{
+                traveler_id: currentUser.id,
+                package_id: pkg.id,
+                status: 'pending', // <--- SECURE: Only the Webhook can change this
+                start_date: startDate || new Date().toISOString().split('T')[0],
+                tier_selected: tier,
+                total_price_usd: finalPrice
+            }])
+            .select()
+            .single();
+
         if (error) throw error;
-        
-        setMyBookings(prev => [...prev, data]);
-        return data;
+        return data; // Return the booking record to TravelAgency.jsx
+
     } catch (e) {
-        showToast("Booking failed: " + e.message, "error");
+        console.error("SQ-Secure-Booking-Error:", e.message);
+        showToast("Booking initialization failed.", 'error');
         return null;
     }
   };
@@ -1877,7 +1898,7 @@ const approveNewReward = async (id) => {
   return (
     <SideQuestContext.Provider value={{
       currentUser, isLoading, 
-      users, quests, questProgress, redemptions, rewards,travelPackages, travelSettings, myBookings, createTravelBooking,
+      users, quests, questProgress, redemptions, rewards,travelPackages, travelSettings, myBookings, initiateTravelBooking, createTravelBooking,
       showAuthModal, setShowAuthModal,
       login, signup, logout,
       submitPartnerRequest, generateInviteCode, partnerRequests,

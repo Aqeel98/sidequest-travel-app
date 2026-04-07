@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, Compass, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Zap, Gift, Trophy } from 'lucide-react'; 
+import { Menu, X, LogOut, Compass, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Zap, Gift, Trophy, Globe, Sparkles } from 'lucide-react'; 
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Navbar = () => {
-  const { currentUser, logout, setShowAuthModal, isHuntActive, activeEvent } = useSideQuest();
+  const { currentUser, logout, setShowAuthModal, isHuntActive, activeEvent, myBookings } = useSideQuest();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const [isPartnerMenuOpen, setIsPartnerMenuOpen] = useState(false);
@@ -41,6 +41,13 @@ const Navbar = () => {
               <Link to="/my-quests" className={isActive('/my-quests')}>My Quests</Link>
                 )}
           <Link to="/rewards" className={isActive('/rewards')}>Rewards</Link>
+          {currentUser && myBookings?.length > 0 && (
+     <Link to="/my-journey" className={isActive('/my-journey')}>
+    <span className="flex items-center gap-1 text-[#107870] font-bold">
+      <Globe size={14} /> My Journey
+    </span>
+     </Link>
+        )}
           {isHuntActive && currentUser?.hunt_access?.includes(activeEvent?.id) && (
            <Link to="/hunt" className={isActive('/hunt')}>
        <span className="flex items-center gap-1 text-teal-400">
@@ -159,6 +166,15 @@ const Navbar = () => {
               <Link to="/my-quests" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>My Quests</Link>
                 )}
             <Link to="/rewards" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Rewards</Link>
+            {currentUser && myBookings?.length > 0 && (
+      <Link 
+    to="/my-journey" 
+    className="p-3 rounded-lg bg-[#107870]/5 text-[#107870] font-black flex items-center border border-[#107870]/10" 
+    onClick={() => setIsOpen(false)}
+      >
+    <Globe size={18} className="mr-2" /> My Active Journey
+      </Link>
+          )}
             {isHuntActive && currentUser?.hunt_access?.includes(activeEvent?.id) && (
     <Link to="/hunt" className="p-3 rounded-lg hover:bg-teal-50 text-teal-600 font-bold flex items-center" onClick={() => setIsOpen(false)}>
       <Trophy size={18} className="mr-2" /> Colombo Hunt

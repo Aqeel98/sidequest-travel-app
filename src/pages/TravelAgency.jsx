@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
 import { 
   Sparkles, Car, Map, ArrowRight, Check, 
   Zap, X, Shield, Clock, Loader2
@@ -9,7 +10,8 @@ import SEO from '../components/SEO';
 
 const TravelAgency = () => {
   const navigate = useNavigate();
-  const { travelPackages, travelSettings, showToast, isLoading } = useSideQuest();
+  const { travelPackages, travelSettings, showToast, isLoading, initiateTravelBooking } = useSideQuest();
+  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
   
   const [activeTab, setActiveTab] = useState('packs'); 
   const [selectedVibe, setSelectedVibe] = useState(null);
@@ -221,11 +223,40 @@ const TravelAgency = () => {
     </p>
 </div>
 <button 
-  onClick={() => showToast(`Booking ${selectedTrip.title} (${tier} tier) via Stripe...`, "success")}
+  onClick={async () => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 1. Create the Pending Booking in DB
+    const booking = await initiateTravelBooking(selectedTrip, tier, today);
+    
+    if (booking) {
+        showToast("Connecting to Stripe...", "info");
+
+        // 2. CALL THE EDGE FUNCTION (Secure Handoff)
+        const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+            body: { 
+                bookingId: booking.id,
+                packageName: selectedTrip.title,
+                price: booking.total_price_usd,
+                customerEmail: currentUser.email
+            }
+        });
+
+        if (error) {
+            showToast("Secure checkout failed. Try again.", "error");
+            return;
+        }
+
+        // 3. REDIRECT TO STRIPE
+        if (data?.url) {
+            window.location.href = data.url; // Sends user to Stripe's secure cloud
+        }
+    }
+  }}
   className="w-full bg-[#107870] text-white py-6 rounded-[2rem] font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
 >
   Confirm & Pay
-</button>           
+</button>    
 </div>
         </div>
       )}

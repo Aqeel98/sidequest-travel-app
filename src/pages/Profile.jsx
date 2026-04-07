@@ -43,7 +43,7 @@ const Profile = () => {
 
 
     // 1. All Hooks called at the top level
-    const { currentUser, questProgress, quests } = useSideQuest();
+    const { currentUser, questProgress, quests, myBookings } = useSideQuest();
 
     // 2. Memoize stats calculation and badge logic
     const stats = useMemo(() => {
@@ -168,6 +168,32 @@ const Profile = () => {
                     "{IMPACT_QUOTES[quoteIndex]}"
                 </p>
             </div>
+
+            {/* --- ACTIVE TRIP GATE (Phase 5) --- */}
+            {myBookings && myBookings.length > 0 && (
+                <div className="mb-8 animate-in slide-in-from-top duration-700">
+                    <div className="bg-white border-2 border-[#107870] rounded-[2.5rem] p-1 shadow-xl overflow-hidden">
+                        <div className="flex items-center justify-between p-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 bg-[#107870]/10 rounded-2xl flex items-center justify-center text-[#107870]">
+                                    <Globe size={32} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase text-[#107870] tracking-[0.2em]">Active Journey</p>
+                                    <h3 className="text-xl font-black text-gray-900">{myBookings[0].travel_packages?.title || "Your Island Adventure"}</h3>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => window.location.href='/#/my-journey'}
+                                className="bg-[#107870] text-white px-6 py-3 rounded-2xl font-black text-sm hover:opacity-90 transition-all shadow-lg shadow-[#107870]/20"
+                            >
+                                Open Itinerary
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* --- LEVEL CARD START --- */}
             <div className="bg-[#107870] text-white rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden">

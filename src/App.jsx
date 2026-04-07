@@ -25,6 +25,7 @@ import HuntDashboard from './pages/HuntDashboard';
 import HuntStop from './pages/HuntStop';
 import Leaderboard from './pages/Leaderboard';
 import TravelAgency from './pages/TravelAgency';
+import MyJourney from './pages/MyJourney';
 
 // --- 1. CONSOLE SHIELD ENGINE ---
 const originalConsole = { ...console };
@@ -158,6 +159,7 @@ export default function App() {
             <Route path="hunt/:stopId" element={<HuntStop />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="plan-trip" element={<TravelAgency />} />
+            <Route path="my-journey" element={<MyJourney />} />
             </Route>
           </Routes>
         </BrowserRouter>
