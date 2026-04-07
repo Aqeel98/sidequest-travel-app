@@ -6,11 +6,12 @@ import {
   Zap, X, Shield, Clock, Loader2
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import { supabase } from '../supabaseClient';
 import SEO from '../components/SEO';
 
 const TravelAgency = () => {
   const navigate = useNavigate();
-  const { travelPackages, travelSettings, showToast, isLoading, initiateTravelBooking } = useSideQuest();
+  const { travelPackages, travelSettings, showToast, isLoading, initiateTravelBooking, currentUser } = useSideQuest();
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
   
   const [activeTab, setActiveTab] = useState('packs'); 

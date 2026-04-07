@@ -1898,7 +1898,8 @@ const approveNewReward = async (id) => {
   return (
     <SideQuestContext.Provider value={{
       currentUser, isLoading, 
-      users, quests, questProgress, redemptions, rewards,travelPackages, travelSettings, myBookings, initiateTravelBooking, createTravelBooking,
+      users, quests, questProgress, redemptions, rewards,travelPackages, travelSettings, myBookings, initiateTravelBooking, 
+      createTravelBooking: initiateTravelBooking,
       showAuthModal, setShowAuthModal,
       login, signup, logout,
       submitPartnerRequest, generateInviteCode, partnerRequests,
