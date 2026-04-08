@@ -20,12 +20,15 @@ const Navbar = () => {
     <header className="fixed top-0 w-full z-[1100] transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
-      <Link to="/" className="flex items-center group">
+
+{/* --- BRAND LOGO AREA --- */}
+<Link to="/" className="flex items-center group">
   <div className="relative flex items-center justify-center w-12 h-12 mr-3">
-    {/* Multi-color Border Version */}
-    <div className="absolute inset-0 rounded-full p-[3px] bg-gradient-to-tr from-[#006A4E] via-[#FFBE29] to-[#800000] transition-all duration-500 group-hover:rotate-180">
-        <div className="h-full w-full bg-white rounded-full"></div>
-    </div>
+    {/* Outer Circle: Exact Teal #0D9488 */}
+    <div 
+      className="absolute inset-0 border-[4px] rounded-full transition-transform duration-500 group-hover:scale-105" 
+      style={{ borderColor: '#0D9488' }}
+    ></div>
 
     {/* Needle */}
     <img 
@@ -34,8 +37,14 @@ const Navbar = () => {
       className="w-8 h-8 object-contain transition-transform duration-700 group-hover:rotate-[360deg]" 
     />
   </div>
-  <div>
-    <span className="text-xl font-extrabold text-gray-800 tracking-tight">SideQuest</span>
+
+  {/* Multi-color Brand Text */}
+  <div className="text-xl font-extrabold text-gray-800 tracking-tight">
+    SideQ
+    <span style={{ color: '#006A4E' }}>u</span> {/* Green */}
+    <span style={{ color: '#800000' }}>e</span> {/* Maroon */}
+    <span style={{ color: '#F58220' }}>s</span> {/* Orange */}
+    t
   </div>
 </Link>
 
