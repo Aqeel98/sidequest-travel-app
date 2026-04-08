@@ -5,6 +5,10 @@ import { createClient } from "npm:@supabase/supabase-js@^2.39.7"
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   httpClient: Stripe.createFetchHttpClient(),
 })
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name',
+}
 
 serve(async (req) => {
   const signature = req.headers.get('stripe-signature')
