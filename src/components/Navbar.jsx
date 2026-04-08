@@ -19,8 +19,8 @@ const Navbar = () => {
     // FIX: z-[1100] ensures Navbar is above Map Button (800) but below AuthModal (1200)
     <header className="fixed top-0 w-full z-[1100] transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-     
-        
+
+
 {/* --- BRAND LOGO AREA --- */}
 <Link to="/" className="flex items-center group">
   <div className="relative flex items-center justify-center w-12 h-12 mr-3">
@@ -34,7 +34,7 @@ const Navbar = () => {
     <img 
       src="/nav-needle.png" 
       alt="SideQuest" 
-      className="w-8 h-8 object-contain transition-transform duration-700 group-hover:rotate-[360deg]" 
+      className="w-6 h-6 object-contain transition-transform duration-500 ease-in-out group-hover:rotate-90" 
     />
   </div>
 
