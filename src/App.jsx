@@ -42,27 +42,28 @@ if (import.meta.env.PROD) {
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
   <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50">
-      <div className="relative flex items-center justify-center mb-6">
+      <div className="relative flex items-center justify-center mb-8">
           
-          {/* 1. THE OUTER TEAL RING (Static & Vibrant) */}
+          {/* 1. THICK OUTER RING (10px) */}
           <div 
-              className="absolute w-20 h-20 border-[6px] rounded-full shadow-sm"
-              style={{ borderColor: '#0D9488' }} 
+              className="absolute w-24 h-24 border-[10px] rounded-full"
+              style={{ borderColor: '#107870' }} 
           ></div>
 
+          {/* 2. FASTER ROTATING NEEDLE */}
           <img 
               src="/nav-needle.png" 
-              alt="Loading..." 
-              className="w-12 h-12 animate-spin-slow object-contain relative z-10"
+              alt="Loading" 
+              className="w-14 h-14 animate-spin-fast object-contain relative z-10"
           />
       </div>
       
-      <h2 className="text-xl font-bold animate-pulse" style={{ color: '#0D9488' }}>
+      {/* 3. BIGGER TEXT (3xl) */}
+      <h2 className="text-3xl font-black tracking-tight animate-pulse" style={{ color: '#107870' }}>
           Loading SideQuest...
       </h2>
   </div>
 );
-
 // --- TOAST NOTIFICATION RENDERER ---
 const Toast = () => {
   const { toast } = useSideQuest(); 
