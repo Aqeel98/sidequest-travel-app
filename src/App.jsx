@@ -102,26 +102,43 @@ const MainLayout = () => {
 
   useEffect(() => {
     const v = '3.7.0';
-    // Skip version check for bots to avoid reload loops
+    
     if (navigator.userAgent.match(/bot|googlebot|crawler|spider|robot|crawling/i)) return;
 
-    if (window.location.search.includes('v=' + v)) return;
-    const checkUpdate = async () => {
-      try {
-        const res = await fetch('/index.html?cb=' + Date.now(), { cache: 'no-store' });
-        const html = await res.text();
-        if (html.includes("const CURRENT_APP_VERSION = '" + v + "'") === false) {
-          window.location.reload(true);
+    const performVersionCheck = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlVersion = urlParams.get('v');
+      const storedVersion = localStorage.getItem('sq_app_version');
+
+      if (urlVersion === v) {
+        localStorage.setItem('sq_app_version', v);
+        return; 
+      }
+
+      if (storedVersion !== v) {
+        console.log("SQ-System: Version upgrade required. Purging...");
+        
+        if ('serviceWorker' in navigator) {
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let r of registrations) { await r.unregister(); }
+          } catch (e) {}
         }
-      } catch (e) {}
+        
+        if ('caches' in window) {
+          try {
+            const keys = await caches.keys();
+            for (let k of keys) { await caches.delete(k); }
+          } catch (e) {}
+        }
+
+        localStorage.setItem('sq_app_version', v);
+
+        window.location.href = `/?v=${v}`;
+      }
     };
 
-    checkUpdate(); // Run on mount
-
-    const handleWake = () => { if (document.visibilityState === 'visible') checkUpdate(); };
-    document.addEventListener('visibilitychange', handleWake);
-    
-    return () => document.removeEventListener('visibilitychange', handleWake);
+    performVersionCheck();
   }, []);
 
   useEffect(() => {
