@@ -31,8 +31,8 @@ const Navbar = () => {
     <img 
       src="/nav-needle.png" 
       alt="SideQuest" 
-      className="w-6 h-6 object-contain transition-transform duration-700 ease-in-out rotate-[45deg] group-hover:rotate-[90deg]" 
-    />
+      className="w-6 h-6 object-contain transition-transform duration-700 ease-in-out rotate-0 group-hover:rotate-[45deg]"
+      />
   </div>
 
   {/* Brand Text: Original Slate color with colored "ues" */}
