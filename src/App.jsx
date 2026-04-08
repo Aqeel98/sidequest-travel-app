@@ -41,29 +41,28 @@ if (import.meta.env.PROD) {
 
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
-  <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50">
-      <div className="relative flex items-center justify-center mb-8">
+  <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
+      <div className="relative flex items-center justify-center mb-4">
           
-          {/* 1. THICK OUTER RING (10px) */}
-          <div 
-              className="absolute w-24 h-24 border-[10px] rounded-full"
-              style={{ borderColor: '#107870' }} 
-          ></div>
+          {/* Outer Layer: Matches the weight of the original Compass icon */}
+          <div className="absolute w-12 h-12 border-2 border-current rounded-full"></div>
 
-          {/* 2. FASTER ROTATING NEEDLE */}
+          {/* Inner Layer: Your new Needle spinning at the original speed */}
           <img 
               src="/nav-needle.png" 
               alt="Loading" 
-              className="w-14 h-14 animate-spin-fast object-contain relative z-10"
+              className="w-8 h-8 animate-spin object-contain relative z-10"
           />
       </div>
-      
-      {/* 3. BIGGER TEXT (3xl) */}
-      <h2 className="text-3xl font-black tracking-tight animate-pulse" style={{ color: '#107870' }}>
+
+      {/* Restored to original text-xl and font-bold */}
+      <h2 className="text-xl font-bold animate-pulse">
           Loading SideQuest...
       </h2>
   </div>
 );
+
+
 // --- TOAST NOTIFICATION RENDERER ---
 const Toast = () => {
   const { toast } = useSideQuest(); 
