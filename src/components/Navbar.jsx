@@ -19,14 +19,14 @@ const Navbar = () => {
     // FIX: z-[1100] ensures Navbar is above Map Button (800) but below AuthModal (1200)
     <header className="fixed top-0 w-full z-[1100] transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
+     
         
-
 {/* --- BRAND LOGO AREA --- */}
 <Link to="/" className="flex items-center group">
   <div className="relative flex items-center justify-center w-12 h-12 mr-3">
-    {/* Outer Circle: Exact Teal #0D9488 */}
+    {/* Outer Circle: Original Brand Teal #0D9488 */}
     <div 
-      className="absolute inset-0 border-[4px] rounded-full transition-transform duration-500 group-hover:scale-105" 
+      className="absolute inset-0 border-[4px] rounded-full transition-all duration-500 group-hover:scale-105" 
       style={{ borderColor: '#0D9488' }}
     ></div>
 
@@ -38,12 +38,12 @@ const Navbar = () => {
     />
   </div>
 
-  {/* Multi-color Brand Text */}
+  {/* Brand Text: Original Slate color with colored "ues" */}
   <div className="text-xl font-extrabold text-gray-800 tracking-tight">
     SideQ
-    <span style={{ color: '#006A4E' }}>u</span> {/* Green */}
-    <span style={{ color: '#800000' }}>e</span> {/* Maroon */}
-    <span style={{ color: '#F58220' }}>s</span> {/* Orange */}
+    <span style={{ color: '#006A4E' }}>u</span>
+    <span style={{ color: '#800000' }}>e</span>
+    <span style={{ color: '#F58220' }}>s</span>
     t
   </div>
 </Link>

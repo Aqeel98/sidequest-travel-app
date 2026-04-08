@@ -53,12 +53,12 @@ const LoadingScreen = () => (
           />
       </div>
 
-      {/* --- LOADING SCREEN TEXT --- */}
-<h2 className="text-xl font-bold animate-pulse text-gray-800">
+   {/* --- LOADING SCREEN TEXT --- */}
+<h2 className="text-xl font-bold animate-pulse text-brand-600">
   Loading SideQ
-  <span style={{ color: '#006A4E' }}>u</span> {/* Green */}
-  <span style={{ color: '#800000' }}>e</span> {/* Maroon */}
-  <span style={{ color: '#F58220' }}>s</span> {/* Orange */}
+  <span style={{ color: '#006A4E' }}>u</span>
+  <span style={{ color: '#800000' }}>e</span>
+  <span style={{ color: '#F58220' }}>s</span>
   t...
 </h2>
   </div>
