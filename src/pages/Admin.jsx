@@ -419,7 +419,7 @@ const handlePublishPackage = async () => {
       title: pkgForm.title,
       duration_days: parseInt(pkgForm.days),
       vibe_tags: [pkgForm.vibe],
-      image_url: finalImageUrl || pkgPreview, // Keep old image if no new one uploaded
+      image_url: finalImageUrl || pkgPreview, 
       price_usd: parseFloat(pkgForm.price), 
       price_essential_usd: parseFloat(pkgForm.price_essential), 
       price_full_usd: parseFloat(pkgForm.price_full), 
