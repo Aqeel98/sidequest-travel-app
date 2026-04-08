@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, Compass, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Zap, Gift  } from 'lucide-react'; 
+import { Menu, X, LogOut, Compass, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Zap, Gift, Trophy, Globe, Sparkles } from 'lucide-react'; 
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Navbar = () => {
-  const { currentUser, logout, setShowAuthModal } = useSideQuest();
+  const { currentUser, logout, setShowAuthModal, isHuntActive, activeEvent, myBookings } = useSideQuest();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const [isPartnerMenuOpen, setIsPartnerMenuOpen] = useState(false);
@@ -19,27 +19,57 @@ const Navbar = () => {
     // FIX: z-[1100] ensures Navbar is above Map Button (800) but below AuthModal (1200)
     <header className="fixed top-0 w-full z-[1100] transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-        
-        {/* Logo Area */}
-        <Link to="/" className="flex items-center group">
-          <div className="bg-gradient-to-tr from-brand-400 to-brand-600 p-2 rounded-xl text-white mr-3 shadow-lg group-hover:shadow-brand-200 transition-all">
-            <Compass size={24} className="group-hover:rotate-45 transition-transform duration-500" />
-          </div>
-          <div>
-            <span className="text-xl font-extrabold text-gray-800 tracking-tight">SideQuest</span>
-          </div>
-        </Link>
+
+
+{/* --- BRAND LOGO AREA --- */}
+<Link to="/" className="flex items-center group">
+  <div className="relative flex items-center justify-center w-12 h-12 mr-3">
+    <div 
+      className="absolute inset-0 border-[4px] rounded-full transition-all duration-500"  
+      style={{ borderColor: '#0D9488' }}
+    ></div>
+    <img 
+      src="/nav-needle.png" 
+      alt="SideQuest" 
+      className="w-6 h-6 object-contain transition-transform duration-700 ease-in-out rotate-0 group-hover:rotate-[45deg]"
+      />
+  </div>
+
+  {/* Brand Text: Original Slate color with colored "ues" */}
+  <div className="text-xl font-extrabold text-gray-800 tracking-tight">
+    SideQ
+    <span style={{ color: '#006A4E' }}>u</span>
+    <span style={{ color: '#800000' }}>e</span>
+    <span style={{ color: '#F58220' }}>s</span>
+    t
+  </div>
+</Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center space-x-2">
           <Link to="/" className={isActive('/')}>Quests</Link>
           <Link to="/map" className={isActive('/map')}>Map</Link>
+          <Link to="/plan-trip" className={isActive('/plan-trip')}>Travel</Link> 
           <Link to="/quiz" className={isActive('/quiz')}>Quiz</Link> 
           <Link to="/how-it-works" className={isActive('/how-it-works')}>Guide</Link>
           {currentUser && (
               <Link to="/my-quests" className={isActive('/my-quests')}>My Quests</Link>
                 )}
           <Link to="/rewards" className={isActive('/rewards')}>Rewards</Link>
+          {currentUser && myBookings?.length > 0 && (
+     <Link to="/my-journey" className={isActive('/my-journey')}>
+    <span className="flex items-center gap-1 text-[#107870] font-bold">
+      <Globe size={14} /> My Journey
+    </span>
+     </Link>
+        )}
+          {isHuntActive && currentUser?.hunt_access?.includes(activeEvent?.id) && (
+           <Link to="/hunt" className={isActive('/hunt')}>
+       <span className="flex items-center gap-1 text-teal-400">
+        <Trophy size={14} className="text-teal-400" /> Colombo Hunt
+      </span>
+          </Link>
+          )}
           
           {/* PARTNER DROPDOWN */}
             {(currentUser?.role === 'Partner' || currentUser?.role === 'Admin') && (
@@ -136,6 +166,13 @@ const Navbar = () => {
             
             <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
             <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
+            <Link 
+              to="/plan-trip" 
+              className="p-3 rounded-lg hover:bg-teal-50 text-[#107870] font-bold flex items-center" 
+              onClick={() => setIsOpen(false)}
+            >
+               <Sparkles size={18} className="mr-2" /> Plan My Trip
+            </Link>
             <Link to="/quiz" className="p-3 rounded-lg hover:bg-brand-50 text-brand-600 font-bold flex items-center" onClick={() => setIsOpen(false)}>
                <Zap size={18} className="mr-2" fill="currentColor"/> Quiz Game
             </Link>
@@ -144,7 +181,20 @@ const Navbar = () => {
               <Link to="/my-quests" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>My Quests</Link>
                 )}
             <Link to="/rewards" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Rewards</Link>
-            
+            {currentUser && myBookings?.length > 0 && (
+      <Link 
+    to="/my-journey" 
+    className="p-3 rounded-lg bg-[#107870]/5 text-[#107870] font-black flex items-center border border-[#107870]/10" 
+    onClick={() => setIsOpen(false)}
+      >
+    <Globe size={18} className="mr-2" /> My Active Journey
+      </Link>
+          )}
+            {isHuntActive && currentUser?.hunt_access?.includes(activeEvent?.id) && (
+    <Link to="/hunt" className="p-3 rounded-lg hover:bg-teal-50 text-teal-600 font-bold flex items-center" onClick={() => setIsOpen(false)}>
+      <Trophy size={18} className="mr-2" /> Colombo Hunt
+    </Link>
+  )}
             <Link to="/emergency" className="p-3 rounded-lg hover:bg-red-50 text-red-500 font-bold flex items-center" onClick={() => setIsOpen(false)}>
                 <HeartPulse size={18} className="mr-2"/> Emergency & Safety Info
             </Link>

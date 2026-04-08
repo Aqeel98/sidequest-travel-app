@@ -21,6 +21,11 @@ import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
 import InstallBanner from './components/InstallBanner';
 import Quiz from './pages/Quiz';
+import HuntDashboard from './pages/HuntDashboard';
+import HuntStop from './pages/HuntStop';
+import Leaderboard from './pages/Leaderboard';
+import TravelAgency from './pages/TravelAgency';
+import MyJourney from './pages/MyJourney';
 
 // --- 1. CONSOLE SHIELD ENGINE ---
 const originalConsole = { ...console };
@@ -36,11 +41,29 @@ if (import.meta.env.PROD) {
 
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
-        <Compass size={48} className="animate-spin mb-4" />
-        <h2 className="text-xl font-bold animate-pulse">Loading SideQuest...</h2>
-    </div>
+  <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
+      <div className="relative flex items-center justify-center mb-4">
+          
+          <div className="absolute w-12 h-12 border-4 border-current rounded-full"></div>
+
+          <img 
+              src="/nav-needle.png" 
+              alt="Loading" 
+               className="w-6 h-6 animate-spin object-contain relative z-10"
+          />
+      </div>
+
+   {/* --- LOADING SCREEN TEXT --- */}
+<h2 className="text-xl font-bold animate-pulse text-brand-600">
+  Loading SideQ
+  <span style={{ color: '#006A4E' }}>u</span>
+  <span style={{ color: '#800000' }}>e</span>
+  <span style={{ color: '#F58220' }}>s</span>
+  t...
+</h2>
+  </div>
 );
+
 
 // --- TOAST NOTIFICATION RENDERER ---
 const Toast = () => {
@@ -78,7 +101,7 @@ const MainLayout = () => {
   const { isLoading, currentUser } = useSideQuest();
 
   useEffect(() => {
-    const v = '3.6.1';
+    const v = '3.7.0';
     // Skip version check for bots to avoid reload loops
     if (navigator.userAgent.match(/bot|googlebot|crawler|spider|robot|crawling/i)) return;
 
@@ -150,6 +173,11 @@ export default function App() {
             <Route path="admin" element={<Admin />} />
             <Route path="emergency" element={<Emergency />} />
             <Route path="quiz" element={<Quiz />} />
+            <Route path="hunt" element={<HuntDashboard />} />
+            <Route path="hunt/:stopId" element={<HuntStop />} />
+            <Route path="leaderboard" element={<Leaderboard />} />
+            <Route path="plan-trip" element={<TravelAgency />} />
+            <Route path="my-journey" element={<MyJourney />} />
             </Route>
           </Routes>
         </BrowserRouter>
