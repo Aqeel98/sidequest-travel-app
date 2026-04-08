@@ -24,19 +24,14 @@ const Navbar = () => {
 {/* --- BRAND LOGO AREA --- */}
 <Link to="/" className="flex items-center group">
   <div className="relative flex items-center justify-center w-12 h-12 mr-3">
-    {/* Outer Circle: Original Brand Teal #0D9488 */}
     <div 
       className="absolute inset-0 border-[4px] rounded-full transition-all duration-500"  
       style={{ borderColor: '#0D9488' }}
     ></div>
-
-    {/* Needle: Rotates from Tilted (45deg) to Horizontal (90deg) */}
     <img 
       src="/nav-needle.png" 
       alt="SideQuest" 
-      className="w-6 h-6 object-contain transition-transform duration-700 ease-in-out 
-                 rotate-[45deg]        
-                 group-hover:rotate-90" 
+      className="w-6 h-6 object-contain transition-transform duration-700 ease-in-out rotate-[45deg] group-hover:rotate-[90deg]" 
     />
   </div>
 
