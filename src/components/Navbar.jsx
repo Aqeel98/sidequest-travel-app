@@ -24,21 +24,19 @@ const Navbar = () => {
 {/* --- BRAND LOGO AREA --- */}
 <Link to="/" className="flex items-center group">
   <div className="relative flex items-center justify-center w-12 h-12 mr-3">
-    
-    {/* 1. THE OUTER CIRCLE (Matches Original Weight & Color) */}
+    {/* Outer Circle: Original Brand Teal #0D9488 */}
     <div 
-      className="absolute inset-0 border-[4px] rounded-full transition-all duration-500" 
+      className="absolute inset-0 border-[4px] rounded-full transition-all duration-500"  
       style={{ borderColor: '#0D9488' }}
     ></div>
 
-    {/* 2. THE NEEDLE (Starts tilted, becomes a horizontal Eye on hover) */}
+    {/* Needle: Rotates from Tilted (45deg) to Horizontal (90deg) */}
     <img 
       src="/nav-needle.png" 
       alt="SideQuest" 
-      className="w-6 h-6 object-contain transition-all duration-700 ease-in-out 
-                 rotate-[45deg]              // DEFAULT: The tilt from your 2nd SS
-                 group-hover:rotate-[-45deg] // HOVER: Flips to horizontal (Eye angle)
-                 group-hover:scale-y-[0.5]"  // HOVER: Squashes to look flat like an Eye
+      className="w-6 h-6 object-contain transition-transform duration-700 ease-in-out 
+                 rotate-[45deg]        
+                 group-hover:rotate-90" 
     />
   </div>
 
