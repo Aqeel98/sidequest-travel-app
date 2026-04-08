@@ -49,7 +49,7 @@ const LoadingScreen = () => (
           <img 
               src="/nav-needle.png" 
               alt="Loading" 
-              className="w-9 h-9 animate-spin object-contain relative z-10"
+               className="w-6 h-6 animate-spin object-contain relative z-10"
           />
       </div>
 

@@ -20,15 +20,28 @@ const Navbar = () => {
     <header className="fixed top-0 w-full z-[1100] transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
-        {/* Logo Area */}
-        <Link to="/" className="flex items-center group">
-          <div className="bg-gradient-to-tr from-brand-400 to-brand-600 p-2 rounded-xl text-white mr-3 shadow-lg group-hover:shadow-brand-200 transition-all">
-            <Compass size={24} className="group-hover:rotate-45 transition-transform duration-500" />
-          </div>
-          <div>
-            <span className="text-xl font-extrabold text-gray-800 tracking-tight">SideQuest</span>
-          </div>
-        </Link>
+        {/* --- BRAND LOGO AREA --- */}
+<Link to="/" className="flex items-center group">
+  <div className="relative flex items-center justify-center w-10 h-10 mr-3">
+    
+    {/* 1. THE STATIC TEAL RING */}
+    <div 
+      className="absolute inset-0 border-[3px] rounded-full transition-transform duration-500 group-hover:scale-110"
+      style={{ borderColor: '#107870' }}
+    ></div>
+
+    {/* 2. THE BRAND NEEDLE (Will not touch the circle) */}
+    <img 
+      src="/nav-needle.png" 
+      alt="SideQuest" 
+      className="w-6 h-6 object-contain transition-transform duration-700 ease-in-out group-hover:rotate-[360deg]"
+    />
+  </div>
+
+  <div>
+    <span className="text-xl font-extrabold text-gray-800 tracking-tight">SideQuest</span>
+  </div>
+</Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center space-x-2">
