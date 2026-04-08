@@ -102,26 +102,30 @@ const MainLayout = () => {
 
   useEffect(() => {
     const v = '3.7.0';
-    
     if (navigator.userAgent.match(/bot|googlebot|crawler|spider|robot|crawling/i)) return;
 
     const performVersionCheck = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const urlVersion = urlParams.get('v');
       const storedVersion = localStorage.getItem('sq_app_version');
+      
+      const hasTriedUpdate = sessionStorage.getItem('sq_update_attempted');
 
-      if (urlVersion === v) {
+      if (urlVersion === v || storedVersion === v) {
         localStorage.setItem('sq_app_version', v);
+        sessionStorage.removeItem('sq_update_attempted'); // Reset for next time
         return; 
       }
 
-      if (storedVersion !== v) {
-        console.log("SQ-System: Version upgrade required. Purging...");
+      if (!hasTriedUpdate) {
+        console.log("SQ-System: Version upgrade required. Executing Nuclear Purge...");
         
+        sessionStorage.setItem('sq_update_attempted', 'true');
+
         if ('serviceWorker' in navigator) {
           try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let r of registrations) { await r.unregister(); }
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (let r of regs) { await r.unregister(); }
           } catch (e) {}
         }
         
@@ -134,7 +138,9 @@ const MainLayout = () => {
 
         localStorage.setItem('sq_app_version', v);
 
-        window.location.href = `/?v=${v}`;
+        window.location.href = `/?v=${v}&t=${Date.now()}`;
+      } else {
+        console.warn("SQ-System: Update attempted but cache is stubborn. Stopping loop.");
       }
     };
 
