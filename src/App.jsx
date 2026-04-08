@@ -41,19 +41,25 @@ if (import.meta.env.PROD) {
 
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
-  <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
-      <div className="relative flex items-center justify-center mb-4">
-          {/* Static Ring */}
-          <div className="absolute w-16 h-16 border-4 border-brand-600 rounded-full opacity-20"></div>
+  <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50">
+      <div className="relative flex items-center justify-center mb-6">
           
-          {/* Rotating Needle */}
+          {/* 1. THE OUTER TEAL RING (Static & Vibrant) */}
+          <div 
+              className="absolute w-20 h-20 border-[6px] rounded-full shadow-sm"
+              style={{ borderColor: '#0D9488' }} 
+          ></div>
+
           <img 
-             src="/nav-needle.png" 
-            alt="Loading" 
-            className="w-12 h-12 animate-needle object-contain" 
+              src="/nav-needle.png" 
+              alt="Loading..." 
+              className="w-12 h-12 animate-spin-slow object-contain relative z-10"
           />
       </div>
-      <h2 className="text-xl font-bold animate-pulse">Loading SideQuest...</h2>
+      
+      <h2 className="text-xl font-bold animate-pulse" style={{ color: '#0D9488' }}>
+          Loading SideQuest...
+      </h2>
   </div>
 );
 
