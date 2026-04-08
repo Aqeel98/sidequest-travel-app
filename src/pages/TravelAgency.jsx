@@ -9,10 +9,12 @@ import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
 import SEO from '../components/SEO';
 
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || "";
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+
 const TravelAgency = () => {
   const navigate = useNavigate();
   const { travelPackages, travelSettings, showToast, isLoading, initiateTravelBooking, currentUser } = useSideQuest();
-  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
   
   const [activeTab, setActiveTab] = useState('packs'); 
   const [selectedVibe, setSelectedVibe] = useState(null);
