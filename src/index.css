@@ -152,3 +152,10 @@ img:not([src]) {
 .animate-spin-slow {
   animation: spin-slow 3s linear infinite;
 }
+
+/* --- 7. BRAND NEEDLE ANIMATION --- */
+.animate-needle {
+  /* Uses the slow spin already in your file, but adds a shadow to make it pop */
+  animation: spin-slow 3s linear infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}

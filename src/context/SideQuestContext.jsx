@@ -712,6 +712,35 @@ useEffect(() => {
     }
   };
 
+  // --- 5.6 CUSTOM/SOLO BOOKING ENGINE ---
+  const initiateCustomBooking = async (type, totalDays, price) => {
+    if (!currentUser) {
+        setShowAuthModal(true);
+        return null;
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('travel_bookings')
+            .insert([{
+                traveler_id: currentUser.id,
+                status: 'pending',
+                start_date: new Date().toISOString().split('T')[0],
+                tier_selected: type, // 'custom_loop' or 'solo_driver'
+                total_price_usd: price,
+                // package_id is left NULL for custom/solo hires
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (e) {
+        showToast("Booking failed: " + e.message, 'error');
+        return null;
+    }
+  };
+
   // --- 5. DATA SYNC & ZOMBIE REPAIR LOGIC ---
 const fetchProfile = async (userId, userEmail) => {
     try {
@@ -1898,7 +1927,7 @@ const approveNewReward = async (id) => {
   return (
     <SideQuestContext.Provider value={{
       currentUser, isLoading, 
-      users, quests, questProgress, redemptions, rewards,travelPackages, travelSettings, myBookings, initiateTravelBooking, 
+      users, quests, questProgress, redemptions, rewards,travelPackages, travelSettings, myBookings, initiateTravelBooking, initiateCustomBooking,
       createTravelBooking: initiateTravelBooking,
       showAuthModal, setShowAuthModal,
       login, signup, logout,

@@ -14,17 +14,24 @@ const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 const TravelAgency = () => {
   const navigate = useNavigate();
-  const { travelPackages, travelSettings, showToast, isLoading, initiateTravelBooking, currentUser } = useSideQuest();
-  
+  // FIXED: Added initiateCustomBooking here
+  const { 
+    travelPackages, 
+    travelSettings, 
+    showToast, 
+    isLoading, 
+    initiateTravelBooking, 
+    initiateCustomBooking, 
+    currentUser 
+  } = useSideQuest();
+
+  const [driverDays, setDriverDays] = useState(1);
   const [activeTab, setActiveTab] = useState('packs'); 
   const [selectedVibe, setSelectedVibe] = useState(null);
   const [selectedDistricts, setSelectedDistricts] = useState([]);
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [isMatching, setIsMatching] = useState(false);
   const [tier, setTier] = useState('driver');
-
- 
-  
 
   // --- LOGIC: AI MATCHER ---
   const handleAiMatch = () => {
@@ -48,7 +55,7 @@ const TravelAgency = () => {
     <div className="min-h-screen bg-[#E6D5B8] pb-24 font-sans">
       <SEO title="Travel Agency | SideQuest Sri Lanka" />
 
-      {/* --- MINIMALIST HEADER --- */}
+      {/* --- HEADER --- */}
       <div className="bg-[#107870] text-white pt-24 pb-16 px-6 rounded-b-[3.5rem] shadow-xl text-center">
         <h1 className="text-5xl md:text-6xl font-black mb-3 tracking-tighter">Travel Agency</h1>
         <p className="text-teal-50/80 font-medium max-w-xl mx-auto italic">Curated Sri Lankan journeys. Verified drivers. Boutique stays.</p>
@@ -56,7 +63,7 @@ const TravelAgency = () => {
 
       <div className="max-w-6xl mx-auto px-4 -mt-8">
         
-        {/* --- NAVIGATION PILLS --- */}
+        {/* --- NAVIGATION --- */}
         <div className="flex overflow-x-auto gap-3 mb-12 pb-2 scrollbar-hide justify-center">
           {[
             { id: 'packs', label: 'Best Sellers' },
@@ -78,15 +85,14 @@ const TravelAgency = () => {
           ))}
         </div>
 
-        {/* --- TAB CONTENT --- */}
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           
-          {/* TAB 1: REAL PACKAGES FROM DB */}
+          {/* TAB 1: QUICK PACKS */}
           {activeTab === 'packs' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {travelPackages.length === 0 ? (
                   <div className="col-span-full py-20 text-center bg-white/40 rounded-[3rem] border-2 border-dashed border-[#107870]/20 text-[#107870] font-bold italic">
-                      No packages live yet. Add them in the Admin Panel!
+                      No packages live yet.
                   </div>
               ) : (
                 travelPackages.map((pack) => (
@@ -132,15 +138,24 @@ const TravelAgency = () => {
             </div>
           )}
 
-          {/* TAB 3: CUSTOM LOOP MATH */}
+          {/* TAB 3: CUSTOM LOOP */}
           {activeTab === 'custom' && (
             <div className="bg-white rounded-[3rem] p-10 shadow-2xl max-w-3xl mx-auto border border-white">
                <h2 className="text-2xl font-black text-[#107870] uppercase tracking-widest mb-8 text-center">Custom Itinerary Builder</h2>
+               
+               {/* FIXED: Restored district selection logic */}
                <div className="flex flex-wrap justify-center gap-3 mb-10">
                   {['Colombo', 'Galle', 'Ella', 'Kandy', 'Sigiriya', 'A-Bay', 'Jaffna', 'Mirissa'].map(d => (
-                    <button key={d} onClick={() => setSelectedDistricts(p => p.includes(d) ? p.filter(x => x !== d) : [...p, d])} className={`px-8 py-3 rounded-full font-bold transition-all border-2 ${selectedDistricts.includes(d) ? 'bg-[#107870] border-[#107870] text-white' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>{d}</button>
+                    <button 
+                      key={d}
+                      onClick={() => setSelectedDistricts(p => p.includes(d) ? p.filter(x => x !== d) : [...p, d])}
+                      className={`px-8 py-3 rounded-full font-bold transition-all border-2 ${selectedDistricts.includes(d) ? 'bg-[#107870] border-[#107870] text-white' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
+                    >
+                      {d}
+                    </button>
                   ))}
                </div>
+
                <div className="p-8 bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-200 flex flex-col md:flex-row items-center justify-between gap-6">
                   <div>
                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Pricing Estimation</p>
@@ -149,25 +164,78 @@ const TravelAgency = () => {
                         <span className="text-[#107870] ml-2">${selectedDistricts.length * 2 * (travelSettings?.driver_day_rate_usd || 70)}</span>
                     </p>
                   </div>
-                  <button disabled={selectedDistricts.length === 0} className="bg-[#107870] text-white px-12 py-4 rounded-2xl font-black shadow-lg disabled:opacity-30">Book This Route</button>
+                  
+                  {/* FIXED: Booking logic moved to this main button */}
+                  <button 
+                    disabled={selectedDistricts.length === 0} 
+                    onClick={async () => {
+                      const price = selectedDistricts.length * 2 * (travelSettings?.driver_day_rate_usd || 70);
+                      const booking = await initiateCustomBooking('custom_loop', selectedDistricts.length * 2, price);
+                      
+                      if (booking) {
+                          showToast("Redirecting to Stripe...", "info");
+                          const { data } = await supabase.functions.invoke('create-checkout-session', {
+                              body: { 
+                                  bookingId: booking.id,
+                                  packageName: `Custom Loop (${selectedDistricts.length} Stops)`,
+                                  price: price,
+                                  customerEmail: currentUser.email
+                              }
+                          });
+                          if (data?.url) window.location.href = data.url;
+                      }
+                    }}
+                    className="bg-[#107870] text-white px-12 py-4 rounded-2xl font-black shadow-lg disabled:opacity-30 active:scale-95 transition-all"
+                  >
+                    Book This Route
+                  </button>
                </div>
             </div>
           )}
 
-          {/* TAB 4: SOLO DRIVER HIRE */}
+          {/* TAB 4: SOLO DRIVER */}
           {activeTab === 'driver' && (
             <div className="bg-white rounded-[3rem] p-12 shadow-2xl flex flex-col md:flex-row items-center gap-12 border border-white">
                <div className="flex-1">
                   <div className="inline-flex items-center gap-2 bg-[#107870]/10 text-[#107870] px-4 py-1.5 rounded-full text-[10px] font-black uppercase mb-6"><Shield size={14} /> SideQuest Partner</div>
                   <h2 className="text-4xl font-black text-gray-900 mb-4 leading-tight">Solo Driver Booking</h2>
-                  <p className="text-gray-500 mb-8 leading-relaxed font-medium text-lg">Already have hotels? Secure a professional SideQuest driver. Includes fuel, insurance, and local knowledge.</p>
-                  <div className="flex items-center gap-8 mb-10 text-gray-700 font-bold">
-                    <span className="flex items-center gap-2"><Check className="text-[#107870]"/> Licensed</span>
-                    <span className="flex items-center gap-2"><Check className="text-[#107870]"/> 24/7 Support</span>
+                  <p className="text-gray-500 mb-8 leading-relaxed font-medium text-lg">Secure a professional SideQuest driver. Includes fuel, insurance, and local knowledge.</p>
+                  
+                  <div className="mb-10 p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">How many days do you need?</p>
+                      <div className="flex items-center gap-6">
+                          <button onClick={() => setDriverDays(Math.max(1, driverDays - 1))} className="w-12 h-12 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center font-black text-2xl">-</button>
+                          <span className="text-3xl font-black text-gray-900">{driverDays} Days</span>
+                          <button onClick={() => setDriverDays(driverDays + 1)} className="w-12 h-12 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center font-black text-2xl">+</button>
+                      </div>
                   </div>
+
                   <div className="flex items-center gap-8">
-                    <div><p className="text-4xl font-black text-gray-900">${travelSettings?.driver_day_rate_usd || 70}</p><p className="text-xs font-bold text-gray-400 uppercase">Per Day</p></div>
-                    <button className="flex-1 max-w-xs bg-[#107870] text-white py-5 rounded-3xl font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all">Hire Now</button>
+                    <div>
+                      <p className="text-4xl font-black text-gray-900">${driverDays * (travelSettings?.driver_day_rate_usd || 70)}</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase">Total for {driverDays} Days</p>
+                    </div>
+                    <button 
+                      onClick={async () => {
+                        const price = driverDays * (travelSettings?.driver_day_rate_usd || 70);
+                        const booking = await initiateCustomBooking('solo_driver', driverDays, price);
+                        if (booking) {
+                            showToast("Connecting...", "info");
+                            const { data } = await supabase.functions.invoke('create-checkout-session', {
+                                body: { 
+                                    bookingId: booking.id,
+                                    packageName: `Solo Driver Hire (${driverDays} Days)`,
+                                    price: price,
+                                    customerEmail: currentUser.email
+                                }
+                            });
+                            if (data?.url) window.location.href = data.url;
+                        }
+                      }}
+                      className="flex-1 max-w-xs bg-[#107870] text-white py-5 rounded-3xl font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
+                    >
+                      Hire Now
+                    </button>
                   </div>
                </div>
                <div className="w-full md:w-96 h-96 bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-2xl">
@@ -178,7 +246,7 @@ const TravelAgency = () => {
         </div>
       </div>
 
-      {/* --- PHASE 4 OVERLAY: TIER PRICING LOGIC --- */}
+      {/* --- PACKAGE OVERLAY --- */}
       {selectedTrip && (
         <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
            <div className="bg-white rounded-[3.5rem] w-full max-w-lg p-12 relative shadow-2xl border border-white/20">
@@ -187,80 +255,61 @@ const TravelAgency = () => {
               <p className="text-xs font-black uppercase text-[#107870] mb-8 tracking-widest">{selectedTrip.duration_days} Day Journey</p>
               
               <div className="space-y-4 mb-10 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-   {[
-     { id: 'driver', label: 'Driver Only', icon: Car, price: selectedTrip.price_usd },
-     { id: 'essential', label: 'Essential Pack', icon: Zap, price: selectedTrip.price_essential_usd },
-     { id: 'full', label: 'Full All-Inclusive', icon: Sparkles, price: selectedTrip.price_full_usd },
-   ].map((item) => (
-     <button 
-       key={item.id} 
-       onClick={() => setTier(item.id)} 
-       className={`w-full text-left p-6 rounded-[2rem] border-2 transition-all group flex justify-between items-center shadow-sm ${
-         tier === item.id 
-         ? 'border-[#107870] bg-[#107870]/5' // Highlighted state
-         : 'border-gray-100 bg-gray-50/50 hover:bg-white'
-       }`}
-     >
-        <div className="flex items-center gap-4">
-          <item.icon size={24} className={tier === item.id ? 'text-[#107870]' : 'text-gray-400'}/>
-          <span className={`font-bold text-lg ${tier === item.id ? 'text-[#107870]' : 'text-gray-800'}`}>
-            {item.label}
-          </span>
-        </div>
-        
-        <div className="text-right">
-            <span className={`font-black text-xl block ${tier === item.id ? 'text-[#107870]' : 'text-gray-900'}`}>
-                ${Math.round(item.price)}
-            </span>
-            {tier === item.id && <span className="text-[9px] font-black uppercase text-[#107870] animate-pulse">Selected</span>}
-        </div>
-     </button>
-   ))}
-</div>
+               {[
+                 { id: 'driver', label: 'Driver Only', icon: Car, price: selectedTrip.price_usd },
+                 { id: 'essential', label: 'Essential Pack', icon: Zap, price: selectedTrip.price_essential_usd },
+                 { id: 'full', label: 'Full All-Inclusive', icon: Sparkles, price: selectedTrip.price_full_usd },
+               ].map((item) => (
+                 <button 
+                   key={item.id} 
+                   onClick={() => setTier(item.id)} 
+                   className={`w-full text-left p-6 rounded-[2rem] border-2 transition-all group flex justify-between items-center shadow-sm ${
+                     tier === item.id 
+                     ? 'border-[#107870] bg-[#107870]/5' 
+                     : 'border-gray-100 bg-gray-50/50 hover:bg-white'
+                   }`}
+                 >
+                    <div className="flex items-center gap-4">
+                      <item.icon size={24} className={tier === item.id ? 'text-[#107870]' : 'text-gray-400'}/>
+                      <span className={`font-bold text-lg ${tier === item.id ? 'text-[#107870]' : 'text-gray-800'}`}>
+                        {item.label}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                        <span className={`font-black text-xl block ${tier === item.id ? 'text-[#107870]' : 'text-gray-900'}`}>
+                            ${Math.round(item.price)}
+                        </span>
+                    </div>
+                 </button>
+               ))}
+            </div>
 
-{/* ADD ITINERARY PREVIEW BELOW TIERS */}
-<div className="mb-10 p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
-    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Trip Itinerary</h4>
-    <p className="text-sm text-gray-600 leading-relaxed italic line-clamp-3">
-        {selectedTrip.itinerary_json?.text || selectedTrip.itinerary_json || "Standard schedule applies."}
-    </p>
-</div>
-<button 
-  onClick={async () => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // 1. Create the Pending Booking in DB
-    const booking = await initiateTravelBooking(selectedTrip, tier, today);
-    
-    if (booking) {
-        showToast("Connecting to Stripe...", "info");
+            <div className="mb-10 p-6 bg-gray-50 rounded-[2rem] border border-gray-100 text-sm italic text-gray-600">
+                {selectedTrip.itinerary_json?.text || "Itinerary available post-booking."}
+            </div>
 
-        // 2. CALL THE EDGE FUNCTION (Secure Handoff)
-        const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-            body: { 
-                bookingId: booking.id,
-                packageName: selectedTrip.title,
-                price: booking.total_price_usd,
-                customerEmail: currentUser.email
-            }
-        });
-
-        if (error) {
-            showToast("Secure checkout failed. Try again.", "error");
-            return;
-        }
-
-        // 3. REDIRECT TO STRIPE
-        if (data?.url) {
-            window.location.href = data.url; // Sends user to Stripe's secure cloud
-        }
-    }
-  }}
-  className="w-full bg-[#107870] text-white py-6 rounded-[2rem] font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
->
-  Confirm & Pay
-</button>    
-</div>
+            <button 
+              onClick={async () => {
+                const today = new Date().toISOString().split('T')[0];
+                const booking = await initiateTravelBooking(selectedTrip, tier, today);
+                if (booking) {
+                    showToast("Connecting to Stripe...", "info");
+                    const { data } = await supabase.functions.invoke('create-checkout-session', {
+                        body: { 
+                            bookingId: booking.id,
+                            packageName: selectedTrip.title,
+                            price: booking.total_price_usd,
+                            customerEmail: currentUser.email
+                        }
+                    });
+                    if (data?.url) window.location.href = data.url;
+                }
+              }}
+              className="w-full bg-[#107870] text-white py-6 rounded-[2rem] font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
+            >
+              Confirm & Pay
+            </button>    
+          </div>
         </div>
       )}
     </div>

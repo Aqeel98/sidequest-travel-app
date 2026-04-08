@@ -41,10 +41,20 @@ if (import.meta.env.PROD) {
 
 // --- LOADING SCREEN ---
 const LoadingScreen = () => (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
-        <Compass size={48} className="animate-spin mb-4" />
-        <h2 className="text-xl font-bold animate-pulse">Loading SideQuest...</h2>
-    </div>
+  <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
+      <div className="relative flex items-center justify-center mb-4">
+          {/* Static Ring */}
+          <div className="absolute w-16 h-16 border-4 border-brand-600 rounded-full opacity-20"></div>
+          
+          {/* Rotating Needle */}
+          <img 
+             src="/nav-needle.png" 
+            alt="Loading" 
+            className="w-12 h-12 animate-needle object-contain" 
+          />
+      </div>
+      <h2 className="text-xl font-bold animate-pulse">Loading SideQuest...</h2>
+  </div>
 );
 
 // --- TOAST NOTIFICATION RENDERER ---
