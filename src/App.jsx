@@ -44,18 +44,15 @@ const LoadingScreen = () => (
   <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-50 text-brand-600">
       <div className="relative flex items-center justify-center mb-4">
           
-          {/* Outer Layer: Matches the weight of the original Compass icon */}
-          <div className="absolute w-12 h-12 border-2 border-current rounded-full"></div>
+          <div className="absolute w-12 h-12 border-4 border-current rounded-full"></div>
 
-          {/* Inner Layer: Your new Needle spinning at the original speed */}
           <img 
               src="/nav-needle.png" 
               alt="Loading" 
-              className="w-8 h-8 animate-spin object-contain relative z-10"
+              className="w-9 h-9 animate-spin object-contain relative z-10"
           />
       </div>
 
-      {/* Restored to original text-xl and font-bold */}
       <h2 className="text-xl font-bold animate-pulse">
           Loading SideQuest...
       </h2>
