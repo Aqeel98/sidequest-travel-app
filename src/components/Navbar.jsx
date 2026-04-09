@@ -60,17 +60,17 @@ const Navbar = () => {
           <Link to="/rewards" className={isActive('/rewards')}>Rewards</Link>
           {currentUser && myBookings?.length > 0 && (
      <Link to="/my-journey" className={isActive('/my-journey')}>
-    <span className="flex items-center gap-1 text-[#107870] font-bold">
-      <Globe size={14} /> My Journey
-    </span>
-     </Link>
+     <span className="flex items-center gap-1 text-[#107870] font-bold">
+       My Journey
+     </span>
+   </Link>
         )}
           {isHuntActive && currentUser?.hunt_access?.includes(activeEvent?.id) && (
            <Link to="/hunt" className={isActive('/hunt')}>
-       <span className="flex items-center gap-1 text-teal-400">
-        <Trophy size={14} className="text-teal-400" /> Colombo Hunt
-      </span>
-          </Link>
+           <span className="flex items-center gap-1 text-teal-400">
+             Colombo Hunt
+           </span>
+         </Link>
           )}
           
           {/* PARTNER DROPDOWN */}
