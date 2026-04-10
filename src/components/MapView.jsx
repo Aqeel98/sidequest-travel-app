@@ -16,22 +16,19 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow 
 });
 
-// --- CUSTOM ICONS (Your Original Colors) ---
-// --- NEW HELPER: CATEGORY COLORS & EMOJIS ---
 const getCategoryDetails = (category) => {
   switch (category) {
-      // Existing
-      case 'Environmental': return { color: '#10b981', emoji: '🌿' }; // Emerald
-      case 'Social': return { color: '#f43f5e', emoji: '❤️' }; // Rose
-      case 'Animal Welfare': return { color: '#ec4899', emoji: '🐘' }; // Pink
-      case 'Cultural': return { color: '#8b5cf6', emoji: '🏯' }; // Violet 
-      case 'Education': return { color: '#3b82f6', emoji: '📚' }; // Blue
-      case 'Adventure': return { color: '#ea580c', emoji: '🧗' }; // Deep Orange
-      case 'Exploration': return { color: '#eab308', emoji: '🧭' }; // GOLD (Discovery)
-      case 'Marine Adventure': return { color: '#06b6d4', emoji: '🤿' }; // CYAN (Water)
-      case 'Wildlife Adventure': return { color: '#84cc16', emoji: '🐾' }; // LIME (Jungle)
-      
-      default: return { color: '#f97316', emoji: '🎯' }; // Orange
+      case 'Environmental': return { color: '#064e3b', emoji: '🌿' };
+      case 'Social': return { color: '#881337', emoji: '❤️' };
+      case 'Animal Welfare': return { color: '#831843', emoji: '🐘' };
+      case 'Cultural': return { color: '#4c1d95', emoji: '🏯' }; 
+      case 'Education': return { color: '#1e3a8a', emoji: '📚' };
+      case 'Adventure': return { color: '#9a3412', emoji: '🧗' };
+      case 'Exploration': return { color: '#854d0e', emoji: '🧭' };
+      case 'Marine Adventure': return { color: '#164e63', emoji: '🤿' };
+      case 'Wildlife Adventure': return { color: '#365314', emoji: '🐾' };
+      case 'Sports & Recreation': return { color: '#1e293b', emoji: '⚽' }; 
+      default: return { color: '#1e293b', emoji: '🎯' };
   }
 };
 
@@ -110,21 +107,14 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
       {/* --- FIX: MOBILE FLOATING BUTTON --- */}
       {currentUser && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1100] w-full max-w-[280px] px-4 pointer-events-none">
-          <button
-            onClick={(e) => {
-               // CHANGE 1: Stop the map from stealing the click
-               e.stopPropagation(); 
-               
-               if (userLocation) {
-                   setShowClosest(true);
-               } else {
-                   onManualLocate(); 
-               }
-            }}
-            // CHANGE 2: Z-Index above was increased to 1050
-            className="pointer-events-auto w-full flex items-center justify-center gap-3 bg-white/90 backdrop-blur-md border border-white/20 px-6 py-3.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 group"
-          >
+  <div className="absolute top-28 left-1/2 -translate-x-1/2 z-[1100] w-full max-w-[280px] px-4 pointer-events-none">
+    <button
+       onClick={(e) => {
+          e.stopPropagation(); 
+          if (userLocation) { setShowClosest(true); } else { onManualLocate(); }
+       }}
+       className="pointer-events-auto w-full flex items-center justify-center gap-3 bg-white/90 backdrop-blur-md border border-white/20 px-6 py-3.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white transition-all group"
+    >
             {isLocating ? (
               <Loader2 size={20} className="text-cyan-600 animate-spin" />
             ) : (
