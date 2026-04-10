@@ -163,8 +163,10 @@ const MapPage = () => {
       <SEO title="Explore Quests Map" description="View all available SideQuests on the map. Find adventures near you." />
 
       <div className="absolute top-2 left-0 right-0 z-[1050] px-2 pointer-events-none">
-        <div className="max-w-screen-xl mx-auto">
-          <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide pointer-events-auto snap-x">
+      <div className="max-w-screen-xl mx-auto relative">
+      <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#1a1a1a] to-transparent z-20 pointer-events-none"></div>
+
+      <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide pointer-events-auto snap-x relative z-10">
             {Object.entries(CATEGORY_CONFIG).map(([name, config]) => (
               <button
                 key={name}
