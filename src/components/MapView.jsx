@@ -107,13 +107,13 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
       {/* --- FIX: MOBILE FLOATING BUTTON --- */}
       {currentUser && (
-  <div className="absolute top-28 left-1/2 -translate-x-1/2 z-[1100] w-full max-w-[280px] px-4 pointer-events-none">
+   <div className="absolute bottom-28 left-4 z-[1100] pointer-events-none">
     <button
+       className="pointer-events-auto flex items-center justify-center gap-2 bg-white/95 backdrop-blur-md border border-gray-200 px-4 py-2.5 rounded-full shadow-xl hover:bg-white active:scale-95 transition-all group"
        onClick={(e) => {
           e.stopPropagation(); 
           if (userLocation) { setShowClosest(true); } else { onManualLocate(); }
        }}
-       className="pointer-events-auto w-full flex items-center justify-center gap-3 bg-white/90 backdrop-blur-md border border-white/20 px-6 py-3.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white transition-all group"
     >
             {isLocating ? (
               <Loader2 size={20} className="text-cyan-600 animate-spin" />
@@ -121,7 +121,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
               <Compass size={20} className={`text-cyan-600 group-hover:rotate-45 transition-transform duration-500 ${!userLocation ? 'animate-pulse' : ''}`} />
             )}
             <span className="font-bold text-slate-800 text-sm tracking-tight">
-              {isLocating ? "Locating..." : "Find Nearest Quests"}
+              {isLocating ? "Locating..." : "Find Quests"}
             </span>
           </button>
         </div>

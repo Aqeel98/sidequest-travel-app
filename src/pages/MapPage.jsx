@@ -18,7 +18,7 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 };
 
 const CATEGORY_CONFIG = {
-  'All': { color: '#334155', icon: 'ALL' }, 
+  'All': { color: '#334155', icon: '🗺️' },
   'Exploration': { color: '#854d0e', icon: '🧭' }, 
   'Adventure': { color: '#9a3412', icon: '🧗' }, 
   'Marine Adventure': { color: '#164e63', icon: '🤿' }, 
@@ -162,7 +162,7 @@ const MapPage = () => {
     <div className="h-[calc(100vh-64px)] w-full relative">
       <SEO title="Explore Quests Map" description="View all available SideQuests on the map. Find adventures near you." />
 
-      <div className="absolute top-4 left-0 right-0 z-[1050] px-4 pointer-events-none">
+      <div className="absolute top-2 left-0 right-0 z-[1050] px-2 pointer-events-none">
         <div className="max-w-screen-xl mx-auto">
           <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide pointer-events-auto snap-x">
             {Object.entries(CATEGORY_CONFIG).map(([name, config]) => (
@@ -201,7 +201,7 @@ const MapPage = () => {
       />
 
       {/* --- SUGGEST A QUEST BUTTON --- */}
-      <div className="absolute bottom-6 left-4 z-[1000]">
+      <div className="absolute bottom-12 left-4 z-[1100]">
         <button
           onClick={() => {
             if (!currentUser) { setShowAuthModal(true); return; }
