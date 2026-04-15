@@ -25,48 +25,51 @@ const getCategoryDetails = (category) => {
       case 'Social': return { color: '#f43f5e', emoji: '❤️' }; // Rose
       case 'Animal Welfare': return { color: '#ec4899', emoji: '🐘' }; // Pink
       case 'Cultural': return { color: '#8b5cf6', emoji: '🏯' }; // Violet 
-      case 'Education': return { color: '#3b82f6', emoji: '📚' }; // Blue
+      case 'Education': return { 
+        color: '#E6D5B8', // Sandy Background
+        icon: '/Edu.png', // Path to your PNG
+        isCustom: true  };
       case 'Adventure': return { color: '#ea580c', emoji: '🧗' }; // Deep Orange
       case 'Exploration': return { color: '#eab308', emoji: '🧭' }; // GOLD (Discovery)
       case 'Marine Adventure': return { color: '#06b6d4', emoji: '🤿' }; // CYAN (Water)
       case 'Wildlife Adventure': return { color: '#84cc16', emoji: '🐾' }; // LIME (Jungle)
       
-      default: return { color: '#f97316', emoji: '🎯' }; // Orange
+      default: return { color: '#E6D5B8', emoji: '🎯', isCustom: false };
   }
 };
 
 const createQuestIcon = (status, category) => {
-// 1. Get Base Category Style
-let { color, emoji } = getCategoryDetails(category);
+  const detail = getCategoryDetails(category);
 
-// 2. Override if Completed or Pending
-if (status === 'approved') {
-    color = '#10B981'; // Emerald Green
-    emoji = '🏆';
-} else if (status === 'pending') {
-    color = '#F59E0B'; // Amber
-    emoji = '⏳';
-}
+  // 1. Logic for the Outer Border Color
+  let outerBorderColor = '#107870'; // Default Teal
+  if (status === 'approved') outerBorderColor = '#10B981';
+  else if (status === 'pending') outerBorderColor = '#F59E0B';
 
-// 3. Return Leaflet Icon
-return L.divIcon({
-  className: "gamified-marker",
-  html: `<div style="
-      background-color: ${color};
-      width: 36px; height: 36px;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      border: 3px solid #107870;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-  ">
-      <span style="transform: rotate(45deg); display: block; line-height: 1;">${emoji}</span>
-  </div>`,
-  iconSize: [36, 36], 
-  iconAnchor: [18, 36], 
-  popupAnchor: [0, -36],
-});
+  // 2. Logic for the Inner Content (Image vs Emoji)
+  const iconContent = detail.isCustom 
+    ? `<img src="${detail.icon}" style="width: 24px; height: 24px; object-fit: contain;" />`
+    : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 18px;">${detail.emoji}</span>`;
+
+  return L.divIcon({
+    className: "gamified-marker",
+    html: `<div style="
+        background-color: #E6D5B8; /* THE SANDY BACKGROUND */
+        width: 38px; height: 38px;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 3px solid ${outerBorderColor};
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        display: flex; align-items: center; justify-content: center;
+    ">
+        <div style="${detail.isCustom ? 'transform: rotate(45deg);' : ''} display: flex; align-items: center; justify-content: center;">
+            ${iconContent}
+        </div>
+    </div>`,
+    iconSize: [38, 38], 
+    iconAnchor: [19, 38], 
+    popupAnchor: [0, -38],
+  });
 };
 
 const createAvatarIcon = () => {
