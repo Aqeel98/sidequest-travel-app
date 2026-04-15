@@ -21,11 +21,19 @@ import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
 import InstallBanner from './components/InstallBanner';
 import Quiz from './pages/Quiz';
+<<<<<<< HEAD
 import HuntDashboard from './pages/HuntDashboard';
 import HuntStop from './pages/HuntStop';
 import Leaderboard from './pages/Leaderboard';
 import TravelAgency from './pages/TravelAgency';
 import MyJourney from './pages/MyJourney';
+=======
+//import HuntDashboard from './pages/HuntDashboard';
+//import HuntStop from './pages/HuntStop';
+//import Leaderboard from './pages/Leaderboard';
+//import TravelAgency from './pages/TravelAgency';
+//import MyJourney from './pages/MyJourney';
+>>>>>>> main
 
 // --- 1. CONSOLE SHIELD ENGINE ---
 const originalConsole = { ...console };
@@ -102,26 +110,9 @@ const MainLayout = () => {
 
   useEffect(() => {
     const v = '3.7.0';
-    // Skip version check for bots to avoid reload loops
-    if (navigator.userAgent.match(/bot|googlebot|crawler|spider|robot|crawling/i)) return;
-
-    if (window.location.search.includes('v=' + v)) return;
-    const checkUpdate = async () => {
-      try {
-        const res = await fetch('/index.html?cb=' + Date.now(), { cache: 'no-store' });
-        const html = await res.text();
-        if (html.includes("const CURRENT_APP_VERSION = '" + v + "'") === false) {
-          window.location.reload(true);
-        }
-      } catch (e) {}
-    };
-
-    checkUpdate(); // Run on mount
-
-    const handleWake = () => { if (document.visibilityState === 'visible') checkUpdate(); };
-    document.addEventListener('visibilitychange', handleWake);
-    
-    return () => document.removeEventListener('visibilitychange', handleWake);
+    if (localStorage.getItem('sq_app_version') !== v) {
+      localStorage.setItem('sq_app_version', v);
+    }
   }, []);
 
   useEffect(() => {
@@ -173,11 +164,19 @@ export default function App() {
             <Route path="admin" element={<Admin />} />
             <Route path="emergency" element={<Emergency />} />
             <Route path="quiz" element={<Quiz />} />
+<<<<<<< HEAD
             <Route path="hunt" element={<HuntDashboard />} />
             <Route path="hunt/:stopId" element={<HuntStop />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="plan-trip" element={<TravelAgency />} />
             <Route path="my-journey" element={<MyJourney />} />
+=======
+            {/* <Route path="hunt" element={<HuntDashboard />} /> */}
+{/* <Route path="hunt/:stopId" element={<HuntStop />} /> */}
+{/* <Route path="leaderboard" element={<Leaderboard />} /> */}
+{/* <Route path="plan-trip" element={<TravelAgency />} /> */}
+{/* <Route path="my-journey" element={<MyJourney />} /> */}
+>>>>>>> main
             </Route>
           </Routes>
         </BrowserRouter>

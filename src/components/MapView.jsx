@@ -16,25 +16,24 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow 
 });
 
-// --- CUSTOM ICONS (Your Original Colors) ---
-// --- NEW HELPER: CATEGORY COLORS & EMOJIS ---
 const getCategoryDetails = (category) => {
   switch (category) {
-      // Existing
-      case 'Environmental': return { color: '#10b981', emoji: '🌿' }; // Emerald
-      case 'Social': return { color: '#f43f5e', emoji: '❤️' }; // Rose
-      case 'Animal Welfare': return { color: '#ec4899', emoji: '🐘' }; // Pink
-      case 'Cultural': return { color: '#8b5cf6', emoji: '🏯' }; // Violet 
-      case 'Education': return { 
-        color: '#E6D5B8', // Sandy Background
-        icon: '/Edu.png', // Path to your PNG
-        isCustom: true  };
-      case 'Adventure': return { color: '#ea580c', emoji: '🧗' }; // Deep Orange
-      case 'Exploration': return { color: '#eab308', emoji: '🧭' }; // GOLD (Discovery)
-      case 'Marine Adventure': return { color: '#06b6d4', emoji: '🤿' }; // CYAN (Water)
-      case 'Wildlife Adventure': return { color: '#84cc16', emoji: '🐾' }; // LIME (Jungle)
-      
-      default: return { color: '#E6D5B8', emoji: '🎯', isCustom: false };
+    case 'Environmental': return { color: '#E6D5B8', emoji: '🌿' };
+    case 'Social': return { color: '#E6D5B8', emoji: '❤️' };
+    case 'Animal Welfare': return { color: '#E6D5B8', emoji: '🐘' };
+    case 'Cultural': return { color: '#E6D5B8', emoji: '🏯' }; 
+    case 'Education': return { 
+      color: '#E6D5B8', 
+      icon: '/Edu.png', 
+      isCustom: true  
+    };
+    case 'Adventure': return { color: '#E6D5B8', emoji: '🧗' };
+    case 'Exploration': return { color: '#E6D5B8', emoji: '🧭' };
+    case 'Marine Adventure': return { color: '#E6D5B8', emoji: '🤿' };
+    case 'Wildlife Adventure': return { color: '#E6D5B8', emoji: '🐾' };
+    case 'Sports & Recreation': return { color: '#E6D5B8', emoji: '⚽' }; 
+    default: return { color: '#E6D5B8', emoji: '🎯', isCustom: false };
+
   }
 };
 
@@ -113,28 +112,21 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
       {/* --- FIX: MOBILE FLOATING BUTTON --- */}
       {currentUser && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1100] w-full max-w-[280px] px-4 pointer-events-none">
-          <button
-            onClick={(e) => {
-               // CHANGE 1: Stop the map from stealing the click
-               e.stopPropagation(); 
-               
-               if (userLocation) {
-                   setShowClosest(true);
-               } else {
-                   onManualLocate(); 
-               }
-            }}
-            // CHANGE 2: Z-Index above was increased to 1050
-            className="pointer-events-auto w-full flex items-center justify-center gap-3 bg-white/90 backdrop-blur-md border border-white/20 px-6 py-3.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 group"
-          >
+   <div className="absolute bottom-28 left-4 z-[1100] pointer-events-none">
+    <button
+       className="pointer-events-auto flex items-center justify-center gap-2 bg-white/95 backdrop-blur-md border border-gray-200 px-4 py-2.5 rounded-full shadow-xl hover:bg-white active:scale-95 transition-all group"
+       onClick={(e) => {
+          e.stopPropagation(); 
+          if (userLocation) { setShowClosest(true); } else { onManualLocate(); }
+       }}
+    >
             {isLocating ? (
               <Loader2 size={20} className="text-cyan-600 animate-spin" />
             ) : (
               <Compass size={20} className={`text-cyan-600 group-hover:rotate-45 transition-transform duration-500 ${!userLocation ? 'animate-pulse' : ''}`} />
             )}
             <span className="font-bold text-slate-800 text-sm tracking-tight">
-              {isLocating ? "Locating..." : "Find Nearest Quests"}
+              {isLocating ? "Locating..." : "Find Quests"}
             </span>
           </button>
         </div>

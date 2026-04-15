@@ -17,6 +17,21 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
+const CATEGORY_CONFIG = {
+  'All': { color: '#334155', icon: '🗺️' },
+  'Exploration': { color: '#854d0e', icon: '🧭' }, 
+  'Adventure': { color: '#9a3412', icon: '🧗' }, 
+  'Marine Adventure': { color: '#164e63', icon: '🤿' }, 
+  'Environmental': { color: '#064e3b', icon: '🌿' }, 
+  'Wildlife Adventure': { color: '#365314', icon: '🐾' }, 
+  'Education': { color: '#1e3a8a', icon: '📚' }, 
+  'Sports & Recreation': { color: '#1e293b', icon: '⚽' }, 
+  'Animal Welfare': { color: '#831843', icon: '🐘' }, 
+  'Cultural': { color: '#4c1d95', icon: '🏯' }, 
+  'Social': { color: '#881337', icon: '❤️' }
+};
+
+
 const MapPage = () => {
   const { quests, questProgress, currentUser, setShowAuthModal, showToast, optimizeImage } = useSideQuest();
   const navigate = useNavigate();
@@ -31,6 +46,14 @@ const MapPage = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
 
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const filteredQuests = useMemo(() => {
+    return quests.filter(q => 
+      q.status === 'active' && 
+      (selectedCategory === 'All' || q.category === selectedCategory)
+    );
+  }, [quests, selectedCategory]);
   // --- 1. SESSION RESTORE ---
   useEffect(() => {
       const savedLoc = sessionStorage.getItem('sq_last_location');
@@ -138,8 +161,38 @@ const MapPage = () => {
   return (
     <div className="h-[calc(100vh-64px)] w-full relative">
       <SEO title="Explore Quests Map" description="View all available SideQuests on the map. Find adventures near you." />
+
+      <div className="absolute top-2 left-0 right-0 z-[1050] px-2 pointer-events-none">
+      <div className="max-w-screen-xl mx-auto relative">
+      <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#1a1a1a] to-transparent z-20 pointer-events-none"></div>
+
+      <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide pointer-events-auto snap-x relative z-10">
+            {Object.entries(CATEGORY_CONFIG).map(([name, config]) => (
+              <button
+                key={name}
+                onClick={() => setSelectedCategory(name)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all duration-300 whitespace-nowrap snap-start shadow-2xl
+                  ${selectedCategory === name 
+                    ? 'scale-105 border-white/30 brightness-110' 
+                    : 'bg-black/40 backdrop-blur-md border-white/10 opacity-80 hover:opacity-100'}
+                `}
+                style={{ 
+                  backgroundColor: selectedCategory === name ? config.color : '',
+                  color: 'white'
+                }}
+              >
+                <span className="text-base drop-shadow-md">{config.icon}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">{name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+
+
       <MapView
-        quests={quests}
+        quests={filteredQuests}
         questProgress={questProgress}
         currentUser={currentUser}
         onSelectQuest={handleSelectQuest}
@@ -150,7 +203,7 @@ const MapPage = () => {
       />
 
       {/* --- SUGGEST A QUEST BUTTON --- */}
-      <div className="absolute bottom-6 left-4 z-[1000]">
+      <div className="absolute bottom-12 left-4 z-[1100]">
         <button
           onClick={() => {
             if (!currentUser) { setShowAuthModal(true); return; }

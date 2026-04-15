@@ -45,49 +45,32 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" media="all">
 
 <script>
-      (function(){
-        const CURRENT_APP_VERSION = '3.7.0';
-        
-        const isBot = /bot|googlebot|crawler|spider|robot|crawling|Lighthouse|Chrome-Lighthouse/i.test(navigator.userAgent);
-        
-        const storageAvailable = (function() {
-          try {
-            var x = '__storage_test__';
-            localStorage.setItem(x, x);
-            localStorage.removeItem(x);
-            return true;
-          } catch (e) { return false; }
-        })();
+  (function() {
+    const V = '3.7.0';
+    const PURGE_KEY = 'sq_v370_stable_purge'; 
 
-        const savedVersion = storageAvailable ? localStorage.getItem('sq_app_version') : CURRENT_APP_VERSION;
+    if (localStorage.getItem(PURGE_KEY) === 'true') {
+      return; 
+    }
 
-        if (!isBot && savedVersion !== CURRENT_APP_VERSION) {
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(rs => {
-              for (let r of rs) r.unregister();
-            });
-          }
-          if ('caches' in window) {
-            caches.keys().then(ks => {
-              for (let k of ks) caches.delete(k);
-            });
-          }
-          if (storageAvailable) localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (let r of regs) { r.unregister(); }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(keys) {
+        for (let k of keys) { caches.delete(k); }
+      });
+    }
 
-          window.location.replace(window.location.origin + window.location.pathname + '?v=' + CURRENT_APP_VERSION);
-          return;
-        }
-        
-        if (storageAvailable) localStorage.setItem('sq_app_version', CURRENT_APP_VERSION);
-      
-        window.addEventListener('error', (e) => {
-          if (e.message && (e.message.includes('module script') || e.message.includes('chunk'))) {
-              window.location.reload(true);
-          }
-        }, true);
-      })();
-      
+    localStorage.setItem(PURGE_KEY, 'true');
+    localStorage.setItem('sq_app_version', V);
+
+    window.location.replace(window.location.origin + window.location.pathname + '?v=' + V);
+  })();
 </script>
+
 </head>
 <body>
 <div id="root"></div>

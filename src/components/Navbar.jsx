@@ -49,7 +49,9 @@ const Navbar = () => {
         <nav className="hidden md:flex items-center space-x-2">
           <Link to="/" className={isActive('/')}>Quests</Link>
           <Link to="/map" className={isActive('/map')}>Map</Link>
-          <Link to="/plan-trip" className={isActive('/plan-trip')}>Travel</Link> 
+
+          {currentUser?.role === 'Admin' && (
+  <Link to="/plan-trip" className={isActive('/plan-trip')}>Travel (Dev)</Link> )}
           <Link to="/quiz" className={isActive('/quiz')}>Quiz</Link> 
           <Link to="/how-it-works" className={isActive('/how-it-works')}>Guide</Link>
           {currentUser && (
@@ -58,17 +60,17 @@ const Navbar = () => {
           <Link to="/rewards" className={isActive('/rewards')}>Rewards</Link>
           {currentUser && myBookings?.length > 0 && (
      <Link to="/my-journey" className={isActive('/my-journey')}>
-    <span className="flex items-center gap-1 text-[#107870] font-bold">
-      <Globe size={14} /> My Journey
-    </span>
-     </Link>
+     <span className="flex items-center gap-1 text-[#107870] font-bold">
+       My Journey
+     </span>
+   </Link>
         )}
           {isHuntActive && currentUser?.hunt_access?.includes(activeEvent?.id) && (
            <Link to="/hunt" className={isActive('/hunt')}>
-       <span className="flex items-center gap-1 text-teal-400">
-        <Trophy size={14} className="text-teal-400" /> Colombo Hunt
-      </span>
-          </Link>
+           <span className="flex items-center gap-1 text-teal-400">
+             Colombo Hunt
+           </span>
+         </Link>
           )}
           
           {/* PARTNER DROPDOWN */}
@@ -166,13 +168,14 @@ const Navbar = () => {
             
             <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
             <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
+            {currentUser?.role === 'Admin' && (
             <Link 
               to="/plan-trip" 
               className="p-3 rounded-lg hover:bg-teal-50 text-[#107870] font-bold flex items-center" 
               onClick={() => setIsOpen(false)}
             >
                <Sparkles size={18} className="mr-2" /> Plan My Trip
-            </Link>
+            </Link>)}
             <Link to="/quiz" className="p-3 rounded-lg hover:bg-brand-50 text-brand-600 font-bold flex items-center" onClick={() => setIsOpen(false)}>
                <Zap size={18} className="mr-2" fill="currentColor"/> Quiz Game
             </Link>
