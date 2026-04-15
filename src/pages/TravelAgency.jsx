@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { 
@@ -14,7 +15,6 @@ const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 const TravelAgency = () => {
   const navigate = useNavigate();
-  // FIXED: Added initiateCustomBooking here
   const { 
     travelPackages, 
     travelSettings, 
@@ -22,7 +22,8 @@ const TravelAgency = () => {
     isLoading, 
     initiateTravelBooking, 
     initiateCustomBooking, 
-    currentUser 
+    currentUser,
+    setShowAuthModal 
   } = useSideQuest();
 
   const [driverDays, setDriverDays] = useState(1);
@@ -32,6 +33,22 @@ const TravelAgency = () => {
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [isMatching, setIsMatching] = useState(false);
   const [tier, setTier] = useState('driver');
+
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1]);
+    
+    if (params.get('cancel') === 'true') {
+        const saved = localStorage.getItem('sq_pending_trip');
+        if (saved) {
+            const { trip, tier: savedTier } = JSON.parse(saved);
+            setSelectedTrip(trip); // Re-opens the modal
+            setTier(savedTier);    // Re-selects their chosen tier
+            showToast("Booking paused. Your selection is saved!", "info");
+            localStorage.removeItem('sq_pending_trip'); // Clear memory
+        }
+    }
+  }, []);
 
   // --- LOGIC: AI MATCHER ---
   const handleAiMatch = () => {
@@ -167,28 +184,35 @@ const TravelAgency = () => {
                   
                   {/* FIXED: Booking logic moved to this main button */}
                   <button 
-                    disabled={selectedDistricts.length === 0} 
-                    onClick={async () => {
-                      const price = selectedDistricts.length * 2 * (travelSettings?.driver_day_rate_usd || 70);
-                      const booking = await initiateCustomBooking('custom_loop', selectedDistricts.length * 2, price);
-                      
-                      if (booking) {
-                          showToast("Redirecting to Stripe...", "info");
-                          const { data } = await supabase.functions.invoke('create-checkout-session', {
-                              body: { 
-                                  bookingId: booking.id,
-                                  packageName: `Custom Loop (${selectedDistricts.length} Stops)`,
-                                  price: price,
-                                  customerEmail: currentUser.email
-                              }
-                          });
-                          if (data?.url) window.location.href = data.url;
-                      }
-                    }}
-                    className="bg-[#107870] text-white px-12 py-4 rounded-2xl font-black shadow-lg disabled:opacity-30 active:scale-95 transition-all"
-                  >
-                    Book This Route
-                  </button>
+  disabled={selectedDistricts.length === 0} 
+  onClick={async () => {
+    // GUARD: Prevents guest checkout
+    if (!currentUser) {
+        showToast("Please login to book this route", "info");
+        setShowAuthModal(true);
+        return;
+    }
+
+    const price = selectedDistricts.length * 2 * (travelSettings?.driver_day_rate_usd || 70);
+    const booking = await initiateCustomBooking('custom_loop', selectedDistricts.length * 2, price);
+    
+    if (booking) {
+        showToast("Redirecting to Stripe...", "info");
+        const { data } = await supabase.functions.invoke('create-checkout-session', {
+            body: { 
+                bookingId: booking.id,
+                packageName: `Custom Loop (${selectedDistricts.length} Stops)`,
+                price: price,
+                customerEmail: currentUser.email
+            }
+        });
+        if (data?.url) window.location.href = data.url;
+    }
+  }}
+  className="bg-[#107870] text-white px-12 py-4 rounded-2xl font-black shadow-lg disabled:opacity-30 active:scale-95 transition-all"
+>
+  {currentUser ? 'Book This Route' : 'Login to Book'}
+</button>
                </div>
             </div>
           )}
@@ -216,26 +240,33 @@ const TravelAgency = () => {
                       <p className="text-xs font-bold text-gray-400 uppercase">Total for {driverDays} Days</p>
                     </div>
                     <button 
-                      onClick={async () => {
-                        const price = driverDays * (travelSettings?.driver_day_rate_usd || 70);
-                        const booking = await initiateCustomBooking('solo_driver', driverDays, price);
-                        if (booking) {
-                            showToast("Connecting...", "info");
-                            const { data } = await supabase.functions.invoke('create-checkout-session', {
-                                body: { 
-                                    bookingId: booking.id,
-                                    packageName: `Solo Driver Hire (${driverDays} Days)`,
-                                    price: price,
-                                    customerEmail: currentUser.email
-                                }
-                            });
-                            if (data?.url) window.location.href = data.url;
-                        }
-                      }}
-                      className="flex-1 max-w-xs bg-[#107870] text-white py-5 rounded-3xl font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
-                    >
-                      Hire Now
-                    </button>
+  onClick={async () => {
+    // GUARD: Prevents guest checkout
+    if (!currentUser) {
+        showToast("Please login to hire a driver", "info");
+        setShowAuthModal(true);
+        return;
+    }
+
+    const price = driverDays * (travelSettings?.driver_day_rate_usd || 70);
+    const booking = await initiateCustomBooking('solo_driver', driverDays, price);
+    if (booking) {
+        showToast("Connecting...", "info");
+        const { data } = await supabase.functions.invoke('create-checkout-session', {
+            body: { 
+                bookingId: booking.id,
+                packageName: `Solo Driver Hire (${driverDays} Days)`,
+                price: price,
+                customerEmail: currentUser.email
+            }
+        });
+        if (data?.url) window.location.href = data.url;
+    }
+  }}
+  className="flex-1 max-w-xs bg-[#107870] text-white py-5 rounded-3xl font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
+>
+  {currentUser ? 'Hire Now' : 'Login to Hire'}
+</button>
                   </div>
                </div>
                <div className="w-full md:w-96 h-96 bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-2xl">
@@ -289,27 +320,38 @@ const TravelAgency = () => {
             </div>
 
             <button 
-              onClick={async () => {
-                const today = new Date().toISOString().split('T')[0];
-                const booking = await initiateTravelBooking(selectedTrip, tier, today);
-                if (booking) {
-                    showToast("Connecting to Stripe...", "info");
-                    const { data } = await supabase.functions.invoke('create-checkout-session', {
-                        body: { 
-                            bookingId: booking.id,
-                            packageName: selectedTrip.title,
-                            price: booking.total_price_usd,
-                            customerEmail: currentUser.email
-                        }
-                    });
-                    if (data?.url) window.location.href = data.url;
-                }
-              }}
-              className="w-full bg-[#107870] text-white py-6 rounded-[2rem] font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
-            >
-              Confirm & Pay
-            </button>    
-          </div>
+                onClick={async () => {
+              if (!currentUser) {
+        showToast("Please login to secure your booking", "info");
+        setShowAuthModal(true);
+        return;
+    }
+
+    // 1. SAVE PROGRESS: Store the selection in local memory in case they click "Back" on Stripe
+            localStorage.setItem('sq_pending_trip', JSON.stringify({ trip: selectedTrip, tier: tier }));
+
+        const today = new Date().toISOString().split('T')[0];
+        const booking = await initiateTravelBooking(selectedTrip, tier, today);
+    
+        if (booking) {
+        showToast("Connecting to Stripe...", "info");
+        const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+            body: { 
+                bookingId: booking.id,
+                packageName: selectedTrip.title,
+                price: booking.total_price_usd,
+                customerEmail: currentUser.email
+            }
+           });
+          // 2. The user leaves the app here...
+            if (data?.url) window.location.href = data.url; 
+           }
+         }}
+         className="w-full bg-[#107870] text-white py-6 rounded-[2rem] font-black text-xl shadow-xl shadow-[#107870]/20 active:scale-95 transition-all"
+        >
+       {currentUser ? 'Confirm & Pay' : 'Login to Book'}
+      </button>
+        </div>
         </div>
       )}
     </div>

@@ -38,7 +38,7 @@ serve(async (req) => {
       mode: 'payment',
       // Redirects back to your PWA
       success_url: `${req.headers.get('origin')}/#/my-journey?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/#/plan-trip`,
+      cancel_url: `${req.headers.get('origin')}/#/plan-trip?cancel=true`,
       metadata: { bookingId: bookingId }
     })
 
