@@ -21,19 +21,11 @@ import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
 import InstallBanner from './components/InstallBanner';
 import Quiz from './pages/Quiz';
-<<<<<<< HEAD
 import HuntDashboard from './pages/HuntDashboard';
 import HuntStop from './pages/HuntStop';
 import Leaderboard from './pages/Leaderboard';
 import TravelAgency from './pages/TravelAgency';
 import MyJourney from './pages/MyJourney';
-=======
-//import HuntDashboard from './pages/HuntDashboard';
-//import HuntStop from './pages/HuntStop';
-//import Leaderboard from './pages/Leaderboard';
-//import TravelAgency from './pages/TravelAgency';
-//import MyJourney from './pages/MyJourney';
->>>>>>> main
 
 // --- 1. CONSOLE SHIELD ENGINE ---
 const originalConsole = { ...console };
@@ -164,19 +156,11 @@ export default function App() {
             <Route path="admin" element={<Admin />} />
             <Route path="emergency" element={<Emergency />} />
             <Route path="quiz" element={<Quiz />} />
-<<<<<<< HEAD
             <Route path="hunt" element={<HuntDashboard />} />
             <Route path="hunt/:stopId" element={<HuntStop />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="plan-trip" element={<TravelAgency />} />
             <Route path="my-journey" element={<MyJourney />} />
-=======
-            {/* <Route path="hunt" element={<HuntDashboard />} /> */}
-{/* <Route path="hunt/:stopId" element={<HuntStop />} /> */}
-{/* <Route path="leaderboard" element={<Leaderboard />} /> */}
-{/* <Route path="plan-trip" element={<TravelAgency />} /> */}
-{/* <Route path="my-journey" element={<MyJourney />} /> */}
->>>>>>> main
             </Route>
           </Routes>
         </BrowserRouter>

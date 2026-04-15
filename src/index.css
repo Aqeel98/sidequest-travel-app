@@ -167,8 +167,6 @@ img:not([src]) {
 
 .animate-spin-fast {
   animation: spin-fast 1.5s linear infinite;
-<<<<<<< HEAD
-=======
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -177,5 +175,4 @@ img:not([src]) {
 .scrollbar-hide {
   -ms-overflow-style: none;  
   scrollbar-width: none;  
->>>>>>> main
 }
