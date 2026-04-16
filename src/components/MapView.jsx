@@ -17,19 +17,19 @@ L.Icon.Default.mergeOptions({
 });
 
 const getCategoryDetails = (category) => {
-  const base = { color: '#E6D5B8', isCustom: true }; // Sandy background for all
+  const base = { color: '#E6D5B8', isCustom: true };
   
-  switch (category) {
+  switch (category?.trim()) {
       case 'Exploration': return { ...base, icon: '/Exploration.png' };
       case 'Adventure': return { ...base, icon: '/Adventure.png' };
       case 'Marine Adventure': return { ...base, icon: '/Marine_Adventure.png' };
-      case 'Environmental': return { ...base, icon: '/Environmental_.png' };
+      case 'Environmental': return { ...base, icon: '/Environmental_.png' }; 
       case 'Wildlife Adventure': return { ...base, icon: '/Wildlife_Adventure.png' };
       case 'Education': return { ...base, icon: '/Edu.png' };
-      case 'Sports & Recreation': return { ...base, icon: '/Sports_&_Recreational_.png' };
+      case 'Sports & Recreation': return { ...base, icon: '/Sports_&_Recreational_.png' }; 
       case 'Animal Welfare': return { ...base, icon: '/Animal_Welfare.png' };
       case 'Cultural': return { ...base, icon: '/Cultural.png' };
-      case 'Social': return { ...base, icon: '/Social.png' };
+      case 'Social': return { ...base, icon: '/Social.png' }; 
       
       default: return { color: '#E6D5B8', emoji: '🎯', isCustom: false };
   }
@@ -41,28 +41,29 @@ const createQuestIcon = (status, category) => {
   if (status === 'approved') outerBorderColor = '#10B981';
   else if (status === 'pending') outerBorderColor = '#F59E0B';
 
+  // INCREASED ICON SIZE TO 28px
   const iconContent = detail.isCustom 
-    ? `<img src="${detail.icon}" style="width: 22px; height: 22px; object-fit: contain; filter: contrast(1.1);" />`
-    : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 18px;">${detail.emoji}</span>`;
+    ? `<img src="${detail.icon}" style="width: 28px; height: 28px; object-fit: contain;" />`
+    : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 20px;">${detail.emoji}</span>`;
 
   return L.divIcon({
     className: "gamified-marker",
     html: `<div style="
         background-color: #E6D5B8;
-        width: 38px; height: 38px;
+        width: 44px; height: 44px; 
         border-radius: 50% 50% 50% 0;
         transform: rotate(-45deg);
         border: 3px solid ${outerBorderColor};
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.4);
         display: flex; align-items: center; justify-content: center;
     ">
         <div style="${detail.isCustom ? 'transform: rotate(45deg);' : ''} display: flex; align-items: center; justify-content: center;">
             ${iconContent}
         </div>
     </div>`,
-    iconSize: [38, 38], 
-    iconAnchor: [19, 38], 
-    popupAnchor: [0, -38],
+    iconSize: [44, 44], 
+    iconAnchor: [22, 44],
+    popupAnchor: [0, -44],
   });
 };
 
