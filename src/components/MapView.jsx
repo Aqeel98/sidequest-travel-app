@@ -30,7 +30,7 @@ const getCategoryDetails = (category) => {
       case 'Sports & Recreation': return { ...base, icon: '/Sports_&_Recreational_.png' };
       case 'Animal Welfare': return { ...base, icon: '/Animal_Welfare.png' };
       case 'Cultural': return { ...base, icon: '/Cultural.png' };
-      case 'Social': return { ...base, icon: '/Social.png' };
+      case 'Social': return { ...base, icon: '/Social_.png' };
       default: return { color: '#E6D5B8', emoji: '🎯', isCustom: false };
   }
 };
