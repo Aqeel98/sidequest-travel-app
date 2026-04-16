@@ -17,6 +17,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const getCategoryDetails = (category) => {
+  // Unified sandy background and custom icon flag
   const base = { color: '#E6D5B8', isCustom: true };
   
   switch (category?.trim()) {
@@ -26,46 +27,46 @@ const getCategoryDetails = (category) => {
       case 'Environmental': return { ...base, icon: '/Environmental_.png' }; 
       case 'Wildlife Adventure': return { ...base, icon: '/Wildlife_Adventure.png' };
       case 'Education': return { ...base, icon: '/Edu.png' };
-      case 'Sports & Recreation': return { ...base, icon: '/Sports_&_Recreational_.png' }; 
+      case 'Sports & Recreation': return { ...base, icon: '/Sports_&_Recreational_.png' };
       case 'Animal Welfare': return { ...base, icon: '/Animal_Welfare.png' };
       case 'Cultural': return { ...base, icon: '/Cultural.png' };
-      case 'Social': return { ...base, icon: '/Social_.png' }; 
-      
+      case 'Social': return { ...base, icon: '/Social.png' };
       default: return { color: '#E6D5B8', emoji: '🎯', isCustom: false };
   }
 };
 
 const createQuestIcon = (status, category) => {
   const detail = getCategoryDetails(category);
-  let outerBorderColor = '#107870'; 
-  if (status === 'approved') outerBorderColor = '#10B981';
-  else if (status === 'pending') outerBorderColor = '#F59E0B';
+  
+  // FIX: Force the border to be the EXACT same teal for every single pin
+  const BRAND_TEAL = '#107870'; 
 
-  // INCREASED ICON SIZE TO 28px
+  // INCREASED SIZE: 48px pin, 32px icon
   const iconContent = detail.isCustom 
-    ? `<img src="${detail.icon}" style="width: 28px; height: 28px; object-fit: contain;" />`
-    : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 20px;">${detail.emoji}</span>`;
+    ? `<img src="${detail.icon}" style="width: 32px; height: 32px; object-fit: contain;" />`
+    : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 24px;">${detail.emoji}</span>`;
 
   return L.divIcon({
     className: "gamified-marker",
     html: `<div style="
         background-color: #E6D5B8;
-        width: 44px; height: 44px; 
+        width: 48px; height: 48px; 
         border-radius: 50% 50% 50% 0;
         transform: rotate(-45deg);
-        border: 3px solid ${outerBorderColor};
-        box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        border: 3.5px solid ${BRAND_TEAL}; /* Identical Thick Teal Border */
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
         display: flex; align-items: center; justify-content: center;
     ">
         <div style="${detail.isCustom ? 'transform: rotate(45deg);' : ''} display: flex; align-items: center; justify-content: center;">
             ${iconContent}
         </div>
     </div>`,
-    iconSize: [44, 44], 
-    iconAnchor: [22, 44],
-    popupAnchor: [0, -44],
+    iconSize: [48, 48], 
+    iconAnchor: [24, 48], 
+    popupAnchor: [0, -48],
   });
 };
+
 
 const createAvatarIcon = () => {
     return L.divIcon({
