@@ -83,28 +83,32 @@ const MyJourney = () => {
             </div>
 
             <div className="max-w-2xl mx-auto px-6 -mt-8 relative z-20">
-                {/* --- DRIVER / SUPPORT CARD --- */}
+                
+                {/* --- DYNAMIC DRIVER CARD --- */}
                 <div className="bg-white rounded-[2.5rem] p-8 shadow-xl mb-10 border border-white group">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-gray-100 rounded-2xl overflow-hidden border-2 border-[#107870]/10">
-                                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100" className="w-full h-full object-cover" alt="Driver" />
+                            <div className="w-16 h-16 bg-gray-100 rounded-2xl overflow-hidden border-2 border-[#107870]/10 flex items-center justify-center">
+                                {activeBooking.driver?.avatar_url ? (
+                                    <img src={activeBooking.driver.avatar_url} className="w-full h-full object-cover" alt="Driver" />
+                                ) : (
+                                    <div className="text-[#107870]/20"><Car size={32}/></div>
+                                )}
                             </div>
                             <div>
-                                <h3 className="font-black text-gray-900 leading-tight">Driver Assigned</h3>
-                                <p className="text-[10px] font-black text-[#107870] uppercase tracking-widest">Verified SideQuest Partner</p>
+                                <h3 className="font-black text-gray-900 leading-tight">
+                                    {activeBooking.driver?.full_name || "Assigning Driver..."}
+                                </h3>
+                                <p className="text-[10px] font-black text-[#107870] uppercase tracking-widest">
+                                    {activeBooking.driver ? "Verified SideQuest Partner" : "SideQuest HQ is assigning yours"}
+                                </p>
                             </div>
                         </div>
-                        <a href="https://wa.me/9400000000" target="_blank" rel="noreferrer" className="bg-[#25D366] text-white p-4 rounded-2xl shadow-lg shadow-[#25D366]/20 active:scale-95 hover:scale-105 transition-all">
-                            <MessageCircle size={24} fill="currentColor" />
-                        </a>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-2xl flex items-center justify-between border border-gray-100">
-                         <div className="flex flex-col">
-                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter leading-none">Booking Reference</span>
-                            <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">{activeBooking.id.slice(0,8)}</span>
-                         </div>
-                         <button className="text-[10px] font-black text-[#107870] underline uppercase tracking-widest">Contact HQ</button>
+                        {activeBooking.driver && (
+                            <a href={`https://wa.me/${activeBooking.driver.email.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="bg-[#25D366] text-white p-4 rounded-2xl shadow-lg active:scale-95 transition-all">
+                                <MessageCircle size={24} fill="currentColor" />
+                            </a>
+                        )}
                     </div>
                 </div>
 

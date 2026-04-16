@@ -19,16 +19,16 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 
 const CATEGORY_CONFIG = {
   'All': { color: '#334155', icon: '🗺️' },
-  'Exploration': { color: '#854d0e', icon: '🧭' }, 
-  'Adventure': { color: '#9a3412', icon: '🧗' }, 
-  'Marine Adventure': { color: '#164e63', icon: '🤿' }, 
-  'Environmental': { color: '#064e3b', icon: '🌿' }, 
-  'Wildlife Adventure': { color: '#365314', icon: '🐾' }, 
-  'Education': { color: '#1e3a8a', icon: '📚' }, 
-  'Sports & Recreation': { color: '#1e293b', icon: '⚽' }, 
-  'Animal Welfare': { color: '#831843', icon: '🐘' }, 
-  'Cultural': { color: '#4c1d95', icon: '🏯' }, 
-  'Social': { color: '#881337', icon: '❤️' }
+  'Exploration': { color: '#854d0e', icon: <img src="/Exploration.png" className="w-5 h-5 object-contain" /> }, 
+  'Adventure': { color: '#9a3412', icon: <img src="/Adventure.png" className="w-5 h-5 object-contain" /> }, 
+  'Marine Adventure': { color: '#164e63', icon: <img src="/Marine_Adventure.png" className="w-5 h-5 object-contain" /> }, 
+  'Environmental': { color: '#064e3b', icon: <img src="/Environmental_.png" className="w-5 h-5 object-contain" /> }, 
+  'Wildlife Adventure': { color: '#365314', icon: <img src="/Wildlife_Adventure.png" className="w-5 h-5 object-contain" /> }, 
+  'Education': { color: '#1e3a8a', icon: <img src="/Edu.png" className="w-5 h-5 object-contain" /> }, 
+  'Sports & Recreation': { color: '#1e293b', icon: <img src="/Sports_&_Recreational_.png" className="w-5 h-5 object-contain" /> }, 
+  'Animal Welfare': { color: '#831843', icon: <img src="/Animal_Welfare.png" className="w-5 h-5 object-contain" /> }, 
+  'Cultural': { color: '#4c1d95', icon: <img src="/Cultural.png" className="w-5 h-5 object-contain" /> }, 
+  'Social': { color: '#881337', icon: <img src="/Social.png" className="w-5 h-5 object-contain" /> }
 };
 
 

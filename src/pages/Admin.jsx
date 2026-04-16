@@ -250,6 +250,7 @@ const handleImageUpload = async (e) => {
 const Admin = () => {
     const {
         currentUser, questProgress, quests, rewards, users, redemptions,travelPackages, travelSettings,
+        myBookings,  updateTravelSettings, manageDriverProfile,
         approveSubmission, rejectSubmission, approveNewQuest, approveNewReward,
         updateQuest, deleteQuest, updateReward, deleteReward, showToast,
         generateInviteCode, partnerRequests,
@@ -586,36 +587,41 @@ const handlePublishPackage = async () => {
           Proofs ({pendingSubmissions.length})
         </button>
         <button onClick={() => setActiveTab('newQuests')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'newQuests' ? 'border-b-4 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}>
-          New Quests ({pendingNewQuests.length})
+          New Quests
         </button>
         <button onClick={() => setActiveTab('newRewards')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'newRewards' ? 'border-b-4 border-orange-500 text-orange-600' : 'text-gray-500 hover:text-orange-600'}`}>
-          New Rewards ({pendingNewRewards.length})
+          New Rewards
         </button>
+
+        {/* 5. TRAVEL MANAGER (Expeditions) */}
+        <button 
+          onClick={() => setActiveTab('travel')} 
+          className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'travel' ? 'border-b-4 border-[#107870] text-[#107870]' : 'text-gray-500 hover:text-[#107870]'}`}
+        >
+          Island Expeditions
+        </button>
+
         <button onClick={() => setActiveTab('quests')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'quests' ? 'border-b-4 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'}`}>
           Quest Manager
         </button>
         <button onClick={() => setActiveTab('rewards')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'rewards' ? 'border-b-4 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}>
           Reward Manager
         </button>
-        <button onClick={() => setActiveTab('security')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'security' ? 'border-b-4 border-red-500 text-red-600' : 'text-gray-500 hover:text-red-600'}`}>
-          Security Vault
+
+        {/* 8. HUNT MANAGER */}
+        <button onClick={() => setActiveTab('hunt')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'hunt' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
+          Hunt Manager
         </button>
 
+        {/* 9. PARTNER OVERSIGHT */}
         <button onClick={() => setActiveTab('partnerOversight')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'partnerOversight' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
           Partner Oversight
         </button>
 
-        <button 
-          onClick={() => setActiveTab('travel')} 
-         className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'travel' ? 'border-b-4 border-[#107870] text-[#107870]' : 'text-gray-500 hover:text-[#107870]'}`}
-        >
-        Travel Manager
+        {/* 10. SECURITY VAULT (Last) */}
+        <button onClick={() => setActiveTab('security')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'security' ? 'border-b-4 border-red-500 text-red-600' : 'text-gray-500 hover:text-red-600'}`}>
+          Security Vault
         </button>
-
-
-        <button onClick={() => setActiveTab('hunt')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'hunt' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
-        Hunt Manager
-      </button>
       </div>
 
       {/* --- 0. DASHBOARD TAB --- */}
@@ -969,44 +975,109 @@ const handlePublishPackage = async () => {
       )}
 
    {/* --- 7. TRAVEL MANAGER TAB --- */}
-{activeTab === 'travel' && (
-  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+   {activeTab === 'travel' && (
+  <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
     
-    {/* A. PACKAGE CREATOR SECTION */}
+    {/* A. PRICING BRAIN (Editable) */}
+    <div className="bg-gray-900 p-8 rounded-[2.5rem] text-white">
+       <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-black flex items-center gap-2 text-teal-400"><Zap size={20}/> Global Pricing Brain</h3>
+          <span className="text-[10px] font-bold text-teal-400/50 uppercase tracking-widest italic">Live Island Rates</span>
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Driver Day Rate ($)</p>
+             <input 
+                type="number" 
+                defaultValue={travelSettings?.driver_day_rate_usd} 
+                onBlur={(e) => updateTravelSettings({ driver_day_rate_usd: parseFloat(e.target.value) })}
+                className="bg-transparent text-2xl font-black outline-none border-b border-white/10 w-full focus:border-teal-400" 
+             />
+          </div>
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Essential Markup ($)</p>
+             <input 
+                type="number" 
+                defaultValue={travelSettings?.essential_markup_usd} 
+                onBlur={(e) => updateTravelSettings({ essential_markup_usd: parseFloat(e.target.value) })}
+                className="bg-transparent text-2xl font-black outline-none border-b border-white/10 w-full focus:border-teal-400" 
+             />
+          </div>
+          <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Full Markup ($)</p>
+             <input 
+                type="number" 
+                defaultValue={travelSettings?.full_markup_usd} 
+                onBlur={(e) => updateTravelSettings({ full_markup_usd: parseFloat(e.target.value) })}
+                className="bg-transparent text-2xl font-black outline-none border-b border-white/10 w-full focus:border-teal-400" 
+             />
+          </div>
+       </div>
+       <p className="text-[9px] text-gray-500 mt-4 italic">* Changes save automatically on click-out (onBlur).</p>
+    </div>
+
+    {/* B. LIVE SALES & OPERATIONS (Driver Assignment) */}
+    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+        <h3 className="text-xl font-black text-gray-800 mb-6 flex items-center gap-2">
+            <CheckCircle className="text-[#107870]"/> Live Sales & Driver Assignment
+        </h3>
+        <div className="space-y-4">
+            {myBookings.length === 0 ? (
+                <p className="py-10 text-center text-gray-400 italic">No bookings recorded yet.</p>
+            ) : (
+                myBookings.map(booking => (
+                    <div key={booking.id} className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-[8px] font-black px-2 py-1 rounded-full uppercase ${booking.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+                                    {booking.status}
+                                </span>
+                                <p className="font-bold text-gray-900">{booking.travel_packages?.title || "Custom Hire"}</p>
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest italic">
+                                Reference: {booking.id.slice(0,8)} | Traveler: {booking.profiles?.email}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <select 
+                                className="bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-[10px] font-black outline-none focus:ring-2 focus:ring-[#107870] min-w-[200px]"
+                                value={booking.driver_id || ""}
+                                onChange={async (e) => {
+                                    const driverId = e.target.value;
+                                    const { error } = await supabase.from('travel_bookings').update({ driver_id: driverId }).eq('id', booking.id);
+                                    if (!error) showToast("Driver Assigned!", "success");
+                                }}
+                            >
+                                <option value="">Assign Private Driver...</option>
+                                {users.filter(u => u.role === 'Driver' || u.role === 'Admin').map(u => (
+                                    <option key={u.id} value={u.id}>{u.full_name || u.email}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    </div>
+
+    {/* C. PACKAGE CREATOR */}
     <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
       <h3 className="text-2xl font-black text-gray-900 mb-2">Package Creator</h3>
-      <p className="text-sm text-gray-500 mb-8 font-medium">Define your trips and upload high-res thumbnails.</p>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-8 rounded-[2rem] border border-gray-200">
          <div className="space-y-4">
             <div>
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Trip Title</label>
-              <input 
-                 type="text" 
-                 value={pkgForm.title} 
-                 onChange={(e) => setPkgForm({...pkgForm, title: e.target.value})} 
-                 placeholder="e.g. Southern Surf Loop" 
-                 className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-teal-500 font-bold" 
-               />          
+              <input type="text" value={pkgForm.title} onChange={(e) => setPkgForm({...pkgForm, title: e.target.value})} placeholder="e.g. Southern Surf Loop" className="w-full p-4 rounded-2xl border-0 shadow-sm font-bold" />          
              </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Days</label>
-                <input 
-                   type="number" 
-                   value={pkgForm.days} 
-                   onChange={(e) => setPkgForm({...pkgForm, days: e.target.value})} 
-                   placeholder="5"  
-                   className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none font-bold" 
-                />
+                <input type="number" value={pkgForm.days} onChange={(e) => setPkgForm({...pkgForm, days: e.target.value})} className="w-full p-4 rounded-2xl border-0 shadow-sm font-bold" />
               </div>
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vibe</label>
-                <select 
-                   value={pkgForm.vibe} 
-                   onChange={(e) => setPkgForm({...pkgForm, vibe: e.target.value})} 
-                   className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none font-bold appearance-none bg-white"
-                >
+                <select value={pkgForm.vibe} onChange={(e) => setPkgForm({...pkgForm, vibe: e.target.value})} className="w-full p-4 rounded-2xl border-0 shadow-sm font-bold appearance-none bg-white">
                    <option value="Surf">Surf</option>
                    <option value="Zen">Zen</option>
                    <option value="Extreme">Extreme</option>
@@ -1014,30 +1085,18 @@ const handlePublishPackage = async () => {
                 </select>
               </div>
             </div>
-            <div className="mt-4">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Itinerary (Day-by-Day Schedule)</label>
-                <textarea 
-                    value={pkgForm.itinerary} 
-                    onChange={(e) => setPkgForm({...pkgForm, itinerary: e.target.value})} 
-                    rows="4" 
-                    placeholder="Day 1: Arrival... Day 2: Morning Surf..." 
-                    className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-medium text-sm"
-                ></textarea>
+            <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Itinerary</label>
+                <textarea value={pkgForm.itinerary} onChange={(e) => setPkgForm({...pkgForm, itinerary: e.target.value})} rows="4" placeholder="Day 1: Arrival..." className="w-full p-4 rounded-2xl border-0 shadow-sm font-medium text-sm"></textarea>
             </div>
          </div>
 
          <div className="space-y-6">
-            {/* THUMBNAIL UPLOAD AREA */}
-            <div 
-                onClick={() => document.getElementById('pkg-upload-input').click()}
-                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-[2rem] p-6 bg-white hover:bg-gray-50 transition-colors cursor-pointer group relative overflow-hidden h-64"
-            >
-                {pkgPreview ? (
-                    <img src={pkgPreview} alt="Preview" className="w-full h-full object-cover" />
-                ) : (
+            <div onClick={() => document.getElementById('pkg-upload-input').click()} className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-[2rem] p-6 bg-white hover:bg-gray-50 transition-colors cursor-pointer group relative overflow-hidden h-64">
+                {pkgPreview ? <img src={pkgPreview} alt="Preview" className="w-full h-full object-cover" /> : (
                     <>
-                        <UploadCloud size={48} className="text-gray-300 group-hover:text-[#107870] transition-colors mb-2" />
-                        <p className="text-xs font-black text-gray-400 uppercase">Upload Package Thumbnail</p>
+                        <UploadCloud size={48} className="text-gray-300 mb-2" />
+                        <p className="text-xs font-black text-gray-400 uppercase">Upload Thumbnail</p>
                     </>
                 )}
                 <input id="pkg-upload-input" type="file" className="hidden" accept="image/*" onChange={(e) => {
@@ -1045,304 +1104,88 @@ const handlePublishPackage = async () => {
                     if (file) { setPkgImage(file); setPkgPreview(URL.createObjectURL(file)); }
                 }} />
             </div>
-
             <div className="grid grid-cols-1 gap-4">
-                <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Tier 1 Price ($)</label>
-                    <input type="number" value={pkgForm.price} onChange={e => setPkgForm({...pkgForm, price: e.target.value})} className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-bold" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                   <div>
-                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Tier 2 ($$)</label>
-                       <input type="number" value={pkgForm.price_essential} onChange={e => setPkgForm({...pkgForm, price_essential: e.target.value})} className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-bold" />
-                   </div>
-                   <div>
-                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Tier 3 ($$$)</label>
-                       <input type="number" value={pkgForm.price_full} onChange={e => setPkgForm({...pkgForm, price_full: e.target.value})} className="w-full p-4 rounded-2xl border-0 shadow-sm outline-none focus:ring-2 focus:ring-[#107870] font-bold" />
-                   </div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tier Pricing</label>
+                <div className="flex gap-2">
+                   <input type="number" value={pkgForm.price} onChange={e => setPkgForm({...pkgForm, price: e.target.value})} className="flex-1 p-4 rounded-2xl border-0 shadow-sm font-bold text-center" placeholder="$" />
+                   <input type="number" value={pkgForm.price_essential} onChange={e => setPkgForm({...pkgForm, price_essential: e.target.value})} className="flex-1 p-4 rounded-2xl border-0 shadow-sm font-bold text-center" placeholder="$$" />
+                   <input type="number" value={pkgForm.price_full} onChange={e => setPkgForm({...pkgForm, price_full: e.target.value})} className="flex-1 p-4 rounded-2xl border-0 shadow-sm font-bold text-center" placeholder="$$$" />
                 </div>
             </div>
          </div>
 
-         <button 
-            onClick={handlePublishPackage}
-            disabled={isPublishing || !pkgForm.title}
-            className="col-span-full bg-[#107870] text-white py-5 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-         >
-      {isPublishing ? "Wait a moment..." : (editingPkgId ? "Update Travel Package ⚡" : "Publish Travel Package ⚡")}
+         <button onClick={handlePublishPackage} disabled={isPublishing || !pkgForm.title} className="col-span-full bg-[#107870] text-white py-5 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all">
+            {isPublishing ? "Wait..." : (editingPkgId ? "Update Expedition ⚡" : "Publish Expedition ⚡")}
          </button>
       </div>
     </div>
 
-    {/* B. PRICING BRAIN SECTION */}
-    <div className="bg-gray-900 p-8 rounded-[2.5rem] text-white">
-       <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-teal-400"><Zap size={20}/> Global Pricing Brain</h3>
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Driver Day Rate</p>
-             <p className="text-2xl font-black">$70</p>
-          </div>
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Essential Markup</p>
-             <p className="text-2xl font-black">+$80</p>
-          </div>
-          <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-             <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Full Markup</p>
-             <p className="text-2xl font-black">+$140</p>
-          </div>
-       </div>
+    {/* D. FLEET MANAGER */}
+    <div className="bg-[#107870]/5 p-8 rounded-[2.5rem] border border-[#107870]/10">
+        <h3 className="text-xl font-black text-[#107870] mb-2">Fleet Manager</h3>
+        <p className="text-xs font-medium text-teal-600/60 mb-8">Onboard and manage professional drivers.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="bg-white p-6 rounded-3xl border border-[#107870]/10 shadow-sm">
+                <h4 className="text-[10px] font-black uppercase text-gray-400 mb-4 tracking-widest">Register New Driver</h4>
+                <div className="space-y-4">
+                    <input id="d_name" type="text" placeholder="Driver Full Name" className="w-full p-4 rounded-2xl bg-gray-50 border-0 font-bold" />
+                    <input id="d_phone" type="text" placeholder="WhatsApp (9477...)" className="w-full p-4 rounded-2xl bg-gray-50 border-0 font-bold" />
+                    <button 
+                        onClick={async () => {
+                            const name = document.getElementById('d_name').value;
+                            const phone = document.getElementById('d_phone').value;
+                            if (!name || !phone) return showToast("Required fields missing", "error");
+                            await manageDriverProfile({ 
+                                full_name: name, 
+                                email: `${phone}@sidequest.driver`,
+                                id: crypto.randomUUID() 
+                            });
+                        }}
+                        className="w-full bg-[#107870] text-white py-4 rounded-2xl font-black shadow-lg"
+                    >
+                        Add to Fleet
+                    </button>
+                </div>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                {users.filter(u => u.role === 'Driver').map(driver => (
+                    <div key={driver.id} className="flex items-center justify-between p-4 bg-white rounded-2xl mb-2 border border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center text-[#107870] font-black">{driver.full_name[0]}</div>
+                            <p className="font-bold text-sm text-gray-800">{driver.full_name}</p>
+                        </div>
+                        <span className="text-[8px] font-black text-teal-600 bg-teal-50 px-2 py-1 rounded-lg uppercase">Verified</span>
+                    </div>
+                ))}
+            </div>
+        </div>
     </div>
 
-    {/* C. INVENTORY SECTION */}
-    <div className="mt-12 px-2">
+    {/* E. INVENTORY LIST */}
+    <div className="mt-12">
         <h3 className="text-xl font-black text-gray-800 mb-6">Live Inventory ({travelPackages.length})</h3>
-        <div className="space-y-4">
+        <div className="space-y-4 pb-20">
             {travelPackages.map(pkg => (
                 <div key={pkg.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-4">
                         <img src={pkg.image_url} className="w-16 h-16 rounded-2xl object-cover border" alt="" />
                         <div>
                             <p className="font-bold text-gray-900">{pkg.title}</p>
-                            <p className="text-xs text-gray-400 uppercase font-bold">{pkg.duration_days} Days · ${pkg.price_usd}</p>
+                            <p className="text-[10px] text-gray-400 uppercase font-bold">{pkg.duration_days} Days · ${pkg.price_usd}</p>
                         </div>
                     </div>
-                    <button 
-                     onClick={() => startEditPackage(pkg)}
-                    className="p-4 text-[#107870] hover:bg-teal-50 rounded-2xl transition-all"
-                   >
-                     <Edit size={20} />
-                     </button>
-                    <button 
-                        onClick={async () => {
-                            if(window.confirm("Delete this package?")) {
-                                await supabase.from('travel_packages').delete().eq('id', pkg.id);
-                                window.location.reload();
-                            }
-                        }} 
-                        className="p-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all"
-                    >
-                        <Trash2 size={20} />
-                    </button>
+                    <div className="flex gap-2">
+                        <button onClick={() => startEditPackage(pkg)} className="p-4 text-[#107870] hover:bg-teal-50 rounded-2xl transition-all"><Edit size={20} /></button>
+                        <button onClick={async () => { if(window.confirm("Delete?")) await supabase.from('travel_packages').delete().eq('id', pkg.id); window.location.reload(); }} className="p-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all"><Trash2 size={20} /></button>
+                    </div>
                 </div>
             ))}
         </div>
     </div>
 
   </div> 
-)}
-
-
-        {/* --- NEW: PARTNER OVERSIGHT TAB --- */}
-      {activeTab === 'partnerOversight' && (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-
-          {/* SECTION 1: INVITE GENERATOR */}
-          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-            <h3 className="font-bold text-xl mb-2 text-gray-900">Invite Code Generator</h3>
-            <p className="text-sm text-gray-500 mb-6">Generate a unique code to share with a verified partner via WhatsApp.</p>
-            
-            <button
-              onClick={async () => {
-                setIsGenerating(true);
-                const code = await generateInviteCode();
-                if (code) setGeneratedCode(code);
-                setIsGenerating(false);
-              }}
-              disabled={isGenerating}
-              className={`bg-teal-600 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-md ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-teal-700 active:scale-95'}`}
-            >
-              {isGenerating ? 'Generating...' : '⚡ Generate New Code'}
-            </button>
-
-            {generatedCode && (
-              <div className="mt-6 bg-teal-50 border-2 border-teal-200 rounded-2xl p-6 text-center animate-in fade-in zoom-in duration-300">
-                <p className="text-xs font-bold text-teal-500 uppercase tracking-widest mb-2">New Invite Code</p>
-                <p className="text-5xl font-black text-teal-700 tracking-widest font-mono">{generatedCode}</p>
-                <p className="text-xs text-teal-400 mt-3">Share this code via WhatsApp. It can only be used once.</p>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(generatedCode);
-                    showToast("Code copied to clipboard!", 'success');
-                  }}
-                  className="mt-4 bg-white border border-teal-200 text-teal-600 px-6 py-2 rounded-xl text-sm font-bold hover:bg-teal-50 transition-all"
-                >
-                  Copy Code
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* SECTION 2: REQUEST MANAGER */}
-          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="font-bold text-xl text-gray-900">Partner Requests</h3>
-                <p className="text-sm text-gray-500 mt-1">Businesses that have requested an invite.</p>
-              </div>
-              <span className="bg-teal-50 text-teal-700 font-black px-3 py-1 rounded-full text-sm border border-teal-100">
-                {partnerRequestsData.filter(r => r.status === 'pending').length} Pending
-              </span>
-            </div>
-
-            {isLoadingRequests ? (
-              <p className="text-center text-gray-400 py-10">Loading requests...</p>
-            ) : partnerRequestsData.length === 0 ? (
-              <p className="text-center text-gray-400 py-10 border border-dashed rounded-2xl">No requests yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {partnerRequestsData.map(request => (
-                  <div key={request.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-bold text-gray-900">{request.business_name}</p>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
-                          request.status === 'pending'
-                            ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
-                            : 'bg-green-50 text-green-600 border-green-200'
-                        }`}>
-                          {request.status.toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500">📱 {request.whatsapp}</p>
-                      <p className="text-sm text-gray-500">✉️ {request.email}</p>
-                      <p className="text-xs text-gray-400 mt-1">{new Date(request.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={async () => {
-                          const { error } = await supabase
-                            .from('partner_requests')
-                            .update({ status: 'contacted' })
-                            .eq('id', request.id);
-                          if (!error) {
-                            setPartnerRequestsData(prev =>
-                              prev.map(r => r.id === request.id ? { ...r, status: 'contacted' } : r)
-                            );
-                            showToast("Marked as contacted.", 'success');
-                          }
-                        }}
-                        disabled={request.status === 'contacted'}
-                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                          request.status === 'contacted'
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-teal-500 text-white hover:bg-teal-600'
-                        }`}
-                      >
-                        {request.status === 'contacted' ? '✓ Contacted' : 'Mark Contacted'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-{/* SECTION 3: QUEST SUGGESTIONS */}
-<div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-  <div className="flex justify-between items-center mb-6">
-    <div>
-      <h3 className="font-bold text-xl text-gray-900">Quest Suggestions</h3>
-      <p className="text-sm text-gray-500 mt-1">Locations suggested by Travelers for new quests.</p>
-    </div>
-    <span className="bg-teal-50 text-teal-700 font-black px-3 py-1 rounded-full text-sm border border-teal-100">
-      {questSuggestions.filter(s => s.status === 'pending').length} Pending
-    </span>
-  </div>
-
-  {questSuggestions.length === 0 ? (
-    <p className="text-center text-gray-400 py-10 border border-dashed rounded-2xl">No suggestions yet.</p>
-  ) : (
-    <div className="space-y-4">
-      {questSuggestions.map(suggestion => {
-        const submitter = users.find(u => u.id === suggestion.submitted_by);
-        return (
-          <div key={suggestion.id} className="bg-gray-50 rounded-2xl border border-gray-100 p-5">
-            <div className="flex flex-col md:flex-row gap-4">
-              {suggestion.photo_url && (
-                <img src={suggestion.photo_url} alt={suggestion.quest_name} className="w-24 h-24 object-cover rounded-xl border border-gray-200 flex-shrink-0" />
-              )}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-bold text-gray-900">{suggestion.quest_name}</h4>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
-                    suggestion.status === 'pending' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
-                    suggestion.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                    'bg-red-50 text-red-500 border-red-200'
-                  }`}>
-                    {suggestion.status.toUpperCase()}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 mb-2">{suggestion.description}</p>
-                {suggestion.maps_link && (
-                  <a href={suggestion.maps_link} target="_blank" rel="noreferrer" className="text-xs font-bold underline mb-2 inline-block" style={{ color: '#107870' }}>
-                    Open in Maps →
-                  </a>
-                )}
-                <p className="text-xs text-gray-400">
-                  By: {submitter?.full_name || submitter?.email || 'Unknown'} · {new Date(suggestion.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              {suggestion.status === 'pending' && (
-                <div className="flex md:flex-col gap-2 justify-end flex-shrink-0">
-                  <button
-                    onClick={() => approveQuestSuggestion(suggestion.id)}
-                    className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all"
-                  >
-                    ✓ Approve
-                  </button>
-                  <button
-                    onClick={() => rejectQuestSuggestion(suggestion.id)}
-                    className="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-200 transition-all"
-                  >
-                    ✕ Reject
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  )}
-</div>
-</div>
-)}
-
-
-
-        {/* --- 6. SECURITY VAULT TAB --- */}
-        {activeTab === 'security' && (
-    <div className="max-w-md mx-auto space-y-8 animate-in fade-in zoom-in">
-        {/* PASSWORD BOX */}
-        <div className="bg-white p-8 rounded-3xl border shadow-sm">
-            <h3 className="font-bold text-lg mb-4">Master Password Update</h3>
-            <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border mb-4 outline-none focus:border-red-500" />
-            <button onClick={handlePasswordUpdate} disabled={isUpdating} className={`w-full bg-black text-white font-bold py-4 rounded-2xl ${isUpdating ? 'opacity-50' : ''}`}>
-                {isUpdating ? 'Processing...' : 'Update Password'}
-            </button>
-        </div>
-
-        {/* MFA BOX */}
-        <div className="bg-white p-8 rounded-3xl border shadow-sm">
-            <h3 className="font-bold text-lg mb-4">Identity Lock (MFA)</h3>
-            {!mfaQR ? (
-                <button onClick={enrollMFA} disabled={isUpdating} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl">
-                    {isUpdating ? 'Clearing Slate...' : 'Enable Google Authenticator'}
-                </button>
-            ) : (
-                <div className="text-center space-y-6">
-                    <div className="p-4 bg-gray-50 rounded-2xl inline-block border-2 border-brand-100">
-                        <img src={mfaQR} alt="QR Code" className="mx-auto" />
-                    </div>
-                    <p className="text-xs text-gray-500 font-medium px-4">Scan the code, then enter the 6 digits from your phone below.</p>
-                    <input type="text" maxLength="6" placeholder="000000" value={mfaVerifyCode} onChange={(e) => setMfaVerifyCode(e.target.value)} className="w-full p-4 border-2 border-brand-100 rounded-2xl text-center text-3xl font-black tracking-[0.5em] focus:border-brand-500 outline-none" />
-                    <button onClick={verifyMFAEnrollment} disabled={isUpdating} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-green-100">
-                        {isUpdating ? 'Verifying Identity...' : 'Verify & Lock Account'}
-                    </button>
-                </div>
-            )}
-        </div>
-    </div>
 )}
 
 

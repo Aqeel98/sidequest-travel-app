@@ -664,11 +664,19 @@ useEffect(() => {
         ]);
         if (pkgs.data) setTravelPackages(pkgs.data);
         if (settings.data) setTravelSettings(settings.data);
+        
         if (userId) {
-            const { data: bookings } = await supabase
+            const { data: bookings, error: bErr } = await supabase
                 .from('travel_bookings')
-                .select('*, travel_packages(*)')
-                .eq('traveler_id', userId);
+                .select(`
+                    *,
+                    travel_packages(*),
+                    driver:profiles!travel_bookings_driver_id_fkey(full_name, email)
+                `) 
+                .eq('traveler_id', userId)
+                .order('created_at', { ascending: false });
+
+            if (bErr) console.error("Booking Fetch Error:", bErr);
             if (bookings) setMyBookings(bookings);
         }
     } catch (e) { console.error("SQ-Travel Error:", e); }
@@ -741,7 +749,43 @@ useEffect(() => {
     }
   };
 
-  // --- 5. DATA SYNC & ZOMBIE REPAIR LOGIC ---
+
+// --- 5.7 ADMIN: UPDATE GLOBAL PRICING ---
+const updateTravelSettings = async (newSettings) => {
+    try {
+        const { error } = await supabase
+            .from('travel_settings')
+            .update(newSettings)
+            .eq('id', 'global_config');
+        if (error) throw error;
+        setTravelSettings(prev => ({ ...prev, ...newSettings }));
+        showToast("Pricing Brain Updated!", "success");
+    } catch (e) { showToast(e.message, "error"); }
+  };
+
+  // --- 5.8 FLEET MANAGEMENT: CREATE/UPDATE DRIVER ---
+  const manageDriverProfile = async (driverData) => {
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .upsert([{
+                ...driverData,
+                role: 'Driver' // Force role to Driver
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        showToast("Driver Fleet Updated!", "success");
+        return data;
+    } catch (e) {
+        showToast(e.message, "error");
+        return null;
+    }
+  };
+
+
+  // --- 6. DATA SYNC & ZOMBIE REPAIR LOGIC ---
 const fetchProfile = async (userId, userEmail) => {
     try {
       console.log("SQ-Profile: Initiating database handshake for:", userEmail);

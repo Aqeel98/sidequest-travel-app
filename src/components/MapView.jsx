@@ -17,43 +17,38 @@ L.Icon.Default.mergeOptions({
 });
 
 const getCategoryDetails = (category) => {
+  const base = { color: '#E6D5B8', isCustom: true }; // Sandy background for all
+  
   switch (category) {
-    case 'Environmental': return { color: '#E6D5B8', emoji: '🌿' };
-    case 'Social': return { color: '#E6D5B8', emoji: '❤️' };
-    case 'Animal Welfare': return { color: '#E6D5B8', emoji: '🐘' };
-    case 'Cultural': return { color: '#E6D5B8', emoji: '🏯' }; 
-    case 'Education': return { 
-      color: '#E6D5B8', 
-      icon: '/Edu.png', 
-      isCustom: true  
-    };
-    case 'Adventure': return { color: '#E6D5B8', emoji: '🧗' };
-    case 'Exploration': return { color: '#E6D5B8', emoji: '🧭' };
-    case 'Marine Adventure': return { color: '#E6D5B8', emoji: '🤿' };
-    case 'Wildlife Adventure': return { color: '#E6D5B8', emoji: '🐾' };
-    case 'Sports & Recreation': return { color: '#E6D5B8', emoji: '⚽' }; 
-    default: return { color: '#E6D5B8', emoji: '🎯', isCustom: false };
-
+      case 'Exploration': return { ...base, icon: '/Exploration.png' };
+      case 'Adventure': return { ...base, icon: '/Adventure.png' };
+      case 'Marine Adventure': return { ...base, icon: '/Marine_Adventure.png' };
+      case 'Environmental': return { ...base, icon: '/Environmental_.png' };
+      case 'Wildlife Adventure': return { ...base, icon: '/Wildlife_Adventure.png' };
+      case 'Education': return { ...base, icon: '/Edu.png' };
+      case 'Sports & Recreation': return { ...base, icon: '/Sports_&_Recreational_.png' };
+      case 'Animal Welfare': return { ...base, icon: '/Animal_Welfare.png' };
+      case 'Cultural': return { ...base, icon: '/Cultural.png' };
+      case 'Social': return { ...base, icon: '/Social.png' };
+      
+      default: return { color: '#E6D5B8', emoji: '🎯', isCustom: false };
   }
 };
 
 const createQuestIcon = (status, category) => {
   const detail = getCategoryDetails(category);
-
-  // 1. Logic for the Outer Border Color
-  let outerBorderColor = '#107870'; // Default Teal
+  let outerBorderColor = '#107870'; 
   if (status === 'approved') outerBorderColor = '#10B981';
   else if (status === 'pending') outerBorderColor = '#F59E0B';
 
-  // 2. Logic for the Inner Content (Image vs Emoji)
   const iconContent = detail.isCustom 
-    ? `<img src="${detail.icon}" style="width: 24px; height: 24px; object-fit: contain;" />`
+    ? `<img src="${detail.icon}" style="width: 22px; height: 22px; object-fit: contain; filter: contrast(1.1);" />`
     : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 18px;">${detail.emoji}</span>`;
 
   return L.divIcon({
     className: "gamified-marker",
     html: `<div style="
-        background-color: #E6D5B8; /* THE SANDY BACKGROUND */
+        background-color: #E6D5B8;
         width: 38px; height: 38px;
         border-radius: 50% 50% 50% 0;
         transform: rotate(-45deg);

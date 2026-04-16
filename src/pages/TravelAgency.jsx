@@ -70,11 +70,11 @@ const TravelAgency = () => {
 
   return (
     <div className="min-h-screen bg-[#E6D5B8] pb-24 font-sans">
-      <SEO title="Travel Agency | SideQuest Sri Lanka" />
+      <SEO title="Island Expeditions | SideQuest Sri Lanka" />
 
       {/* --- HEADER --- */}
       <div className="bg-[#107870] text-white pt-24 pb-16 px-6 rounded-b-[3.5rem] shadow-xl text-center">
-        <h1 className="text-5xl md:text-6xl font-black mb-3 tracking-tighter">Travel Agency</h1>
+        <h1 className="text-5xl md:text-6xl font-black mb-3 tracking-tighter">Island Expeditions</h1>
         <p className="text-teal-50/80 font-medium max-w-xl mx-auto italic">Curated Sri Lankan journeys. Verified drivers. Boutique stays.</p>
       </div>
 
