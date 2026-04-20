@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { RefreshCw, X } from 'lucide-react';
 
@@ -12,27 +12,37 @@ import { RefreshCw, X } from 'lucide-react';
  * banner asking the user to reload. The reload happens exactly
  * ONCE, only on explicit user action.
  *
- * This replaces the old manual "nuke SW + caches + location.replace"
+ * Replaces the old manual "nuke SW + caches + location.replace"
  * pattern that caused reload loops on deploy.
  */
 export default function UpdatePrompt() {
+    // The latest ServiceWorkerRegistration, kept in a ref so the
+    // polling interval always sees the current value without being
+    // recreated when it changes.
+    const registrationRef = useRef(null);
+
     const {
         needRefresh: [needRefresh, setNeedRefresh],
         updateServiceWorker,
     } = useRegisterSW({
         onRegisteredSW(_swUrl, registration) {
-            // Poll for a new version every 60 minutes while the app is open.
-            // Users on long sessions (e.g. during a trip) will still get prompted.
-            if (registration) {
-                setInterval(() => {
-                    registration.update().catch(() => {});
-                }, 60 * 60 * 1000);
-            }
+            registrationRef.current = registration || null;
         },
         onRegisterError() {
             // Silently ignore. The app still works without SW updates.
         },
     });
+
+    // Poll for a new version every 60 minutes while the app is open.
+    // Interval is owned here (not inside onRegisteredSW) so it is
+    // guaranteed to be cleared on unmount.
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            registrationRef.current?.update().catch(() => {});
+        }, 60 * 60 * 1000);
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     if (!needRefresh) return null;
 
@@ -50,7 +60,7 @@ export default function UpdatePrompt() {
             role="status"
             aria-live="polite"
         >
-            <div className="flex items-center gap-3 bg-slate-900/95 backdrop-blur-md border border-slate-700 text-white rounded-2xl shadow-2xl px-4 py-3">
+            <div className="flex items-center gap-3 bg-slate-900/95 backdrop-blur-md border border-white/10 text-white rounded-2xl shadow-2xl px-4 py-3">
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold tracking-wide">
                         New version of SideQuest is ready
@@ -61,15 +71,15 @@ export default function UpdatePrompt() {
                 </div>
                 <button
                     onClick={handleRefresh}
-                    className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-colors px-3 py-2 rounded-xl text-sm font-bold shadow-sm"
+                    className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-500 active:scale-95 transition-all px-4 py-2 rounded-lg text-xs font-bold text-white shadow-lg"
                 >
-                    <RefreshCw size={14} />
+                    <RefreshCw size={12} />
                     Refresh
                 </button>
                 <button
                     onClick={handleDismiss}
                     aria-label="Dismiss update notice"
-                    className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg"
+                    className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg shrink-0"
                 >
                     <X size={18} />
                 </button>
