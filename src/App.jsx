@@ -48,7 +48,7 @@ const LoadingScreen = () => (
           <div className="absolute w-12 h-12 border-4 border-current rounded-full"></div>
 
           <img 
-              src="/nav-needle.png" 
+              src="/nav-needle.webp" 
               alt="Loading" 
                className="w-6 h-6 animate-spin object-contain relative z-10"
           />
