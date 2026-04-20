@@ -54,26 +54,68 @@ const ICON_SOURCES = [
 
 const ICON_COLORS = ['#DFF2EE', '#D8ECE8', '#E3F4F1', '#D5E8E3', '#DCEEEA'];
 
+const getIconFamily = (src) => src.split('/').pop().replace('.webp', '').split('_')[0];
+
+const createSeededRandom = (seed) => {
+  let value = seed;
+  return () => {
+    value = (value * 1664525 + 1013904223) % 4294967296;
+    return value / 4294967296;
+  };
+};
+
 const LANDING_DECOR = (() => {
-  const points = [];
-  for (let y = 4; y <= 56; y += 7) {
-    for (let x = 2; x <= 94; x += 7) {
-      // Keep the hero headline/button zone visually clean.
-      const inSafeZone = x >= 30 && x <= 70 && y >= 16 && y <= 46;
-      if (!inSafeZone) points.push({ top: `${y}%`, left: `${x}%` });
-    }
+  const rand = createSeededRandom(20260420);
+  const items = [];
+  const targetCount = 96;
+  const minGap = 5.2;
+  const nearRadius = 14;
+  let attempts = 0;
+
+  while (items.length < targetCount && attempts < 9000) {
+    attempts += 1;
+    const x = 2 + rand() * 94;
+    const y = 3 + rand() * 55;
+
+    // Keep center area clear for hero headline + CTA.
+    const inSafeZone = x >= 30 && x <= 70 && y >= 15 && y <= 47;
+    if (inSafeZone) continue;
+
+    // Avoid icon overlap.
+    const hasCollision = items.some((item) => {
+      const dx = item.x - x;
+      const dy = item.y - y;
+      return Math.hypot(dx, dy) < minGap;
+    });
+    if (hasCollision) continue;
+
+    const src = ICON_SOURCES[Math.floor(rand() * ICON_SOURCES.length)];
+    const family = getIconFamily(src);
+
+    // Avoid placing similar icons close to each other.
+    const hasNearSimilar = items.some((item) => {
+      const dx = item.x - x;
+      const dy = item.y - y;
+      return Math.hypot(dx, dy) < nearRadius && item.family === family;
+    });
+    if (hasNearSimilar) continue;
+
+    items.push({
+      x,
+      y,
+      family,
+      src,
+      top: `${y.toFixed(2)}%`,
+      left: `${x.toFixed(2)}%`,
+      size: Math.round(72 + rand() * 36),
+      rotate: Math.round(-22 + rand() * 44),
+      opacity: Number((0.085 + rand() * 0.055).toFixed(3)),
+      color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
+      className: rand() > 0.72 ? 'hidden md:block' : '',
+    });
   }
 
-  return points.map((point, i) => ({
-    src: ICON_SOURCES[i % ICON_SOURCES.length],
-    top: point.top,
-    left: point.left,
-    size: 82 + (i % 4) * 8,
-    rotate: ((i * 19) % 36) - 18,
-    opacity: 0.1 + (i % 3) * 0.015,
-    color: ICON_COLORS[i % ICON_COLORS.length],
-    className: i % 5 === 0 ? 'hidden md:block' : '',
-  }));
+  return items;
 })();
 
 const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
