@@ -19,37 +19,62 @@ const QuestSkeleton = () => (
   </div>
 );
 
-const LANDING_DECOR = [
-  { src: '/landing-icons/Anchor_1.webp', top: '8%', left: '6%', size: 130, rotate: -18, opacity: 0.16, color: '#DDF0ED' },
-  { src: '/landing-icons/Fish_1.webp', top: '16%', left: '24%', size: 110, rotate: 9, opacity: 0.12, color: '#D7ECE8' },
-  { src: '/landing-icons/Coral_1.webp', top: '6%', right: '10%', size: 170, rotate: 14, opacity: 0.14, color: '#CFE8E3', className: 'hidden md:block' },
-  { src: '/landing-icons/Wheel.webp', top: '28%', right: '26%', size: 145, rotate: -20, opacity: 0.11, color: '#DCEBE8' },
-  { src: '/landing-icons/Turtle_1.webp', bottom: '22%', left: '14%', size: 120, rotate: 12, opacity: 0.1, color: '#E1EFEC' },
-  { src: '/landing-icons/Surf_1.webp', bottom: '16%', left: '40%', size: 115, rotate: -8, opacity: 0.12, color: '#D6E9E5' },
-  { src: '/landing-icons/Pearl.webp', bottom: '10%', right: '20%', size: 125, rotate: 6, opacity: 0.1, color: '#D5E7E3' },
-  { src: '/landing-icons/Boat_1.webp', top: '38%', left: '58%', size: 135, rotate: -10, opacity: 0.12, color: '#D9ECE8', className: 'hidden lg:block' },
-  { src: '/landing-icons/Anchor_2.webp', top: '12%', left: '72%', size: 105, rotate: 18, opacity: 0.13, color: '#E2F2EF' },
-  { src: '/landing-icons/Anchor_3.webp', top: '24%', left: '84%', size: 92, rotate: -12, opacity: 0.11, color: '#DAECE8', className: 'hidden md:block' },
-  { src: '/landing-icons/Boat_2.webp', top: '9%', left: '42%', size: 118, rotate: -7, opacity: 0.1, color: '#D9EEEA' },
-  { src: '/landing-icons/Boat_3.webp', top: '20%', left: '52%', size: 110, rotate: 8, opacity: 0.11, color: '#D6E9E4', className: 'hidden md:block' },
-  { src: '/landing-icons/Fish_2.webp', top: '30%', left: '18%', size: 98, rotate: -5, opacity: 0.1, color: '#DFEFEC' },
-  { src: '/landing-icons/Fish_3.webp', top: '35%', left: '30%', size: 88, rotate: 22, opacity: 0.11, color: '#D6EAE6' },
-  { src: '/landing-icons/Goggle_1.webp', top: '14%', right: '34%', size: 112, rotate: 12, opacity: 0.1, color: '#D4E8E3', className: 'hidden md:block' },
-  { src: '/landing-icons/Goggle_2.webp', top: '32%', right: '6%', size: 122, rotate: -9, opacity: 0.11, color: '#D7E9E5', className: 'hidden lg:block' },
-  { src: '/landing-icons/Hook_1.webp', top: '5%', left: '16%', size: 92, rotate: 16, opacity: 0.11, color: '#E4F1EF' },
-  { src: '/landing-icons/Hook_2.webp', top: '28%', right: '41%', size: 86, rotate: -14, opacity: 0.1, color: '#E1EFEC' },
-  { src: '/landing-icons/Lifeboat_1.webp', top: '10%', right: '20%', size: 128, rotate: 5, opacity: 0.11, color: '#D8EAE6', className: 'hidden md:block' },
-  { src: '/landing-icons/Lifeboat_2.webp', top: '26%', right: '14%', size: 106, rotate: -16, opacity: 0.1, color: '#DCEDE9' },
-  { src: '/landing-icons/Octopus_.webp', top: '18%', left: '63%', size: 130, rotate: 9, opacity: 0.1, color: '#D2E5E0', className: 'hidden lg:block' },
-  { src: '/landing-icons/Pearl_2.webp', top: '4%', right: '44%', size: 90, rotate: -3, opacity: 0.12, color: '#E2F1EE' },
-  { src: '/landing-icons/Starfish.webp', top: '34%', left: '8%', size: 102, rotate: -18, opacity: 0.1, color: '#D5E8E3' },
-  { src: '/landing-icons/Surf_2.webp', top: '22%', left: '36%', size: 95, rotate: 11, opacity: 0.11, color: '#DBECE8' },
-  { src: '/landing-icons/Surf_3.webp', top: '31%', left: '46%', size: 92, rotate: -10, opacity: 0.11, color: '#DEEEEB', className: 'hidden md:block' },
-  { src: '/landing-icons/Turtle_2.webp', top: '27%', left: '67%', size: 112, rotate: 7, opacity: 0.1, color: '#D6E9E4', className: 'hidden lg:block' },
-  { src: '/landing-icons/Turtle_3.webp', top: '15%', left: '3%', size: 110, rotate: -6, opacity: 0.1, color: '#DCECE8', className: 'hidden md:block' },
-  { src: '/landing-icons/Weed.webp', top: '38%', right: '30%', size: 94, rotate: 13, opacity: 0.11, color: '#D9EAE6' },
-  { src: '/landing-icons/Bottle.webp', top: '12%', right: '2%', size: 98, rotate: 18, opacity: 0.11, color: '#E0EFEC', className: 'hidden md:block' },
+const ICON_SOURCES = [
+  '/landing-icons/Anchor_1.webp',
+  '/landing-icons/Anchor_2.webp',
+  '/landing-icons/Anchor_3.webp',
+  '/landing-icons/Boat_1.webp',
+  '/landing-icons/Boat_2.webp',
+  '/landing-icons/Boat_3.webp',
+  '/landing-icons/Bottle.webp',
+  '/landing-icons/Coral_1.webp',
+  '/landing-icons/Coral_2.webp',
+  '/landing-icons/Fish_1.webp',
+  '/landing-icons/Fish_2.webp',
+  '/landing-icons/Fish_3.webp',
+  '/landing-icons/Goggle_1.webp',
+  '/landing-icons/Goggle_2.webp',
+  '/landing-icons/Hook_1.webp',
+  '/landing-icons/Hook_2.webp',
+  '/landing-icons/Lifeboat_1.webp',
+  '/landing-icons/Lifeboat_2.webp',
+  '/landing-icons/Octopus_.webp',
+  '/landing-icons/Pearl.webp',
+  '/landing-icons/Pearl_2.webp',
+  '/landing-icons/Starfish.webp',
+  '/landing-icons/Surf_1.webp',
+  '/landing-icons/Surf_2.webp',
+  '/landing-icons/Surf_3.webp',
+  '/landing-icons/Turtle_1.webp',
+  '/landing-icons/Turtle_2.webp',
+  '/landing-icons/Turtle_3.webp',
+  '/landing-icons/Weed.webp',
+  '/landing-icons/Wheel.webp',
 ];
+
+const ICON_COLORS = ['#DFF2EE', '#D8ECE8', '#E3F4F1', '#D5E8E3', '#DCEEEA'];
+
+const LANDING_DECOR = (() => {
+  const points = [];
+  for (let y = 4; y <= 56; y += 7) {
+    for (let x = 2; x <= 94; x += 7) {
+      // Keep the hero headline/button zone visually clean.
+      const inSafeZone = x >= 30 && x <= 70 && y >= 16 && y <= 46;
+      if (!inSafeZone) points.push({ top: `${y}%`, left: `${x}%` });
+    }
+  }
+
+  return points.map((point, i) => ({
+    src: ICON_SOURCES[i % ICON_SOURCES.length],
+    top: point.top,
+    left: point.left,
+    size: 82 + (i % 4) * 8,
+    rotate: ((i * 19) % 36) - 18,
+    opacity: 0.1 + (i % 3) * 0.015,
+    color: ICON_COLORS[i % ICON_COLORS.length],
+    className: i % 5 === 0 ? 'hidden md:block' : '',
+  }));
+})();
 
 const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
   <div
@@ -189,7 +214,7 @@ const Home = () => {
             <div className="absolute -top-20 -right-20 w-[600px] h-[600px] rounded-full bg-brand-400 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/4 left-[10%] w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-transparent via-white/5 to-transparent rotate-12"></div>
-            <div className="absolute top-0 left-0 w-full h-[52%] md:h-[56%] lg:h-[60%] overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden">
               {LANDING_DECOR.map((icon) => (
                 <LandingMaskIcon key={`${icon.src}-${icon.top || icon.bottom}-${icon.left || icon.right}`} {...icon} />
               ))}
