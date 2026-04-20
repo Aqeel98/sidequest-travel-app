@@ -17,9 +17,10 @@
     /* Linting - Simplified for stability */
     "strict": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
     // REMOVED: erasableSyntaxOnly, noUncheckedSideEffectImports, noFallthroughCasesInSwitch
+    "tsBuildInfoFile": "./node_modules/.cache/tsbuild-app/tsconfig.app.tsbuildinfo"
   },
   "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }] // Ensure this array is present
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

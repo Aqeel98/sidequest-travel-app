@@ -5,10 +5,12 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "allowJs": true, 
+    "allowJs": true,
     "types": ["node", "vite-plugin-pwa/client"],
     "target": "ES2022",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "outDir": "./node_modules/.cache/tsbuild-node",
+    "tsBuildInfoFile": "./node_modules/.cache/tsbuild-node/tsconfig.node.tsbuildinfo"
   },
-  "include": ["vite.config.ts"] 
+  "include": ["vite.config.ts"]
 }

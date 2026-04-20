@@ -7,8 +7,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'inline',
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['favicon.ico', 'favicon-96x96.png', 'sq-v4-apple.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'SideQuest',
@@ -53,10 +53,8 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-        disableDevLogs: true, 
-        navigateFallbackDenylist: [/^\/api/], 
+        disableDevLogs: true,
+        navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/res\.cloudinary\.com\/dtowdaysr\/image\/fetch\/.*sisyjuaspeznyrmipmlo\.supabase\.co.*/i,

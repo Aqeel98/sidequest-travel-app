@@ -20,6 +20,7 @@ import PartnerDashboard from './pages/PartnerDashboard';
 import Emergency from './pages/Emergency';
 import HowItWorks from './pages/HowItWorks'; 
 import InstallBanner from './components/InstallBanner';
+import UpdatePrompt from './components/UpdatePrompt';
 import Quiz from './pages/Quiz';
 //import HuntDashboard from './pages/HuntDashboard';
 //import HuntStop from './pages/HuntStop';
@@ -96,16 +97,8 @@ const Toast = () => {
 };
 
 // --- MAIN LAYOUT WRAPPER ---
-//////////////////////CHANGE VERSION HERE////////////////////
 const MainLayout = () => {
   const { isLoading, currentUser } = useSideQuest();
-
-  useEffect(() => {
-    const v = '3.7.0';
-    if (localStorage.getItem('sq_app_version') !== v) {
-      localStorage.setItem('sq_app_version', v);
-    }
-  }, []);
 
   useEffect(() => {
       if (import.meta.env.PROD) {
@@ -131,6 +124,7 @@ const MainLayout = () => {
       <div className="min-h-screen bg-gray-50 pt-20 font-sans text-gray-900">
           <Navbar />
           <InstallBanner />
+          <UpdatePrompt />
           <Toast />
           <AuthModal />
           <Outlet />
