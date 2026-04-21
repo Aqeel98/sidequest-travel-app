@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({
 const getCategoryDetails = (category) => {
   switch (category?.trim()) {
       case 'Environmental': return { color: '#064e3b', icon: '/Environmental_.webp', isCustom: true };
-      case 'Social': return { color: '#881337', icon: '/Social_.webp', isCustom: true };
+      case 'Social': return { color: '#9f1239', icon: '/Social_.webp', isCustom: true };
       case 'Animal Welfare': return { color: '#831843', icon: '/Animal_Welfare.webp', isCustom: true };
       case 'Cultural': return { color: '#4c1d95', icon: '/Cultural.webp', isCustom: true };
       case 'Education': return { color: '#1e3a8a', icon: '/Edu.webp', isCustom: true };

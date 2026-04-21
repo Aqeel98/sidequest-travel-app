@@ -28,7 +28,7 @@ const CATEGORY_CONFIG = {
   'Sports & Recreation': { color: '#1e293b', icon: <img src="/Sports_&_Recreational_.webp" className="w-5 h-5 object-contain" /> }, 
   'Animal Welfare': { color: '#831843', icon: <img src="/Animal_Welfare.webp" className="w-5 h-5 object-contain" /> }, 
   'Cultural': { color: '#4c1d95', icon: <img src="/Cultural.webp" className="w-5 h-5 object-contain" /> }, 
-  'Social': { color: '#881337', icon: <img src="/Social_.webp" className="w-5 h-5 object-contain" /> }
+  'Social': { color: '#9f1239', icon: <img src="/Social_.webp" className="w-5 h-5 object-contain" /> }
 };
 
 
