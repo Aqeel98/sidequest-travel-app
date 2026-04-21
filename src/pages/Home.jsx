@@ -1,5 +1,5 @@
 
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useState, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MapPin, ArrowRight, Sparkles, PlusCircle, Search, Crosshair, Loader2
@@ -64,48 +64,54 @@ const createSeededRandom = (seed) => {
   };
 };
 
-const LANDING_DECOR = (() => {
-  const rand = createSeededRandom(20260420);
+const createLandingDecor = (seed, config) => {
+  const rand = createSeededRandom(seed);
   const items = [];
-  const nearRadius = 12;
-  const minEdgeGap = 0.55;
-  const cellSize = 6.5;
-  const jitter = 2.4;
   const shuffledSources = [...ICON_SOURCES].sort(() => rand() - 0.5);
   let sourceIndex = 0;
 
   const fitsWithoutCollision = (candidate) => !items.some((item) => {
     const dx = item.x - candidate.x;
     const dy = item.y - candidate.y;
-    const minDistance = item.radius + candidate.radius + minEdgeGap;
+    const minDistance = item.radius + candidate.radius + config.minEdgeGap;
     return Math.hypot(dx, dy) < minDistance;
   });
 
   const canUseFamilyHere = (candidate, family) => !items.some((item) => {
     const dx = item.x - candidate.x;
     const dy = item.y - candidate.y;
-    return Math.hypot(dx, dy) < nearRadius && item.family === family;
+    return Math.hypot(dx, dy) < config.nearRadius && item.family === family;
   });
 
-  for (let row = 0; row <= 100 / cellSize; row += 1) {
-    for (let col = 0; col <= 100 / cellSize; col += 1) {
-      const baseX = col * cellSize + cellSize / 2;
-      const baseY = row * cellSize + cellSize / 2;
-      const x = Math.min(99, Math.max(1, baseX + (rand() * 2 - 1) * jitter));
-      const y = Math.min(99, Math.max(1, baseY + (rand() * 2 - 1) * jitter));
-      const radius = Number((1.8 + rand() * 0.8).toFixed(2));
+  const totalRows = Math.ceil(config.canvasHeight / config.cellSize);
+  const totalCols = Math.ceil(config.canvasWidth / config.cellSize);
+
+  for (let row = 0; row < totalRows; row += 1) {
+    for (let col = 0; col < totalCols; col += 1) {
+      const baseX = col * config.cellSize + config.cellSize / 2;
+      const baseY = row * config.cellSize + config.cellSize / 2;
+      const size = Math.round(config.minSize + rand() * (config.maxSize - config.minSize));
+      const radius = size / 2;
       const src = shuffledSources[sourceIndex % shuffledSources.length];
       sourceIndex += 1;
       const family = getIconFamily(src);
+      const maxJitter = config.jitter;
 
       let placed = false;
-      for (let attempt = 0; attempt < 4 && !placed; attempt += 1) {
-        const testX = Math.min(99, Math.max(1, x + (rand() * 2 - 1) * (attempt + 1)));
-        const testY = Math.min(99, Math.max(1, y + (rand() * 2 - 1) * (attempt + 1)));
+      for (let attempt = 0; attempt < 8 && !placed; attempt += 1) {
+        const spread = maxJitter * (0.5 + attempt * 0.2);
+        const testX = Math.min(
+          config.canvasWidth - radius - 1,
+          Math.max(radius + 1, baseX + (rand() * 2 - 1) * spread),
+        );
+        const testY = Math.min(
+          config.canvasHeight - radius - 1,
+          Math.max(radius + 1, baseY + (rand() * 2 - 1) * spread),
+        );
         const candidate = { x: testX, y: testY, radius };
 
         if (!fitsWithoutCollision(candidate)) continue;
-        if (!canUseFamilyHere(candidate, family)) continue;
+        if (attempt < 5 && !canUseFamilyHere(candidate, family)) continue;
 
         items.push({
           x: testX,
@@ -113,11 +119,11 @@ const LANDING_DECOR = (() => {
           radius,
           family,
           src,
-          top: `${testY.toFixed(2)}%`,
-          left: `${testX.toFixed(2)}%`,
-          size: Math.round(70 + rand() * 32),
+          top: `${((testY / config.canvasHeight) * 100).toFixed(2)}%`,
+          left: `${((testX / config.canvasWidth) * 100).toFixed(2)}%`,
+          size,
           rotate: Math.round(-25 + rand() * 50),
-          opacity: Number((0.11 + rand() * 0.08).toFixed(3)),
+          opacity: Number((config.opacityMin + rand() * (config.opacityMax - config.opacityMin)).toFixed(3)),
           color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
           className: '',
         });
@@ -127,7 +133,46 @@ const LANDING_DECOR = (() => {
   }
 
   return items;
-})();
+};
+
+const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
+  canvasWidth: 390,
+  canvasHeight: 760,
+  cellSize: 42,
+  jitter: 14,
+  minSize: 28,
+  maxSize: 40,
+  minEdgeGap: 3,
+  nearRadius: 72,
+  opacityMin: 0.12,
+  opacityMax: 0.2,
+});
+
+const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
+  canvasWidth: 900,
+  canvasHeight: 760,
+  cellSize: 54,
+  jitter: 18,
+  minSize: 38,
+  maxSize: 56,
+  minEdgeGap: 4,
+  nearRadius: 88,
+  opacityMin: 0.115,
+  opacityMax: 0.19,
+});
+
+const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
+  canvasWidth: 1440,
+  canvasHeight: 760,
+  cellSize: 64,
+  jitter: 22,
+  minSize: 46,
+  maxSize: 68,
+  minEdgeGap: 5,
+  nearRadius: 96,
+  opacityMin: 0.11,
+  opacityMax: 0.18,
+});
 
 const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
   <div
@@ -161,6 +206,9 @@ const Home = () => {
   const hasRestored = useRef(false);
   const { quests, isLoading, currentUser } = useSideQuest();
   const navigate = useNavigate();
+  const [viewportWidth, setViewportWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1280,
+  );
   const activeQuests = quests.filter(quest => quest.status === 'active');
   const [selectedCategory, setSelectedCategory] = useState(
     sessionStorage.getItem('sq_selected_category') || 'All'
@@ -178,6 +226,17 @@ const Home = () => {
 );
   const [userLoc, setUserLoc] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
+  const landingDecor = viewportWidth < 768
+    ? LANDING_DECOR_MOBILE
+    : viewportWidth < 1024
+      ? LANDING_DECOR_TABLET
+      : LANDING_DECOR_DESKTOP;
+
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -269,7 +328,7 @@ const Home = () => {
             <div className="absolute top-1/4 left-[10%] w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-transparent via-white/5 to-transparent rotate-12"></div>
             <div className="absolute inset-0 overflow-hidden">
-              {LANDING_DECOR.map((icon) => (
+              {landingDecor.map((icon) => (
                 <LandingMaskIcon key={`${icon.src}-${icon.top || icon.bottom}-${icon.left || icon.right}`} {...icon} />
               ))}
             </div>
