@@ -35,6 +35,19 @@ const getCategoryDetails = (category) => {
 const createQuestIcon = (status, category) => {
   const detail = getCategoryDetails(category);
   let color = detail.color;
+  const normalizedCategory = category?.trim();
+  const iconSizeByCategory = {
+    Environmental: 33,
+    Social: 33,
+    'Animal Welfare': 37,
+    Cultural: 34,
+    Education: 33,
+    Adventure: 37,
+    Exploration: 34,
+    'Marine Adventure': 33,
+    'Wildlife Adventure': 34,
+    'Sports & Recreation': 32,
+  };
   
   // FIX: Force the border to be the EXACT same teal for every single pin
   const BRAND_TEAL = '#107870'; 
@@ -45,9 +58,10 @@ const createQuestIcon = (status, category) => {
     color = '#F59E0B';
   }
 
-  // INCREASED SIZE: 48px pin, 32px icon
+  // Keep pin size consistent, but tune icon sizes for optical balance per category.
+  const iconPixelSize = iconSizeByCategory[normalizedCategory] || 33;
   const iconContent = detail.isCustom 
-    ? `<img src="${detail.icon}" style="width: 32px; height: 32px; object-fit: contain;" />`
+    ? `<img src="${detail.icon}" style="width: ${iconPixelSize}px; height: ${iconPixelSize}px; object-fit: contain;" />`
     : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 24px;">${detail.emoji}</span>`;
 
   return L.divIcon({
