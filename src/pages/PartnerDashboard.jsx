@@ -422,7 +422,7 @@ useEffect(() => {
                                     <Map size={14} className="mr-1"/> Business Location (Google Maps)
                                 </label>
                                 
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
                                     <input 
                                         type="url" 
                                         name="map_link" 
@@ -434,7 +434,7 @@ useEffect(() => {
                                     <button 
                                         type="button"
                                         onClick={() => window.open('https://www.google.com/maps', '_blank')}
-                                        className="bg-white border border-orange-200 text-orange-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-orange-100 transition-colors shadow-sm"
+                                        className="w-full sm:w-auto bg-white border border-orange-200 text-orange-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-orange-100 transition-colors shadow-sm whitespace-nowrap"
                                     >
                                         Open Maps 📍
                                     </button>
@@ -485,7 +485,7 @@ useEffect(() => {
         <Map size={14} className="mr-1"/> Location Source (Google Maps)
     </label>
     
-    <div className="flex gap-2">
+    <div className="flex flex-col sm:flex-row gap-2">
         <input 
             type="url" 
             name="map_link" 
@@ -498,7 +498,7 @@ useEffect(() => {
         <button 
             type="button" 
             onClick={() => window.open('https://www.google.com/maps', '_blank')}
-            className="bg-white border border-brand-200 text-brand-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-brand-100 transition-colors shadow-sm whitespace-nowrap"
+            className="w-full sm:w-auto bg-white border border-brand-200 text-brand-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-brand-100 transition-colors shadow-sm whitespace-nowrap"
         >
             Open Maps 📍
         </button>
