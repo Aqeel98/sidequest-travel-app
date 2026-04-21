@@ -132,6 +132,46 @@ const createLandingDecor = (seed, config) => {
     }
   }
 
+  let remainingTopFill = config.topFillCount || 0;
+  let topFillAttempts = 0;
+  while (remainingTopFill > 0 && items.length && topFillAttempts < (config.topFillCount || 0) * 20) {
+    topFillAttempts += 1;
+    const size = Math.round(config.minSize + rand() * (config.maxSize - config.minSize));
+    const radius = size / 2;
+    const src = shuffledSources[sourceIndex % shuffledSources.length];
+    sourceIndex += 1;
+    const family = getIconFamily(src);
+    const testX = Math.min(
+      config.canvasWidth - radius - 1,
+      Math.max(radius + 1, radius + rand() * (config.canvasWidth - radius * 2 - 2)),
+    );
+    const topBandPx = config.canvasHeight * 0.14;
+    const testY = Math.min(
+      topBandPx,
+      Math.max(radius + 1, radius + rand() * Math.max(1, topBandPx - radius - 1)),
+    );
+    const candidate = { x: testX, y: testY, radius };
+
+    if (!fitsWithoutCollision(candidate)) continue;
+    if (!canUseFamilyHere(candidate, family)) continue;
+
+    items.push({
+      x: testX,
+      y: testY,
+      radius,
+      family,
+      src,
+      top: `${((testY / config.canvasHeight) * 100).toFixed(2)}%`,
+      left: `${((testX / config.canvasWidth) * 100).toFixed(2)}%`,
+      size,
+      rotate: Math.round(-25 + rand() * 50),
+      opacity: Number((config.opacityMin + rand() * (config.opacityMax - config.opacityMin)).toFixed(3)),
+      color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
+      className: '',
+    });
+    remainingTopFill -= 1;
+  }
+
   return items;
 };
 
@@ -146,6 +186,7 @@ const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
   nearRadius: 72,
   opacityMin: 0.3,
   opacityMax: 0.44,
+  topFillCount: 10,
 });
 
 const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
@@ -159,6 +200,7 @@ const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
   nearRadius: 88,
   opacityMin: 0.18,
   opacityMax: 0.28,
+  topFillCount: 6,
 });
 
 const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
@@ -172,6 +214,7 @@ const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
   nearRadius: 96,
   opacityMin: 0.22,
   opacityMax: 0.34,
+  topFillCount: 8,
 });
 
 const LandingMaskIcon = React.memo(({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
@@ -380,13 +423,13 @@ const Home = () => {
      {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none overflow-hidden">
   {/* Blend gradient hides the hard seam between hero overlays and wave base */}
-  <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-brand-600/0 via-brand-600/50 to-brand-600"></div>
+  <div className="absolute top-0 left-0 w-full h-14 bg-gradient-to-b from-brand-500/0 via-brand-500/35 to-brand-500"></div>
 
   {/* 1. TALLER SAND BASE */}
   <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
 
   <svg
-    className="relative -mt-8 block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
+    className="relative -mt-5 block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
     viewBox="0 0 1200 320"
     preserveAspectRatio="none"
   >
@@ -409,7 +452,7 @@ const Home = () => {
     {/* 4. TURQUOISE WATER (Matched to Header) */}
     <path
       d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z"
-      className="fill-brand-600 animate-wave-roll"
+      className="fill-brand-500 animate-wave-roll"
       style={{ animationDuration: '10s' }}
     ></path>
   </svg>

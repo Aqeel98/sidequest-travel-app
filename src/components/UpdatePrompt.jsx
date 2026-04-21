@@ -33,15 +33,32 @@ export default function UpdatePrompt() {
         },
     });
 
-    // Poll for a new version every 10 minutes while the app is open.
-    // Interval is owned here (not inside onRegisteredSW) so it is
-    // guaranteed to be cleared on unmount.
+    // Check for updates on mount/focus/visibility + every 10 minutes.
+    // iOS browsers can pause background timers, so focus-driven checks
+    // make update discovery much more reliable in production.
     useEffect(() => {
-        const intervalId = setInterval(() => {
+        const checkForUpdate = () => {
             registrationRef.current?.update().catch(() => {});
+        };
+
+        checkForUpdate();
+        const intervalId = setInterval(() => {
+            checkForUpdate();
         }, 10 * 60 * 1000);
 
-        return () => clearInterval(intervalId);
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') checkForUpdate();
+        };
+        const handleFocus = () => checkForUpdate();
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, []);
 
     if (!needRefresh) return null;

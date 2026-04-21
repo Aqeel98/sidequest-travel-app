@@ -9,6 +9,27 @@ import { Compass, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { Analytics } from "@vercel/analytics/react";
 
 let isBootAssetsPreloaded = false;
+const STALE_SW_HEAL_FLAG = 'sq_sw_self_heal_attempted';
+
+const recoverFromStaleServiceWorker = async () => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
+    }
+  } catch (error) {
+    // Silent fail: next reload still attempts network-first fetches.
+  } finally {
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set('sq_force_refresh', Date.now().toString());
+    window.location.replace(nextUrl.toString());
+  }
+};
 
 // Pages
 import Home from './pages/Home';
@@ -119,6 +140,23 @@ const MainLayout = () => {
           }
       }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      sessionStorage.removeItem(STALE_SW_HEAL_FLAG);
+      return;
+    }
+
+    const hasAttemptedRecovery = sessionStorage.getItem(STALE_SW_HEAL_FLAG) === '1';
+    if (hasAttemptedRecovery) return;
+
+    const timeoutId = window.setTimeout(() => {
+      sessionStorage.setItem(STALE_SW_HEAL_FLAG, '1');
+      recoverFromStaleServiceWorker();
+    }, 12000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoading]);
 
   if (isLoading) return <LoadingScreen />;
 
