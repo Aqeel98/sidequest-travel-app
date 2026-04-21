@@ -181,12 +181,12 @@ const MapPage = () => {
                   color: 'white'
                 }}
               >
-                <span className="text-base drop-shadow-md shrink-0 flex items-center justify-center w-5 h-5">
+                <span className="text-base drop-shadow-md shrink-0 flex items-center justify-center w-6 h-6">
                   {config.iconSrc ? (
                     <img
                       src={config.iconSrc}
                       alt=""
-                      className="w-4 h-4 object-contain opacity-95"
+                      className="w-5 h-5 object-contain opacity-95"
                       style={{ filter: 'brightness(0) invert(1)' }}
                       loading="eager"
                       fetchPriority="high"
