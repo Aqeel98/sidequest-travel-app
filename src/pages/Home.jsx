@@ -140,12 +140,12 @@ const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
   canvasHeight: 760,
   cellSize: 42,
   jitter: 14,
-  minSize: 28,
-  maxSize: 40,
+  minSize: 30,
+  maxSize: 44,
   minEdgeGap: 3,
   nearRadius: 72,
-  opacityMin: 0.12,
-  opacityMax: 0.2,
+  opacityMin: 0.19,
+  opacityMax: 0.3,
 });
 
 const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
@@ -153,12 +153,12 @@ const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
   canvasHeight: 760,
   cellSize: 54,
   jitter: 18,
-  minSize: 38,
-  maxSize: 56,
+  minSize: 42,
+  maxSize: 60,
   minEdgeGap: 4,
   nearRadius: 88,
-  opacityMin: 0.115,
-  opacityMax: 0.19,
+  opacityMin: 0.18,
+  opacityMax: 0.28,
 });
 
 const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
@@ -166,12 +166,12 @@ const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
   canvasHeight: 760,
   cellSize: 64,
   jitter: 22,
-  minSize: 46,
-  maxSize: 68,
+  minSize: 50,
+  maxSize: 74,
   minEdgeGap: 5,
   nearRadius: 96,
-  opacityMin: 0.11,
-  opacityMax: 0.18,
+  opacityMin: 0.17,
+  opacityMax: 0.26,
 });
 
 const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
@@ -188,7 +188,7 @@ const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity,
       opacity,
       backgroundColor: color,
       transform: `rotate(${rotate}deg)`,
-      filter: 'saturate(1.2)',
+      filter: 'saturate(1.5)',
       WebkitMaskImage: `url(${src})`,
       WebkitMaskRepeat: 'no-repeat',
       WebkitMaskSize: 'contain',
