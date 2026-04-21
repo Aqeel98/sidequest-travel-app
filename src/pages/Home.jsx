@@ -67,19 +67,17 @@ const createSeededRandom = (seed) => {
 const LANDING_DECOR = (() => {
   const rand = createSeededRandom(20260420);
   const items = [];
-  const targetCount = 96;
-  const minGap = 5.2;
+  const targetCount = 180;
+  const minGap = 4.8;
   const nearRadius = 14;
+  const shuffledSources = [...ICON_SOURCES].sort(() => rand() - 0.5);
+  let sourceIndex = 0;
   let attempts = 0;
 
   while (items.length < targetCount && attempts < 9000) {
     attempts += 1;
-    const x = 2 + rand() * 94;
-    const y = 3 + rand() * 55;
-
-    // Keep center area clear for hero headline + CTA.
-    const inSafeZone = x >= 30 && x <= 70 && y >= 15 && y <= 47;
-    if (inSafeZone) continue;
+    const x = 1 + rand() * 98;
+    const y = 2 + rand() * 96;
 
     // Avoid icon overlap.
     const hasCollision = items.some((item) => {
@@ -89,7 +87,8 @@ const LANDING_DECOR = (() => {
     });
     if (hasCollision) continue;
 
-    const src = ICON_SOURCES[Math.floor(rand() * ICON_SOURCES.length)];
+    const src = shuffledSources[sourceIndex % shuffledSources.length];
+    sourceIndex += 1;
     const family = getIconFamily(src);
 
     // Avoid placing similar icons close to each other.
@@ -111,7 +110,7 @@ const LANDING_DECOR = (() => {
       rotate: Math.round(-22 + rand() * 44),
       opacity: Number((0.085 + rand() * 0.055).toFixed(3)),
       color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
-      className: rand() > 0.72 ? 'hidden md:block' : '',
+      className: '',
     });
   }
 
@@ -132,6 +131,7 @@ const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity,
       opacity,
       backgroundColor: color,
       transform: `rotate(${rotate}deg)`,
+      filter: 'saturate(1.2)',
       WebkitMaskImage: `url(${src})`,
       WebkitMaskRepeat: 'no-repeat',
       WebkitMaskSize: 'contain',
