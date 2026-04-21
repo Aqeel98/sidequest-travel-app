@@ -8,6 +8,8 @@ import AuthModal from './components/AuthModal';
 import { Compass, CheckCircle, AlertCircle, Info } from 'lucide-react'; 
 import { Analytics } from "@vercel/analytics/react";
 
+let isBootAssetsPreloaded = false;
+
 // Pages
 import Home from './pages/Home';
 import QuestDetails from './pages/QuestDetails';
@@ -133,6 +135,15 @@ const MainLayout = () => {
 };
 
 export default function App() {
+  useEffect(() => {
+    if (isBootAssetsPreloaded) return;
+    isBootAssetsPreloaded = true;
+
+    const needle = new Image();
+    needle.decoding = 'async';
+    needle.src = '/nav-needle.webp';
+  }, []);
+
   return (
     <HelmetProvider>
       <SideQuestProvider>
