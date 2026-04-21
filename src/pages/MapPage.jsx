@@ -217,7 +217,7 @@ const MapPage = () => {
       />
 
       {/* --- SUGGEST A QUEST BUTTON --- */}
-      <div className="absolute bottom-12 left-4 z-[1100]">
+      <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-4 z-[1100]">
         <button
           onClick={() => {
             if (!currentUser) { setShowAuthModal(true); return; }
