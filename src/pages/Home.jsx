@@ -144,8 +144,8 @@ const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
   maxSize: 44,
   minEdgeGap: 3,
   nearRadius: 72,
-  opacityMin: 0.19,
-  opacityMax: 0.3,
+  opacityMin: 0.69,
+  opacityMax: 0.8,
 });
 
 const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
