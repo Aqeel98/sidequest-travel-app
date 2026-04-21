@@ -276,9 +276,11 @@ const Home = () => {
       ? LANDING_DECOR_TABLET
       : LANDING_DECOR_DESKTOP;
   const landingDecorNodes = useMemo(
-    () => landingDecor.map((icon) => (
-      <LandingMaskIcon key={`${icon.src}-${icon.top}-${icon.left}`} {...icon} />
-    )),
+    () => landingDecor
+      .filter((icon) => Number.parseFloat(icon.top) < 74)
+      .map((icon) => (
+        <LandingMaskIcon key={`${icon.src}-${icon.top}-${icon.left}`} {...icon} />
+      )),
     [landingDecor],
   );
 
@@ -374,9 +376,6 @@ const Home = () => {
       <div className="relative bg-brand-600 overflow-hidden">
 
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-            <div className="absolute -top-20 -right-20 w-[600px] h-[600px] rounded-full bg-brand-400 opacity-20 blur-3xl"></div>
-            <div className="absolute top-1/4 left-[10%] w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-transparent via-white/5 to-transparent rotate-12"></div>
             <div className="absolute inset-0 overflow-hidden">{landingDecorNodes}</div>
         </div>
 
@@ -422,20 +421,16 @@ const Home = () => {
 
      {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none overflow-hidden">
-  {/* Blend gradient hides the hard seam between hero overlays and wave base */}
-  <div className="absolute top-0 left-0 w-full h-14 bg-gradient-to-b from-brand-500/0 via-brand-500/35 to-brand-500"></div>
-
   {/* 1. TALLER SAND BASE */}
   <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
 
   <svg
-    className="relative -mt-5 block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
+    className="relative -mt-px block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
     viewBox="0 0 1200 320"
     preserveAspectRatio="none"
   >
 
     {/* 2. GHOST WAVE (Added as requested - Sits behind main foam) */}
-    {/* This creates the "Double Wave" look */}
     <path
       d="M0,0 L1200,0 L1200,130 C900,180 600,90 300,160 L0,120 Z"
       className="fill-white/30 animate-wave-roll"
@@ -452,10 +447,11 @@ const Home = () => {
     {/* 4. TURQUOISE WATER (Matched to Header) */}
     <path
       d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z"
-      className="fill-brand-500 animate-wave-roll"
+      className="fill-brand-600 animate-wave-roll"
       style={{ animationDuration: '10s' }}
     ></path>
   </svg>
+
 </div>
             </div>
 
