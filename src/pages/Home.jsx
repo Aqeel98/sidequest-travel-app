@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MapPin, ArrowRight, Sparkles, PlusCircle, Search, Crosshair, Loader2
@@ -53,6 +53,7 @@ const ICON_SOURCES = [
 ];
 
 const ICON_COLORS = ['#DFF2EE', '#D8ECE8', '#E3F4F1', '#D5E8E3', '#DCEEEA'];
+let landingIconsPreloaded = false;
 
 const getIconFamily = (src) => src.split('/').pop().replace('.webp', '').split('_')[0];
 
@@ -138,7 +139,7 @@ const createLandingDecor = (seed, config) => {
 const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
   canvasWidth: 390,
   canvasHeight: 760,
-  cellSize: 42,
+  cellSize: 48,
   jitter: 14,
   minSize: 30,
   maxSize: 44,
@@ -151,7 +152,7 @@ const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
 const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
   canvasWidth: 900,
   canvasHeight: 760,
-  cellSize: 54,
+  cellSize: 60,
   jitter: 18,
   minSize: 42,
   maxSize: 60,
@@ -164,7 +165,7 @@ const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
 const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
   canvasWidth: 1440,
   canvasHeight: 760,
-  cellSize: 64,
+  cellSize: 70,
   jitter: 22,
   minSize: 50,
   maxSize: 74,
@@ -174,7 +175,7 @@ const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
   opacityMax: 0.34,
 });
 
-const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
+const LandingMaskIcon = React.memo(({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
   <div
     aria-hidden="true"
     className={`absolute pointer-events-none select-none ${className}`}
@@ -188,7 +189,7 @@ const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity,
       opacity,
       backgroundColor: color,
       transform: `rotate(${rotate}deg)`,
-      filter: 'saturate(1.5)',
+      filter: 'saturate(1.35)',
       WebkitMaskImage: `url(${src})`,
       WebkitMaskRepeat: 'no-repeat',
       WebkitMaskSize: 'contain',
@@ -199,7 +200,7 @@ const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity,
       maskPosition: 'center',
     }}
   />
-);
+));
 
 
 const Home = () => {
@@ -231,11 +232,27 @@ const Home = () => {
     : viewportWidth < 1024
       ? LANDING_DECOR_TABLET
       : LANDING_DECOR_DESKTOP;
+  const landingDecorNodes = useMemo(
+    () => landingDecor.map((icon) => (
+      <LandingMaskIcon key={`${icon.src}-${icon.top}-${icon.left}`} {...icon} />
+    )),
+    [landingDecor],
+  );
 
   useEffect(() => {
     const onResize = () => setViewportWidth(window.innerWidth);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    if (landingIconsPreloaded) return;
+    landingIconsPreloaded = true;
+    ICON_SOURCES.forEach((src) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+    });
   }, []);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -327,11 +344,7 @@ const Home = () => {
             <div className="absolute -top-20 -right-20 w-[600px] h-[600px] rounded-full bg-brand-400 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/4 left-[10%] w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-transparent via-white/5 to-transparent rotate-12"></div>
-            <div className="absolute inset-0 overflow-hidden">
-              {landingDecor.map((icon) => (
-                <LandingMaskIcon key={`${icon.src}-${icon.top || icon.bottom}-${icon.left || icon.right}`} {...icon} />
-              ))}
-            </div>
+            <div className="absolute inset-0 overflow-hidden">{landingDecorNodes}</div>
         </div>
 
         {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
@@ -375,15 +388,15 @@ const Home = () => {
         </div>
 
      {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
-<div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
-  {/* Blend strip removes visible seam between hero and wave layers */}
-  <div className="absolute top-0 left-0 w-full h-4 bg-brand-600"></div>
+<div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none overflow-hidden">
+  {/* Blend gradient hides the hard seam between hero overlays and wave base */}
+  <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-brand-600/0 via-brand-600/50 to-brand-600"></div>
 
   {/* 1. TALLER SAND BASE */}
   <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
 
   <svg
-    className="relative -mt-px block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
+    className="relative -mt-8 block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
     viewBox="0 0 1200 320"
     preserveAspectRatio="none"
   >
