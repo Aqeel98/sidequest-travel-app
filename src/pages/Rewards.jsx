@@ -115,7 +115,7 @@ const LinkifyText = ({ text }) => {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 text-gray-800 flex items-center">
-          <ShoppingBag className="mr-3 text-green-600" /> Rewards Marketplace
+          <ShoppingBag className="mr-3 text-brand-600" /> Rewards Marketplace
         </h1>
         {currentUser ? (
           <p className="text-gray-600">
