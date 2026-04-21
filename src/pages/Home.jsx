@@ -67,51 +67,63 @@ const createSeededRandom = (seed) => {
 const LANDING_DECOR = (() => {
   const rand = createSeededRandom(20260420);
   const items = [];
-  const targetCount = 180;
-  const minGap = 4.8;
-  const nearRadius = 14;
+  const nearRadius = 12;
+  const minEdgeGap = 0.55;
+  const cellSize = 6.5;
+  const jitter = 2.4;
   const shuffledSources = [...ICON_SOURCES].sort(() => rand() - 0.5);
   let sourceIndex = 0;
-  let attempts = 0;
 
-  while (items.length < targetCount && attempts < 9000) {
-    attempts += 1;
-    const x = 1 + rand() * 98;
-    const y = 2 + rand() * 96;
+  const fitsWithoutCollision = (candidate) => !items.some((item) => {
+    const dx = item.x - candidate.x;
+    const dy = item.y - candidate.y;
+    const minDistance = item.radius + candidate.radius + minEdgeGap;
+    return Math.hypot(dx, dy) < minDistance;
+  });
 
-    // Avoid icon overlap.
-    const hasCollision = items.some((item) => {
-      const dx = item.x - x;
-      const dy = item.y - y;
-      return Math.hypot(dx, dy) < minGap;
-    });
-    if (hasCollision) continue;
+  const canUseFamilyHere = (candidate, family) => !items.some((item) => {
+    const dx = item.x - candidate.x;
+    const dy = item.y - candidate.y;
+    return Math.hypot(dx, dy) < nearRadius && item.family === family;
+  });
 
-    const src = shuffledSources[sourceIndex % shuffledSources.length];
-    sourceIndex += 1;
-    const family = getIconFamily(src);
+  for (let row = 0; row <= 100 / cellSize; row += 1) {
+    for (let col = 0; col <= 100 / cellSize; col += 1) {
+      const baseX = col * cellSize + cellSize / 2;
+      const baseY = row * cellSize + cellSize / 2;
+      const x = Math.min(99, Math.max(1, baseX + (rand() * 2 - 1) * jitter));
+      const y = Math.min(99, Math.max(1, baseY + (rand() * 2 - 1) * jitter));
+      const radius = Number((1.8 + rand() * 0.8).toFixed(2));
+      const src = shuffledSources[sourceIndex % shuffledSources.length];
+      sourceIndex += 1;
+      const family = getIconFamily(src);
 
-    // Avoid placing similar icons close to each other.
-    const hasNearSimilar = items.some((item) => {
-      const dx = item.x - x;
-      const dy = item.y - y;
-      return Math.hypot(dx, dy) < nearRadius && item.family === family;
-    });
-    if (hasNearSimilar) continue;
+      let placed = false;
+      for (let attempt = 0; attempt < 4 && !placed; attempt += 1) {
+        const testX = Math.min(99, Math.max(1, x + (rand() * 2 - 1) * (attempt + 1)));
+        const testY = Math.min(99, Math.max(1, y + (rand() * 2 - 1) * (attempt + 1)));
+        const candidate = { x: testX, y: testY, radius };
 
-    items.push({
-      x,
-      y,
-      family,
-      src,
-      top: `${y.toFixed(2)}%`,
-      left: `${x.toFixed(2)}%`,
-      size: Math.round(72 + rand() * 36),
-      rotate: Math.round(-22 + rand() * 44),
-      opacity: Number((0.085 + rand() * 0.055).toFixed(3)),
-      color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
-      className: '',
-    });
+        if (!fitsWithoutCollision(candidate)) continue;
+        if (!canUseFamilyHere(candidate, family)) continue;
+
+        items.push({
+          x: testX,
+          y: testY,
+          radius,
+          family,
+          src,
+          top: `${testY.toFixed(2)}%`,
+          left: `${testX.toFixed(2)}%`,
+          size: Math.round(70 + rand() * 32),
+          rotate: Math.round(-25 + rand() * 50),
+          opacity: Number((0.11 + rand() * 0.08).toFixed(3)),
+          color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
+          className: '',
+        });
+        placed = true;
+      }
+    }
   }
 
   return items;
