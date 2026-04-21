@@ -181,12 +181,12 @@ const MapPage = () => {
                   color: 'white'
                 }}
               >
-                <span className="text-base drop-shadow-md shrink-0 flex items-center justify-center w-6 h-6">
+                <span className="text-base drop-shadow-md shrink-0 flex items-center justify-center w-7 h-7">
                   {config.iconSrc ? (
                     <img
                       src={config.iconSrc}
                       alt=""
-                      className="w-[20px] h-[20px] object-contain opacity-95"
+                      className="w-6 h-6 object-contain opacity-95"
                       style={{ filter: 'brightness(0) invert(1)' }}
                       loading="eager"
                       fetchPriority="high"
@@ -196,7 +196,7 @@ const MapPage = () => {
                     <span>{config.iconFallback}</span>
                   )}
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-widest">{name}</span>
+                <span className="text-[10px] font-black uppercase tracking-wide">{name}</span>
               </button>
             ))}
           </div>
