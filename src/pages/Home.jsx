@@ -20,40 +20,39 @@ const QuestSkeleton = () => (
 );
 
 const ICON_SOURCES = [
-  '/landing-icons/Anchor_1.webp',
-  '/landing-icons/Anchor_2.webp',
-  '/landing-icons/Anchor_3.webp',
-  '/landing-icons/Boat_1.webp',
-  '/landing-icons/Boat_2.webp',
-  '/landing-icons/Boat_3.webp',
-  '/landing-icons/Bottle.webp',
-  '/landing-icons/Coral_1.webp',
-  '/landing-icons/Coral_2.webp',
-  '/landing-icons/Fish_1.webp',
-  '/landing-icons/Fish_2.webp',
-  '/landing-icons/Fish_3.webp',
-  '/landing-icons/Goggle_1.webp',
-  '/landing-icons/Goggle_2.webp',
-  '/landing-icons/Hook_1.webp',
-  '/landing-icons/Hook_2.webp',
-  '/landing-icons/Lifeboat_1.webp',
-  '/landing-icons/Lifeboat_2.webp',
-  '/landing-icons/Octopus_.webp',
-  '/landing-icons/Pearl.webp',
-  '/landing-icons/Pearl_2.webp',
-  '/landing-icons/Starfish.webp',
-  '/landing-icons/Surf_1.webp',
-  '/landing-icons/Surf_2.webp',
-  '/landing-icons/Surf_3.webp',
-  '/landing-icons/Turtle_1.webp',
-  '/landing-icons/Turtle_2.webp',
-  '/landing-icons/Turtle_3.webp',
-  '/landing-icons/Weed.webp',
-  '/landing-icons/Wheel.webp',
+  '/landing-icons-opt/Anchor_1.webp',
+  '/landing-icons-opt/Anchor_2.webp',
+  '/landing-icons-opt/Anchor_3.webp',
+  '/landing-icons-opt/Boat_1.webp',
+  '/landing-icons-opt/Boat_2.webp',
+  '/landing-icons-opt/Boat_3.webp',
+  '/landing-icons-opt/Bottle.webp',
+  '/landing-icons-opt/Coral_1.webp',
+  '/landing-icons-opt/Coral_2.webp',
+  '/landing-icons-opt/Fish_1.webp',
+  '/landing-icons-opt/Fish_2.webp',
+  '/landing-icons-opt/Fish_3.webp',
+  '/landing-icons-opt/Goggle_1.webp',
+  '/landing-icons-opt/Goggle_2.webp',
+  '/landing-icons-opt/Hook_1.webp',
+  '/landing-icons-opt/Hook_2.webp',
+  '/landing-icons-opt/Lifeboat_1.webp',
+  '/landing-icons-opt/Lifeboat_2.webp',
+  '/landing-icons-opt/Octopus_.webp',
+  '/landing-icons-opt/Pearl.webp',
+  '/landing-icons-opt/Pearl_2.webp',
+  '/landing-icons-opt/Starfish.webp',
+  '/landing-icons-opt/Surf_1.webp',
+  '/landing-icons-opt/Surf_2.webp',
+  '/landing-icons-opt/Surf_3.webp',
+  '/landing-icons-opt/Turtle_1.webp',
+  '/landing-icons-opt/Turtle_2.webp',
+  '/landing-icons-opt/Turtle_3.webp',
+  '/landing-icons-opt/Weed.webp',
+  '/landing-icons-opt/Wheel.webp',
 ];
 
 const ICON_COLORS = ['#DFF2EE', '#D8ECE8', '#E3F4F1', '#D5E8E3', '#DCEEEA'];
-let landingIconsPreloaded = false;
 
 const getIconFamily = (src) => src.split('/').pop().replace('.webp', '').split('_')[0];
 
@@ -243,16 +242,6 @@ const Home = () => {
     const onResize = () => setViewportWidth(window.innerWidth);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  useEffect(() => {
-    if (landingIconsPreloaded) return;
-    landingIconsPreloaded = true;
-    ICON_SOURCES.forEach((src) => {
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = src;
-    });
   }, []);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {

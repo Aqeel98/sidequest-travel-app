@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { stat } from "node:fs/promises";
+import { mkdir, readdir, stat } from "node:fs/promises";
 import sharp from "sharp";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,5 +69,43 @@ for (const asset of assets) {
 
   console.log(
     `${asset.name} (${before.width}x${before.height}) -> ${path.basename(output)} (${after.width}x${after.height}) | ${formatSize(inBytes)} -> ${formatSize(outBytes)} | -${saved}%`
+  );
+}
+
+const landingInputDir = path.join(publicDir, "landing-icons");
+const landingOutputDir = path.join(publicDir, "landing-icons-opt");
+await mkdir(landingOutputDir, { recursive: true });
+
+const landingIcons = (await readdir(landingInputDir)).filter((name) => name.endsWith(".webp"));
+for (const iconName of landingIcons) {
+  const input = path.join(landingInputDir, iconName);
+  const output = path.join(landingOutputDir, iconName);
+
+  const src = sharp(input, { failOn: "none" });
+  const metadata = await src.metadata();
+  if (!metadata.width || !metadata.height) {
+    throw new Error(`Could not read image dimensions for ${iconName}`);
+  }
+
+  await src
+    .resize({
+      width: 256,
+      height: 256,
+      fit: "inside",
+      withoutEnlargement: true,
+      kernel: "lanczos3",
+    })
+    .webp({
+      quality: 72,
+      alphaQuality: 100,
+      effort: 6,
+      nearLossless: false,
+    })
+    .toFile(output);
+
+  const [{ size: inSize }, { size: outSize }] = await Promise.all([stat(input), stat(output)]);
+  const saved = inSize > 0 ? (((inSize - outSize) / inSize) * 100).toFixed(1) : "0.0";
+  console.log(
+    `landing-icons/${iconName} -> landing-icons-opt/${iconName} | ${formatSize(inSize)} -> ${formatSize(outSize)} | -${saved}%`
   );
 }
