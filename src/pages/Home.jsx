@@ -170,8 +170,8 @@ const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
   maxSize: 74,
   minEdgeGap: 5,
   nearRadius: 96,
-  opacityMin: 0.17,
-  opacityMax: 0.26,
+  opacityMin: 0.22,
+  opacityMax: 0.34,
 });
 
 const LandingMaskIcon = ({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
