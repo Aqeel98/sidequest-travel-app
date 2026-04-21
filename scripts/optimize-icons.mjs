@@ -72,7 +72,7 @@ for (const asset of assets) {
   );
 }
 
-const landingInputDir = path.join(publicDir, "landing-icons");
+const landingInputDir = path.resolve(__dirname, "..", "assets-source", "landing-icons");
 const landingOutputDir = path.join(publicDir, "landing-icons-opt");
 await mkdir(landingOutputDir, { recursive: true });
 

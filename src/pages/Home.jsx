@@ -203,6 +203,7 @@ const LandingMaskIcon = React.memo(({ src, top, right, bottom, left, size, rotat
 
 
 const Home = () => {
+  const PRIORITY_QUEST_IMAGE_COUNT = 10;
   const hasRestored = useRef(false);
   const { quests, isLoading, currentUser } = useSideQuest();
   const navigate = useNavigate();
@@ -518,9 +519,9 @@ const Home = () => {
                         <img
                             src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"}
                             alt={quest.title}
-                            loading={index < 12 ? "eager" : "lazy"}
-                            fetchpriority={index < 12 ? "high" : "low"}
-                            //decoding="async"
+                            loading={index < PRIORITY_QUEST_IMAGE_COUNT ? "eager" : "lazy"}
+                            fetchpriority={index < PRIORITY_QUEST_IMAGE_COUNT ? "high" : "low"}
+                            decoding="async"
                             draggable="false"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             style={{
