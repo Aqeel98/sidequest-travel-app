@@ -18,17 +18,17 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 };
 
 const CATEGORY_CONFIG = {
-  'All': { color: '#334155', icon: '🗺️' },
-  'Exploration': { color: '#854d0e', icon: <img src="/Exploration.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Adventure': { color: '#9a3412', icon: <img src="/Adventure.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Marine Adventure': { color: '#164e63', icon: <img src="/Marine_Adventure.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Environmental': { color: '#064e3b', icon: <img src="/Environmental_.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Wildlife Adventure': { color: '#365314', icon: <img src="/Wildlife_Adventure.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Education': { color: '#1e3a8a', icon: <img src="/Edu.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Sports & Recreation': { color: '#1e293b', icon: <img src="/Sports_&_Recreational_.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Animal Welfare': { color: '#831843', icon: <img src="/Animal_Welfare.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Cultural': { color: '#4c1d95', icon: <img src="/Cultural.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }, 
-  'Social': { color: '#9f1239', icon: <img src="/Social_.webp" className="w-5 h-5 object-contain brightness-0 invert" /> }
+  'All': { color: '#334155', iconFallback: '🗺️' },
+  'Exploration': { color: '#854d0e', iconSrc: '/Exploration.webp', iconFallback: '🧭' },
+  'Adventure': { color: '#9a3412', iconSrc: '/Adventure.webp', iconFallback: '🧗' },
+  'Marine Adventure': { color: '#164e63', iconSrc: '/Marine_Adventure.webp', iconFallback: '🤿' },
+  'Environmental': { color: '#064e3b', iconSrc: '/Environmental_.webp', iconFallback: '🌿' },
+  'Wildlife Adventure': { color: '#365314', iconSrc: '/Wildlife_Adventure.webp', iconFallback: '🐾' },
+  'Education': { color: '#1e3a8a', iconSrc: '/Edu.webp', iconFallback: '📚' },
+  'Sports & Recreation': { color: '#1e293b', iconSrc: '/Sports_&_Recreational_.webp', iconFallback: '⚽' },
+  'Animal Welfare': { color: '#831843', iconSrc: '/Animal_Welfare.webp', iconFallback: '🐘' },
+  'Cultural': { color: '#4c1d95', iconSrc: '/Cultural.webp', iconFallback: '🏯' },
+  'Social': { color: '#9f1239', iconSrc: '/Social_.webp', iconFallback: '❤️' }
 };
 
 
@@ -181,7 +181,21 @@ const MapPage = () => {
                   color: 'white'
                 }}
               >
-                <span className="text-base drop-shadow-md">{config.icon}</span>
+                <span className="text-base drop-shadow-md shrink-0 flex items-center justify-center w-5 h-5">
+                  {config.iconSrc ? (
+                    <img
+                      src={config.iconSrc}
+                      alt=""
+                      className="w-4 h-4 object-contain opacity-95"
+                      style={{ filter: 'brightness(0) invert(1)' }}
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span>{config.iconFallback}</span>
+                  )}
+                </span>
                 <span className="text-[10px] font-black uppercase tracking-widest">{name}</span>
               </button>
             ))}
