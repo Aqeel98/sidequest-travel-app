@@ -33,13 +33,13 @@ export default function UpdatePrompt() {
         },
     });
 
-    // Poll for a new version every 60 minutes while the app is open.
+    // Poll for a new version every 10 minutes while the app is open.
     // Interval is owned here (not inside onRegisteredSW) so it is
     // guaranteed to be cleared on unmount.
     useEffect(() => {
         const intervalId = setInterval(() => {
             registrationRef.current?.update().catch(() => {});
-        }, 60 * 60 * 1000);
+        }, 10 * 60 * 1000);
 
         return () => clearInterval(intervalId);
     }, []);

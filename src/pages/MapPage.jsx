@@ -18,17 +18,17 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 };
 
 const CATEGORY_CONFIG = {
-  'All': { color: '#334155', icon: '🗺️' },
-  'Exploration': { color: '#854d0e', icon: '🧭' }, 
-  'Adventure': { color: '#9a3412', icon: '🧗' }, 
-  'Marine Adventure': { color: '#164e63', icon: '🤿' }, 
-  'Environmental': { color: '#064e3b', icon: '🌿' }, 
-  'Wildlife Adventure': { color: '#365314', icon: '🐾' }, 
-  'Education': { color: '#1e3a8a', icon: '📚' }, 
-  'Sports & Recreation': { color: '#1e293b', icon: '⚽' }, 
-  'Animal Welfare': { color: '#831843', icon: '🐘' }, 
-  'Cultural': { color: '#4c1d95', icon: '🏯' }, 
-  'Social': { color: '#881337', icon: '❤️' }
+  'All': { color: '#334155', iconFallback: '🗺️' },
+  'Exploration': { color: '#854d0e', iconSrc: '/Exploration.webp', iconFallback: '🧭' },
+  'Adventure': { color: '#9a3412', iconSrc: '/Adventure.webp', iconFallback: '🧗' },
+  'Marine Adventure': { color: '#164e63', iconSrc: '/Marine_Adventure.webp', iconFallback: '🤿' },
+  'Environmental': { color: '#064e3b', iconSrc: '/Environmental_.webp', iconFallback: '🌿' },
+  'Wildlife Adventure': { color: '#365314', iconSrc: '/Wildlife_Adventure.webp', iconFallback: '🐾' },
+  'Education': { color: '#1e3a8a', iconSrc: '/Edu.webp', iconFallback: '📚' },
+  'Sports & Recreation': { color: '#1e293b', iconSrc: '/Sports_&_Recreational_.webp', iconFallback: '⚽' },
+  'Animal Welfare': { color: '#831843', iconSrc: '/Animal_Welfare.webp', iconFallback: '🐘' },
+  'Cultural': { color: '#4c1d95', iconSrc: '/Cultural.webp', iconFallback: '🏯' },
+  'Social': { color: '#9f1239', iconSrc: '/Social_.webp', iconFallback: '❤️' }
 };
 
 
@@ -181,8 +181,22 @@ const MapPage = () => {
                   color: 'white'
                 }}
               >
-                <span className="text-base drop-shadow-md">{config.icon}</span>
-                <span className="text-[10px] font-black uppercase tracking-widest">{name}</span>
+                <span className="text-base drop-shadow-md shrink-0 flex items-center justify-center w-7 h-7">
+                  {config.iconSrc ? (
+                    <img
+                      src={config.iconSrc}
+                      alt=""
+                      className="w-6 h-6 object-contain opacity-95"
+                      style={{ filter: 'brightness(0) invert(1)' }}
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span>{config.iconFallback}</span>
+                  )}
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wide">{name}</span>
               </button>
             ))}
           </div>
@@ -203,7 +217,7 @@ const MapPage = () => {
       />
 
       {/* --- SUGGEST A QUEST BUTTON --- */}
-      <div className="absolute bottom-12 left-4 z-[1100]">
+      <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-4 z-[1100]">
         <button
           onClick={() => {
             if (!currentUser) { setShowAuthModal(true); return; }

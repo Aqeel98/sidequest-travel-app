@@ -8,6 +8,8 @@ import AuthModal from './components/AuthModal';
 import { Compass, CheckCircle, AlertCircle, Info } from 'lucide-react'; 
 import { Analytics } from "@vercel/analytics/react";
 
+let isBootAssetsPreloaded = false;
+
 // Pages
 import Home from './pages/Home';
 import QuestDetails from './pages/QuestDetails';
@@ -48,7 +50,7 @@ const LoadingScreen = () => (
           <div className="absolute w-12 h-12 border-4 border-current rounded-full"></div>
 
           <img 
-              src="/nav-needle.png" 
+              src="/nav-needle.webp" 
               alt="Loading" 
                className="w-6 h-6 animate-spin object-contain relative z-10"
           />
@@ -133,6 +135,15 @@ const MainLayout = () => {
 };
 
 export default function App() {
+  useEffect(() => {
+    if (isBootAssetsPreloaded) return;
+    isBootAssetsPreloaded = true;
+
+    const needle = new Image();
+    needle.decoding = 'async';
+    needle.src = '/nav-needle.webp';
+  }, []);
+
   return (
     <HelmetProvider>
       <SideQuestProvider>

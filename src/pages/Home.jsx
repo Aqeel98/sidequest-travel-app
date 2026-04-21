@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect, useLayoutEffect, useRef  } from 'react';
+import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  MapPin, ArrowRight, Sparkles, PlusCircle, Compass, Mountain, Anchor,
-  Waves,  Bird, Palmtree, Sun, Moon,  Search, Crosshair, Loader2
+  MapPin, ArrowRight, Sparkles, PlusCircle, Search, Crosshair, Loader2
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 import SEO from '../components/SEO';
@@ -20,32 +19,197 @@ const QuestSkeleton = () => (
   </div>
 );
 
-const ICON_POOL = [
-  Mountain, Anchor, Waves, Bird, Palmtree, Sun, Moon
+const ICON_SOURCES = [
+  '/landing-icons-opt/Anchor_1.webp',
+  '/landing-icons-opt/Anchor_2.webp',
+  '/landing-icons-opt/Anchor_3.webp',
+  '/landing-icons-opt/Boat_1.webp',
+  '/landing-icons-opt/Boat_2.webp',
+  '/landing-icons-opt/Boat_3.webp',
+  '/landing-icons-opt/Bottle.webp',
+  '/landing-icons-opt/Coral_1.webp',
+  '/landing-icons-opt/Coral_2.webp',
+  '/landing-icons-opt/Fish_1.webp',
+  '/landing-icons-opt/Fish_2.webp',
+  '/landing-icons-opt/Fish_3.webp',
+  '/landing-icons-opt/Goggle_1.webp',
+  '/landing-icons-opt/Goggle_2.webp',
+  '/landing-icons-opt/Hook_1.webp',
+  '/landing-icons-opt/Hook_2.webp',
+  '/landing-icons-opt/Lifeboat_1.webp',
+  '/landing-icons-opt/Lifeboat_2.webp',
+  '/landing-icons-opt/Octopus_.webp',
+  '/landing-icons-opt/Pearl.webp',
+  '/landing-icons-opt/Pearl_2.webp',
+  '/landing-icons-opt/Starfish.webp',
+  '/landing-icons-opt/Surf_1.webp',
+  '/landing-icons-opt/Surf_2.webp',
+  '/landing-icons-opt/Surf_3.webp',
+  '/landing-icons-opt/Turtle_1.webp',
+  '/landing-icons-opt/Turtle_2.webp',
+  '/landing-icons-opt/Turtle_3.webp',
+  '/landing-icons-opt/Weed.webp',
+  '/landing-icons-opt/Wheel.webp',
 ];
 
-const SCATTERED_ICONS = Array.from({ length: 25 }).map((_, i) => {
-  // Alternates between left gutter (5-12%) and right gutter (88-95%)
-  const isLeft = i % 2 === 0;
-  const horizontalPos = isLeft
-    ? (5 + (Math.random() * 7))
-    : (88 + (Math.random() * 7));
+const ICON_COLORS = ['#DFF2EE', '#D8ECE8', '#E3F4F1', '#D5E8E3', '#DCEEEA'];
 
-  return {
-    Icon: ICON_POOL[i % ICON_POOL.length],
-    top: 1100 + (i * 350),
-    left: horizontalPos,
-    size: 200 + (i % 3) * 20,
-    rot: (i * 42) % 360,
-    opacity: 0.08
+const getIconFamily = (src) => src.split('/').pop().replace('.webp', '').split('_')[0];
+
+const createSeededRandom = (seed) => {
+  let value = seed;
+  return () => {
+    value = (value * 1664525 + 1013904223) % 4294967296;
+    return value / 4294967296;
   };
+};
+
+const createLandingDecor = (seed, config) => {
+  const rand = createSeededRandom(seed);
+  const items = [];
+  const shuffledSources = [...ICON_SOURCES].sort(() => rand() - 0.5);
+  let sourceIndex = 0;
+
+  const fitsWithoutCollision = (candidate) => !items.some((item) => {
+    const dx = item.x - candidate.x;
+    const dy = item.y - candidate.y;
+    const minDistance = item.radius + candidate.radius + config.minEdgeGap;
+    return Math.hypot(dx, dy) < minDistance;
+  });
+
+  const canUseFamilyHere = (candidate, family) => !items.some((item) => {
+    const dx = item.x - candidate.x;
+    const dy = item.y - candidate.y;
+    return Math.hypot(dx, dy) < config.nearRadius && item.family === family;
+  });
+
+  const totalRows = Math.ceil(config.canvasHeight / config.cellSize);
+  const totalCols = Math.ceil(config.canvasWidth / config.cellSize);
+
+  for (let row = 0; row < totalRows; row += 1) {
+    for (let col = 0; col < totalCols; col += 1) {
+      const baseX = col * config.cellSize + config.cellSize / 2;
+      const baseY = row * config.cellSize + config.cellSize / 2;
+      const size = Math.round(config.minSize + rand() * (config.maxSize - config.minSize));
+      const radius = size / 2;
+      const src = shuffledSources[sourceIndex % shuffledSources.length];
+      sourceIndex += 1;
+      const family = getIconFamily(src);
+      const maxJitter = config.jitter;
+
+      let placed = false;
+      for (let attempt = 0; attempt < 8 && !placed; attempt += 1) {
+        const spread = maxJitter * (0.5 + attempt * 0.2);
+        const testX = Math.min(
+          config.canvasWidth - radius - 1,
+          Math.max(radius + 1, baseX + (rand() * 2 - 1) * spread),
+        );
+        const testY = Math.min(
+          config.canvasHeight - radius - 1,
+          Math.max(radius + 1, baseY + (rand() * 2 - 1) * spread),
+        );
+        const candidate = { x: testX, y: testY, radius };
+
+        if (!fitsWithoutCollision(candidate)) continue;
+        if (attempt < 5 && !canUseFamilyHere(candidate, family)) continue;
+
+        items.push({
+          x: testX,
+          y: testY,
+          radius,
+          family,
+          src,
+          top: `${((testY / config.canvasHeight) * 100).toFixed(2)}%`,
+          left: `${((testX / config.canvasWidth) * 100).toFixed(2)}%`,
+          size,
+          rotate: Math.round(-25 + rand() * 50),
+          opacity: Number((config.opacityMin + rand() * (config.opacityMax - config.opacityMin)).toFixed(3)),
+          color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
+          className: '',
+        });
+        placed = true;
+      }
+    }
+  }
+
+  return items;
+};
+
+const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
+  canvasWidth: 390,
+  canvasHeight: 760,
+  cellSize: 48,
+  jitter: 14,
+  minSize: 30,
+  maxSize: 44,
+  minEdgeGap: 3,
+  nearRadius: 72,
+  opacityMin: 0.3,
+  opacityMax: 0.44,
 });
+
+const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
+  canvasWidth: 900,
+  canvasHeight: 760,
+  cellSize: 60,
+  jitter: 18,
+  minSize: 42,
+  maxSize: 60,
+  minEdgeGap: 4,
+  nearRadius: 88,
+  opacityMin: 0.18,
+  opacityMax: 0.28,
+});
+
+const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
+  canvasWidth: 1440,
+  canvasHeight: 760,
+  cellSize: 70,
+  jitter: 22,
+  minSize: 50,
+  maxSize: 74,
+  minEdgeGap: 5,
+  nearRadius: 96,
+  opacityMin: 0.22,
+  opacityMax: 0.34,
+});
+
+const LandingMaskIcon = React.memo(({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
+  <div
+    aria-hidden="true"
+    className={`absolute pointer-events-none select-none ${className}`}
+    style={{
+      top,
+      right,
+      bottom,
+      left,
+      width: `${size}px`,
+      height: `${size}px`,
+      opacity,
+      backgroundColor: color,
+      transform: `rotate(${rotate}deg)`,
+      filter: 'saturate(1.35)',
+      WebkitMaskImage: `url(${src})`,
+      WebkitMaskRepeat: 'no-repeat',
+      WebkitMaskSize: 'contain',
+      WebkitMaskPosition: 'center',
+      maskImage: `url(${src})`,
+      maskRepeat: 'no-repeat',
+      maskSize: 'contain',
+      maskPosition: 'center',
+    }}
+  />
+));
 
 
 const Home = () => {
+  const PRIORITY_QUEST_IMAGE_COUNT = 10;
   const hasRestored = useRef(false);
   const { quests, isLoading, currentUser } = useSideQuest();
   const navigate = useNavigate();
+  const [viewportWidth, setViewportWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1280,
+  );
   const activeQuests = quests.filter(quest => quest.status === 'active');
   const [selectedCategory, setSelectedCategory] = useState(
     sessionStorage.getItem('sq_selected_category') || 'All'
@@ -63,6 +227,23 @@ const Home = () => {
 );
   const [userLoc, setUserLoc] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
+  const landingDecor = viewportWidth < 768
+    ? LANDING_DECOR_MOBILE
+    : viewportWidth < 1024
+      ? LANDING_DECOR_TABLET
+      : LANDING_DECOR_DESKTOP;
+  const landingDecorNodes = useMemo(
+    () => landingDecor.map((icon) => (
+      <LandingMaskIcon key={`${icon.src}-${icon.top}-${icon.left}`} {...icon} />
+    )),
+    [landingDecor],
+  );
+
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -153,6 +334,7 @@ const Home = () => {
             <div className="absolute -top-20 -right-20 w-[600px] h-[600px] rounded-full bg-brand-400 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/4 left-[10%] w-[400px] h-[400px] rounded-full bg-teal-300 opacity-20 blur-3xl"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-transparent via-white/5 to-transparent rotate-12"></div>
+            <div className="absolute inset-0 overflow-hidden">{landingDecorNodes}</div>
         </div>
 
         {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
@@ -196,13 +378,15 @@ const Home = () => {
         </div>
 
      {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
-<div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
+<div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none overflow-hidden">
+  {/* Blend gradient hides the hard seam between hero overlays and wave base */}
+  <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-brand-600/0 via-brand-600/50 to-brand-600"></div>
 
   {/* 1. TALLER SAND BASE */}
   <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
 
   <svg
-    className="relative block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
+    className="relative -mt-8 block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
     viewBox="0 0 1200 320"
     preserveAspectRatio="none"
   >
@@ -233,25 +417,6 @@ const Home = () => {
             </div>
 
       {/* --- AESTHETIC HEADER END --- */}
-
-        {/* --- BACKGROUND GHOST ICONS ( --- */}
-        <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
-          {SCATTERED_ICONS.map((asset, idx) => (
-              <asset.Icon
-                  key={idx}
-                  size={asset.size}
-                  style={{
-                      position: 'absolute',
-                      top: `${asset.top}px`,
-                      left: `${asset.left}%`,
-                      transform: `rotate(${asset.rot}deg)`,
-                      opacity: asset.opacity,
-                      color: '#5D4037',
-                      pointerEvents: 'none',
-                  }}
-              />
-          ))}
-      </div>
 
       {/* Quest Grid */}
       <div id="quests-grid" className="max-w-7xl mx-auto px-4 mt-20 relative z-10">
@@ -354,9 +519,9 @@ const Home = () => {
                         <img
                             src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"}
                             alt={quest.title}
-                            loading={index < 12 ? "eager" : "lazy"}
-                            fetchpriority={index < 12 ? "high" : "low"}
-                            //decoding="async"
+                            loading={index < PRIORITY_QUEST_IMAGE_COUNT ? "eager" : "lazy"}
+                            fetchpriority={index < PRIORITY_QUEST_IMAGE_COUNT ? "high" : "low"}
+                            decoding="async"
                             draggable="false"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             style={{

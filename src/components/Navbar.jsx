@@ -29,7 +29,7 @@ const Navbar = () => {
       style={{ borderColor: '#0D9488' }}
     ></div>
     <img 
-      src="/nav-needle.png" 
+      src="/nav-needle.webp" 
       alt="SideQuest" 
       className="w-6 h-6 object-contain transition-transform duration-700 ease-in-out rotate-0 group-hover:rotate-[45deg]"
       />

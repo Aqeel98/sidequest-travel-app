@@ -17,54 +17,74 @@ L.Icon.Default.mergeOptions({
 });
 
 const getCategoryDetails = (category) => {
-  switch (category) {
-      case 'Environmental': return { color: '#064e3b', emoji: '🌿' };
-      case 'Social': return { color: '#881337', emoji: '❤️' };
-      case 'Animal Welfare': return { color: '#831843', emoji: '🐘' };
-      case 'Cultural': return { color: '#4c1d95', emoji: '🏯' }; 
-      case 'Education': return { color: '#1e3a8a', emoji: '📚' };
-      case 'Adventure': return { color: '#9a3412', emoji: '🧗' };
-      case 'Exploration': return { color: '#854d0e', emoji: '🧭' };
-      case 'Marine Adventure': return { color: '#164e63', emoji: '🤿' };
-      case 'Wildlife Adventure': return { color: '#365314', emoji: '🐾' };
-      case 'Sports & Recreation': return { color: '#1e293b', emoji: '⚽' }; 
-      default: return { color: '#1e293b', emoji: '🎯' };
+  switch (category?.trim()) {
+      case 'Environmental': return { color: '#064e3b', icon: '/Environmental_.webp', isCustom: true };
+      case 'Social': return { color: '#9f1239', icon: '/Social_.webp', isCustom: true };
+      case 'Animal Welfare': return { color: '#831843', icon: '/Animal_Welfare.webp', isCustom: true };
+      case 'Cultural': return { color: '#4c1d95', icon: '/Cultural.webp', isCustom: true };
+      case 'Education': return { color: '#1e3a8a', icon: '/Edu.webp', isCustom: true };
+      case 'Adventure': return { color: '#9a3412', icon: '/Adventure.webp', isCustom: true };
+      case 'Exploration': return { color: '#854d0e', icon: '/Exploration.webp', isCustom: true };
+      case 'Marine Adventure': return { color: '#164e63', icon: '/Marine_Adventure.webp', isCustom: true };
+      case 'Wildlife Adventure': return { color: '#365314', icon: '/Wildlife_Adventure.webp', isCustom: true };
+      case 'Sports & Recreation': return { color: '#1e293b', icon: '/Sports_&_Recreational_.webp', isCustom: true };
+      default: return { color: '#1e293b', emoji: '🎯', isCustom: false };
   }
 };
 
 const createQuestIcon = (status, category) => {
-// 1. Get Base Category Style
-let { color, emoji } = getCategoryDetails(category);
+  const detail = getCategoryDetails(category);
+  let color = detail.color;
+  const normalizedCategory = category?.trim();
+  const iconSizeByCategory = {
+    Environmental: 33,
+    Social: 33,
+    'Animal Welfare': 37,
+    Cultural: 34,
+    Education: 33,
+    Adventure: 37,
+    Exploration: 34,
+    'Marine Adventure': 33,
+    'Wildlife Adventure': 34,
+    'Sports & Recreation': 32,
+  };
+  
+  // FIX: Force the border to be the EXACT same teal for every single pin
+  const BRAND_TEAL = '#107870'; 
 
-// 2. Override if Completed or Pending
-if (status === 'approved') {
-    color = '#10B981'; // Emerald Green
-    emoji = '🏆';
-} else if (status === 'pending') {
-    color = '#F59E0B'; // Amber
-    emoji = '⏳';
-}
+  if (status === 'approved') {
+    color = '#10B981';
+  } else if (status === 'pending') {
+    color = '#F59E0B';
+  }
 
-// 3. Return Leaflet Icon
-return L.divIcon({
-  className: "gamified-marker",
-  html: `<div style="
-      background-color: ${color};
-      width: 36px; height: 36px;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      border: 3px solid #107870;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-  ">
-      <span style="transform: rotate(45deg); display: block; line-height: 1;">${emoji}</span>
-  </div>`,
-  iconSize: [36, 36], 
-  iconAnchor: [18, 36], 
-  popupAnchor: [0, -36],
-});
+  // Keep pin size consistent, but tune icon sizes for optical balance per category.
+  const iconPixelSize = iconSizeByCategory[normalizedCategory] || 33;
+  const iconContent = detail.isCustom 
+    ? `<img src="${detail.icon}" style="width: ${iconPixelSize}px; height: ${iconPixelSize}px; object-fit: contain;" />`
+    : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 24px;">${detail.emoji}</span>`;
+
+  return L.divIcon({
+    className: "gamified-marker",
+    html: `<div style="
+        background-color: ${color};
+        width: 48px; height: 48px; 
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 3.5px solid ${BRAND_TEAL}; /* Identical Thick Teal Border */
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        display: flex; align-items: center; justify-content: center;
+    ">
+        <div style="${detail.isCustom ? 'transform: rotate(45deg);' : ''} display: flex; align-items: center; justify-content: center;">
+            ${iconContent}
+        </div>
+    </div>`,
+    iconSize: [48, 48], 
+    iconAnchor: [24, 48], 
+    popupAnchor: [0, -48],
+  });
 };
+
 
 const createAvatarIcon = () => {
     return L.divIcon({
@@ -107,7 +127,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
       {/* --- FIX: MOBILE FLOATING BUTTON --- */}
       {currentUser && (
-   <div className="absolute bottom-28 left-4 z-[1100] pointer-events-none">
+   <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom)+7rem)] md:bottom-6 md:left-56 z-[1100] pointer-events-none">
     <button
        className="pointer-events-auto flex items-center justify-center gap-2 bg-white/95 backdrop-blur-md border border-gray-200 px-4 py-2.5 rounded-full shadow-xl hover:bg-white active:scale-95 transition-all group"
        onClick={(e) => {
