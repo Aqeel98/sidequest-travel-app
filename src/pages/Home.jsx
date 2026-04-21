@@ -376,12 +376,14 @@ const Home = () => {
 
      {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
+  {/* Blend strip removes visible seam between hero and wave layers */}
+  <div className="absolute top-0 left-0 w-full h-4 bg-brand-600"></div>
 
   {/* 1. TALLER SAND BASE */}
   <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
 
   <svg
-    className="relative block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
+    className="relative -mt-px block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
     viewBox="0 0 1200 320"
     preserveAspectRatio="none"
   >
