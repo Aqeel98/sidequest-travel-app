@@ -186,7 +186,7 @@ const MapPage = () => {
                     <img
                       src={config.iconSrc}
                       alt=""
-                      className="w-5 h-5 object-contain opacity-95"
+                      className="w-[20px] h-[20px] object-contain opacity-95"
                       style={{ filter: 'brightness(0) invert(1)' }}
                       loading="eager"
                       fetchPriority="high"
