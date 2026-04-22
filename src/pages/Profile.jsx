@@ -43,7 +43,7 @@ const Profile = () => {
 
 
     // 1. All Hooks called at the top level
-    const { currentUser, questProgress, quests } = useSideQuest();
+    const { currentUser, questProgress, quests, questSuggestions } = useSideQuest();
 
     // 2. Memoize stats calculation and badge logic
     const stats = useMemo(() => {
@@ -62,13 +62,23 @@ const Profile = () => {
         const activeQuests = activeProgress.length; 
 
         // --- TWO DIFFERENT XP NUMBERS ---
-        // LIFETIME XP: total XP ever earned from approved quests. Immutable ledger.
-        // Drives Level, progress bar, and achievement badges so they never regress
-        // when a user redeems a reward.
-        const lifetimeXP = completedProgress.reduce((sum, p) => {
+        // LIFETIME XP: total XP ever earned from approved quests AND the 50 XP
+        // bonus for each approved traveler suggestion. Immutable ledger.
+        // Drives Level, progress bar, and achievement badges so they never
+        // regress when a user redeems a reward.
+        //
+        // The 50 constant mirrors the DB trigger award_xp_on_quest_suggestion_approval().
+        // If that trigger ever changes the amount, update SUGGESTION_XP_BONUS here too.
+        const SUGGESTION_XP_BONUS = 50;
+        const questXP = completedProgress.reduce((sum, p) => {
             const q = quests.find(quest => quest.id === p.quest_id);
             return sum + (q?.xp_value || 0);
         }, 0);
+        const approvedSuggestionCount = (questSuggestions || []).filter(
+            s => s.submitted_by === currentUser.id && s.status === 'approved' && s.xp_awarded
+        ).length;
+        const suggestionBonusXP = approvedSuggestionCount * SUGGESTION_XP_BONUS;
+        const lifetimeXP = questXP + suggestionBonusXP;
 
         // WALLET XP: spendable balance (profiles.xp). Goes down on redemption.
         // Used for display only — redemption gating is enforced server-side.
@@ -151,7 +161,7 @@ const Profile = () => {
             level, 
             progressPercent
         };
-    }, [currentUser, questProgress, quests]);
+    }, [currentUser, questProgress, quests, questSuggestions]);
     
     // 3. Early return after all hooks are called
     if (!currentUser) {
