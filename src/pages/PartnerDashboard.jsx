@@ -56,26 +56,34 @@ useEffect(() => {
         if (editingId) return;
 
         // PRIORITY 1: Admin-initiated suggestion prefill wins over a stale draft.
+        // Gated to Admins only — if a partner somehow inherits a stale prefill
+        // key (e.g. shared device), clear it silently and fall through to the
+        // normal draft restore so they never see the admin-only workflow.
         const prefillRaw = sessionStorage.getItem('sq_admin_suggestion_prefill');
         if (prefillRaw) {
-            try {
-                const parsed = JSON.parse(prefillRaw);
-                setForm(prev => ({
-                    ...prev,
-                    title: parsed.title || '',
-                    description: parsed.description || '',
-                    map_link: parsed.map_link || '',
-                    image: parsed.image || null
-                }));
-                if (parsed.image) setPreview(parsed.image);
-                setSuggestionPrefill(parsed);
-                // Consume the prefill so a refresh doesn't re-apply it, and
-                // clear any lingering draft so it can't override our fields.
+            if (currentUser?.role === 'Admin') {
+                try {
+                    const parsed = JSON.parse(prefillRaw);
+                    setForm(prev => ({
+                        ...prev,
+                        title: parsed.title || '',
+                        description: parsed.description || '',
+                        map_link: parsed.map_link || '',
+                        image: parsed.image || null
+                    }));
+                    if (parsed.image) setPreview(parsed.image);
+                    setSuggestionPrefill(parsed);
+                    // Consume the prefill so a refresh doesn't re-apply it, and
+                    // clear any lingering draft so it can't override our fields.
+                    sessionStorage.removeItem('sq_admin_suggestion_prefill');
+                    sessionStorage.removeItem('sq_partner_draft');
+                    setMode('quest');
+                    return;
+                } catch (e) { console.error("Prefill parse error", e); }
+            } else {
+                // Non-admin viewer — wipe the admin-only prefill key defensively.
                 sessionStorage.removeItem('sq_admin_suggestion_prefill');
-                sessionStorage.removeItem('sq_partner_draft');
-                setMode('quest');
-                return;
-            } catch (e) { console.error("Prefill parse error", e); }
+            }
         }
 
         // PRIORITY 2: Normal draft restore for in-progress partner work.
@@ -87,7 +95,7 @@ useEffect(() => {
                 if (parsed.lat && parsed.lat !== 0) setShowGps(true);
             } catch (e) { console.error("Draft restore error", e); }
         }
-    }, [editingId]);
+    }, [editingId, currentUser?.role]);
 
     useEffect(() => {
         if (!editingId && view === 'create') {
@@ -193,7 +201,11 @@ useEffect(() => {
                         // suggestion, flip the source suggestion to 'approved'
                         // now. The DB trigger awards 50 XP to the suggester
                         // atomically and syncs via the profiles realtime channel.
-                        if (fromSuggestionId && sMode === 'quest' && !sId) {
+                        // Admin-only — partners never trigger this branch because
+                        // they never see the prefill banner (gated in the
+                        // prefill-detect effect) and thus fromSuggestionId stays
+                        // null in their payload. Double-checked here anyway.
+                        if (fromSuggestionId && sMode === 'quest' && !sId && currentUser?.role === 'Admin') {
                             await approveQuestSuggestion(fromSuggestionId);
                         }
 
