@@ -49,7 +49,7 @@ const Profile = () => {
     const stats = useMemo(() => {
         // If no user, return empty stats safely
         if (!currentUser) return {
-            totalXP: 0, completedQuests: 0, activeQuests: 0, badges: [], recentQuests: []
+            lifetimeXP: 0, walletXP: 0, completedQuests: 0, activeQuests: 0, badges: [], recentQuests: [], level: 1, progressPercent: 0
         };
         
         const myProgress = questProgress.filter(p => p.traveler_id === currentUser.id);
@@ -61,12 +61,23 @@ const Profile = () => {
         const completedQuests = completedProgress.length;
         const activeQuests = activeProgress.length; 
 
+        // --- TWO DIFFERENT XP NUMBERS ---
+        // LIFETIME XP: total XP ever earned from approved quests. Immutable ledger.
+        // Drives Level, progress bar, and achievement badges so they never regress
+        // when a user redeems a reward.
+        const lifetimeXP = completedProgress.reduce((sum, p) => {
+            const q = quests.find(quest => quest.id === p.quest_id);
+            return sum + (q?.xp_value || 0);
+        }, 0);
 
-        const currentXP = currentUser.xp || 0;
+        // WALLET XP: spendable balance (profiles.xp). Goes down on redemption.
+        // Used for display only — redemption gating is enforced server-side.
+        const walletXP = currentUser.xp || 0;
+
         // Level Calculation: 0-99 XP = Level 1, 100-199 XP = Level 2
-        const level = Math.floor(currentXP / 100) + 1;
+        const level = Math.floor(lifetimeXP / 100) + 1;
         // Progress Bar: 0 to 100% based on remainder
-        const progressPercent = currentXP % 100;
+        const progressPercent = lifetimeXP % 100;
 
 
         // Count completed quests by category
@@ -84,7 +95,7 @@ const Profile = () => {
         if (completedQuests >= BADGE_THRESHOLDS['Impact Explorer']) badges.push({ name: 'Impact Explorer', icon: <Compass size={24} />, color: 'text-brand-500', desc: 'Completed your very first SideQuest' });
         if (completedQuests >= BADGE_THRESHOLDS['Committed Traveler']) badges.push({ name: 'Committed Traveler', icon: <CheckCircle size={24} />, color: 'text-emerald-500', desc: `Completed ${BADGE_THRESHOLDS['Committed Traveler']} quests` });
         if (completedQuests >= BADGE_THRESHOLDS['South Coast Steward']) badges.push({ name: 'South Coast Steward', icon: <Globe size={24} />, color: 'text-blue-500', desc: `Completed ${BADGE_THRESHOLDS['South Coast Steward']} quests in the pilot region` });
-        if (currentUser.xp >= 150) badges.push({ name: 'XP Collector', icon: <Award size={24} />, color: 'text-yellow-500', desc: 'Accumulated over 150 XP' });
+        if (lifetimeXP >= 150) badges.push({ name: 'XP Collector', icon: <Award size={24} />, color: 'text-yellow-500', desc: 'Accumulated over 150 XP' });
 
         // 2. Category-Specific Badges
         if (categoryCounts['Environmental'] >= BADGE_THRESHOLDS['Eco Champion']) {
@@ -131,7 +142,8 @@ const Profile = () => {
         });
     }
         return {
-            totalXP: currentUser.xp,
+            lifetimeXP,
+            walletXP,
             completedQuests,
             activeQuests, 
             badges,
@@ -150,7 +162,7 @@ const Profile = () => {
         );
     }
     
-    const { totalXP, completedQuests, activeQuests, badges, recentQuests, level, progressPercent } = stats;
+    const { lifetimeXP, walletXP, completedQuests, activeQuests, badges, recentQuests, level, progressPercent } = stats;
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -202,7 +214,10 @@ const Profile = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                 <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-500">
                     <p className="text-sm font-semibold text-gray-500">Total Impact Points</p>
-                    <p className="text-4xl font-extrabold text-gray-900 mt-1">⭐ {totalXP} XP</p>
+                    <p className="text-4xl font-extrabold text-gray-900 mt-1">⭐ {lifetimeXP} XP</p>
+                    <p className="text-xs text-gray-500 mt-2" title="Your spendable balance. Redeemed rewards deduct from this, not from your lifetime impact.">
+                        Wallet: <span className="font-bold text-brand-600">{walletXP} XP</span> <span className="text-gray-400">available to spend</span>
+                    </p>
                 </div>
                 <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-brand-500">
                     <p className="text-sm font-semibold text-gray-500">Quests Completed</p>
