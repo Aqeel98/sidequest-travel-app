@@ -826,16 +826,21 @@ if (role === 'Partner') {
     }
   };
 
-  const rejectQuestSuggestion = async (id) => {
+  const rejectQuestSuggestion = async (id, reason = null) => {
+    const cleanReason = reason?.trim() || null;
+
     try {
       const { error } = await withTimeout(
-        supabase.from('quest_suggestions').update({ status: 'rejected' }).eq('id', id),
+        supabase
+          .from('quest_suggestions')
+          .update({ status: 'rejected', rejection_reason: cleanReason })
+          .eq('id', id),
         10000
       );
       if (error) throw error;
-      
+
       setQuestSuggestions(prev => prev.map(s =>
-        s.id === id ? { ...s, status: 'rejected' } : s
+        s.id === id ? { ...s, status: 'rejected', rejection_reason: cleanReason } : s
       ));
       showToast("Suggestion rejected.", 'info');
     } catch (err) {
@@ -1206,11 +1211,14 @@ const deleteQuest = async (id) => {
             }
 
             // STEP C: UPDATE OR INSERT (The Self-Healing Logic)
+            // Null out rejection_reason on retry so a stale reason doesn't linger
+            // after the traveler has addressed the feedback.
             const payload = {
                 status: 'pending',
                 completion_note: note,
                 proof_photo_url: proofUrl || optimisticUpdate.proof_photo_url,
-                submitted_at: new Date().toISOString()
+                submitted_at: new Date().toISOString(),
+                rejection_reason: null
             };
 
             if (realSubmissionId) {
@@ -1546,20 +1554,70 @@ const redeemReward = async (reward) => {
     }
   };
 
-  const rejectSubmission = async (id) => {
-    // 1. OPTIMISTIC UPDATE
-    setQuestProgress(prev => prev.map(p => 
-        p.id === id ? { ...p, status: 'rejected' } : p
+  const rejectSubmission = async (id, reason = null) => {
+    const cleanReason = reason?.trim() || null;
+
+    setQuestProgress(prev => prev.map(p =>
+        p.id === id ? { ...p, status: 'rejected', rejection_reason: cleanReason } : p
     ));
 
     try {
-      const { error } = await supabase.from('submissions').update({ status: 'rejected' }).eq('id', id);
+      const { error } = await supabase
+        .from('submissions')
+        .update({ status: 'rejected', rejection_reason: cleanReason })
+        .eq('id', id);
       if (error) throw error;
-      
+
       showToast("Submission Rejected.", 'info');
-    } catch (e) { 
+    } catch (e) {
         console.error(e);
         fetchSubmissions(currentUser.id, 'Admin'); // Revert on error
+    }
+};
+
+// Soft-reject a partner-submitted NEW QUEST. Unlike deleteQuest, this preserves
+// the row + any in_progress traveler submissions attached via ON DELETE CASCADE.
+// Partner sees a "rejected" badge + reason on their dashboard and can re-submit.
+const rejectNewQuest = async (id, reason = null) => {
+    const cleanReason = reason?.trim() || null;
+
+    setQuests(prev => prev.map(q =>
+        q.id === id ? { ...q, status: 'rejected', rejection_reason: cleanReason } : q
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('quests')
+        .update({ status: 'rejected', rejection_reason: cleanReason })
+        .eq('id', id);
+      if (error) throw error;
+
+      showToast("Quest rejected. Partner will see the reason.", 'info');
+    } catch (e) {
+        console.error(e);
+        fetchQuests(); // Revert on error
+    }
+};
+
+// Soft-reject a partner-submitted NEW REWARD. Same contract as rejectNewQuest.
+const rejectNewReward = async (id, reason = null) => {
+    const cleanReason = reason?.trim() || null;
+
+    setRewards(prev => prev.map(r =>
+        r.id === id ? { ...r, status: 'rejected', rejection_reason: cleanReason } : r
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('rewards')
+        .update({ status: 'rejected', rejection_reason: cleanReason })
+        .eq('id', id);
+      if (error) throw error;
+
+      showToast("Reward rejected. Partner will see the reason.", 'info');
+    } catch (e) {
+        console.error(e);
+        fetchRewards(); // Revert on error
     }
 };
   
@@ -1627,8 +1685,8 @@ const approveNewReward = async (id) => {
       login, signup, logout,
       submitPartnerRequest, generateInviteCode, partnerRequests,
       questSuggestions, approveQuestSuggestion, rejectQuestSuggestion,
-      addQuest, updateQuest, deleteQuest, approveNewQuest,
-      addReward, updateReward, deleteReward, approveNewReward, 
+      addQuest, updateQuest, deleteQuest, approveNewQuest, rejectNewQuest,
+      addReward, updateReward, deleteReward, approveNewReward, rejectNewReward,
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
       redeemReward, verifyRedemptionCode,  switchRole, quizBank, completedQuizIds, submitQuizAnswer,
       toast, showToast, optimizeImage

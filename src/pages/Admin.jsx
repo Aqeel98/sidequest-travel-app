@@ -76,6 +76,125 @@ const LinkifyText = ({ text }) => {
     return <span className="whitespace-pre-line">{parts.length > 0 ? parts : text}</span>;
   };
 
+// --- SUB-COMPONENT: REJECT REASON MODAL ---
+// Shared across submissions, new quests, new rewards, and quest suggestions.
+// Quick-pick chips cover ~90% of real-world reasons; free-text handles the rest.
+const REJECT_CHIPS = [
+    'Photo unclear',
+    'Wrong location',
+    'Does not meet requirements',
+    'Duplicate',
+    'Inappropriate content',
+];
+
+const RejectReasonModal = ({ open, target, onCancel, onConfirm }) => {
+    const [reason, setReason] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            setReason('');
+            setSubmitting(false);
+        }
+    }, [open, target?.id]);
+
+    if (!open || !target) return null;
+
+    const handleConfirm = async () => {
+        setSubmitting(true);
+        try {
+            await onConfirm(reason);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const labelByType = {
+        submission: 'proof submission',
+        quest: 'quest',
+        reward: 'reward',
+        suggestion: 'quest suggestion',
+    };
+    const itemLabel = labelByType[target.type] || 'item';
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150"
+            onClick={onCancel}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reject-modal-title"
+        >
+            <div
+                className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-150"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-red-50 rounded-xl">
+                        <XCircle size={22} className="text-red-500" />
+                    </div>
+                    <div>
+                        <h2 id="reject-modal-title" className="font-black text-lg text-gray-900">Reject {itemLabel}?</h2>
+                        {target.title && (
+                            <p className="text-xs text-gray-500 truncate max-w-xs">{target.title}</p>
+                        )}
+                    </div>
+                </div>
+
+                <p className="text-sm text-gray-600 mb-3">
+                    Pick a reason so the submitter knows how to fix it. Optional but strongly recommended.
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {REJECT_CHIPS.map(chip => (
+                        <button
+                            key={chip}
+                            type="button"
+                            onClick={() => setReason(chip)}
+                            className={`text-xs px-3 py-1.5 rounded-full border font-bold transition-all ${
+                                reason === chip
+                                    ? 'bg-red-500 text-white border-red-500 shadow-sm'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-red-300 hover:text-red-600'
+                            }`}
+                        >
+                            {chip}
+                        </button>
+                    ))}
+                </div>
+
+                <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Or type a custom reason..."
+                    maxLength={500}
+                    rows={3}
+                    className="w-full p-3 border-2 border-gray-100 rounded-2xl text-sm outline-none focus:border-red-300 transition"
+                />
+                <p className="text-[11px] text-gray-400 text-right mt-1">{reason.length}/500</p>
+
+                <div className="flex justify-end gap-2 mt-4">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={submitting}
+                        className="px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleConfirm}
+                        disabled={submitting}
+                        className="px-5 py-2 rounded-xl text-sm font-black bg-red-500 text-white hover:bg-red-600 shadow-sm transition disabled:opacity-50"
+                    >
+                        {submitting ? 'Rejecting...' : 'Confirm Reject'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- SUB-COMPONENT: STAT CARD (New for Oversight) ---
 const StatCard = ({ title, value, subtext, icon: Icon, colorClass }) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between transition-all hover:shadow-md">
@@ -264,7 +383,9 @@ const handleImageUpload = async (e) => {
 const Admin = () => {
     const {
         currentUser, questProgress, quests, rewards, users, redemptions,
-        approveSubmission, rejectSubmission, approveNewQuest, approveNewReward,
+        approveSubmission, rejectSubmission,
+        approveNewQuest, rejectNewQuest,
+        approveNewReward, rejectNewReward,
         updateQuest, deleteQuest, updateReward, deleteReward, showToast,
         generateInviteCode, partnerRequests,
         questSuggestions, approveQuestSuggestion, rejectQuestSuggestion
@@ -292,6 +413,25 @@ const Admin = () => {
   // Dashboard "Recent Activity" lists — collapsed by default so the page stays scannable.
   const [showApproved, setShowApproved] = useState(false);
   const [showRejected, setShowRejected] = useState(false);
+
+  // Reject-with-reason modal state. `target` is { type, id, title } or null.
+  const [rejectTarget, setRejectTarget] = useState(null);
+
+  const openRejectModal = (type, id, title) => setRejectTarget({ type, id, title });
+  const closeRejectModal = () => setRejectTarget(null);
+
+  const handleRejectConfirm = async (reason) => {
+    if (!rejectTarget) return;
+    const { type, id } = rejectTarget;
+    try {
+        if (type === 'submission')  await rejectSubmission(id, reason);
+        else if (type === 'quest')      await rejectNewQuest(id, reason);
+        else if (type === 'reward')     await rejectNewReward(id, reason);
+        else if (type === 'suggestion') await rejectQuestSuggestion(id, reason);
+    } finally {
+        closeRejectModal();
+    }
+  };
 
  // --- IMMORTAL ADMIN RESUME ENGINE ---
  useEffect(() => {
@@ -772,19 +912,26 @@ const Admin = () => {
                                 const t = users.find(u => u.id === p.traveler_id);
                                 const when = p.submitted_at || p.created_at;
                                 return (
-                                    <div key={p.id} className="flex items-center justify-between p-3 bg-red-50/50 border border-red-100 rounded-xl text-sm">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-gray-900 truncate">{q?.title || 'Unknown quest'}</p>
-                                            <p className="text-xs text-gray-500 truncate">
-                                                {t?.full_name || t?.email || 'Unknown traveler'}
-                                                {when && (
-                                                    <>
-                                                        {' · '}
-                                                        <span title={formatAbsoluteTime(when)}>{formatTimeAgo(when)}</span>
-                                                    </>
-                                                )}
-                                            </p>
+                                    <div key={p.id} className="p-3 bg-red-50/50 border border-red-100 rounded-xl text-sm">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-gray-900 truncate">{q?.title || 'Unknown quest'}</p>
+                                                <p className="text-xs text-gray-500 truncate">
+                                                    {t?.full_name || t?.email || 'Unknown traveler'}
+                                                    {when && (
+                                                        <>
+                                                            {' · '}
+                                                            <span title={formatAbsoluteTime(when)}>{formatTimeAgo(when)}</span>
+                                                        </>
+                                                    )}
+                                                </p>
+                                            </div>
                                         </div>
+                                        {p.rejection_reason && (
+                                            <p className="text-xs text-red-700 mt-2 bg-white border border-red-100 rounded-lg px-2 py-1 italic">
+                                                “{p.rejection_reason}”
+                                            </p>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -839,7 +986,12 @@ const Admin = () => {
                     >
                         Approve
                     </button>
-                       <button onClick={() => rejectSubmission(progress.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 font-medium transition">Reject</button>
+                       <button
+                            onClick={() => openRejectModal('submission', progress.id, quest?.title)}
+                            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 font-medium transition"
+                        >
+                            Reject
+                        </button>
                   </div>
                 </div>
               </div>
@@ -884,7 +1036,12 @@ const Admin = () => {
                         >
                             <Check size={18} className="mr-1"/> Approve
                         </button>
-                          <button onClick={() => deleteQuest(quest.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"><Trash2 size={18} className="mr-1"/> Reject</button>
+                          <button
+                            onClick={() => openRejectModal('quest', quest.id, quest.title)}
+                            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"
+                          >
+                            <Trash2 size={18} className="mr-1"/> Reject
+                          </button>
                     </div>
                 </div>
 
@@ -956,7 +1113,12 @@ const Admin = () => {
                             >
                                 <Check size={16} className="mr-1"/> Approve
                             </button>
-                               <button onClick={() => deleteReward(reward.id)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-red-600 shadow-sm"><Trash2 size={16} className="mr-1"/> Reject</button>
+                               <button
+                                    onClick={() => openRejectModal('reward', reward.id, reward.title)}
+                                    className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-red-600 shadow-sm"
+                               >
+                                    <Trash2 size={16} className="mr-1"/> Reject
+                               </button>
                         </div>
                     </div>
 
@@ -1241,7 +1403,7 @@ const Admin = () => {
                     ✓ Approve
                   </button>
                   <button
-                    onClick={() => rejectQuestSuggestion(suggestion.id)}
+                    onClick={() => openRejectModal('suggestion', suggestion.id, suggestion.quest_name)}
                     className="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-200 transition-all"
                   >
                     ✕ Reject
@@ -1295,6 +1457,12 @@ const Admin = () => {
 )}
 
 
+      <RejectReasonModal
+        open={Boolean(rejectTarget)}
+        target={rejectTarget}
+        onCancel={closeRejectModal}
+        onConfirm={handleRejectConfirm}
+      />
     </div>
   );
 };
