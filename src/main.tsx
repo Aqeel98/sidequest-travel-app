@@ -14,15 +14,21 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       const data = event && (event as MessageEvent).data;
       if (data && data.type === 'SQ_KILLSWITCH_RELOAD') {
         const key = 'sq_killswitch_reloaded';
+        let alreadyReloaded = false;
         try {
-          if (sessionStorage.getItem(key) === '1') return;
-          sessionStorage.setItem(key, '1');
-        } catch (_e) {
+          alreadyReloaded = sessionStorage.getItem(key) === '1';
+          if (!alreadyReloaded) sessionStorage.setItem(key, '1');
+        } catch {
+          // sessionStorage may be unavailable (privacy mode, sandboxed iframe).
+          // Fall through and reload anyway; the browser will still be fixed
+          // because caches are cleared and the SW is unregistered.
         }
-        window.location.reload();
+        if (!alreadyReloaded) window.location.reload();
       }
     });
-  } catch (_e) {
+  } catch {
+    // Attaching the listener can fail in rare environments; the browser's
+    // own SW update mechanism still recovers stuck clients on next load.
   }
 }
 
