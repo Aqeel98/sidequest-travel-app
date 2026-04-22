@@ -4,7 +4,8 @@ import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
 import {
   PlusCircle, Edit, Trash2, Check, MapPin, Award,
-  UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon
+  UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon,
+  XCircle, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { validatePassword } from '../utils/security';
 
@@ -288,6 +289,10 @@ const Admin = () => {
   const [partnerRequestsData, setPartnerRequestsData] = useState([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
+  // Dashboard "Recent Activity" lists — collapsed by default so the page stays scannable.
+  const [showApproved, setShowApproved] = useState(false);
+  const [showRejected, setShowRejected] = useState(false);
+
  // --- IMMORTAL ADMIN RESUME ENGINE ---
  useEffect(() => {
     const pendingAction = localStorage.getItem('sq_admin_deferred');
@@ -392,6 +397,34 @@ const Admin = () => {
         (r) => r.created_at
     ),
     [rewards]
+  );
+
+  // Recent Activity: approved & rejected submissions, newest first.
+  // Replaces the need for a separate audit-log feature — admin sees every moderation
+  // outcome inline on the dashboard.
+  const sortNewestFirst = (list, getTimestamp) => {
+    const timeOf = (item) => {
+        const t = getTimestamp(item);
+        const ms = t ? new Date(t).getTime() : NaN;
+        return Number.isNaN(ms) ? -Infinity : ms;
+    };
+    return [...list].sort((a, b) => timeOf(b) - timeOf(a));
+  };
+
+  const approvedSubmissions = useMemo(
+    () => sortNewestFirst(
+        questProgress.filter(p => p.status === 'approved'),
+        (p) => p.submitted_at || p.created_at
+    ),
+    [questProgress]
+  );
+
+  const rejectedSubmissions = useMemo(
+    () => sortNewestFirst(
+        questProgress.filter(p => p.status === 'rejected'),
+        (p) => p.submitted_at || p.created_at
+    ),
+    [questProgress]
   );
 
   const manageableQuests = useMemo(() => {
@@ -655,6 +688,108 @@ const Admin = () => {
                             <p className="text-center text-gray-400 text-sm py-10">No users found.</p>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* --- RECENT ACTIVITY: APPROVED + REJECTED SUBMISSIONS --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* APPROVED LIST */}
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <button
+                        type="button"
+                        onClick={() => setShowApproved(v => !v)}
+                        className="w-full flex items-center justify-between"
+                        aria-expanded={showApproved}
+                    >
+                        <div className="flex items-center gap-2">
+                            <CheckCircle size={20} className="text-emerald-600" />
+                            <h3 className="font-bold text-xl text-gray-800">Approved Quests</h3>
+                            <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                {approvedSubmissions.length}
+                            </span>
+                        </div>
+                        {showApproved ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+                    </button>
+
+                    {showApproved && (
+                        <div className="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                            {approvedSubmissions.length === 0 ? (
+                                <p className="text-center text-gray-400 text-sm py-8">No approved submissions yet.</p>
+                            ) : approvedSubmissions.map(p => {
+                                const q = quests.find(x => x.id === p.quest_id);
+                                const t = users.find(u => u.id === p.traveler_id);
+                                const when = p.submitted_at || p.created_at;
+                                return (
+                                    <div key={p.id} className="flex items-center justify-between p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-sm">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-gray-900 truncate">{q?.title || 'Unknown quest'}</p>
+                                            <p className="text-xs text-gray-500 truncate">
+                                                {t?.full_name || t?.email || 'Unknown traveler'}
+                                                {when && (
+                                                    <>
+                                                        {' · '}
+                                                        <span title={formatAbsoluteTime(when)}>{formatTimeAgo(when)}</span>
+                                                    </>
+                                                )}
+                                            </p>
+                                        </div>
+                                        {q?.xp_value != null && (
+                                            <span className="ml-3 text-xs font-black text-emerald-700 bg-white border border-emerald-200 px-2 py-1 rounded-lg shadow-sm flex-shrink-0">
+                                                +{q.xp_value} XP
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* REJECTED LIST */}
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <button
+                        type="button"
+                        onClick={() => setShowRejected(v => !v)}
+                        className="w-full flex items-center justify-between"
+                        aria-expanded={showRejected}
+                    >
+                        <div className="flex items-center gap-2">
+                            <XCircle size={20} className="text-red-500" />
+                            <h3 className="font-bold text-xl text-gray-800">Rejected Quests</h3>
+                            <span className="text-xs font-black text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                                {rejectedSubmissions.length}
+                            </span>
+                        </div>
+                        {showRejected ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+                    </button>
+
+                    {showRejected && (
+                        <div className="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                            {rejectedSubmissions.length === 0 ? (
+                                <p className="text-center text-gray-400 text-sm py-8">No rejected submissions.</p>
+                            ) : rejectedSubmissions.map(p => {
+                                const q = quests.find(x => x.id === p.quest_id);
+                                const t = users.find(u => u.id === p.traveler_id);
+                                const when = p.submitted_at || p.created_at;
+                                return (
+                                    <div key={p.id} className="flex items-center justify-between p-3 bg-red-50/50 border border-red-100 rounded-xl text-sm">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-gray-900 truncate">{q?.title || 'Unknown quest'}</p>
+                                            <p className="text-xs text-gray-500 truncate">
+                                                {t?.full_name || t?.email || 'Unknown traveler'}
+                                                {when && (
+                                                    <>
+                                                        {' · '}
+                                                        <span title={formatAbsoluteTime(when)}>{formatTimeAgo(when)}</span>
+                                                    </>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
