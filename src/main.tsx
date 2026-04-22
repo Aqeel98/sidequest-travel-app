@@ -3,33 +3,17 @@ import './index.css'
 // @ts-expect-error App.jsx is not typed
 import App from './App.jsx'
 
-// Phase 1 — Kill Switch fast path.
-// When the kill-switch service worker finishes cleanup it posts a
-// one-time reload message. We guard with sessionStorage so this can
-// never loop, and we silently ignore if the browser has no SW support
-// or the page was loaded in an incompatible context.
-if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-  try {
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      const data = event && (event as MessageEvent).data;
-      if (data && data.type === 'SQ_KILLSWITCH_RELOAD') {
-        const key = 'sq_killswitch_reloaded';
-        let alreadyReloaded = false;
-        try {
-          alreadyReloaded = sessionStorage.getItem(key) === '1';
-          if (!alreadyReloaded) sessionStorage.setItem(key, '1');
-        } catch {
-          // sessionStorage may be unavailable (privacy mode, sandboxed iframe).
-          // Fall through and reload anyway; the browser will still be fixed
-          // because caches are cleared and the SW is unregistered.
-        }
-        if (!alreadyReloaded) window.location.reload();
-      }
-    });
-  } catch {
-    // Attaching the listener can fail in rare environments; the browser's
-    // own SW update mechanism still recovers stuck clients on next load.
-  }
+// One-time housekeeping: remove dead localStorage keys left over from legacy
+// cache-purge mechanisms that predated the Phase 1 kill-switch. These keys
+// are never read or written by any current code (the purge/version system
+// that used them was removed before the kill-switch release). Sweeping them
+// keeps every user's localStorage clean so inert fossils don't accumulate.
+try {
+  localStorage.removeItem('sq_v370_stable_purge');
+  localStorage.removeItem('sq_app_version');
+} catch {
+  // localStorage can throw in privacy mode or sandboxed contexts. The app
+  // still runs fine without this cleanup, so we silently ignore.
 }
 
 createRoot(document.getElementById('root')!).render(
