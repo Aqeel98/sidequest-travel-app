@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react"; 
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
-import { Compass, ExternalLink, Loader2 } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import "leaflet/dist/leaflet.css";
 
 // --- LEAFLET ICON FIXES (Required for Vite/Webpack) ---
@@ -126,26 +126,18 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       
       {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
       {/* --- FIX: MOBILE FLOATING BUTTON --- */}
-      {currentUser && (
-   <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom)+7rem)] md:bottom-6 md:left-56 z-[1100] pointer-events-none">
+   <div className="absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-[16rem] md:right-auto z-[1100] pointer-events-none">
     <button
-       className="pointer-events-auto w-56 flex items-center justify-center gap-2 bg-white/95 backdrop-blur-md border border-gray-200 px-5 py-3 rounded-full shadow-xl hover:bg-white active:scale-95 transition-all group"
+       className="pointer-events-auto w-48 sm:w-52 flex items-center justify-center bg-white/90 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
+       style={{ color: '#107870' }}
        onClick={(e) => {
           e.stopPropagation(); 
           if (userLocation) { setShowClosest(true); } else { onManualLocate(); }
        }}
     >
-            {isLocating ? (
-              <Loader2 size={20} className="text-cyan-600 animate-spin" />
-            ) : (
-              <Compass size={20} className={`text-cyan-600 group-hover:rotate-45 transition-transform duration-500 ${!userLocation ? 'animate-pulse' : ''}`} />
-            )}
-            <span className="font-bold text-slate-800 text-sm tracking-tight">
-              {isLocating ? "Locating..." : "Find Quests"}
-            </span>
+            <span className="font-bold text-sm tracking-tight">{isLocating ? "Locating..." : "Find Quest"}</span>
           </button>
         </div>
-      )}
 
       <MapContainer
         center={mapCenter}
