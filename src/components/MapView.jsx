@@ -34,7 +34,7 @@ const getCategoryDetails = (category) => {
 
 const createQuestIcon = (status, category) => {
   const detail = getCategoryDetails(category);
-  let color = detail.color;
+  const color = detail.color;
   const normalizedCategory = category?.trim();
   const iconSizeByCategory = {
     Environmental: 33,
@@ -52,11 +52,14 @@ const createQuestIcon = (status, category) => {
   // FIX: Force the border to be the EXACT same teal for every single pin
   const BRAND_TEAL = '#107870'; 
 
-  if (status === 'approved') {
-    color = '#10B981';
-  } else if (status === 'pending') {
-    color = '#F59E0B';
-  }
+  const statusRingColor = status === 'approved'
+    ? '#10B981'
+    : status === 'pending'
+      ? '#F59E0B'
+      : null;
+  const statusRingShadow = statusRingColor
+    ? `, 0 0 0 3px ${statusRingColor}, 0 0 14px ${statusRingColor}55`
+    : '';
 
   // Keep pin size consistent, but tune icon sizes for optical balance per category.
   const iconPixelSize = iconSizeByCategory[normalizedCategory] || 33;
@@ -72,7 +75,7 @@ const createQuestIcon = (status, category) => {
         border-radius: 50% 50% 50% 0;
         transform: rotate(-45deg);
         border: 3.5px solid ${BRAND_TEAL}; /* Identical Thick Teal Border */
-        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4)${statusRingShadow};
         display: flex; align-items: center; justify-content: center;
     ">
         <div style="${detail.isCustom ? 'transform: rotate(45deg);' : ''} display: flex; align-items: center; justify-content: center;">
@@ -128,7 +131,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {/* --- FIX: MOBILE FLOATING BUTTON --- */}
    <div className="absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-[16rem] md:right-auto z-[1100] pointer-events-none">
     <button
-       className="pointer-events-auto w-48 sm:w-52 flex items-center justify-center bg-white/90 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
+       className="pointer-events-auto w-44 sm:w-52 flex items-center justify-center bg-white/90 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
        style={{ color: '#107870' }}
        onClick={(e) => {
           e.stopPropagation(); 
