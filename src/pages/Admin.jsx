@@ -9,6 +9,31 @@ import {
 import { validatePassword } from '../utils/security';
 
 
+// --- HELPER: RELATIVE TIME ("5m ago", "3h ago", "2d ago"). Defensive against missing/invalid dates. ---
+const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return null;
+    const ms = new Date(timestamp).getTime();
+    if (Number.isNaN(ms)) return null;
+    const diff = Math.max(0, Date.now() - ms);
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks}w ago`;
+    return new Date(timestamp).toLocaleDateString();
+};
+
+// Absolute time shown on hover so admin can see exact submission date/time.
+const formatAbsoluteTime = (timestamp) => {
+    if (!timestamp) return null;
+    const d = new Date(timestamp);
+    return Number.isNaN(d.getTime()) ? null : d.toLocaleString();
+};
+
 // --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
 const LinkifyText = ({ text }) => {
     if (!text) return null;
@@ -334,9 +359,40 @@ const Admin = () => {
     return { approvedCount: approved.length, pendingCount: pending.length, totalXP, redemptionCount: redemptions.length, userCount: users.length, categories };
   }, [questProgress, quests, users, redemptions]);
 
-  const pendingSubmissions = questProgress.filter(p => p.status === 'pending');
-  const pendingNewQuests = quests.filter(q => q.status === 'pending_admin');
-  const pendingNewRewards = rewards.filter(r => r.status === 'pending_admin');
+  // Pending queues sorted OLDEST-FIRST so the admin naturally clears the backlog in order.
+  // Items missing a timestamp (legacy rows) fall to the bottom rather than pretending to be old.
+  const sortOldestFirst = (list, getTimestamp) => {
+    const timeOf = (item) => {
+        const t = getTimestamp(item);
+        const ms = t ? new Date(t).getTime() : NaN;
+        return Number.isNaN(ms) ? Infinity : ms;
+    };
+    return [...list].sort((a, b) => timeOf(a) - timeOf(b));
+  };
+
+  const pendingSubmissions = useMemo(
+    () => sortOldestFirst(
+        questProgress.filter(p => p.status === 'pending'),
+        (p) => p.submitted_at || p.created_at
+    ),
+    [questProgress]
+  );
+
+  const pendingNewQuests = useMemo(
+    () => sortOldestFirst(
+        quests.filter(q => q.status === 'pending_admin'),
+        (q) => q.created_at
+    ),
+    [quests]
+  );
+
+  const pendingNewRewards = useMemo(
+    () => sortOldestFirst(
+        rewards.filter(r => r.status === 'pending_admin'),
+        (r) => r.created_at
+    ),
+    [rewards]
+  );
 
   const manageableQuests = useMemo(() => {
     return quests
@@ -618,6 +674,14 @@ const Admin = () => {
                     <h3 className="font-bold text-lg text-gray-800">{quest?.title}</h3>
                     <p className="text-sm text-gray-600">Traveler: {traveler?.email || 'Unknown'}</p>
                     <p className="text-sm text-gray-600 mt-1">XP to Award: <span className="font-bold text-green-600">{quest?.xp_value} XP</span></p>
+                    {formatTimeAgo(progress.submitted_at || progress.created_at) && (
+                        <p
+                            className="text-xs text-gray-500 mt-1 font-medium"
+                            title={formatAbsoluteTime(progress.submitted_at || progress.created_at)}
+                        >
+                            Submitted {formatTimeAgo(progress.submitted_at || progress.created_at)}
+                        </p>
+                    )}
                     <div className="mt-3 bg-gray-50 p-3 rounded">
                        <p className="text-sm font-medium text-gray-700">Submission Note:</p>
                        <p className="text-sm text-gray-600 mt-1 italic">
@@ -663,6 +727,14 @@ const Admin = () => {
                         <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
                         <p className="text-sm text-gray-600 mt-1">Submitted by: {creator?.email || 'Partner'}</p>
                         <p className="text-xs text-brand-700 font-medium mt-1">{quest.location_address}</p>
+                        {formatTimeAgo(quest.created_at) && (
+                            <p
+                                className="text-xs text-gray-400 mt-1"
+                                title={formatAbsoluteTime(quest.created_at)}
+                            >
+                                Submitted {formatTimeAgo(quest.created_at)}
+                            </p>
+                        )}
                     </div>
                     <div className="flex gap-2 mt-3 md:mt-0"><button onClick={() => setViewDetailsId(isDetailsOpen ? null : quest.id)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 font-medium transition flex items-center">
                             <Info size={18} className="mr-1"/> {isDetailsOpen ? 'Hide' : 'Details'}
@@ -729,6 +801,14 @@ const Admin = () => {
                             <div>
                                 <div className="flex items-center gap-2"><Gift size={20} className="text-orange-600"/><h3 className="font-bold text-gray-800">{reward.title}</h3></div>
                                 <p className="text-sm text-gray-600">Cost: {reward.xp_cost} XP | By: {creator?.email || 'Partner'}</p>
+                                {formatTimeAgo(reward.created_at) && (
+                                    <p
+                                        className="text-xs text-gray-400 mt-0.5"
+                                        title={formatAbsoluteTime(reward.created_at)}
+                                    >
+                                        Submitted {formatTimeAgo(reward.created_at)}
+                                    </p>
+                                )}
                             </div>
                         </div>
                         <div className="flex gap-2">
