@@ -98,10 +98,15 @@ useEffect(() => {
     }, [editingId, currentUser?.role]);
 
     useEffect(() => {
-        if (!editingId && view === 'create') {
+        // Skip autosave during an admin's suggestion-approval flow. Otherwise
+        // the prefilled form gets written into sq_partner_draft, and if the
+        // admin navigates away and returns the draft restores the fields
+        // without the suggestionPrefill state — publishing would then create
+        // a quest but leave the source suggestion orphaned as 'pending'.
+        if (!editingId && view === 'create' && !suggestionPrefill) {
             sessionStorage.setItem('sq_partner_draft', JSON.stringify(form));
         }
-    }, [form, editingId, view]);
+    }, [form, editingId, view, suggestionPrefill]);
 
     // --- 1. THE IMMORTAL PARTNER RESUME ENGINE ---
     useEffect(() => {
@@ -373,7 +378,7 @@ useEffect(() => {
                 
                 <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
                     <button 
-                        onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental', xp_value: 50, xp_cost: 50}); setPreview(null);}} 
+                        onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental', xp_value: 50, xp_cost: 50}); setPreview(null); setSuggestionPrefill(null);}} 
                         className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'create' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
                     >
                         {editingId ? 'Edit Mode' : 'Add New'}
