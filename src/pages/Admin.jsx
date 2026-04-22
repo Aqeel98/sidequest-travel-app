@@ -591,6 +591,12 @@ const Admin = () => {
       );
   }, [quests, questSearch]);
 
+  // Exclude pending_admin rewards from the manager list — they belong in the
+  // moderation queue above, and double-listing them risks accidental deletes.
+  const manageableRewards = useMemo(
+    () => rewards.filter(r => r.status !== 'pending_admin'),
+    [rewards]
+  );
 
   const activeRewards = rewards.filter(r => r.status === 'active');
 
@@ -1235,8 +1241,8 @@ const Admin = () => {
       {/* --- 5. REWARD MANAGER TAB --- */}
       {activeTab === 'rewards' && (
         <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Database: Rewards ({rewards.length})</h2>
-            {rewards.map(reward => (
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Database: Rewards ({manageableRewards.length})</h2>
+            {manageableRewards.map(reward => (
                 <div key={reward.id} className="border-b pb-4">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
