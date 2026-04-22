@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
@@ -119,12 +119,15 @@ useEffect(() => {
                         }
 
                         // THE EXPLICIT FIELD MAPPING (Ensures DB Integrity)
-                        const payload = { 
+                        // Note: rejection_reason is cleared in the context's updateQuest /
+                        // updateReward when status becomes 'pending_admin', so we don't
+                        // need to pass it here.
+                        const payload = {
                             title: sForm.title,
                             contact_phone: sForm.contact_phone,
                             description: sForm.description,
                             image: currentImageUrl,
-                            status: 'pending_admin' // Force re-approval on edit
+                            status: 'pending_admin'
                         };
 
                         if (sMode === 'quest') {
@@ -649,8 +652,9 @@ useEffect(() => {
                             // CALCULATE 
                             const completedCount = questProgress.filter(p => p.quest_id === q.id && p.status === 'approved').length;
                             
+                            const isRejected = q.status === 'rejected';
                             return (
-                                <div key={q.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                                <div key={q.id} className={`bg-white p-5 rounded-3xl border shadow-sm transition-all hover:shadow-md ${isRejected ? 'border-red-200' : 'border-gray-100'}`}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 rounded-2xl border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
@@ -665,10 +669,15 @@ useEffect(() => {
                                             <div>
                                                 <p className="font-bold text-gray-900 leading-tight">{q.title}</p>
                                                 <div className="mt-1 flex items-center gap-2">
-                                                    {q.status === 'active' ? 
-                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">LIVE</span> :
+                                                    {q.status === 'active' && (
+                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">LIVE</span>
+                                                    )}
+                                                    {isRejected && (
+                                                        <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-black border border-red-100">REJECTED</span>
+                                                    )}
+                                                    {q.status !== 'active' && !isRejected && (
                                                         <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">IN REVIEW</span>
-                                                    }
+                                                    )}
                                                     {/* SHOW COMPLETION STATS */}
                                                     <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-black border border-blue-100 flex items-center">
                                                         <CheckCircle size={10} className="mr-1"/> {completedCount} Completed
@@ -676,8 +685,34 @@ useEffect(() => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={() => startEdit(q, 'quest')} className="p-2 text-gray-300 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all"><Edit size={20} /></button>
+                                        <button
+                                            onClick={() => startEdit(q, 'quest')}
+                                            title={isRejected ? 'Fix & Resubmit' : 'Edit'}
+                                            className={`p-2 rounded-xl transition-all ${isRejected ? 'text-red-500 hover:text-red-600 hover:bg-red-50' : 'text-gray-300 hover:text-brand-600 hover:bg-brand-50'}`}
+                                        >
+                                            <Edit size={20} />
+                                        </button>
                                     </div>
+
+                                    {isRejected && (
+                                        <div className="mt-4 flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl p-4">
+                                            <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-black text-red-700 uppercase tracking-wider">Rejected by Game Master</p>
+                                                {q.rejection_reason ? (
+                                                    <p className="text-sm text-red-700 mt-1 italic">“{q.rejection_reason}”</p>
+                                                ) : (
+                                                    <p className="text-sm text-red-700 mt-1">No reason provided. Contact the team or edit and resubmit.</p>
+                                                )}
+                                                <button
+                                                    onClick={() => startEdit(q, 'quest')}
+                                                    className="mt-3 text-xs font-black bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 transition-all"
+                                                >
+                                                    Fix & Resubmit
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -695,8 +730,9 @@ useEffect(() => {
                             const claims = redemptions.filter(red => red.reward_id === r.id);
                             const isExpanded = viewClaimsId === r.id;
 
+                            const isRejected = r.status === 'rejected';
                             return (
-                                <div key={r.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                                <div key={r.id} className={`bg-white rounded-3xl border shadow-sm overflow-hidden transition-all hover:shadow-md ${isRejected ? 'border-red-200' : 'border-gray-100'}`}>
                                     <div className="p-5 flex justify-between items-center">
                                         <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 rounded-2xl border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
@@ -711,12 +747,17 @@ useEffect(() => {
                                             <div>
                                                 <p className="font-bold text-gray-900 leading-tight">{r.title}</p>
                                                 <div className="mt-1 flex items-center gap-3">
-                                                    {r.status === 'active' ? 
-                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">ACTIVE</span> :
+                                                    {r.status === 'active' && (
+                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">ACTIVE</span>
+                                                    )}
+                                                    {isRejected && (
+                                                        <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-black border border-red-100">REJECTED</span>
+                                                    )}
+                                                    {r.status !== 'active' && !isRejected && (
                                                         <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">REVIEWING</span>
-                                                    }
+                                                    )}
                                                     {/* SHOW CLAIM STATS */}
-                                                    <button 
+                                                    <button
                                                         onClick={() => setViewClaimsId(isExpanded ? null : r.id)}
                                                         className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-black border border-orange-100 hover:bg-orange-100 transition-colors cursor-pointer"
                                                     >
@@ -725,8 +766,36 @@ useEffect(() => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={() => startEdit(r, 'reward')} className="p-2 text-gray-300 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"><Edit size={20} /></button>
+                                        <button
+                                            onClick={() => startEdit(r, 'reward')}
+                                            title={isRejected ? 'Fix & Resubmit' : 'Edit'}
+                                            className={`p-2 rounded-xl transition-all ${isRejected ? 'text-red-500 hover:text-red-600 hover:bg-red-50' : 'text-gray-300 hover:text-orange-600 hover:bg-orange-50'}`}
+                                        >
+                                            <Edit size={20} />
+                                        </button>
                                     </div>
+
+                                    {isRejected && (
+                                        <div className="px-5 pb-5">
+                                            <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl p-4">
+                                                <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-black text-red-700 uppercase tracking-wider">Rejected by Game Master</p>
+                                                    {r.rejection_reason ? (
+                                                        <p className="text-sm text-red-700 mt-1 italic">“{r.rejection_reason}”</p>
+                                                    ) : (
+                                                        <p className="text-sm text-red-700 mt-1">No reason provided. Contact the team or edit and resubmit.</p>
+                                                    )}
+                                                    <button
+                                                        onClick={() => startEdit(r, 'reward')}
+                                                        className="mt-3 text-xs font-black bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 transition-all"
+                                                    >
+                                                        Fix & Resubmit
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* EXPANDED CLAIM LIST */}
                                 {isExpanded && (

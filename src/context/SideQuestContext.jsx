@@ -1032,6 +1032,12 @@ const updateQuest = async (id, updates) => {
             status: finalStatus
         };
 
+        // When a partner resubmits (any update sets status back to pending_admin)
+        // clear the stale rejection_reason so the admin re-review starts clean.
+        if (finalStatus === 'pending_admin') {
+            cleanPayload.rejection_reason = null;
+        }
+
         // 2. DEFINE THE SAVE OPERATION
         const executeSave = () => supabase.from('quests').update(cleanPayload).eq('id', Number(id));
 
@@ -1333,7 +1339,12 @@ const updateReward = async (id, updates) => {
             status: finalStatus 
         };
 
-        
+        // When a partner resubmits (status back to pending_admin) clear the
+        // stale rejection_reason so the admin re-review starts clean.
+        if (finalStatus === 'pending_admin') {
+            cleanPayload.rejection_reason = null;
+        }
+
         // If the internet is "Zombie", this kills the wait after 25s.
         const updatePromise = supabase
             .from('rewards')
