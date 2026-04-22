@@ -1,78 +1,16 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
+
+// NOTE (Phase 1 — Kill Switch):
+// vite-plugin-pwa is intentionally disabled for this release so the only
+// service worker served at /sw.js is the self-destructing kill-switch in
+// public/sw.js. Re-enable (and remove public/sw.js) in Phase 2 when the
+// kill-switch window ends. See foundation.md §13 for details.
 
 export default defineConfig({
   base: '/',
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'prompt',
-      injectRegister: false,
-      includeAssets: ['favicon.ico', 'favicon-96x96.png', 'sq-v4-apple.png', 'pwa-192x192.png', 'pwa-512x512.png'],
-      manifest: {
-        name: 'SideQuest',
-        short_name: 'SideQuest',
-        description: 'Discover meaningful quests across Sri Lanka.',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        display: 'standalone',
-        scope: '/',
-        start_url: '/',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },  
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'pwa-512x512.png', 
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: 'sq-v4-apple.png',
-            sizes: '180x180',
-            type: 'image/png'
-          }
-        ]
-      },
-      workbox: {
-        cleanupOutdatedCaches: true,
-        disableDevLogs: true,
-        navigateFallbackDenylist: [/^\/api/],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/res\.cloudinary\.com\/dtowdaysr\/image\/fetch\/.*sisyjuaspeznyrmipmlo\.supabase\.co.*/i,
-            handler: 'CacheFirst', 
-            options: {
-              cacheName: 'quest-image-cache',
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 Days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-        ],
-      }
-    })
   ],
   optimizeDeps: {
     include: ['leaflet']
