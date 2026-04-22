@@ -227,7 +227,7 @@ const MapPage = () => {
             setSuggestImage(null);
             setSuggestPreview(null);
           }}
-          className="flex items-center gap-2 bg-white/90 backdrop-blur-md border border-white/20 px-5 py-3 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
+          className="w-56 flex items-center justify-center gap-2 bg-white/90 backdrop-blur-md border border-white/20 px-5 py-3 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
           style={{ color: '#107870' }}
         >
           <span className="text-lg">📍</span>

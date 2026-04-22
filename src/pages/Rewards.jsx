@@ -119,7 +119,7 @@ const LinkifyText = ({ text }) => {
         </h1>
         {currentUser ? (
           <p className="text-gray-600">
-            You have <span className="font-bold text-green-600">{currentUser.xp} XP</span> available to spend.
+            You have <span className="font-bold text-brand-600">{currentUser.xp} XP</span> available to spend.
           </p>
         ) : (
           <p className="text-gray-600 italic">Login to see your XP and redeem rewards.</p>

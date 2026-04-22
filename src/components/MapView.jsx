@@ -129,7 +129,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       {currentUser && (
    <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom)+7rem)] md:bottom-6 md:left-56 z-[1100] pointer-events-none">
     <button
-       className="pointer-events-auto flex items-center justify-center gap-2 bg-white/95 backdrop-blur-md border border-gray-200 px-4 py-2.5 rounded-full shadow-xl hover:bg-white active:scale-95 transition-all group"
+       className="pointer-events-auto w-56 flex items-center justify-center gap-2 bg-white/95 backdrop-blur-md border border-gray-200 px-5 py-3 rounded-full shadow-xl hover:bg-white active:scale-95 transition-all group"
        onClick={(e) => {
           e.stopPropagation(); 
           if (userLocation) { setShowClosest(true); } else { onManualLocate(); }

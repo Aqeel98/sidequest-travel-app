@@ -147,13 +147,13 @@ const Emergency = () => {
             <div className="max-w-4xl mx-auto px-4 py-8 pb-32 min-h-screen">
             
             <h1 className="text-3xl font-black mb-2 text-gray-900 flex items-center tracking-tight">
-                <HeartPulse className="text-red-500 mr-3" size={32} /> Safety & Emergency
+                <HeartPulse className="text-red-600 mr-3" size={32} /> Safety & Emergency
             </h1>
             <p className="text-gray-500 mb-8 font-medium italic">Crucial contacts for all 25 districts across the island.</p>
 
             {/* --- TOP ACTIONS: 1990 & GPS --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <a href="tel:1990" className="bg-red-500 p-6 rounded-3xl text-white flex items-center justify-between shadow-xl shadow-red-200 active:scale-95 transition-all">
+                <a href="tel:1990" className="bg-red-600 p-6 rounded-3xl text-white flex items-center justify-between shadow-xl shadow-red-300/60 active:scale-95 transition-all">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Primary Medical Help</p>
                         <h2 className="text-2xl font-black">Call Suwa Seriya 1990</h2>
