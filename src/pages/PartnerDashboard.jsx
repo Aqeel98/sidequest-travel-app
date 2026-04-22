@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft, AlertCircle } from 'lucide-react';
+import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
@@ -8,7 +8,7 @@ import { supabase } from '../supabaseClient';
 const PartnerDashboard = () => {
     // 1. Updated Destructuring
     const { currentUser, quests, rewards, questProgress, redemptions, users, addQuest, addReward, updateQuest, updateReward, showToast,
-        deleteQuest, deleteReward, verifyRedemptionCode } = useSideQuest();
+        deleteQuest, deleteReward, verifyRedemptionCode, approveQuestSuggestion } = useSideQuest();
     
     // UI State
     const [view, setView] = useState('create'); 
@@ -22,6 +22,11 @@ const PartnerDashboard = () => {
     const [imageFile, setImageFile] = useState(null); 
     const [preview, setPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // When an admin clicks "Approve & Create Quest" on a traveler suggestion,
+    // the suggestion's data is stashed in sessionStorage. We pick it up on mount
+    // (see draft-restore effect) and carry the id through submission so that
+    // successful publication auto-approves the source suggestion.
+    const [suggestionPrefill, setSuggestionPrefill] = useState(null);
     
     const [searchParams] = useSearchParams();
 
@@ -49,6 +54,31 @@ useEffect(() => {
 
     useEffect(() => {
         if (editingId) return;
+
+        // PRIORITY 1: Admin-initiated suggestion prefill wins over a stale draft.
+        const prefillRaw = sessionStorage.getItem('sq_admin_suggestion_prefill');
+        if (prefillRaw) {
+            try {
+                const parsed = JSON.parse(prefillRaw);
+                setForm(prev => ({
+                    ...prev,
+                    title: parsed.title || '',
+                    description: parsed.description || '',
+                    map_link: parsed.map_link || '',
+                    image: parsed.image || null
+                }));
+                if (parsed.image) setPreview(parsed.image);
+                setSuggestionPrefill(parsed);
+                // Consume the prefill so a refresh doesn't re-apply it, and
+                // clear any lingering draft so it can't override our fields.
+                sessionStorage.removeItem('sq_admin_suggestion_prefill');
+                sessionStorage.removeItem('sq_partner_draft');
+                setMode('quest');
+                return;
+            } catch (e) { console.error("Prefill parse error", e); }
+        }
+
+        // PRIORITY 2: Normal draft restore for in-progress partner work.
         const savedDraft = sessionStorage.getItem('sq_partner_draft');
         if (savedDraft) {
             try {
@@ -83,7 +113,7 @@ useEffect(() => {
         // Ensure data exists and user is hydrated from Context
         if (pendingData && currentUser) {
             const resumeSubmit = async () => {
-                const { form: sForm, imageString, mode: sMode, editingId: sId } = JSON.parse(pendingData);
+                const { form: sForm, imageString, mode: sMode, editingId: sId, fromSuggestionId } = JSON.parse(pendingData);
                 
                 // Clear immediately to prevent accidental loops
                 localStorage.removeItem('sq_auto_submit'); 
@@ -158,6 +188,15 @@ useEffect(() => {
                     if (success) {
                         // Clean up the draft memory
                         sessionStorage.removeItem('sq_partner_draft');
+
+                        // If this quest was born from an approved traveler
+                        // suggestion, flip the source suggestion to 'approved'
+                        // now. The DB trigger awards 50 XP to the suggester
+                        // atomically and syncs via the profiles realtime channel.
+                        if (fromSuggestionId && sMode === 'quest' && !sId) {
+                            await approveQuestSuggestion(fromSuggestionId);
+                        }
+
                         showToast(sId ? "Changes Resubmitted for Approval!" : "Published! Awaiting Review.", 'success');
                         setView('manage');
                     }
@@ -289,11 +328,14 @@ useEffect(() => {
             
             // 4. PERSISTENCE PAYLOAD
             // We save EVERYTHING required to recreate the original logic after the refresh.
-            const payload = { 
-                form, 
-                imageString: imageToStore, 
-                mode, 
-                editingId // null for Create, ID for Edit
+            const payload = {
+                form,
+                imageString: imageToStore,
+                mode,
+                editingId, // null for Create, ID for Edit
+                // Carry the source suggestion id (if any) through the hard
+                // refresh so the resume handler can approve it after creation.
+                fromSuggestionId: suggestionPrefill?.suggestion_id || null
             };
             
             localStorage.setItem('sq_auto_submit', JSON.stringify(payload));
@@ -340,6 +382,40 @@ useEffect(() => {
                     <button onClick={() => setView('manage')} className="flex items-center text-sm font-bold text-gray-400 hover:text-brand-600 mb-6 transition-colors">
                         <ArrowLeft size={16} className="mr-1"/> Back to My Content
                     </button>
+
+                    {suggestionPrefill && !editingId && (
+                        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                            <div className="flex-shrink-0 mt-0.5">
+                                <Sparkles className="text-emerald-600" size={20} />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-emerald-900">
+                                    Creating quest from traveler suggestion
+                                </p>
+                                <p className="text-xs text-emerald-700 mt-0.5">
+                                    Title, description, map link, and photo have been pre-filled from{' '}
+                                    <span className="font-semibold">{suggestionPrefill.submitter_name}</span>'s
+                                    suggestion. Fill in the remaining fields and publish — the suggester will
+                                    automatically receive <span className="font-bold">+50 XP</span>.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    // Allow admin to bail out of the suggestion flow without creating.
+                                    // The source suggestion stays 'pending' so it can be handled later.
+                                    setSuggestionPrefill(null);
+                                    setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
+                                    setPreview(null);
+                                    setImageFile(null);
+                                }}
+                                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 underline whitespace-nowrap"
+                                title="Clear the pre-filled data and start fresh. The suggestion stays pending."
+                            >
+                                Start fresh
+                            </button>
+                        </div>
+                    )}
 
                     {!editingId && (
     <div className="flex flex-col sm:flex-row gap-4 mb-8">

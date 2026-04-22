@@ -811,16 +811,25 @@ if (role === 'Partner') {
 
   const approveQuestSuggestion = async (id) => {
     try {
-      const { error } = await withTimeout(
-        supabase.from('quest_suggestions').update({ status: 'approved' }).eq('id', id),
+      // DB trigger (trg_award_suggestion_xp) atomically credits the suggester
+      // 50 XP via profiles.xp when status transitions to 'approved' and
+      // flips xp_awarded=true for idempotency. The profiles realtime
+      // subscription syncs the XP to the suggester's UI if they're online.
+      const { data: updated, error } = await withTimeout(
+        supabase
+          .from('quest_suggestions')
+          .update({ status: 'approved' })
+          .eq('id', id)
+          .select()
+          .single(),
         10000
       );
       if (error) throw error;
-      
+
       setQuestSuggestions(prev => prev.map(s =>
-        s.id === id ? { ...s, status: 'approved', xp_awarded: true } : s
+        s.id === id ? { ...s, status: 'approved', xp_awarded: updated?.xp_awarded ?? true } : s
       ));
-      showToast("Approved! 50 XP awarded.", 'success');
+      showToast("Approved! 50 XP awarded to suggester.", 'success');
     } catch (err) {
       showToast(err.message === "Connection Timeout" ? "Signal weak. Try again." : err.message, 'error');
     }
@@ -954,8 +963,11 @@ if (role === 'Partner') {
   const addQuest = async (formData, imageFile) => {
     try {
         console.log("SQ-System: Processing upload on fresh connection...");
-        
-        let finalImageUrl = null;
+
+        // Fallback to any image URL already on formData (e.g. carried over from
+        // a prefilled quest suggestion's photo_url). If the user uploads a new
+        // file, that takes precedence and overrides the fallback below.
+        let finalImageUrl = formData.image || null;
         if (imageFile) {
             // Step A: Setup name
             const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;

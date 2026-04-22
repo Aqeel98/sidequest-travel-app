@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSideQuest } from '../context/SideQuestContext';
 
 import { supabase } from '../supabaseClient';
 import {
   PlusCircle, Edit, Trash2, Check, MapPin, Award,
   UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon,
-  XCircle, ChevronDown, ChevronUp
+  XCircle, ChevronDown, ChevronUp, Sparkles
 } from 'lucide-react';
 import { validatePassword } from '../utils/security';
 
@@ -391,6 +392,7 @@ const Admin = () => {
         questSuggestions, approveQuestSuggestion, rejectQuestSuggestion
       } = useSideQuest();
 
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
   const [editingId, setEditingId] = useState(null);
   // --- SECURITY VAULT STATE ---
@@ -1422,10 +1424,27 @@ const Admin = () => {
               {suggestion.status === 'pending' && (
                 <div className="flex md:flex-col gap-2 justify-end flex-shrink-0">
                   <button
-                    onClick={() => approveQuestSuggestion(suggestion.id)}
-                    className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all"
+                    onClick={() => {
+                      // Stash the suggestion's data for PartnerDashboard to pick up
+                      // on mount. The partner-side form will pre-fill, and on
+                      // successful creation will auto-approve this suggestion
+                      // (which in turn triggers the 50 XP award via DB trigger).
+                      sessionStorage.setItem('sq_admin_suggestion_prefill', JSON.stringify({
+                        suggestion_id: suggestion.id,
+                        title: suggestion.quest_name || '',
+                        description: suggestion.description || '',
+                        map_link: suggestion.maps_link || '',
+                        image: suggestion.photo_url || null,
+                        submitter_name: submitter?.full_name || submitter?.email?.split('@')[0] || 'Traveler'
+                      }));
+                      // Clear any lingering partner draft so prefill wins
+                      sessionStorage.removeItem('sq_partner_draft');
+                      navigate('/partner-dashboard?tab=create&mode=quest');
+                    }}
+                    className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all flex items-center gap-1.5 whitespace-nowrap"
+                    title="Opens the Quest Creator pre-filled with this suggestion's details. Publishing the quest will approve the suggestion and award the suggester 50 XP."
                   >
-                    ✓ Approve
+                    <Sparkles size={14} /> Approve &amp; Create Quest
                   </button>
                   <button
                     onClick={() => openRejectModal('suggestion', suggestion.id, suggestion.quest_name)}
