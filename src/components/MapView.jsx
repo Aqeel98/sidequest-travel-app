@@ -33,6 +33,18 @@ const getCategoryDetails = (category) => {
   }
 };
 
+const hexToRgba = (hex, alpha) => {
+  const clean = hex.replace('#', '');
+  const value = clean.length === 3
+    ? clean.split('').map((c) => c + c).join('')
+    : clean;
+  const int = Number.parseInt(value, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const createQuestIcon = (status, category) => {
   const detail = getCategoryDetails(category);
   const color = detail.color;
@@ -197,8 +209,12 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                   {/* Category & XP Badge */}
                   <div className={`flex justify-between items-center w-full mb-2 pb-2 border-b ${isDark ? 'border-cyan-900/60' : 'border-gray-100'}`}>
                     <span
-                      className="px-2 py-1 rounded text-[10px] font-bold uppercase whitespace-nowrap text-white"
-                      style={{ backgroundColor: categoryColor }}
+                      className="px-2 py-1 rounded text-[10px] font-bold uppercase whitespace-nowrap border"
+                      style={{
+                        backgroundColor: isDark ? hexToRgba(categoryColor, 0.32) : hexToRgba(categoryColor, 0.09),
+                        color: isDark ? '#f8fafc' : categoryColor,
+                        borderColor: isDark ? hexToRgba(categoryColor, 0.45) : hexToRgba(categoryColor, 0.14),
+                      }}
                     >
                       {quest.category}
                     </span>

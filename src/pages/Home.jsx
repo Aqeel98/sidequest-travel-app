@@ -67,6 +67,18 @@ const MAP_CATEGORY_COLORS = {
   'Sports & Recreation': '#1e293b',
 };
 
+const hexToRgba = (hex, alpha) => {
+  const clean = hex.replace('#', '');
+  const value = clean.length === 3
+    ? clean.split('').map((c) => c + c).join('')
+    : clean;
+  const int = Number.parseInt(value, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const getIconFamily = (src) => src.split('/').pop().replace('.webp', '').split('_')[0];
 
 const createSeededRandom = (seed) => {
@@ -656,12 +668,22 @@ const Home = () => {
                     {/* Content Section */}
                     <div className="p-6">
                         <div className="flex items-center gap-2 mb-3">
+                            {(() => {
+                              const categoryColor = MAP_CATEGORY_COLORS[quest.category] || '#1e293b';
+                              const isDarkTheme = theme === 'dark';
+                              return (
                             <span
-                              className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white"
-                              style={{ backgroundColor: MAP_CATEGORY_COLORS[quest.category] || '#1e293b' }}
+                              className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+                              style={{
+                                backgroundColor: isDarkTheme ? hexToRgba(categoryColor, 0.32) : hexToRgba(categoryColor, 0.09),
+                                color: isDarkTheme ? '#f8fafc' : categoryColor,
+                                borderColor: isDarkTheme ? hexToRgba(categoryColor, 0.45) : hexToRgba(categoryColor, 0.14),
+                              }}
                             >
                                 {quest.category}
                             </span>
+                              );
+                            })()}
                         </div>
 
                         <h3 className={`font-bold text-xl mb-2 transition-colors ${
