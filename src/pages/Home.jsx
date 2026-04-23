@@ -54,6 +54,18 @@ const ICON_SOURCES = [
 ];
 
 const ICON_COLORS = ['#DFF2EE', '#D8ECE8', '#E3F4F1', '#D5E8E3', '#DCEEEA'];
+const MAP_CATEGORY_COLORS = {
+  Environmental: '#064e3b',
+  Social: '#9f1239',
+  'Animal Welfare': '#831843',
+  Cultural: '#4c1d95',
+  Education: '#1e3a8a',
+  Adventure: '#9a3412',
+  Exploration: '#854d0e',
+  'Marine Adventure': '#164e63',
+  'Wildlife Adventure': '#365314',
+  'Sports & Recreation': '#1e293b',
+};
 
 const getIconFamily = (src) => src.split('/').pop().replace('.webp', '').split('_')[0];
 
@@ -644,19 +656,10 @@ const Home = () => {
                     {/* Content Section */}
                     <div className="p-6">
                         <div className="flex items-center gap-2 mb-3">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                quest.category === 'Environmental' ? 'bg-emerald-100 text-emerald-700' :
-                                quest.category === 'Social' ? 'bg-rose-100 text-rose-700' :
-                                quest.category === 'Animal Welfare' ? 'bg-pink-100 text-pink-700' :
-                                quest.category === 'Education' ? 'bg-blue-100 text-blue-700' :
-                                quest.category === 'Sports & Recreation' ? 'bg-indigo-100 text-indigo-700' :
-                                quest.category === 'Cultural' ? 'bg-violet-100 text-violet-700' :
-                                quest.category === 'Adventure' ? 'bg-orange-100 text-orange-800' :
-                                quest.category === 'Exploration' ? 'bg-yellow-100 text-yellow-800' :
-                                quest.category === 'Marine Adventure' ? 'bg-cyan-100 text-cyan-700' :
-                                quest.category === 'Wildlife Adventure' ? 'bg-lime-100 text-lime-700' :
-                                'bg-orange-100 text-orange-700'
-                            }`}>
+                            <span
+                              className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white"
+                              style={{ backgroundColor: MAP_CATEGORY_COLORS[quest.category] || '#1e293b' }}
+                            >
                                 {quest.category}
                             </span>
                         </div>

@@ -182,6 +182,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
         {quests.filter(q => q.status === 'active').map((quest) => {
           if (!quest.lat || !quest.lng) return null;
           const status = getQuestStatus(quest.id);
+          const categoryColor = getCategoryDetails(quest.category).color;
 
           return (
             <Marker
@@ -195,7 +196,10 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                   
                   {/* Category & XP Badge */}
                   <div className={`flex justify-between items-center w-full mb-2 pb-2 border-b ${isDark ? 'border-cyan-900/60' : 'border-gray-100'}`}>
-                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase whitespace-nowrap ${isDark ? 'bg-[#0f5c5c] text-cyan-100 border border-cyan-800/60' : 'bg-brand-100 text-brand-700'}`}>
+                    <span
+                      className="px-2 py-1 rounded text-[10px] font-bold uppercase whitespace-nowrap text-white"
+                      style={{ backgroundColor: categoryColor }}
+                    >
                       {quest.category}
                     </span>
                     <span className={`text-sm font-extrabold ml-2 ${isDark ? 'text-cyan-100' : 'text-brand-600'}`}>
