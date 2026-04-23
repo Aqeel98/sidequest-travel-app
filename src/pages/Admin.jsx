@@ -1450,7 +1450,7 @@ const Admin = () => {
                       }));
                       // Clear any lingering partner draft so prefill wins
                       sessionStorage.removeItem('sq_partner_draft');
-                      navigate('/partner-dashboard?tab=create&mode=quest');
+                      navigate('/partner?tab=create&mode=quest');
                     }}
                     className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all flex items-center gap-1.5 whitespace-nowrap"
                     title="Opens the Quest Creator pre-filled with this suggestion's details. Publishing the quest will approve the suggestion and award the suggester 50 XP."
