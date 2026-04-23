@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Gift, Trophy, Globe, Lightbulb } from 'lucide-react'; 
+import { Menu, X, LogOut, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Gift, Trophy, Lightbulb } from 'lucide-react'; 
 import { useSideQuest } from '../context/SideQuestContext';
 import { useAppPreferences } from '../context/AppPreferencesContext';
 
 const Navbar = () => {
   const { currentUser, logout, setShowAuthModal, isHuntActive, activeEvent, myBookings } = useSideQuest();
-  const { t, theme, setThemeMode, language, setLanguage, languageOptions } = useAppPreferences();
+  const { t, theme, setThemeMode } = useAppPreferences();
   const isDark = theme === 'dark';
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
@@ -140,20 +140,6 @@ const Navbar = () => {
             <Lightbulb size={18} />
           </button>
 
-          <div className="relative">
-            <Globe size={14} className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`} />
-            <select
-              aria-label={t('language')}
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className={`pl-7 pr-2 py-1.5 text-xs rounded-lg border ${isDark ? 'border-cyan-900/60 text-cyan-50 bg-[#0d4b4b]' : 'border-gray-200 text-gray-600 bg-white'}`}
-            >
-              {languageOptions.map((option) => (
-                <option key={option.code} value={option.code}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          
           <div className="w-px h-6 bg-gray-200 mx-2"></div>
 
           {currentUser ? (
@@ -225,7 +211,7 @@ const Navbar = () => {
     className="p-3 rounded-lg bg-[#107870]/5 text-[#107870] font-black flex items-center border border-[#107870]/10" 
     onClick={() => setIsOpen(false)}
       >
-    <Globe size={18} className="mr-2" /> My Active Journey
+    <Trophy size={18} className="mr-2" /> My Active Journey
       </Link>
           )}
             {isHuntActive && currentUser?.hunt_access?.includes(activeEvent?.id) && (
@@ -237,23 +223,13 @@ const Navbar = () => {
                 <HeartPulse size={18} className="mr-2"/> Emergency & Safety Info
             </Link>
 
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-1 gap-2 mt-2">
               <button
                 onClick={() => setThemeMode(theme === 'dark' ? 'light' : 'dark')}
                 className={`p-3 rounded-lg border border-gray-200 text-sm ${isDark ? 'border-cyan-900/60 text-cyan-50' : ''}`}
               >
                 {theme === 'dark' ? t('lightMode') : t('darkMode')}
               </button>
-              <select
-                aria-label={t('language')}
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className={`p-3 rounded-lg border border-gray-200 text-sm ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60 text-cyan-50' : ''}`}
-              >
-                {languageOptions.map((option) => (
-                  <option key={option.code} value={option.code}>{option.label}</option>
-                ))}
-              </select>
             </div>
 
             {/* MOBILE PARTNER SECTION */}
