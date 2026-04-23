@@ -3,10 +3,13 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { Award, ShoppingBag, Coffee, Waves, BedSingle, Search, MapPin, ChevronRight } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 const Rewards = () => {
   const navigate = useNavigate();
   const { currentUser, rewards, redemptions, redeemReward, setShowAuthModal, showToast  } = useSideQuest();
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
 
 
 
@@ -111,18 +114,18 @@ const LinkifyText = ({ text }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E6D5B8] pb-20">
+    <div className={`min-h-screen pb-20 ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-gray-800 flex items-center">
+        <h1 className={`text-3xl font-bold mb-2 flex items-center ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>
           <ShoppingBag className="mr-3 text-brand-600" /> Rewards Marketplace
         </h1>
         {currentUser ? (
-          <p className="text-gray-600">
+          <p className={isDark ? 'text-cyan-100/80' : 'text-gray-600'}>
             You have <span className="font-bold text-brand-600">{currentUser.xp} XP</span> available to spend.
           </p>
         ) : (
-          <p className="text-gray-600 italic">Login to see your XP and redeem rewards.</p>
+          <p className={`${isDark ? 'text-cyan-100/80' : 'text-gray-600'} italic`}>Login to see your XP and redeem rewards.</p>
         )}
       </div>
 
@@ -132,15 +135,15 @@ const LinkifyText = ({ text }) => {
             /* --- SCOUTING MODE UI --- */
             <div className="col-span-full py-20 px-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 <div className="max-w-2xl mx-auto">
-                    <div className="inline-flex p-4 bg-brand-50 rounded-full mb-6 text-brand-600">
+                    <div className={`inline-flex p-4 rounded-full mb-6 ${isDark ? 'bg-cyan-900/40 text-cyan-200' : 'bg-brand-50 text-brand-600'}`}>
                         <Search size={32} className="animate-pulse" />
                     </div>
                     
-                    <h2 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">
+                    <h2 className={`text-2xl font-black mb-4 tracking-tight ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                         Our Marketplace is Growing...
                     </h2>
                     
-                    <p className="text-gray-600 leading-relaxed mb-12 text-lg font-medium">
+                    <p className={`leading-relaxed mb-12 text-lg font-medium ${isDark ? 'text-cyan-100/85' : 'text-gray-600'}`}>
                     We’re scouting Sri Lanka for impact-driven partners. Your XP shows the mark you’ve made. 
                     Save it to unlock exclusive rewards at cafés, stays, and workshops soon.
                     </p>
@@ -148,34 +151,34 @@ const LinkifyText = ({ text }) => {
                     {/* --- COMING SOON GRAPHIC --- */}
                     <div className="relative">
                         {/* Connecting Line */}
-                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -z-10 hidden md:block"></div>
+                        <div className={`absolute top-1/2 left-0 w-full h-0.5 -z-10 hidden md:block ${isDark ? 'bg-cyan-900/40' : 'bg-gray-100'}`}></div>
                         
                         <div className="grid grid-cols-3 gap-4 md:gap-12">
                             <div className="flex flex-col items-center group">
-                                <div className="p-5 bg-white border-2 border-gray-50 rounded-2xl shadow-sm text-gray-300 group-hover:text-orange-500 transition-colors">
+                                <div className={`p-5 border-2 rounded-2xl shadow-sm transition-colors ${isDark ? 'bg-[#0d4b4b] border-cyan-900/40 text-cyan-300/50 group-hover:text-orange-300' : 'bg-white border-gray-50 text-gray-300 group-hover:text-orange-500'}`}>
                                     <Coffee size={32} />
                                 </div>
-                                <span className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Partner Cafes</span>
+                                <span className={`mt-3 text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`}>Partner Cafes</span>
                             </div>
 
                             <div className="flex flex-col items-center group">
-                                <div className="p-5 bg-white border-2 border-gray-50 rounded-2xl shadow-sm text-gray-300 group-hover:text-blue-500 transition-colors">
+                                <div className={`p-5 border-2 rounded-2xl shadow-sm transition-colors ${isDark ? 'bg-[#0d4b4b] border-cyan-900/40 text-cyan-300/50 group-hover:text-blue-300' : 'bg-white border-gray-50 text-gray-300 group-hover:text-blue-500'}`}>
                                     <Waves size={32} />
                                 </div>
-                                <span className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Surf Lessons</span>
+                                <span className={`mt-3 text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`}>Surf Lessons</span>
                             </div>
 
                             <div className="flex flex-col items-center group">
-                                <div className="p-5 bg-white border-2 border-gray-50 rounded-2xl shadow-sm text-gray-300 group-hover:text-emerald-500 transition-colors">
+                                <div className={`p-5 border-2 rounded-2xl shadow-sm transition-colors ${isDark ? 'bg-[#0d4b4b] border-cyan-900/40 text-cyan-300/50 group-hover:text-emerald-300' : 'bg-white border-gray-50 text-gray-300 group-hover:text-emerald-500'}`}>
                                     <BedSingle size={32} />
                                 </div>
-                                <span className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Impact Stays</span>
+                                <span className={`mt-3 text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`}>Impact Stays</span>
                             </div>
                         </div>
                     </div>
 
 
-                    <div className="mt-16 p-8 bg-brand-600 rounded-3xl text-white text-left relative overflow-hidden shadow-xl shadow-brand-100">
+                    <div className={`mt-16 p-8 bg-brand-600 rounded-3xl text-white text-left relative overflow-hidden ${isDark ? 'shadow-[0_0_14px_rgba(45,212,191,0.20)]' : 'shadow-xl shadow-brand-100'}`}>
                         <div className="relative z-10">
                             <h3 className="text-xl font-black mb-2">Own a local spot?</h3>
                             <p className="text-brand-100 text-sm mb-6 leading-relaxed max-w-md">
@@ -195,7 +198,7 @@ const LinkifyText = ({ text }) => {
                     </div>
 
                     {/* Keep the "Scouting in Progress" badge at the very bottom */}
-                    <div className="mt-12 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <div className={`mt-12 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${isDark ? 'bg-cyan-900/40 text-cyan-200/80' : 'bg-gray-100 text-gray-400'}`}>
                         <div className="w-2 h-2 rounded-full bg-brand-500 animate-ping"></div>
                         SideQuest Scouting in Progress
                     </div>
@@ -206,15 +209,15 @@ const LinkifyText = ({ text }) => {
             activeRewards.map(reward => {
             const canAfford = currentUser && currentUser.xp >= reward.xp_cost;
             return (
-                <div key={reward.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                <div key={reward.id} className={`rounded-xl shadow-md overflow-hidden border ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
                 <img 
                     src={reward.image || "https://via.placeholder.com/400x200?text=Reward"} 
                     alt={reward.title} 
                     className="w-full h-40 object-cover" 
                 />
                 <div className="p-5">
-                    <h3 className="font-bold text-lg mb-2 text-gray-800">{reward.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4 h-10 line-clamp-2">
+                    <h3 className={`font-bold text-lg mb-2 ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>{reward.title}</h3>
+                    <p className={`text-sm mb-4 h-10 line-clamp-2 ${isDark ? 'text-cyan-100/80' : 'text-gray-600'}`}>
                        <LinkifyText text={reward.description} />
                     </p>
 
@@ -256,7 +259,7 @@ const LinkifyText = ({ text }) => {
       {/* User's Redemptions Section */}
       {myRedemptions.length > 0 && (
         <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Your Redemptions</h2>
+          <h2 className={`text-2xl font-bold mb-6 border-b pb-2 ${isDark ? 'text-cyan-50 border-cyan-900/50' : 'text-gray-800'}`}>Your Redemptions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {myRedemptions.map(redemption => {
               const reward = rewards.find(r => r.id == redemption.reward_id);
@@ -267,18 +270,20 @@ const LinkifyText = ({ text }) => {
 
               return (
                 <div key={redemption.id} className={`rounded-2xl p-5 border flex items-center justify-between transition-all ${
-                  redemption.status === 'verified' ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-green-50 border-green-200'
+                  redemption.status === 'verified'
+                    ? (isDark ? 'bg-[#0a3a3a] border-cyan-900/50 opacity-75' : 'bg-gray-50 border-gray-200 opacity-60')
+                    : (isDark ? 'bg-emerald-900/20 border-emerald-700/40' : 'bg-green-50 border-green-200')
               }`}>
                   <div>
-                      <h3 className={`font-bold ${redemption.status === 'verified' ? 'text-gray-400' : 'text-gray-800'}`}>
+                      <h3 className={`font-bold ${redemption.status === 'verified' ? (isDark ? 'text-cyan-200/70' : 'text-gray-400') : (isDark ? 'text-cyan-50' : 'text-gray-800')}`}>
                           {reward?.title || 'Unknown Reward'}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1">Code: <span className="font-mono font-bold text-green-700">{redemption.redemption_code}</span></p>
-                      <p className={`text-[10px] font-black uppercase mt-2 tracking-widest ${redemption.status === 'verified' ? 'text-gray-400' : 'text-brand-600'}`}>
+                      <p className={`text-sm mt-1 ${isDark ? 'text-cyan-200/80' : 'text-gray-600'}`}>Code: <span className={`font-mono font-bold ${isDark ? 'text-emerald-300' : 'text-green-700'}`}>{redemption.redemption_code}</span></p>
+                      <p className={`text-[10px] font-black uppercase mt-2 tracking-widest ${redemption.status === 'verified' ? (isDark ? 'text-cyan-200/60' : 'text-gray-400') : 'text-brand-600'}`}>
                           {redemption.status === 'verified' ? 'Voucher Used' : 'Ready to Use'}
                       </p>
                   </div>
-                  <Award className={redemption.status === 'verified' ? 'text-gray-300' : 'text-green-500'} size={36} />
+                  <Award className={redemption.status === 'verified' ? (isDark ? 'text-cyan-200/40' : 'text-gray-300') : 'text-green-500'} size={36} />
               </div>
               );
             })}

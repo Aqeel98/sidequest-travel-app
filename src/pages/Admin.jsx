@@ -9,6 +9,7 @@ import {
   XCircle, ChevronDown, ChevronUp, Sparkles
 } from 'lucide-react';
 import { validatePassword } from '../utils/security';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 
 // --- HELPER: RELATIVE TIME ("5m ago", "3h ago", "2d ago"). Defensive against missing/invalid dates. ---
@@ -393,6 +394,8 @@ const Admin = () => {
       } = useSideQuest();
 
   const navigate = useNavigate();
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
   const [editingId, setEditingId] = useState(null);
   // --- SECURITY VAULT STATE ---
@@ -749,33 +752,33 @@ const Admin = () => {
 };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-black mb-8 text-gray-900 tracking-tight">Game Master Oversight</h1>
+    <div className={`max-w-7xl mx-auto px-4 py-8 ${isDark ? 'text-cyan-50' : ''}`}>
+      <h1 className={`text-4xl font-black mb-8 tracking-tight ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Game Master Oversight</h1>
 
       {/* --- TAB NAVIGATION --- */}
-      <div className="flex border-b mb-8 overflow-x-auto gap-2 pb-2 scrollbar-hide">
-        <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'dashboard' ? 'border-b-4 border-brand-500 text-brand-600' : 'text-gray-500 hover:text-brand-600'}`}>
+      <div className={`flex border-b mb-8 overflow-x-auto gap-2 pb-2 scrollbar-hide ${isDark ? 'border-cyan-900/50' : ''}`}>
+        <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'dashboard' ? 'border-b-4 border-brand-500 text-brand-600' : (isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-brand-600')}`}>
           Ecosystem Stats
         </button>
-        <button onClick={() => setActiveTab('submissions')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'submissions' ? 'border-b-4 border-yellow-500 text-yellow-600' : 'text-gray-500 hover:text-yellow-600'}`}>
+        <button onClick={() => setActiveTab('submissions')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'submissions' ? 'border-b-4 border-yellow-500 text-yellow-600' : (isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-yellow-600')}`}>
           Proofs ({pendingSubmissions.length})
         </button>
-        <button onClick={() => setActiveTab('newQuests')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'newQuests' ? 'border-b-4 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}>
+        <button onClick={() => setActiveTab('newQuests')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'newQuests' ? 'border-b-4 border-blue-500 text-blue-600' : (isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-blue-600')}`}>
           New Quests ({pendingNewQuests.length})
         </button>
-        <button onClick={() => setActiveTab('newRewards')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'newRewards' ? 'border-b-4 border-orange-500 text-orange-600' : 'text-gray-500 hover:text-orange-600'}`}>
+        <button onClick={() => setActiveTab('newRewards')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'newRewards' ? 'border-b-4 border-orange-500 text-orange-600' : (isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-orange-600')}`}>
           New Rewards ({pendingNewRewards.length})
         </button>
-        <button onClick={() => setActiveTab('quests')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'quests' ? 'border-b-4 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-indigo-600'}`}>
+        <button onClick={() => setActiveTab('quests')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'quests' ? 'border-b-4 border-indigo-500 text-indigo-600' : (isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-indigo-600')}`}>
           Quest Manager
         </button>
-        <button onClick={() => setActiveTab('rewards')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'rewards' ? 'border-b-4 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-purple-600'}`}>
+        <button onClick={() => setActiveTab('rewards')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'rewards' ? 'border-b-4 border-purple-500 text-purple-600' : (isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-purple-600')}`}>
           Reward Manager
         </button>
-        <button onClick={() => setActiveTab('security')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'security' ? 'border-b-4 border-red-500 text-red-600' : 'text-gray-500 hover:text-red-600'}`}>
+        <button onClick={() => setActiveTab('security')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'security' ? 'border-b-4 border-red-500 text-red-600' : (isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-red-600')}`}>
           Security Vault
         </button>
-        <button onClick={() => setActiveTab('partnerOversight')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'partnerOversight' ? 'border-b-4 border-teal-500 text-teal-600' : 'text-gray-500 hover:text-teal-600'}`}>
+        <button onClick={() => setActiveTab('partnerOversight')} className={`px-4 py-2 font-bold transition whitespace-nowrap ${activeTab === 'partnerOversight' ? 'border-b-4 border-teal-500 text-teal-600' : (isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-teal-600')}`}>
           Partner Oversight
         </button>
       </div>
@@ -791,7 +794,7 @@ const Admin = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                <div className={`p-8 rounded-3xl border shadow-sm ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
                     <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
                         <BarChart2 className="text-brand-600"/> Impact by Category
                     </h3>
@@ -813,7 +816,7 @@ const Admin = () => {
                     </div>
                 </div>
                 {/* --- NEW LEADERBOARD COMPONENT --- */}
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col h-96">
+                <div className={`p-6 rounded-3xl border shadow-sm flex flex-col h-96 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-xl flex items-center gap-2 text-gray-800">
                             <UsersIcon className="text-brand-600" /> Top Adventurers
@@ -872,7 +875,7 @@ const Admin = () => {
             {/* --- RECENT ACTIVITY: APPROVED + REJECTED SUBMISSIONS --- */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* APPROVED LIST */}
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <div className={`p-6 rounded-3xl border shadow-sm ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
                     <button
                         type="button"
                         onClick={() => setShowApproved(v => !v)}
@@ -924,7 +927,7 @@ const Admin = () => {
                 </div>
 
                 {/* REJECTED LIST */}
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <div className={`p-6 rounded-3xl border shadow-sm ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
                     <button
                         type="button"
                         onClick={() => setShowRejected(v => !v)}

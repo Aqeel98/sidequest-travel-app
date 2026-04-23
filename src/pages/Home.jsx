@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 import SEO from '../components/SEO';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 
 const QuestSkeleton = () => (
@@ -85,6 +86,7 @@ const createLandingDecor = (seed, config) => {
 
   const totalRows = Math.ceil(config.canvasHeight / config.cellSize);
   const totalCols = Math.ceil(config.canvasWidth / config.cellSize);
+  const leftBiasStrength = config.leftBiasStrength || 0;
 
   for (let row = 0; row < totalRows; row += 1) {
     for (let col = 0; col < totalCols; col += 1) {
@@ -92,6 +94,7 @@ const createLandingDecor = (seed, config) => {
       const baseY = row * config.cellSize + config.cellSize / 2;
       const size = Math.round(config.minSize + rand() * (config.maxSize - config.minSize));
       const radius = size / 2;
+      const edgePadding = Math.max(2, radius * 0.25);
       const src = shuffledSources[sourceIndex % shuffledSources.length];
       sourceIndex += 1;
       const family = getIconFamily(src);
@@ -100,13 +103,15 @@ const createLandingDecor = (seed, config) => {
       let placed = false;
       for (let attempt = 0; attempt < 8 && !placed; attempt += 1) {
         const spread = maxJitter * (0.5 + attempt * 0.2);
+        const colProgress = totalCols > 1 ? col / (totalCols - 1) : 0;
+        const leftBiasShift = (1 - colProgress) * leftBiasStrength * (0.7 + rand() * 0.3);
         const testX = Math.min(
-          config.canvasWidth - radius - 1,
-          Math.max(radius + 1, baseX + (rand() * 2 - 1) * spread),
+          config.canvasWidth - edgePadding,
+          Math.max(edgePadding, baseX + (rand() * 2 - 1) * spread - leftBiasShift),
         );
         const testY = Math.min(
-          config.canvasHeight - radius - 1,
-          Math.max(radius + 1, baseY + (rand() * 2 - 1) * spread),
+          config.canvasHeight - edgePadding,
+          Math.max(edgePadding, baseY + (rand() * 2 - 1) * spread),
         );
         const candidate = { x: testX, y: testY, radius };
 
@@ -138,17 +143,18 @@ const createLandingDecor = (seed, config) => {
     topFillAttempts += 1;
     const size = Math.round(config.minSize + rand() * (config.maxSize - config.minSize));
     const radius = size / 2;
+    const edgePadding = Math.max(2, radius * 0.25);
     const src = shuffledSources[sourceIndex % shuffledSources.length];
     sourceIndex += 1;
     const family = getIconFamily(src);
     const testX = Math.min(
-      config.canvasWidth - radius - 1,
-      Math.max(radius + 1, radius + rand() * (config.canvasWidth - radius * 2 - 2)),
+      config.canvasWidth - edgePadding,
+      Math.max(edgePadding, edgePadding + rand() * Math.max(1, config.canvasWidth - edgePadding * 2)),
     );
     const topBandPx = config.canvasHeight * 0.14;
     const testY = Math.min(
       topBandPx,
-      Math.max(radius + 1, radius + rand() * Math.max(1, topBandPx - radius - 1)),
+      Math.max(edgePadding, edgePadding + rand() * Math.max(1, topBandPx - edgePadding)),
     );
     const candidate = { x: testX, y: testY, radius };
 
@@ -172,6 +178,40 @@ const createLandingDecor = (seed, config) => {
     remainingTopFill -= 1;
   }
 
+  let remainingGapFill = config.gapFillCount || 0;
+  let gapFillAttempts = 0;
+  while (remainingGapFill > 0 && gapFillAttempts < (config.gapFillCount || 0) * 24) {
+    gapFillAttempts += 1;
+    const size = Math.round(config.minSize + rand() * (config.maxSize - config.minSize));
+    const radius = size / 2;
+    const edgePadding = Math.max(2, radius * 0.25);
+    const src = shuffledSources[sourceIndex % shuffledSources.length];
+    sourceIndex += 1;
+    const family = getIconFamily(src);
+    const testX = edgePadding + rand() * Math.max(1, config.canvasWidth - edgePadding * 2);
+    const testY = edgePadding + rand() * Math.max(1, config.canvasHeight * 0.78 - edgePadding * 2);
+    const candidate = { x: testX, y: testY, radius };
+
+    if (!fitsWithoutCollision(candidate)) continue;
+    if (!canUseFamilyHere(candidate, family)) continue;
+
+    items.push({
+      x: testX,
+      y: testY,
+      radius,
+      family,
+      src,
+      top: `${((testY / config.canvasHeight) * 100).toFixed(2)}%`,
+      left: `${((testX / config.canvasWidth) * 100).toFixed(2)}%`,
+      size,
+      rotate: Math.round(-25 + rand() * 50),
+      opacity: Number((config.opacityMin + rand() * (config.opacityMax - config.opacityMin)).toFixed(3)),
+      color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
+      className: '',
+    });
+    remainingGapFill -= 1;
+  }
+
   return items;
 };
 
@@ -187,6 +227,8 @@ const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
   opacityMin: 0.3,
   opacityMax: 0.44,
   topFillCount: 10,
+  leftBiasStrength: 7,
+  gapFillCount: 10,
 });
 
 const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
@@ -201,6 +243,8 @@ const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
   opacityMin: 0.18,
   opacityMax: 0.28,
   topFillCount: 6,
+  leftBiasStrength: 10,
+  gapFillCount: 8,
 });
 
 const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
@@ -214,7 +258,9 @@ const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
   nearRadius: 96,
   opacityMin: 0.22,
   opacityMax: 0.34,
-  topFillCount: 8,
+  topFillCount: 10,
+  leftBiasStrength: 12,
+  gapFillCount: 16,
 });
 
 const LandingMaskIcon = React.memo(({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
@@ -249,6 +295,7 @@ const Home = () => {
   const PRIORITY_QUEST_IMAGE_COUNT = 10;
   const hasRestored = useRef(false);
   const { quests, isLoading, currentUser } = useSideQuest();
+  const { t, theme } = useAppPreferences();
   const navigate = useNavigate();
   const [viewportWidth, setViewportWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1280,
@@ -277,7 +324,10 @@ const Home = () => {
       : LANDING_DECOR_DESKTOP;
   const landingDecorNodes = useMemo(
     () => landingDecor
-      .filter((icon) => Number.parseFloat(icon.top) < 74)
+      .filter((icon) => {
+        const topPercent = Number.parseFloat(icon.top);
+        return topPercent > 2 && topPercent < 70;
+      })
       .map((icon) => (
         <LandingMaskIcon key={`${icon.src}-${icon.top}-${icon.left}`} {...icon} />
       )),
@@ -367,13 +417,13 @@ const Home = () => {
 
   return (
 
-    <div className="pb-12 bg-[#E6D5B8] min-h-screen relative overflow-hidden">
+    <div className={`pb-12 min-h-screen relative overflow-hidden ${theme === 'dark' ? 'bg-[#062f2f]' : 'bg-[#E6D5B8]'}`}>
       <SEO />
 
       {/* --- AESTHETIC HEADER START --- */}
 
 
-      <div className="relative bg-brand-600 overflow-hidden">
+      <div className={`relative overflow-hidden ${theme === 'dark' ? 'bg-[#0b5252]' : 'bg-brand-600'}`}>
 
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
             <div className="absolute inset-0 overflow-hidden">{landingDecorNodes}</div>
@@ -382,7 +432,7 @@ const Home = () => {
         {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-64 md:pb-80 lg:pb-96 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium mb-6 animate-fade-in-up">
-            <span>Discover the unseen Sri Lanka</span>
+            <span>{t('travelerTag')}</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-white mb-8 tracking-tight leading-[1.1]">
@@ -421,7 +471,7 @@ const Home = () => {
      {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none overflow-hidden">
   {/* 1. TALLER SAND BASE */}
-  <div className="absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] bg-[#E6D5B8]"></div>
+  <div className={`absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] ${theme === 'dark' ? 'bg-[#062f2f]' : 'bg-[#E6D5B8]'}`}></div>
 
   <svg
     className="relative -mt-px block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
@@ -432,21 +482,21 @@ const Home = () => {
     {/* 2. GHOST WAVE (Added as requested - Sits behind main foam) */}
     <path
       d="M0,0 L1200,0 L1200,130 C900,180 600,90 300,160 L0,120 Z"
-      className="fill-white/30 animate-wave-roll"
+      className={`animate-wave-roll ${theme === 'dark' ? 'fill-[#3f6f74]' : 'fill-white/30'}`}
       style={{ animationDuration: '15s', animationDelay: '-5s' }}
     ></path>
 
     {/* 3. WHITE FOAM */}
     <path
       d="M0,0 L1200,0 L1200,120 C900,160 600,80 300,140 L0,100 Z"
-      className="fill-white animate-wave-roll"
+      className={`animate-wave-roll ${theme === 'dark' ? 'fill-[#73a6ad]' : 'fill-white'}`}
       style={{ animationDuration: '10s', animationDelay: '-2s' }}
     ></path>
 
     {/* 4. TURQUOISE WATER (Matched to Header) */}
     <path
       d="M0,0 L1200,0 L1200,100 C900,140 600,60 300,120 L0,80 Z"
-      className="fill-brand-600 animate-wave-roll"
+      className={`animate-wave-roll ${theme === 'dark' ? 'fill-[#0b5252]' : 'fill-brand-600'}`}
       style={{ animationDuration: '10s' }}
     ></path>
   </svg>
@@ -461,10 +511,10 @@ const Home = () => {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Available Quests</h2>
+            <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-cyan-50' : 'text-gray-900'}`}>Available Quests</h2>
 
           </div>
-          <button onClick={() => navigate('/map')} className="hidden md:block text-brand-600 font-bold hover:underline">View All on Map</button>
+          <button onClick={() => navigate('/map')} className={`hidden md:block font-bold hover:underline ${theme === 'dark' ? 'text-brand-300' : 'text-brand-600'}`}>View All on Map</button>
         </div>
 
 
@@ -474,13 +524,13 @@ const Home = () => {
     {/* 1. The Search Input */}
     <div className="relative w-full group">
         <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-600 transition-colors"
+            className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${theme === 'dark' ? 'text-cyan-200/70 group-focus-within:text-cyan-100' : 'text-gray-400 group-focus-within:text-brand-600'}`}
             size={20}
         />
         <input
             type="text"
             placeholder="Search by name or location..."
-            className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent focus:border-brand-500/30 rounded-2xl shadow-sm outline-none font-semibold text-gray-700 placeholder:text-gray-400 transition-all"
+            className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl shadow-sm outline-none font-semibold transition-all ${theme === 'dark' ? 'bg-[#0d4b4b] text-cyan-50 placeholder:text-cyan-200/60 border-cyan-900/40 focus:border-cyan-500/60' : 'bg-white border-transparent focus:border-brand-500/30 text-gray-700 placeholder:text-gray-400'}`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -488,7 +538,7 @@ const Home = () => {
         <button
             onClick={findClosest}
             disabled={isLocating}
-            className="w-full flex items-center justify-center gap-2 bg-brand-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-brand-200 active:scale-[0.98] transition-all disabled:opacity-70"        >
+            className={`w-full flex items-center justify-center gap-2 bg-brand-600 text-white py-4 rounded-2xl font-black active:scale-[0.98] transition-all disabled:opacity-70 ${theme === 'dark' ? 'shadow-[0_0_14px_rgba(45,212,191,0.22)]' : 'shadow-lg shadow-brand-200'}`}        >
             {isLocating ? <Loader2 className="animate-spin" size={20}/> : <Crosshair size={20}/>}
             {isLocating ? 'Locating...' : 'Find Closest'}
         </button>
@@ -520,8 +570,12 @@ const Home = () => {
                   }}
                     className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${
                         selectedCategory === cat
-                        ? 'bg-brand-600 text-white border-brand-600 shadow-md transform scale-105'
-                        : 'bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:border-gray-200'
+                        ? (theme === 'dark'
+                            ? 'bg-[#0f5c5c] text-white border-[#1e6b6b] shadow-[0_0_12px_rgba(20,184,166,0.2)] transform scale-105'
+                            : 'bg-brand-600 text-white border-brand-600 shadow-md transform scale-105')
+                        : (theme === 'dark'
+                            ? 'bg-[#0d4b4b] text-cyan-100 border-cyan-900/50 hover:bg-[#125454] hover:border-[#1e6b6b]'
+                            : 'bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:border-gray-200')
                     }`}
                 >
                     {cat}
@@ -546,7 +600,11 @@ const Home = () => {
                 <div
                 key={quest.id}
                 onClick={() => handleQuestClick(quest.id)}
-                className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-3xl shadow-sm overflow-hidden cursor-pointer h-[450px]"
+                className={`group backdrop-blur-md rounded-3xl shadow-sm overflow-hidden cursor-pointer h-[450px] border ${
+                  theme === 'dark'
+                    ? 'bg-[#0d4b4b] border-cyan-900/50'
+                    : 'bg-white/80 border-white/50'
+                }`}
                 style={{
                     contentVisibility: 'auto', // Browser keeps the pixels ready
                     containIntrinsicSize: '450px', // Prevents layout jumping
@@ -574,7 +632,11 @@ const Home = () => {
                         {/* Transparent Shield */}
                         <div className="absolute inset-0 z-10"></div>
 
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-brand-600 shadow-lg">
+                        <div className={`absolute top-4 right-4 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-lg ${
+                          theme === 'dark'
+                            ? 'bg-[#0a3a3a]/95 text-cyan-100 border border-cyan-900/60'
+                            : 'bg-white/90 text-brand-600'
+                        }`}>
                             ⭐ {quest.xp_value} XP
                         </div>
                     </div>
@@ -599,12 +661,14 @@ const Home = () => {
                             </span>
                         </div>
 
-                        <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-brand-600 transition-colors">
+                        <h3 className={`font-bold text-xl mb-2 transition-colors ${
+                          theme === 'dark' ? 'text-cyan-50 group-hover:text-cyan-200' : 'text-gray-900 group-hover:text-brand-600'
+                        }`}>
                             {quest.title}
                         </h3>
 
-                        <div className="flex items-center text-gray-500 text-sm mt-4">
-                            <MapPin size={16} className="mr-1.5 text-gray-400" />
+                        <div className={`flex items-center text-sm mt-4 ${theme === 'dark' ? 'text-cyan-200/80' : 'text-gray-500'}`}>
+                            <MapPin size={16} className={`mr-1.5 ${theme === 'dark' ? 'text-cyan-300/70' : 'text-gray-400'}`} />
                             {quest.location_address}
                         </div>
                     </div>

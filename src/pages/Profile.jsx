@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Award, Compass, Globe, CheckCircle, Clock, Leaf, Heart, Flag, Mountain, Map, Anchor, Bird, Trophy, Zap } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 const BADGE_THRESHOLDS = {
     'Impact Explorer': 1,
@@ -44,6 +45,8 @@ const Profile = () => {
 
     // 1. All Hooks called at the top level
     const { currentUser, questProgress, quests, questSuggestions } = useSideQuest();
+    const { theme } = useAppPreferences();
+    const isDark = theme === 'dark';
 
     // 2. Memoize stats calculation and badge logic
     const stats = useMemo(() => {
@@ -175,18 +178,18 @@ const Profile = () => {
     const { lifetimeXP, walletXP, completedQuests, activeQuests, badges, recentQuests, level, progressPercent } = stats;
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-2 text-gray-900 flex items-center">
+        <div className={`max-w-4xl mx-auto px-4 py-8 ${isDark ? 'text-cyan-50' : ''}`}>
+            <h1 className={`text-3xl font-bold mb-2 flex items-center ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                 <Award className="text-yellow-500 mr-3" size={32} />
                 Traveler Profile
             </h1>
             {/* Correctly displays Full Name or falls back to Email */}
             {/* User Name + Rotating Quote */}
             <div className="mb-8">
-                <p className="text-lg font-bold text-gray-900">
+                <p className={`text-lg font-bold ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                     {currentUser.full_name || currentUser.email.split('@')[0]}
                 </p>
-                <p className="text-gray-500 italic text-sm mt-1 animate-in fade-in duration-700 key={quoteIndex}">
+                <p className={`italic text-sm mt-1 animate-in fade-in duration-700 key={quoteIndex} ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>
                     "{IMPACT_QUOTES[quoteIndex]}"
                 </p>
             </div>
@@ -222,55 +225,55 @@ const Profile = () => {
 
             {/* --- XP & STATS --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-500">
-                    <p className="text-sm font-semibold text-gray-500">Total Impact Points</p>
-                    <p className="text-4xl font-extrabold text-gray-900 mt-1">⭐ {lifetimeXP} XP</p>
-                    <p className="text-xs text-gray-500 mt-2" title="Your spendable balance. Redeemed rewards deduct from this, not from your lifetime impact.">
-                        Wallet: <span className="font-bold text-brand-600">{walletXP} XP</span> <span className="text-gray-400">available to spend</span>
+                <div className={`rounded-xl shadow-lg p-6 border-t-4 border-yellow-500 ${isDark ? 'bg-[#0d4b4b] border border-cyan-900/50' : 'bg-white'}`}>
+                    <p className={`text-sm font-semibold ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Total Impact Points</p>
+                    <p className={`text-4xl font-extrabold mt-1 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>⭐ {lifetimeXP} XP</p>
+                    <p className={`text-xs mt-2 ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`} title="Your spendable balance. Redeemed rewards deduct from this, not from your lifetime impact.">
+                        Wallet: <span className="font-bold text-brand-600">{walletXP} XP</span> <span className={isDark ? 'text-cyan-200/70' : 'text-gray-400'}>available to spend</span>
                     </p>
                 </div>
-                <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-brand-500">
-                    <p className="text-sm font-semibold text-gray-500">Quests Completed</p>
-                    <p className="text-4xl font-extrabold text-gray-900 mt-1">{completedQuests}</p>
+                <div className={`rounded-xl shadow-lg p-6 border-t-4 border-brand-500 ${isDark ? 'bg-[#0d4b4b] border border-cyan-900/50' : 'bg-white'}`}>
+                    <p className={`text-sm font-semibold ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Quests Completed</p>
+                    <p className={`text-4xl font-extrabold mt-1 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>{completedQuests}</p>
                 </div>
-                <div className="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500">
-                    <p className="text-sm font-semibold text-gray-500">Quests In Progress</p>
-                    <p className="text-4xl font-extrabold text-gray-900 mt-1">{activeQuests}</p>
+                <div className={`rounded-xl shadow-lg p-6 border-t-4 border-blue-500 ${isDark ? 'bg-[#0d4b4b] border border-cyan-900/50' : 'bg-white'}`}>
+                    <p className={`text-sm font-semibold ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Quests In Progress</p>
+                    <p className={`text-4xl font-extrabold mt-1 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>{activeQuests}</p>
                 </div>
             </div>
 
             {/* --- BADGES --- */}
             <div className="mb-10">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Impact Badges ({badges.length})</h2>
+                <h2 className={`text-2xl font-bold mb-4 ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>Impact Badges ({badges.length})</h2>
                 <div className="flex flex-wrap gap-4">
                     {badges.length > 0 ? (
                         badges.map(badge => (
-                            <div key={badge.name} className="flex items-center bg-white border border-brand-100 rounded-xl p-4 shadow-sm hover:shadow-md transition group">
+                            <div key={badge.name} className={`flex items-center rounded-xl p-4 shadow-sm hover:shadow-md transition group ${isDark ? 'bg-[#0d4b4b] border border-cyan-900/50' : 'bg-white border border-brand-100'}`}>
                                 <div className={`mr-3 ${badge.color} group-hover:scale-110 transition-transform`}>{badge.icon}</div>
                                 <div>
-                                    <span className="font-bold text-gray-800">{badge.name}</span>
-                                    <p className="text-xs text-gray-500 mt-0.5">{badge.desc}</p>
+                                    <span className={`font-bold ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>{badge.name}</span>
+                                    <p className={`text-xs mt-0.5 ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>{badge.desc}</p>
                                 </div>
                             </div>
                         ))
                     ) : (
-                        <p className="text-gray-500">Complete your first quest to earn a badge!</p>
+                        <p className={isDark ? 'text-cyan-200/80' : 'text-gray-500'}>Complete your first quest to earn a badge!</p>
                     )}
                 </div>
             </div>
 
             {/* --- RECENT ACTIVITY --- */}
             <div>
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Recent Completed Quests</h2>
+                <h2 className={`text-2xl font-bold mb-4 ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>Recent Completed Quests</h2>
                 <div className="space-y-3">
                     {recentQuests.length > 0 ? (
                         recentQuests.map(p => {
                             const quest = quests.find(q => q.id === p.quest_id);
                             return (
-                                <div key={p.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
+                                <div key={p.id} className={`rounded-xl p-4 shadow-sm flex items-center justify-between ${isDark ? 'bg-[#0d4b4b] border border-cyan-900/50' : 'bg-white'}`}>
                                     <div className="flex items-center">
-                                        <Clock size={20} className="mr-3 text-gray-400" />
-                                        <div className="text-gray-800 font-medium">
+                                        <Clock size={20} className={`mr-3 ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`} />
+                                        <div className={`font-medium ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>
                                             {quest?.title || "Unknown Quest"}
                                             <p className={`text-xs mt-1 font-bold uppercase ${p.status === 'approved' ? 'text-emerald-500' : 'text-yellow-500'}`}>
                                                 {p.status.replace('_', ' ')}
@@ -282,7 +285,7 @@ const Profile = () => {
                             );
                         })
                     ) : (
-                        <p className="text-gray-500">No quests completed yet.</p>
+                        <p className={isDark ? 'text-cyan-200/80' : 'text-gray-500'}>No quests completed yet.</p>
                     )}
                 </div>
             </div>

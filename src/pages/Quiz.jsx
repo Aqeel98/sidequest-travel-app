@@ -5,11 +5,14 @@ import {
   RotateCcw, Brain, MapPin, Award , Lock, Compass, Leaf, Waves, Anchor, Bird, CheckCircle
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 const Quiz = () => {
 
     const navigate = useNavigate();
     const { currentUser, quizBank, completedQuizIds, submitQuizAnswer, showToast, setShowAuthModal, isLoading } = useSideQuest(); 
+    const { theme } = useAppPreferences();
+    const isDark = theme === 'dark';
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showHint, setShowHint] = useState(false);
@@ -200,7 +203,7 @@ useEffect(() => {
     // --- 1. GUEST CHECK (Keep this first) ---
     if (!currentUser) {
         return (
-            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center relative overflow-hidden">
+            <div className={`min-h-screen flex items-center justify-center px-4 text-center relative overflow-hidden ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
                     <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
                     <Leaf size={300} className="absolute top-10 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
@@ -208,14 +211,14 @@ useEffect(() => {
                     <Anchor size={300} className="absolute -bottom-10 -right-10 text-brand-900 opacity-[0.04] -rotate-45" />
                     <Bird size={200} className="absolute bottom-20 left-1/4 text-brand-900 opacity-[0.02] rotate-12" />
                 </div>
-                <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white relative z-10">
+                <div className={`p-10 rounded-[2.5rem] shadow-2xl max-w-sm border relative z-10 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-white'}`}>
                     <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Lock className="text-brand-600" size={40} />
                     </div>
-                    <h2 className="text-3xl font-black text-gray-900 mb-3">Locked Quest</h2>
-                    <p className="text-gray-600 mb-8 font-medium leading-relaxed">Sri Lankan secrets are earned! Login to play the quiz and earn XP.</p>
-                    <button onClick={() => setShowAuthModal(true)} className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">Login to Play</button>
-                    <button onClick={() => navigate('/')} className="mt-4 text-gray-400 font-bold hover:text-brand-600 block w-full text-center">Maybe Later</button>
+                    <h2 className={`text-3xl font-black mb-3 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Locked Quest</h2>
+                    <p className={`mb-8 font-medium leading-relaxed ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}>Sri Lankan secrets are earned! Login to play the quiz and earn XP.</p>
+                    <button onClick={() => setShowAuthModal(true)} className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg ${isDark ? 'bg-brand-600 hover:bg-brand-700 text-white' : 'bg-brand-600 text-white'}`}>Login to Play</button>
+                    <button onClick={() => navigate('/')} className={`mt-4 font-bold block w-full text-center ${isDark ? 'text-cyan-200 hover:text-cyan-50' : 'text-gray-400 hover:text-brand-600'}`}>Maybe Later</button>
                 </div>
             </div>
         );
@@ -223,17 +226,17 @@ useEffect(() => {
 
     if (allDone) {
         return (
-            <div className="min-h-screen bg-brand-50 flex items-center justify-center px-4 text-center">
+            <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-brand-50'}`}>
                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
                     <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
                 </div>
                 <div className="max-w-md relative z-10">
-                    <div className="bg-white p-10 rounded-[2rem] shadow-2xl border-4 border-white text-center">
+                    <div className={`p-10 rounded-[2rem] shadow-2xl border-4 text-center ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-white'}`}>
                         <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Trophy className="text-yellow-600" size={40} />
                         </div>
-                        <h2 className="text-3xl font-black text-gray-900 mb-4">Quiz Master!</h2>
-                        <p className="text-gray-600 mb-8 font-medium">You've answered all available questions! Check back soon for more Sri Lankan secrets.</p>
+                        <h2 className={`text-3xl font-black mb-4 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Quiz Master!</h2>
+                        <p className={`mb-8 font-medium ${isDark ? 'text-cyan-100/80' : 'text-gray-600'}`}>You've answered all available questions! Check back soon for more Sri Lankan secrets.</p>
                         <button onClick={() => navigate('/rewards')} className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">Go Redeem My XP</button>
                     </div>
                 </div>
@@ -248,13 +251,13 @@ useEffect(() => {
         
         if (activeLevel >= maxDefinedLevel) {
             return (
-                <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
-                    <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
+                <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
+                    <div className={`p-10 rounded-[2.5rem] shadow-2xl max-w-sm border z-10 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-white'}`}>
                         <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <CheckCircle size={40} className="text-emerald-500" />
                         </div>
-                        <h2 className="text-3xl font-black text-gray-900 mb-3">Quiz Complete!</h2>
-                        <p className="text-gray-600 mb-8 font-medium leading-relaxed">
+                        <h2 className={`text-3xl font-black mb-3 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Quiz Complete!</h2>
+                        <p className={`mb-8 font-medium leading-relaxed ${isDark ? 'text-cyan-100/80' : 'text-gray-600'}`}>
                              You have mastered all {maxDefinedLevel} tiers of the SideQuest Quiz.
                         </p>
                         <button 
@@ -269,13 +272,13 @@ useEffect(() => {
         }
         
         return (
-            <div className="min-h-screen bg-[#E6D5B8] flex items-center justify-center px-4 text-center">
-                <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm border border-white z-10">
+            <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
+                <div className={`p-10 rounded-[2.5rem] shadow-2xl max-w-sm border z-10 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-white'}`}>
                     <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle size={40} className="text-emerald-500" />
                     </div>
-                    <h2 className="text-3xl font-black text-gray-900 mb-3">Level {activeLevel} Complete!</h2>
-                    <p className="text-gray-600 mb-8 font-medium leading-relaxed">
+                    <h2 className={`text-3xl font-black mb-3 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Level {activeLevel} Complete!</h2>
+                    <p className={`mb-8 font-medium leading-relaxed ${isDark ? 'text-cyan-100/80' : 'text-gray-600'}`}>
                          You've mastered this tier. Ready for Level {activeLevel + 1}? 
                     </p>
                     <button 
@@ -299,11 +302,11 @@ useEffect(() => {
              }
 
     if (isLoading || (quizBank.length > 0 && !currentQuestion && !allDone)) {
-        return <div className="min-h-screen bg-[#E6D5B8]" />;
+        return <div className={`min-h-screen ${isDark ? 'bg-[#062f2f]' : 'bg-[#E6D5B8]'}`} />;
     }
 
               return (
-                <div className="min-h-screen bg-[#E6D5B8] pb-20 pt-10 px-4 relative overflow-hidden">
+                <div className={`min-h-screen pb-20 pt-10 px-4 relative overflow-hidden ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
 
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
 
@@ -336,29 +339,29 @@ useEffect(() => {
         <div className="max-w-2xl mx-auto relative z-10">
                 
                 {/* --- HEADER: XP PROGRESS --- */}
-                <div className="flex items-center justify-between mb-6 bg-white/50 backdrop-blur-md p-4 rounded-2xl border border-white/50 shadow-sm">
+                <div className={`flex items-center justify-between mb-6 backdrop-blur-md p-4 rounded-2xl border shadow-sm ${isDark ? 'bg-[#0d4b4b]/80 border-cyan-900/60' : 'bg-white/50 border-white/50'}`}>
                     <div className="flex items-center gap-3">
-                        <div className="bg-brand-600 p-2 rounded-lg text-white shadow-lg">
+                    <div className="bg-brand-600 p-2 rounded-lg text-white shadow-lg">
                             <Zap size={20} fill="currentColor" />
                         </div>
                         <div>
-                  <p className="text-[10px] font-black text-brand-700 uppercase tracking-widest leading-none mb-1">
+                  <p className={`text-[10px] font-black uppercase tracking-widest leading-none mb-1 ${isDark ? 'text-cyan-200/80' : 'text-brand-700'}`}>
                       Level {activeLevel}
                       </p>
-                    <p className={`text-2xl font-black transition-all duration-300 ${xpAnimate ? 'scale-125 text-emerald-500' : 'text-gray-900'}`}>
+                    <p className={`text-2xl font-black transition-all duration-300 ${xpAnimate ? 'scale-125 text-emerald-500' : (isDark ? 'text-cyan-50' : 'text-gray-900')}`}>
                        {currentUser.xp} <span className="text-sm">XP</span>
                         </p>
                          </div>
                     </div>
                     <div className="text-right flex flex-col items-end gap-2">
                  <div>
-                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Progress</p>
-              <p className="text-lg font-black text-gray-900 leading-none">
+                 <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Progress</p>
+              <p className={`text-lg font-black leading-none ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                  {Math.min(completedInLevelCount + 1, 10)} / 10
                 </p>
           </div>
            {/* Small Header Bar */}
-          <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+          <div className={`w-24 h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-cyan-950/70' : 'bg-gray-200'}`}>
         <div 
             className="h-full bg-brand-600 transition-all duration-500" 
             style={{ width: `${(Math.min(completedInLevelCount + 1, 10) / 10) * 100}%` }}
@@ -368,7 +371,7 @@ useEffect(() => {
                 </div>
 
                 {/* --- THE QUIZ CARD --- */}
-                <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-white relative">
+                <div className={`rounded-[2.5rem] shadow-2xl overflow-hidden border relative ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-white'}`}>
                     
                     {/* Category Tab */}
                     <div className="bg-brand-600 text-white px-6 py-2 inline-block rounded-br-2xl text-[10px] font-black uppercase tracking-[0.2em]">
@@ -376,7 +379,7 @@ useEffect(() => {
                     </div>
 
                     <div className="p-8 md:p-12">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-10">
+                        <h2 className={`text-2xl md:text-3xl font-bold leading-tight mb-10 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                             {currentQuestion.question}
                         </h2>
 
@@ -388,8 +391,10 @@ useEffect(() => {
                                 
                                 if (isCorrect === null) {
                                     btnClass += isSelected 
-                                        ? "border-brand-600 bg-brand-50 text-brand-700 shadow-md" 
-                                        : "border-gray-100 bg-gray-50 text-gray-700 hover:border-brand-200 hover:bg-white";
+                                        ? (isDark
+                                            ? "border-[#1e6b6b] bg-[#0f5c5c] text-cyan-50 shadow-[0_0_10px_rgba(20,184,166,0.2)]"
+                                            : "border-brand-600 bg-brand-50 text-brand-700 shadow-md")
+                                        : `${isDark ? 'border-cyan-900/50 bg-[#0a3a3a] text-cyan-100 hover:border-[#1e6b6b] hover:bg-[#0f4b4b]' : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-brand-200 hover:bg-white'}`;
                                 } else {
                                     if (index === currentQuestion.correct_index) {
                                         btnClass += "border-emerald-500 bg-emerald-50 text-emerald-700";
@@ -421,7 +426,7 @@ useEffect(() => {
                             {isCorrect === null ? (
                                 <button 
                                     onClick={() => setShowHint(!showHint)}
-                                    className="flex items-center justify-center gap-2 text-sm font-black text-brand-600 uppercase tracking-widest hover:opacity-70 transition-opacity"
+                                    className={`flex items-center justify-center gap-2 text-sm font-black uppercase tracking-widest hover:opacity-70 transition-opacity ${isDark ? 'text-cyan-200' : 'text-brand-600'}`}
                                 >
                                     <HelpCircle size={18} />
                                     {showHint ? 'Hide Hint' : 'Need a Hint?'}
@@ -429,7 +434,7 @@ useEffect(() => {
                             ) : (
                                 <button 
                                     onClick={nextQuestion}
-                                    className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-black transition-all shadow-xl flex items-center justify-center"
+                                    className={`w-full text-white py-5 rounded-2xl font-black text-lg transition-all shadow-xl flex items-center justify-center ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-gray-900 hover:bg-black'}`}
                                 >
                                     {isCorrect ? 'Awesome! Next Question' : 'Try the Next One'}
                                     <ChevronRight className="ml-2" />
@@ -445,7 +450,7 @@ useEffect(() => {
                     </div>
 
                     {/* Footer Graphic */}
-                    <div className="h-2 bg-gray-100 w-full">
+                    <div className={`h-2 w-full ${isDark ? 'bg-cyan-950/60' : 'bg-gray-100'}`}>
                     <div 
                          className="h-full bg-brand-600 transition-all duration-500" 
                          style={{ width: `${(Math.min(completedInLevelCount + 1, 10) / 10) * 100}%` }}
@@ -454,7 +459,7 @@ useEffect(() => {
                 </div>
 
                 <div className="mt-12 min-h-[60px] flex flex-col items-center justify-center text-center px-6">
-    <div className="flex items-center justify-center gap-2 text-brand-600/50 mb-2">
+    <div className={`flex items-center justify-center gap-2 mb-2 ${isDark ? 'text-cyan-300/60' : 'text-brand-600/50'}`}>
         <Brain size={16} />
         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Expedition Wisdom</span>
     </div>
@@ -462,7 +467,7 @@ useEffect(() => {
     {/* The key={quoteIdx} restart every 10 seconds */}
     <p 
         key={quoteIdx} 
-        className="text-gray-500 font-medium text-sm italic leading-relaxed animate-in fade-in slide-in-from-bottom-1 duration-1000 max-w-sm"
+        className={`font-medium text-sm italic leading-relaxed animate-in fade-in slide-in-from-bottom-1 duration-1000 max-w-sm ${isDark ? 'text-cyan-100/80' : 'text-gray-500'}`}
                       >
         "{EXPLORER_QUOTES[quoteIdx]}"
              </p>

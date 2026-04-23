@@ -5,10 +5,13 @@ import { useSideQuest } from '../context/SideQuestContext';
 import imageCompression from 'browser-image-compression';
 import { useSwipeable } from 'react-swipeable';
 import SEO from '../components/SEO';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 const QuestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
   const { quests, acceptQuest, submitProof, currentUser, questProgress, setShowAuthModal, showToast } = useSideQuest();
 
   const questSequence = JSON.parse(sessionStorage.getItem('sq_quest_sequence') || '[]');
@@ -40,7 +43,7 @@ const QuestDetails = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
 // --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
-const LinkifyText = ({ text }) => {
+  const LinkifyText = ({ text }) => {
   if (!text) return null;
 
   const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
@@ -58,7 +61,7 @@ const LinkifyText = ({ text }) => {
         href={match[2]}
         target="_blank"
         rel="noreferrer"
-        className="text-blue-600 underline font-bold hover:text-blue-800"
+        className={`${isDark ? 'text-cyan-200 hover:text-cyan-100' : 'text-blue-600 hover:text-blue-800'} underline font-bold`}
       >
         {match[1]}
       </a>
@@ -143,7 +146,7 @@ const getCategoryColor = (cat) => {
   }, [previewUrl]);
 
   if (!quest) return (
-    <div className="flex h-screen items-center justify-center bg-gray-50">
+    <div className={`flex h-screen items-center justify-center ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-gray-50'}`}>
         <Loader2 className="animate-spin text-brand-500 mr-2" /> Loading Quest...
     </div>
   );
@@ -249,7 +252,7 @@ const getRemainingText = (text) => {
   const shortDesc = getFirstSentence(factsPart);
 
   return (
-    <div {...handlers} className="max-w-4xl mx-auto px-4 py-8 pb-24 touch-pan-y">
+    <div {...handlers} className={`min-h-screen max-w-4xl mx-auto px-4 py-8 pb-24 touch-pan-y ${isDark ? 'text-cyan-50 bg-[#062f2f]' : 'bg-gray-50'}`}>
     <SEO
       title={quest.title}
       description={shortDesc || `Complete the ${quest.title} quest at ${quest.location_address}.`}
@@ -279,7 +282,7 @@ const getRemainingText = (text) => {
     )}
 </div>
 
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+      <div className={`rounded-3xl shadow-xl overflow-hidden border ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
 
         {/* HERO IMAGE (Protected) */}
         {/* onContextMenu prevents Right-Click Menu */}
@@ -312,13 +315,13 @@ const getRemainingText = (text) => {
         <div className="p-8">
           <button
                 onClick={handleOpenMaps}
-                className="w-full mb-8 bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl font-bold hover:bg-blue-100 transition flex items-center justify-center"
+                className={`w-full mb-8 py-3 rounded-xl font-bold transition flex items-center justify-center ${isDark ? 'bg-cyan-900/40 text-cyan-100 border border-cyan-800/60 hover:bg-cyan-900/60' : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100'}`}
              >
                 <Navigation size={18} className="mr-2" /> Get Directions
           </button>
 
           {/* 1. Mission Brief (Yellow Box) */}
-<div className="bg-yellow-50 p-6 rounded-2xl mb-6 border border-yellow-200 shadow-sm">
+<div className={`p-6 rounded-2xl mb-6 border shadow-sm ${isDark ? 'bg-yellow-900/20 border-yellow-700/50' : 'bg-yellow-50 border-yellow-200'}`}>
     {(() => {
         // Split the text into Facts and Mission based on the marker
         const parts = quest.description.split('[MISSION]');
@@ -330,7 +333,7 @@ const getRemainingText = (text) => {
                 {/* --- FACTS SECTION --- */}
                 <div>
                     <h3 className="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">The Facts</h3>
-                    <p className="text-yellow-900 leading-relaxed text-sm">
+                    <p className={`leading-relaxed text-sm ${isDark ? 'text-yellow-100' : 'text-yellow-900'}`}>
                         <LinkifyText text={getFirstSentence(factsPart)} />
                         {isExpanded && (
                             <span className="animate-in fade-in duration-500">
@@ -344,7 +347,7 @@ const getRemainingText = (text) => {
                 {missionPart && (
                     <div className="pt-2 border-t border-yellow-200/50">
                         <h3 className="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">Your Mission</h3>
-                        <p className="text-yellow-900 leading-relaxed text-sm">
+                        <p className={`leading-relaxed text-sm ${isDark ? 'text-yellow-100' : 'text-yellow-900'}`}>
                             <LinkifyText text={getFirstSentence(missionPart)} />
                             {isExpanded && (
                                 <span className="animate-in fade-in duration-500">
@@ -369,18 +372,18 @@ const getRemainingText = (text) => {
 
           {/* 2. Traveler Instructions (Blue Box) */}
           {quest.instructions && (
-             <div className="bg-blue-50 p-6 rounded-2xl mb-6 border border-blue-100">
-                <h3 className="font-bold text-blue-800 text-lg mb-2">How to Complete</h3>
-                <p className="text-blue-900 leading-relaxed">
+             <div className={`p-6 rounded-2xl mb-6 border ${isDark ? 'bg-cyan-900/25 border-cyan-800/60' : 'bg-blue-50 border-blue-100'}`}>
+                <h3 className={`font-bold text-lg mb-2 ${isDark ? 'text-cyan-100' : 'text-blue-800'}`}>How to Complete</h3>
+                <p className={`leading-relaxed ${isDark ? 'text-cyan-50' : 'text-blue-900'}`}>
                <LinkifyText text={quest.instructions} />
               </p>
              </div>
           )}
 
           {/* 3. Proof Requirements (Gray Box) */}
-          <div className="bg-gray-50 p-4 rounded-2xl mb-8 border border-gray-200">
-             <h4 className="font-bold text-gray-700 text-xs uppercase tracking-widest mb-2">Submission Proof Required</h4>
-             <p className="text-sm text-gray-600 flex items-center gap-2 italic font-medium whitespace-pre-line">
+          <div className={`p-4 rounded-2xl mb-8 border ${isDark ? 'bg-[#083636] border-cyan-900/50' : 'bg-gray-50 border-gray-200'}`}>
+             <h4 className={`font-bold text-xs uppercase tracking-widest mb-2 ${isDark ? 'text-cyan-100' : 'text-gray-700'}`}>Submission Proof Required</h4>
+             <p className={`text-sm flex items-center gap-2 italic font-medium whitespace-pre-line ${isDark ? 'text-cyan-200' : 'text-gray-600'}`}>
                 <Camera size={18} className="text-brand-500" />
                 {quest.proof_requirements || "Upload a photo of your activity to earn XP."}
              </p>
@@ -412,7 +415,7 @@ const getRemainingText = (text) => {
           )}
 
           {status === 'pending' && (
-            <div className="bg-blue-50 text-blue-800 p-6 rounded-xl text-center font-bold border border-blue-200 flex flex-col items-center">
+            <div className={`${isDark ? 'bg-cyan-900/30 text-cyan-100 border-cyan-800/60' : 'bg-blue-50 text-blue-800 border-blue-200'} p-6 rounded-xl text-center font-bold border flex flex-col items-center`}>
               <Clock size={48} className="mb-2 text-blue-500"/>
               <div>Proof Submitted</div>
               <div className="text-sm font-normal mt-1">An admin is reviewing your submission.</div>
@@ -441,7 +444,7 @@ const getRemainingText = (text) => {
                 <h3 className="text-xl font-bold mb-4">Submit Your Proof</h3>
 
                 <div className="mb-4">
-                    <div className={`relative w-full h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${previewUrl ? 'border-brand-500 bg-white' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}>
+                    <div className={`relative w-full h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${previewUrl ? `border-brand-500 ${isDark ? 'bg-[#0a3a3a]' : 'bg-white'}` : `${isDark ? 'border-cyan-800 bg-[#0a3a3a] hover:bg-[#0f4b4b]' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}`}>
                         <input
                             type="file"
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
@@ -458,16 +461,16 @@ const getRemainingText = (text) => {
                         ) : (
                             <div className="text-center">
                                 <Camera className="w-10 h-10 mb-2 text-gray-400 mx-auto" />
-                                <p className="text-sm font-bold text-gray-500">Tap to Upload Proof</p>
+                                <p className={`text-sm font-bold ${isDark ? 'text-cyan-100/80' : 'text-gray-500'}`}>Tap to Upload Proof</p>
                             </div>
                         )}
                     </div>
                 </div>
 
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">My Experience (Optional)</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-cyan-100' : 'text-gray-700'}`}>My Experience (Optional)</label>
                     <textarea
-                        className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                        className={`w-full p-4 border rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all ${isDark ? 'border-cyan-800 bg-[#0a3a3a] text-cyan-50' : 'border-gray-300'}`}
                         rows="3"
                         placeholder="Tell us about your experience..."
                         value={description}
@@ -492,7 +495,7 @@ const getRemainingText = (text) => {
         {/* Back Arrow */}
         <button
           onClick={() => navigate(-1)}
-          className="fixed left-8 top-1/2 -translate-y-1/2 z-[1000] p-4 rounded-full bg-white/40 backdrop-blur-md border border-white/20 text-gray-800 hover:bg-white hover:scale-110 transition-all shadow-xl group"
+          className={`fixed left-8 top-1/2 -translate-y-1/2 z-[1000] p-4 rounded-full backdrop-blur-md border hover:scale-110 transition-all shadow-xl group ${isDark ? 'bg-[#0d4b4b]/70 border-cyan-900/60 text-cyan-50 hover:bg-[#0f5c5c]' : 'bg-white/40 border-white/20 text-gray-800 hover:bg-white'}`}
           title="Back to Explore"
         >
           <ArrowLeft size={28} className="group-hover:-translate-x-1 transition-transform" />
@@ -505,7 +508,7 @@ const getRemainingText = (text) => {
               const nextId = questSequence[currentIndex + 1];
               navigate(`/quest/${nextId}`, { replace: true });
             }}
-            className="fixed right-8 top-1/2 -translate-y-1/2 z-[1000] p-4 rounded-full bg-white/40 backdrop-blur-md border border-white/20 text-gray-800 hover:bg-white hover:scale-110 transition-all shadow-xl group"
+            className={`fixed right-8 top-1/2 -translate-y-1/2 z-[1000] p-4 rounded-full backdrop-blur-md border hover:scale-110 transition-all shadow-xl group ${isDark ? 'bg-[#0d4b4b]/70 border-cyan-900/60 text-cyan-50 hover:bg-[#0f5c5c]' : 'bg-white/40 border-white/20 text-gray-800 hover:bg-white'}`}
             title="Next Quest"
           >
             <ArrowLeft size={28} className="rotate-180 group-hover:translate-x-1 transition-transform" />

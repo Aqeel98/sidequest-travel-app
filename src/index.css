@@ -13,6 +13,10 @@
   color-scheme: light;
 }
 
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -20,6 +24,10 @@ body {
   min-height: 100vh;
   /* Pro-tip: prevents rubber-banding on mobile */
   overscroll-behavior-y: none; 
+}
+
+html.dark body {
+  background-color: #062f2f;
 }
 
 /* --- 4. LEAFLET/MAP SPECIFIC FIXES --- */
@@ -111,6 +119,22 @@ body {
 
 .leaflet-popup-tip {
   background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: rgba(10, 58, 58, 0.95) !important;
+  border: 1px solid rgba(22, 78, 99, 0.55);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) !important;
+}
+
+.dark .leaflet-popup-tip {
+  background: rgba(10, 58, 58, 0.95) !important;
+}
+
+.dark .leaflet-container a.leaflet-popup-close-button {
+  background: #0f5c5c;
+  color: #cffafe !important;
+  border: 1px solid rgba(34, 211, 238, 0.3);
 }
 
 /* Make the close button easier to tap on mobile */

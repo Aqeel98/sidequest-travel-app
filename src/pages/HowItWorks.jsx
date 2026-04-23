@@ -5,6 +5,7 @@ import {
   Users, HeartHandshake, ArrowRight, Lock, EyeOff, Zap 
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 const HowItWorks = () => {
   useEffect(() => {
@@ -19,6 +20,8 @@ const HowItWorks = () => {
   }, []);
   
   const navigate = useNavigate();
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
   const { setShowAuthModal, currentUser, submitPartnerRequest, showToast } = useSideQuest(); 
   const [requestForm, setRequestForm] = useState({ business_name: '', whatsapp: '', email: '' });
   const [requestSubmitted, setRequestSubmitted] = useState(false);
@@ -78,10 +81,10 @@ const HowItWorks = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#E6D5B8] pb-20">
+    <div className={`min-h-screen pb-20 ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
       
       {/* --- HERO SECTION --- */}
-      <div className="bg-brand-600 pt-32 pb-20 px-4 text-center relative overflow-hidden">
+      <div className={`pt-32 pb-20 px-4 text-center relative overflow-hidden ${isDark ? 'bg-[#0b5252]' : 'bg-brand-600'}`}>
         {/* Abstract Background Blobs */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
             <div className="absolute -top-20 -left-20 w-96 h-96 bg-teal-300 rounded-full blur-3xl"></div>
@@ -97,13 +100,13 @@ const HowItWorks = () => {
 
         {/* --- TOGGLE SWITCH --- */}
         <div className="relative z-10 flex justify-center mt-10">
-          <div className="bg-brand-800/50 p-1 rounded-full backdrop-blur-md inline-flex">
+          <div className={`p-1 rounded-full backdrop-blur-md inline-flex ${isDark ? 'bg-cyan-900/60 border border-cyan-800/60' : 'bg-brand-800/50'}`}>
             <button 
               onClick={() => setActiveTab('traveler')}
               className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${
                 activeTab === 'traveler' 
-                  ? 'bg-white text-brand-600 shadow-lg scale-105' 
-                  : 'text-brand-100 hover:text-white'
+                  ? `${isDark ? 'bg-cyan-100 text-cyan-900' : 'bg-white text-brand-600'} shadow-lg scale-105` 
+                  : `${isDark ? 'text-cyan-200 hover:text-white' : 'text-brand-100 hover:text-white'}`
               }`}
             >
               For Travelers
@@ -112,8 +115,8 @@ const HowItWorks = () => {
               onClick={() => setActiveTab('partner')}
               className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${
                 activeTab === 'partner' 
-                  ? 'bg-white text-brand-600 shadow-lg scale-105' 
-                  : 'text-brand-100 hover:text-white'
+                  ? `${isDark ? 'bg-cyan-100 text-cyan-900' : 'bg-white text-brand-600'} shadow-lg scale-105` 
+                  : `${isDark ? 'text-cyan-200 hover:text-white' : 'text-brand-100 hover:text-white'}`
               }`}
             >
               For Partners
@@ -128,15 +131,15 @@ const HowItWorks = () => {
           {(activeTab === 'traveler' ? travelerSteps : partnerSteps).map((step, index) => (
             <div 
               key={index} 
-              className={`bg-white p-8 rounded-3xl shadow-lg border-2 ${step.color} flex flex-col items-start hover:-translate-y-1 transition-transform duration-300`}
+              className={`p-8 rounded-3xl shadow-lg border-2 flex flex-col items-start hover:-translate-y-1 transition-transform duration-300 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : `bg-white ${step.color}`}`}
             >
-              <div className="mb-6 p-4 bg-white rounded-2xl shadow-sm inline-block">
+              <div className={`mb-6 p-4 rounded-2xl shadow-sm inline-block ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50' : 'bg-white'}`}>
                 {step.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
+              <h3 className={`text-xl font-bold mb-3 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                 {index + 1}. {step.title}
               </h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className={`leading-relaxed ${isDark ? 'text-cyan-100/85' : 'text-gray-600'}`}>
                 {step.desc}
               </p>
             </div>
@@ -145,40 +148,40 @@ const HowItWorks = () => {
 
         {/* --- THE SIDEQUEST PROMISE (Privacy & Trust) --- */}
         {activeTab === 'traveler' && (
-            <div className="mt-12 bg-white/40 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-sm">
-                <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">Built for your journey</h3>
+            <div className={`mt-12 backdrop-blur-md rounded-3xl p-8 shadow-sm border ${isDark ? 'bg-[#0d4b4b]/85 border-cyan-900/60' : 'bg-white/40 border-white/20'}`}>
+                <h3 className={`text-2xl font-bold mb-6 text-center ${isDark ? 'text-cyan-50' : 'text-slate-800'}`}>Built for your journey</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
 
                     {/* Private Exploration */}
                     <div className="text-center">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-200' : 'bg-white text-slate-600'}`}>
                             <EyeOff size={24} />
                         </div>
-                        <h4 className="font-bold text-slate-900 mb-1">Private Exploration</h4>
-                        <p className="text-sm text-slate-500">
+                        <h4 className={`font-bold mb-1 ${isDark ? 'text-cyan-50' : 'text-slate-900'}`}>Private Exploration</h4>
+                        <p className={`text-sm ${isDark ? 'text-cyan-100/85' : 'text-slate-500'}`}>
                         You lead the way. SideQuest does not access or store your location data, not even for a moment. You explore the map on your own terms.
                         </p>
                     </div>
 
                     {/* Anonymity */}
                     <div className="text-center">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-200' : 'bg-white text-slate-600'}`}>
                             <Shield size={24} />
                         </div>
-                        <h4 className="font-bold text-slate-900 mb-1">Stay Anonymous</h4>
-                        <p className="text-sm text-slate-500">
+                        <h4 className={`font-bold mb-1 ${isDark ? 'text-cyan-50' : 'text-slate-900'}`}>Stay Anonymous</h4>
+                        <p className={`text-sm ${isDark ? 'text-cyan-100/85' : 'text-slate-500'}`}>
                             You can sign up with any nickname. Only need an email to save your XP and badges.
                         </p>
                     </div>
 
                     {/* Recovery */}
                     <div className="text-center">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-200' : 'bg-white text-slate-600'}`}>
                             <Zap size={24} />
                         </div>
-                        <h4 className="font-bold text-slate-900 mb-1">Instant Recovery</h4>
-                        <p className="text-sm text-slate-500">
+                        <h4 className={`font-bold mb-1 ${isDark ? 'text-cyan-50' : 'text-slate-900'}`}>Instant Recovery</h4>
+                        <p className={`text-sm ${isDark ? 'text-cyan-100/85' : 'text-slate-500'}`}>
                         Jump back in instantly. No passwords to remember. A secure link in your inbox gets you back to the mission right away.
                         </p>
                     </div>
@@ -191,39 +194,39 @@ const HowItWorks = () => {
 
                 {/* --- THE PARTNER MODEL (Now matching the Promise section colors) --- */}
         {activeTab === 'partner' && (
-            <div className="mt-12 bg-white/40 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-sm">
-                <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">The Partner Model</h3>
+            <div className={`mt-12 backdrop-blur-md rounded-3xl p-8 shadow-sm border ${isDark ? 'bg-[#0d4b4b]/85 border-cyan-900/60' : 'bg-white/40 border-white/20'}`}>
+                <h3 className={`text-2xl font-bold mb-6 text-center ${isDark ? 'text-cyan-50' : 'text-slate-800'}`}>The Partner Model</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     
                     {/* Community First */}
                     <div className="text-center">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-200' : 'bg-white text-slate-600'}`}>
                             <HeartHandshake size={24} />
                         </div>
-                        <h4 className="font-bold text-slate-900 mb-1">Community First</h4>
-                        <p className="text-sm text-slate-500">
+                        <h4 className={`font-bold mb-1 ${isDark ? 'text-cyan-50' : 'text-slate-900'}`}>Community First</h4>
+                        <p className={`text-sm ${isDark ? 'text-cyan-100/85' : 'text-slate-500'}`}>
                             Keep your earnings. Travelers pay you directly, and while we launch together in Beta, we do not charge any platform fees.
                         </p>
                     </div>
 
                     {/* The Reward Exchange */}
                     <div className="text-center">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-200' : 'bg-white text-slate-600'}`}>
                             <Gift size={24} />
                         </div>
-                        <h4 className="font-bold text-slate-900 mb-1">The Reward Exchange</h4>
-                        <p className="text-sm text-slate-500">
+                        <h4 className={`font-bold mb-1 ${isDark ? 'text-cyan-50' : 'text-slate-900'}`}>The Reward Exchange</h4>
+                        <p className={`text-sm ${isDark ? 'text-cyan-100/85' : 'text-slate-500'}`}>
                             No listing fees. Your only "cost" is the reward you provide. This can be a discount, a unique experience, or a small freebie to welcome adventurers.
                         </p>
                     </div>
 
                     {/* Expedition Ready */}
                     <div className="text-center">
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-600">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-200' : 'bg-white text-slate-600'}`}>
                             <Zap size={24} />
                         </div>
-                        <h4 className="font-bold text-slate-900 mb-1">Expedition Ready</h4>
-                        <p className="text-sm text-slate-500">
+                        <h4 className={`font-bold mb-1 ${isDark ? 'text-cyan-50' : 'text-slate-900'}`}>Expedition Ready</h4>
+                        <p className={`text-sm ${isDark ? 'text-cyan-100/85' : 'text-slate-500'}`}>
                         Built for bigger journeys. Soon, travel companies can list full tour packages and all-in-one expeditions for our community.
                         </p>
                     </div>
@@ -232,8 +235,8 @@ const HowItWorks = () => {
         )}
 
         {/* --- GUIDELINES SECTION --- */}
-        <div className="mt-12 bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+        <div className={`mt-12 rounded-3xl p-8 md:p-12 shadow-sm border ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
+          <h2 className={`text-3xl font-bold mb-8 text-center ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
             {activeTab === 'traveler' ? 'Submission Guidelines' : 'Partner Rules'}
           </h2>
           
@@ -247,16 +250,16 @@ const HowItWorks = () => {
               <ul className="space-y-4">
                 {activeTab === 'traveler' ? (
                   <>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Take clear photos of the completed task or your participation.</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Respect local customs and dress codes.</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Wait for GPS to lock before starting a quest.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Take clear photos of the completed task or your participation.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Respect local customs and dress codes.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Wait for GPS to lock before starting a quest.</li>
                   </>
                 ) : (
                   <>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Provide accurate GPS coordinates.</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Offer meaningful rewards (discounts, unique experiences, or freebies).</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Keep safety instructions clear.</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Provide clear, helpful arrival instructions.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Provide accurate GPS coordinates.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Offer meaningful rewards (discounts, unique experiences, or freebies).</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Keep safety instructions clear.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 mr-3 shrink-0"></div>Provide clear, helpful arrival instructions.</li>
                   </>
                 )}
               </ul>
@@ -270,14 +273,14 @@ const HowItWorks = () => {
               <ul className="space-y-4">
                 {activeTab === 'traveler' ? (
                   <>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't upload blurry or dark photos.</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't submit the same photo for multiple quests.</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't trespass on private property.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't upload blurry or dark photos.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't submit the same photo for multiple quests.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't trespass on private property.</li>
                   </>
                 ) : (
                   <>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't create quests that harm wildlife.</li>
-                    <li className="flex items-start text-gray-600"><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't use copyrighted images without permission.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't create quests that harm wildlife.</li>
+                    <li className={`flex items-start ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}><div className="w-1.5 h-1.5 bg-red-400 rounded-full mt-2 mr-3 shrink-0"></div>Don't use copyrighted images without permission.</li>
                   </>
                 )}
               </ul>
@@ -287,7 +290,7 @@ const HowItWorks = () => {
 
         {/* --- CTA --- */}
         <div id="partner-cta" className="mt-16 text-center pb-12">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6">Ready to start?</h3>
+            <h3 className={`text-2xl font-bold mb-6 ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>Ready to start?</h3>
             
             {activeTab === 'traveler' ? (
                 <button 
@@ -298,7 +301,7 @@ const HowItWorks = () => {
                 </button>
             ) : (
                 <div className="flex flex-col items-center">
-                    <p className="text-gray-600 mb-6 max-w-lg mx-auto leading-relaxed">
+                    <p className={`mb-6 max-w-lg mx-auto leading-relaxed ${isDark ? 'text-cyan-100/85' : 'text-gray-600'}`}>
                         We hand-pick our partners to maintain quality. Request an invite and our Game Masters will WhatsApp you a code to unlock your dashboard.
                     </p>
                     
@@ -318,39 +321,39 @@ const HowItWorks = () => {
                             </p>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 max-w-md mx-auto w-full">
-                            <h4 className="font-black text-gray-800 text-lg mb-6 text-left">Request an Invite</h4>
+                        <div className={`rounded-3xl p-8 shadow-sm border max-w-md mx-auto w-full ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
+                            <h4 className={`font-black text-lg mb-6 text-left ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>Request an Invite</h4>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Business Name</label>
+                                    <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Business Name</label>
                                     <input
                                         type="text"
                                         value={requestForm.business_name}
                                         onChange={e => setRequestForm(prev => ({ ...prev, business_name: e.target.value }))}
                                         placeholder="Your business name"
-                                        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-purple-500 outline-none transition-all"
+                                        className={`w-full border-2 p-3 rounded-xl focus:border-purple-500 outline-none transition-all ${isDark ? 'bg-[#0a3a3a] border-cyan-900/60 text-cyan-50' : 'border-gray-100'}`}
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">WhatsApp Number</label>
+                                    <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>WhatsApp Number</label>
                                     <input
                                         type="tel"
                                         value={requestForm.whatsapp}
                                         onChange={e => setRequestForm(prev => ({ ...prev, whatsapp: e.target.value.replace(/[^0-9+]/g, '') }))}
                                         placeholder="+94771234567"
-                                        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-purple-500 outline-none transition-all"
+                                        className={`w-full border-2 p-3 rounded-xl focus:border-purple-500 outline-none transition-all ${isDark ? 'bg-[#0a3a3a] border-cyan-900/60 text-cyan-50' : 'border-gray-100'}`}
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Email</label>
+                                    <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Email</label>
                                     <input
                                         type="email"
                                         value={requestForm.email}
                                         onChange={e => setRequestForm(prev => ({ ...prev, email: e.target.value }))}
                                         placeholder="you@example.com"
-                                        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-purple-500 outline-none transition-all"
+                                        className={`w-full border-2 p-3 rounded-xl focus:border-purple-500 outline-none transition-all ${isDark ? 'bg-[#0a3a3a] border-cyan-900/60 text-cyan-50' : 'border-gray-100'}`}
                                         required
                                     />
                                 </div>
