@@ -427,7 +427,7 @@ useEffect(() => {
           } 
           else if (payload.eventType === 'INSERT') {
               setQuests(prev => {
-                  // ✅ FIX: Check if ID exists. If yes, ignore it.
+                  // Check if ID exists. If yes, ignore it.
                   if (prev.find(q => q.id === payload.new.id)) return prev;
                   return [...prev, payload.new];
               });
@@ -1279,7 +1279,7 @@ const deleteQuest = async (id) => {
     try {
         console.log("SQ-Reward: 1. Initiating Robust Upload...");
         
-        // 🔥 THE FIX: CONNECTION CHECK WITH TIMEOUT
+        // Connection check with timeout
         try {
             await withTimeout(supabase.auth.getSession(), 3000);
         } catch (err) {

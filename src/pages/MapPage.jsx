@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { X, Camera, CheckCircle } from 'lucide-react';
 import { MapView } from '../components/MapView';
 import { useSideQuest } from '../context/SideQuestContext';
 import ClosestQuestsOverlay from '../components/ClosestQuestsOverlay';
@@ -18,17 +19,17 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 };
 
 const CATEGORY_CONFIG = {
-  'All': { color: '#334155', iconFallback: '🗺️' },
-  'Exploration': { color: '#854d0e', iconSrc: '/Exploration.webp', iconFallback: '🧭' },
-  'Adventure': { color: '#9a3412', iconSrc: '/Adventure.webp', iconFallback: '🧗' },
-  'Marine Adventure': { color: '#164e63', iconSrc: '/Marine_Adventure.webp', iconFallback: '🤿' },
-  'Environmental': { color: '#064e3b', iconSrc: '/Environmental_.webp', iconFallback: '🌿' },
-  'Wildlife Adventure': { color: '#365314', iconSrc: '/Wildlife_Adventure.webp', iconFallback: '🐾' },
-  'Education': { color: '#1e3a8a', iconSrc: '/Edu.webp', iconFallback: '📚' },
-  'Sports & Recreation': { color: '#1e293b', iconSrc: '/Sports_&_Recreational_.webp', iconFallback: '⚽' },
-  'Animal Welfare': { color: '#831843', iconSrc: '/Animal_Welfare.webp', iconFallback: '🐘' },
-  'Cultural': { color: '#4c1d95', iconSrc: '/Cultural.webp', iconFallback: '🏯' },
-  'Social': { color: '#9f1239', iconSrc: '/Social_.webp', iconFallback: '❤️' }
+  'All': { color: '#334155' },
+  'Exploration': { color: '#854d0e', iconSrc: '/Exploration.webp' },
+  'Adventure': { color: '#9a3412', iconSrc: '/Adventure.webp' },
+  'Marine Adventure': { color: '#164e63', iconSrc: '/Marine_Adventure.webp' },
+  'Environmental': { color: '#064e3b', iconSrc: '/Environmental_.webp' },
+  'Wildlife Adventure': { color: '#365314', iconSrc: '/Wildlife_Adventure.webp' },
+  'Education': { color: '#1e3a8a', iconSrc: '/Edu.webp' },
+  'Sports & Recreation': { color: '#1e293b', iconSrc: '/Sports_&_Recreational_.webp' },
+  'Animal Welfare': { color: '#831843', iconSrc: '/Animal_Welfare.webp' },
+  'Cultural': { color: '#4c1d95', iconSrc: '/Cultural.webp' },
+  'Social': { color: '#9f1239', iconSrc: '/Social_.webp' }
 };
 
 
@@ -192,9 +193,7 @@ const MapPage = () => {
                       fetchPriority="high"
                       decoding="async"
                     />
-                  ) : (
-                    <span>{config.iconFallback}</span>
-                  )}
+                  ) : null}
                 </span>
                 <span className="text-[10px] font-black uppercase tracking-wide">{name}</span>
               </button>
@@ -250,15 +249,15 @@ const MapPage = () => {
                   onClick={() => setShowSuggestModal(false)}
                   className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
                 >
-                  ✕
+                  <X size={20} />
                 </button>
               </div>
             </div>
 
             {suggestSuccess ? (
               <div className="p-10 text-center">
-                <div className="text-5xl mb-4">🎯</div>
-                <h3 className="text-xl font-black text-gray-900 mb-2">Quest Suggestion Submitted!</h3>
+                <div className="mb-4 flex justify-center"><CheckCircle size={56} className="text-emerald-500" /></div>
+                <h3 className="text-xl font-black text-gray-900 mb-2">Quest Suggestion Submitted</h3>
                 <p className="text-gray-500 text-sm mb-6">Game Masters will review your suggestion. You'll earn 50 XP if it gets approved.</p>
                 <button
                   onClick={() => setShowSuggestModal(false)}
@@ -314,7 +313,7 @@ const MapPage = () => {
             onClick={() => window.open('https://www.google.com/maps', '_blank')}
             className="bg-gray-50 border-2 border-gray-100 text-gray-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors shadow-sm whitespace-nowrap"
               >
-            Open Maps 📍
+            Open Maps
               </button>
            </div>
              <p className="text-[10px] text-gray-400 mt-2 italic leading-tight">
@@ -329,7 +328,7 @@ const MapPage = () => {
                     {suggestPreview ? (
                       <img src={suggestPreview} alt="Preview" className="w-16 h-16 object-cover rounded-xl border-2 border-gray-100" />
                     ) : (
-                      <div className="w-16 h-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-xl">📷</div>
+                      <div className="w-16 h-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300"><Camera size={24} /></div>
                     )}
                     <label className="cursor-pointer bg-gray-50 border-2 border-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all">
                       {suggestImage ? 'Change Photo' : 'Upload Photo'}
@@ -395,7 +394,7 @@ const MapPage = () => {
                   className={`w-full text-white py-4 rounded-2xl font-bold text-base transition-all shadow-lg ${isSuggestSubmitting ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
                   style={{ backgroundColor: '#107870' }}
                 >
-                  {isSuggestSubmitting ? 'Submitting...' : 'Submit Quest Suggestion 📍'}
+                  {isSuggestSubmitting ? 'Submitting...' : 'Submit Quest Suggestion'}
                 </button>
 
               </div>

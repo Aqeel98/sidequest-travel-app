@@ -163,12 +163,12 @@ const getCategoryColor = (cat) => {
         const options = {
             maxSizeMB: 0.8,
             maxWidthOrHeight: 1280,
-            useWebWorker: false // ✅ FIX: Must be false for Mobile stability
+            useWebWorker: false // Must be false for Mobile stability
         };
 
         const compressedBlob = await imageCompression(file, options);
 
-        // ✅ FIX: Convert Blob to File (Supabase strict mode)
+        // Convert Blob to File (Supabase strict mode)
         const compressedFile = new File([compressedBlob], file.name, {
             type: file.type
         });

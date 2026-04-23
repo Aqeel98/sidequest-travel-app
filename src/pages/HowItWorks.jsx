@@ -311,8 +311,8 @@ const HowItWorks = () => {
                         </button>
                     ) : requestSubmitted ? (
                         <div className="bg-green-50 border border-green-200 rounded-3xl p-8 max-w-md mx-auto text-center">
-                            <div className="text-4xl mb-3">🎮</div>
-                            <h4 className="font-black text-green-800 text-lg mb-2">Request Received!</h4>
+                            <div className="mb-3 flex justify-center"><CheckCircle size={40} className="text-green-600" /></div>
+                            <h4 className="font-black text-green-800 text-lg mb-2">Request Received</h4>
                             <p className="text-green-700 text-sm leading-relaxed">
                                 Game Masters have received your request. We will WhatsApp you with a code.
                             </p>

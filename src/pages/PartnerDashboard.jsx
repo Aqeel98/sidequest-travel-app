@@ -532,7 +532,7 @@ useEffect(() => {
                                         onClick={() => window.open('https://www.google.com/maps', '_blank')}
                                         className="w-full sm:w-auto bg-white border border-orange-200 text-orange-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-orange-100 transition-colors shadow-sm whitespace-nowrap"
                                     >
-                                        Open Maps 📍
+                                        Open Maps
                                     </button>
                                 </div>
                                 <p className="text-[10px] text-orange-400 mt-2 italic">
@@ -596,7 +596,7 @@ useEffect(() => {
             onClick={() => window.open('https://www.google.com/maps', '_blank')}
             className="w-full sm:w-auto bg-white border border-brand-200 text-brand-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-brand-100 transition-colors shadow-sm whitespace-nowrap"
         >
-            Open Maps 📍
+            Open Maps
         </button>
     </div>
 
@@ -690,7 +690,7 @@ useEffect(() => {
             {/* Draft Logic UI Feedback */}
             {!imageFile && !preview && form.title && (
                 <p className="mt-3 text-[10px] text-brand-600 font-bold bg-brand-50 p-2 rounded animate-pulse">
-                    ✨ Draft Restored! Please re-select your photo before publishing.
+                    Draft restored. Please re-select your photo before publishing.
                 </p>
             )}
                    </div>
@@ -854,7 +854,7 @@ useEffect(() => {
                                                         onClick={() => setViewClaimsId(isExpanded ? null : r.id)}
                                                         className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-black border border-orange-100 hover:bg-orange-100 transition-colors cursor-pointer"
                                                     >
-                                                        🎁 {claims.length} Claimed {isExpanded ? '▲' : '▼'}
+                                                        {claims.length} Claimed {isExpanded ? '▲' : '▼'}
                                                     </button>
                                                 </div>
                                             </div>
@@ -907,7 +907,7 @@ useEffect(() => {
                                  </span>
  
                                  <span className={`text-[9px] font-bold uppercase ${claim.status === 'verified' ? 'text-green-500' : 'text-orange-400'}`}>
-                                  {claim.status === 'verified' ? '✓ Used' : '○ Not Used Yet'}
+                                  {claim.status === 'verified' ? 'Used' : 'Not used yet'}
                                    </span>
                                   </div>    
                                    {/* Updated Code Badge styling */}

@@ -28,7 +28,7 @@ const getCategoryDetails = (category) => {
       case 'Marine Adventure': return { color: '#164e63', icon: '/Marine_Adventure.webp', isCustom: true };
       case 'Wildlife Adventure': return { color: '#365314', icon: '/Wildlife_Adventure.webp', isCustom: true };
       case 'Sports & Recreation': return { color: '#1e293b', icon: '/Sports_&_Recreational_.webp', isCustom: true };
-      default: return { color: '#1e293b', emoji: '🎯', isCustom: false };
+      default: return { color: '#1e293b', isCustom: false };
   }
 };
 
@@ -65,7 +65,7 @@ const createQuestIcon = (status, category) => {
   const iconPixelSize = iconSizeByCategory[normalizedCategory] || 33;
   const iconContent = detail.isCustom 
     ? `<img src="${detail.icon}" style="width: ${iconPixelSize}px; height: ${iconPixelSize}px; object-fit: contain;" />`
-    : `<span style="transform: rotate(45deg); display: block; line-height: 1; font-size: 24px;">${detail.emoji}</span>`;
+    : '';
 
   return L.divIcon({
     className: "gamified-marker",

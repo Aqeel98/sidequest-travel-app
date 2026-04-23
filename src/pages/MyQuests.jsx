@@ -32,12 +32,12 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
         const options = {
             maxSizeMB: 0.8,
             maxWidthOrHeight: 1280,
-            useWebWorker: false // ✅ FIX: Must be false for Vercel/Mobile
+            useWebWorker: false // Must be false for Vercel/Mobile
         };
         
         const compressedBlob = await imageCompression(selected, options);
         
-        // ✅ FIX: Convert Blob to File so SideQuestContext accepts it
+        // Convert Blob to File so SideQuestContext accepts it
         const compressedFile = new File([compressedBlob], selected.name, { 
             type: selected.type 
         });
@@ -260,7 +260,7 @@ const MyQuests = () => {
 
         {questSuggestions.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
-            <div className="text-4xl mb-3">📍</div>
+            <div className="mb-3 flex justify-center"><MapPin size={40} className="text-gray-300" /></div>
             <p className="text-gray-500 font-medium">You haven't suggested any quests yet.</p>
             <p className="text-gray-400 text-sm mt-1">Use the map to suggest a hidden gem. Earn 50 XP if approved!</p>
           </div>
@@ -272,7 +272,7 @@ const MyQuests = () => {
                   {s.photo_url ? (
                     <img src={s.photo_url} alt={s.quest_name} className="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-shrink-0" />
                   ) : (
-                    <div className="w-16 h-16 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-2xl flex-shrink-0">📍</div>
+                    <div className="w-16 h-16 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-300 flex-shrink-0"><MapPin size={24} /></div>
                   )}
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg leading-tight">{s.quest_name}</h3>
@@ -288,7 +288,7 @@ const MyQuests = () => {
                 <div className="flex-shrink-0">
                   {s.status === 'pending' && (
                     <span className="flex items-center gap-1 bg-yellow-50 text-yellow-600 border border-yellow-200 px-3 py-1.5 rounded-full text-xs font-black uppercase">
-                      ⏳ Under Review
+                      <Clock size={12} /> Under Review
                     </span>
                   )}
                   {s.status === 'approved' && (
@@ -301,7 +301,7 @@ const MyQuests = () => {
                   )}
                   {s.status === 'rejected' && (
                     <span className="flex items-center gap-1 bg-red-50 text-red-500 border border-red-200 px-3 py-1.5 rounded-full text-xs font-black uppercase">
-                      ✕ Not Approved
+                      <XCircle size={12} /> Not Approved
                     </span>
                   )}
                 </div>

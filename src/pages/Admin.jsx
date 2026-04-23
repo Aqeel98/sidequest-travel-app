@@ -272,7 +272,7 @@ const handleImageUpload = async (e) => {
     console.log("SQ-Admin: Optimizing...");
 
     try {
-        // ✅ FIX: Optimize locally first
+        // Optimize locally first
         const optimizedFile = await optimizeImage(file);
 
         // Upload the SMALL optimized file
@@ -333,7 +333,7 @@ const handleImageUpload = async (e) => {
             <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Partner Location Link</p>
                 <a href={formData.map_link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline break-all hover:text-blue-800 font-bold">
-                    Click to Open Maps Link 📍
+                    Click to Open Maps Link
                 </a>
                 <p className="text-[10px] text-blue-400 mt-1 italic">Open link, right-click the spot, and copy the numbers into Lat/Lng below.</p>
             </div>
@@ -1301,7 +1301,7 @@ const Admin = () => {
               disabled={isGenerating}
               className={`bg-teal-600 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-md ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-teal-700 active:scale-95'}`}
             >
-              {isGenerating ? 'Generating...' : '⚡ Generate New Code'}
+              {isGenerating ? 'Generating...' : 'Generate New Code'}
             </button>
 
             {generatedCode && (
@@ -1353,8 +1353,8 @@ const Admin = () => {
                           {request.status.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500">📱 {request.whatsapp}</p>
-                      <p className="text-sm text-gray-500">✉️ {request.email}</p>
+                      <p className="text-sm text-gray-500">{request.whatsapp}</p>
+                      <p className="text-sm text-gray-500">{request.email}</p>
                       <p className="text-xs text-gray-400 mt-1">{new Date(request.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="flex gap-2">
@@ -1378,7 +1378,7 @@ const Admin = () => {
                             : 'bg-teal-500 text-white hover:bg-teal-600'
                         }`}
                       >
-                        {request.status === 'contacted' ? '✓ Contacted' : 'Mark Contacted'}
+                        {request.status === 'contacted' ? 'Contacted' : 'Mark Contacted'}
                       </button>
                     </div>
                   </div>
@@ -1461,7 +1461,7 @@ const Admin = () => {
                     onClick={() => openRejectModal('suggestion', suggestion.id, suggestion.quest_name)}
                     className="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-200 transition-all"
                   >
-                    ✕ Reject
+                    Reject
                   </button>
                 </div>
               )}

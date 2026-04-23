@@ -275,7 +275,7 @@ const LinkifyText = ({ text }) => {
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">Code: <span className="font-mono font-bold text-green-700">{redemption.redemption_code}</span></p>
                       <p className={`text-[10px] font-black uppercase mt-2 tracking-widest ${redemption.status === 'verified' ? 'text-gray-400' : 'text-brand-600'}`}>
-                          {redemption.status === 'verified' ? '✓ Voucher Used' : '○ Ready to Use'}
+                          {redemption.status === 'verified' ? 'Voucher Used' : 'Ready to Use'}
                       </p>
                   </div>
                   <Award className={redemption.status === 'verified' ? 'text-gray-300' : 'text-green-500'} size={36} />

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  MapPin, ArrowRight, Sparkles, PlusCircle, Search, Crosshair, Loader2
+  MapPin, ArrowRight, PlusCircle, Search, Crosshair, Loader2
 } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
 import SEO from '../components/SEO';
@@ -382,7 +382,6 @@ const Home = () => {
         {/* Content Section: 2. CHANGED pb-24 to pb-32 */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 pt-32 pb-64 md:pb-80 lg:pb-96 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-white text-sm font-medium mb-6 animate-fade-in-up">
-            <Sparkles size={16} className="text-yellow-300" />
             <span>Discover the unseen Sri Lanka</span>
           </div>
 
