@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useSideQuest } from '../context/SideQuestContext';
 import { supabase } from '../supabaseClient';
@@ -8,7 +8,7 @@ import { supabase } from '../supabaseClient';
 const PartnerDashboard = () => {
     // 1. Updated Destructuring
     const { currentUser, quests, rewards, questProgress, redemptions, users, addQuest, addReward, updateQuest, updateReward, showToast,
-        deleteQuest, deleteReward, verifyRedemptionCode } = useSideQuest();
+        deleteQuest, deleteReward, verifyRedemptionCode, approveQuestSuggestion } = useSideQuest();
     
     // UI State
     const [view, setView] = useState('create'); 
@@ -22,6 +22,11 @@ const PartnerDashboard = () => {
     const [imageFile, setImageFile] = useState(null); 
     const [preview, setPreview] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // When an admin clicks "Approve & Create Quest" on a traveler suggestion,
+    // the suggestion's data is stashed in sessionStorage. We pick it up on mount
+    // (see draft-restore effect) and carry the id through submission so that
+    // successful publication auto-approves the source suggestion.
+    const [suggestionPrefill, setSuggestionPrefill] = useState(null);
     
     const [searchParams] = useSearchParams();
 
@@ -49,6 +54,39 @@ useEffect(() => {
 
     useEffect(() => {
         if (editingId) return;
+
+        // PRIORITY 1: Admin-initiated suggestion prefill wins over a stale draft.
+        // Gated to Admins only — if a partner somehow inherits a stale prefill
+        // key (e.g. shared device), clear it silently and fall through to the
+        // normal draft restore so they never see the admin-only workflow.
+        const prefillRaw = sessionStorage.getItem('sq_admin_suggestion_prefill');
+        if (prefillRaw) {
+            if (currentUser?.role === 'Admin') {
+                try {
+                    const parsed = JSON.parse(prefillRaw);
+                    setForm(prev => ({
+                        ...prev,
+                        title: parsed.title || '',
+                        description: parsed.description || '',
+                        map_link: parsed.map_link || '',
+                        image: parsed.image || null
+                    }));
+                    if (parsed.image) setPreview(parsed.image);
+                    setSuggestionPrefill(parsed);
+                    // Consume the prefill so a refresh doesn't re-apply it, and
+                    // clear any lingering draft so it can't override our fields.
+                    sessionStorage.removeItem('sq_admin_suggestion_prefill');
+                    sessionStorage.removeItem('sq_partner_draft');
+                    setMode('quest');
+                    return;
+                } catch (e) { console.error("Prefill parse error", e); }
+            } else {
+                // Non-admin viewer — wipe the admin-only prefill key defensively.
+                sessionStorage.removeItem('sq_admin_suggestion_prefill');
+            }
+        }
+
+        // PRIORITY 2: Normal draft restore for in-progress partner work.
         const savedDraft = sessionStorage.getItem('sq_partner_draft');
         if (savedDraft) {
             try {
@@ -57,13 +95,18 @@ useEffect(() => {
                 if (parsed.lat && parsed.lat !== 0) setShowGps(true);
             } catch (e) { console.error("Draft restore error", e); }
         }
-    }, [editingId]);
+    }, [editingId, currentUser?.role]);
 
     useEffect(() => {
-        if (!editingId && view === 'create') {
+        // Skip autosave during an admin's suggestion-approval flow. Otherwise
+        // the prefilled form gets written into sq_partner_draft, and if the
+        // admin navigates away and returns the draft restores the fields
+        // without the suggestionPrefill state — publishing would then create
+        // a quest but leave the source suggestion orphaned as 'pending'.
+        if (!editingId && view === 'create' && !suggestionPrefill) {
             sessionStorage.setItem('sq_partner_draft', JSON.stringify(form));
         }
-    }, [form, editingId, view]);
+    }, [form, editingId, view, suggestionPrefill]);
 
     // --- 1. THE IMMORTAL PARTNER RESUME ENGINE ---
     useEffect(() => {
@@ -83,7 +126,7 @@ useEffect(() => {
         // Ensure data exists and user is hydrated from Context
         if (pendingData && currentUser) {
             const resumeSubmit = async () => {
-                const { form: sForm, imageString, mode: sMode, editingId: sId } = JSON.parse(pendingData);
+                const { form: sForm, imageString, mode: sMode, editingId: sId, fromSuggestionId } = JSON.parse(pendingData);
                 
                 // Clear immediately to prevent accidental loops
                 localStorage.removeItem('sq_auto_submit'); 
@@ -119,12 +162,15 @@ useEffect(() => {
                         }
 
                         // THE EXPLICIT FIELD MAPPING (Ensures DB Integrity)
-                        const payload = { 
+                        // Note: rejection_reason is cleared in the context's updateQuest /
+                        // updateReward when status becomes 'pending_admin', so we don't
+                        // need to pass it here.
+                        const payload = {
                             title: sForm.title,
                             contact_phone: sForm.contact_phone,
                             description: sForm.description,
                             image: currentImageUrl,
-                            status: 'pending_admin' // Force re-approval on edit
+                            status: 'pending_admin'
                         };
 
                         if (sMode === 'quest') {
@@ -155,6 +201,19 @@ useEffect(() => {
                     if (success) {
                         // Clean up the draft memory
                         sessionStorage.removeItem('sq_partner_draft');
+
+                        // If this quest was born from an approved traveler
+                        // suggestion, flip the source suggestion to 'approved'
+                        // now. The DB trigger awards 50 XP to the suggester
+                        // atomically and syncs via the profiles realtime channel.
+                        // Admin-only — partners never trigger this branch because
+                        // they never see the prefill banner (gated in the
+                        // prefill-detect effect) and thus fromSuggestionId stays
+                        // null in their payload. Double-checked here anyway.
+                        if (fromSuggestionId && sMode === 'quest' && !sId && currentUser?.role === 'Admin') {
+                            await approveQuestSuggestion(fromSuggestionId);
+                        }
+
                         showToast(sId ? "Changes Resubmitted for Approval!" : "Published! Awaiting Review.", 'success');
                         setView('manage');
                     }
@@ -286,11 +345,14 @@ useEffect(() => {
             
             // 4. PERSISTENCE PAYLOAD
             // We save EVERYTHING required to recreate the original logic after the refresh.
-            const payload = { 
-                form, 
-                imageString: imageToStore, 
-                mode, 
-                editingId // null for Create, ID for Edit
+            const payload = {
+                form,
+                imageString: imageToStore,
+                mode,
+                editingId, // null for Create, ID for Edit
+                // Carry the source suggestion id (if any) through the hard
+                // refresh so the resume handler can approve it after creation.
+                fromSuggestionId: suggestionPrefill?.suggestion_id || null
             };
             
             localStorage.setItem('sq_auto_submit', JSON.stringify(payload));
@@ -316,7 +378,7 @@ useEffect(() => {
                 
                 <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
                     <button 
-                        onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental', xp_value: 50, xp_cost: 50}); setPreview(null);}} 
+                        onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental', xp_value: 50, xp_cost: 50}); setPreview(null); setSuggestionPrefill(null);}} 
                         className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'create' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
                     >
                         {editingId ? 'Edit Mode' : 'Add New'}
@@ -337,6 +399,40 @@ useEffect(() => {
                     <button onClick={() => setView('manage')} className="flex items-center text-sm font-bold text-gray-400 hover:text-brand-600 mb-6 transition-colors">
                         <ArrowLeft size={16} className="mr-1"/> Back to My Content
                     </button>
+
+                    {suggestionPrefill && !editingId && (
+                        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                            <div className="flex-shrink-0 mt-0.5">
+                                <Sparkles className="text-emerald-600" size={20} />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-emerald-900">
+                                    Creating quest from traveler suggestion
+                                </p>
+                                <p className="text-xs text-emerald-700 mt-0.5">
+                                    Title, description, map link, and photo have been pre-filled from{' '}
+                                    <span className="font-semibold">{suggestionPrefill.submitter_name}</span>'s
+                                    suggestion. Fill in the remaining fields and publish — the suggester will
+                                    automatically receive <span className="font-bold">+50 XP</span>.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    // Allow admin to bail out of the suggestion flow without creating.
+                                    // The source suggestion stays 'pending' so it can be handled later.
+                                    setSuggestionPrefill(null);
+                                    setForm({ category: 'Environmental', xp_value: 50, xp_cost: 50 });
+                                    setPreview(null);
+                                    setImageFile(null);
+                                }}
+                                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 underline whitespace-nowrap"
+                                title="Clear the pre-filled data and start fresh. The suggestion stays pending."
+                            >
+                                Start fresh
+                            </button>
+                        </div>
+                    )}
 
                     {!editingId && (
     <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -649,8 +745,9 @@ useEffect(() => {
                             // CALCULATE 
                             const completedCount = questProgress.filter(p => p.quest_id === q.id && p.status === 'approved').length;
                             
+                            const isRejected = q.status === 'rejected';
                             return (
-                                <div key={q.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                                <div key={q.id} className={`bg-white p-5 rounded-3xl border shadow-sm transition-all hover:shadow-md ${isRejected ? 'border-red-200' : 'border-gray-100'}`}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 rounded-2xl border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
@@ -665,10 +762,15 @@ useEffect(() => {
                                             <div>
                                                 <p className="font-bold text-gray-900 leading-tight">{q.title}</p>
                                                 <div className="mt-1 flex items-center gap-2">
-                                                    {q.status === 'active' ? 
-                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">LIVE</span> :
+                                                    {q.status === 'active' && (
+                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">LIVE</span>
+                                                    )}
+                                                    {isRejected && (
+                                                        <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-black border border-red-100">REJECTED</span>
+                                                    )}
+                                                    {q.status !== 'active' && !isRejected && (
                                                         <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">IN REVIEW</span>
-                                                    }
+                                                    )}
                                                     {/* SHOW COMPLETION STATS */}
                                                     <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-black border border-blue-100 flex items-center">
                                                         <CheckCircle size={10} className="mr-1"/> {completedCount} Completed
@@ -676,8 +778,34 @@ useEffect(() => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={() => startEdit(q, 'quest')} className="p-2 text-gray-300 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-all"><Edit size={20} /></button>
+                                        <button
+                                            onClick={() => startEdit(q, 'quest')}
+                                            title={isRejected ? 'Fix & Resubmit' : 'Edit'}
+                                            className={`p-2 rounded-xl transition-all ${isRejected ? 'text-red-500 hover:text-red-600 hover:bg-red-50' : 'text-gray-300 hover:text-brand-600 hover:bg-brand-50'}`}
+                                        >
+                                            <Edit size={20} />
+                                        </button>
                                     </div>
+
+                                    {isRejected && (
+                                        <div className="mt-4 flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl p-4">
+                                            <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-black text-red-700 uppercase tracking-wider">Rejected by Game Master</p>
+                                                {q.rejection_reason ? (
+                                                    <p className="text-sm text-red-700 mt-1 italic">“{q.rejection_reason}”</p>
+                                                ) : (
+                                                    <p className="text-sm text-red-700 mt-1">No reason provided. Contact the team or edit and resubmit.</p>
+                                                )}
+                                                <button
+                                                    onClick={() => startEdit(q, 'quest')}
+                                                    className="mt-3 text-xs font-black bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 transition-all"
+                                                >
+                                                    Fix & Resubmit
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -695,8 +823,9 @@ useEffect(() => {
                             const claims = redemptions.filter(red => red.reward_id === r.id);
                             const isExpanded = viewClaimsId === r.id;
 
+                            const isRejected = r.status === 'rejected';
                             return (
-                                <div key={r.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                                <div key={r.id} className={`bg-white rounded-3xl border shadow-sm overflow-hidden transition-all hover:shadow-md ${isRejected ? 'border-red-200' : 'border-gray-100'}`}>
                                     <div className="p-5 flex justify-between items-center">
                                         <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 rounded-2xl border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
@@ -711,12 +840,17 @@ useEffect(() => {
                                             <div>
                                                 <p className="font-bold text-gray-900 leading-tight">{r.title}</p>
                                                 <div className="mt-1 flex items-center gap-3">
-                                                    {r.status === 'active' ? 
-                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">ACTIVE</span> :
+                                                    {r.status === 'active' && (
+                                                        <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">ACTIVE</span>
+                                                    )}
+                                                    {isRejected && (
+                                                        <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-black border border-red-100">REJECTED</span>
+                                                    )}
+                                                    {r.status !== 'active' && !isRejected && (
                                                         <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-black border border-yellow-100">REVIEWING</span>
-                                                    }
+                                                    )}
                                                     {/* SHOW CLAIM STATS */}
-                                                    <button 
+                                                    <button
                                                         onClick={() => setViewClaimsId(isExpanded ? null : r.id)}
                                                         className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-black border border-orange-100 hover:bg-orange-100 transition-colors cursor-pointer"
                                                     >
@@ -725,8 +859,36 @@ useEffect(() => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <button onClick={() => startEdit(r, 'reward')} className="p-2 text-gray-300 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"><Edit size={20} /></button>
+                                        <button
+                                            onClick={() => startEdit(r, 'reward')}
+                                            title={isRejected ? 'Fix & Resubmit' : 'Edit'}
+                                            className={`p-2 rounded-xl transition-all ${isRejected ? 'text-red-500 hover:text-red-600 hover:bg-red-50' : 'text-gray-300 hover:text-orange-600 hover:bg-orange-50'}`}
+                                        >
+                                            <Edit size={20} />
+                                        </button>
                                     </div>
+
+                                    {isRejected && (
+                                        <div className="px-5 pb-5">
+                                            <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl p-4">
+                                                <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-black text-red-700 uppercase tracking-wider">Rejected by Game Master</p>
+                                                    {r.rejection_reason ? (
+                                                        <p className="text-sm text-red-700 mt-1 italic">“{r.rejection_reason}”</p>
+                                                    ) : (
+                                                        <p className="text-sm text-red-700 mt-1">No reason provided. Contact the team or edit and resubmit.</p>
+                                                    )}
+                                                    <button
+                                                        onClick={() => startEdit(r, 'reward')}
+                                                        className="mt-3 text-xs font-black bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 transition-all"
+                                                    >
+                                                        Fix & Resubmit
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* EXPANDED CLAIM LIST */}
                                 {isExpanded && (

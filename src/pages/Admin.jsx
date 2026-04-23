@@ -1,13 +1,40 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSideQuest } from '../context/SideQuestContext';
 
 import { supabase } from '../supabaseClient';
 import {
   PlusCircle, Edit, Trash2, Check, MapPin, Award,
-  UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon
+  UploadCloud, Info, Gift, CheckCircle, BarChart2, Users as UsersIcon,
+  XCircle, ChevronDown, ChevronUp, Sparkles
 } from 'lucide-react';
 import { validatePassword } from '../utils/security';
 
+
+// --- HELPER: RELATIVE TIME ("5m ago", "3h ago", "2d ago"). Defensive against missing/invalid dates. ---
+const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return null;
+    const ms = new Date(timestamp).getTime();
+    if (Number.isNaN(ms)) return null;
+    const diff = Math.max(0, Date.now() - ms);
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks}w ago`;
+    return new Date(timestamp).toLocaleDateString();
+};
+
+// Absolute time shown on hover so admin can see exact submission date/time.
+const formatAbsoluteTime = (timestamp) => {
+    if (!timestamp) return null;
+    const d = new Date(timestamp);
+    return Number.isNaN(d.getTime()) ? null : d.toLocaleString();
+};
 
 // --- HELPER: CONVERT MARKDOWN LINKS [text](url) TO CLICKABLE LINKS ---
 const LinkifyText = ({ text }) => {
@@ -49,6 +76,125 @@ const LinkifyText = ({ text }) => {
 
     return <span className="whitespace-pre-line">{parts.length > 0 ? parts : text}</span>;
   };
+
+// --- SUB-COMPONENT: REJECT REASON MODAL ---
+// Shared across submissions, new quests, new rewards, and quest suggestions.
+// Quick-pick chips cover ~90% of real-world reasons; free-text handles the rest.
+const REJECT_CHIPS = [
+    'Photo unclear',
+    'Wrong location',
+    'Does not meet requirements',
+    'Duplicate',
+    'Inappropriate content',
+];
+
+const RejectReasonModal = ({ open, target, onCancel, onConfirm }) => {
+    const [reason, setReason] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            setReason('');
+            setSubmitting(false);
+        }
+    }, [open, target?.id]);
+
+    if (!open || !target) return null;
+
+    const handleConfirm = async () => {
+        setSubmitting(true);
+        try {
+            await onConfirm(reason);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const labelByType = {
+        submission: 'proof submission',
+        quest: 'quest',
+        reward: 'reward',
+        suggestion: 'quest suggestion',
+    };
+    const itemLabel = labelByType[target.type] || 'item';
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150"
+            onClick={onCancel}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reject-modal-title"
+        >
+            <div
+                className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-150"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-red-50 rounded-xl">
+                        <XCircle size={22} className="text-red-500" />
+                    </div>
+                    <div>
+                        <h2 id="reject-modal-title" className="font-black text-lg text-gray-900">Reject {itemLabel}?</h2>
+                        {target.title && (
+                            <p className="text-xs text-gray-500 truncate max-w-xs">{target.title}</p>
+                        )}
+                    </div>
+                </div>
+
+                <p className="text-sm text-gray-600 mb-3">
+                    Pick a reason so the submitter knows how to fix it. Optional but strongly recommended.
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {REJECT_CHIPS.map(chip => (
+                        <button
+                            key={chip}
+                            type="button"
+                            onClick={() => setReason(chip)}
+                            className={`text-xs px-3 py-1.5 rounded-full border font-bold transition-all ${
+                                reason === chip
+                                    ? 'bg-red-500 text-white border-red-500 shadow-sm'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-red-300 hover:text-red-600'
+                            }`}
+                        >
+                            {chip}
+                        </button>
+                    ))}
+                </div>
+
+                <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Or type a custom reason..."
+                    maxLength={500}
+                    rows={3}
+                    className="w-full p-3 border-2 border-gray-100 rounded-2xl text-sm outline-none focus:border-red-300 transition"
+                />
+                <p className="text-[11px] text-gray-400 text-right mt-1">{reason.length}/500</p>
+
+                <div className="flex justify-end gap-2 mt-4">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={submitting}
+                        className="px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleConfirm}
+                        disabled={submitting}
+                        className="px-5 py-2 rounded-xl text-sm font-black bg-red-500 text-white hover:bg-red-600 shadow-sm transition disabled:opacity-50"
+                    >
+                        {submitting ? 'Rejecting...' : 'Confirm Reject'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // --- SUB-COMPONENT: STAT CARD (New for Oversight) ---
 const StatCard = ({ title, value, subtext, icon: Icon, colorClass }) => (
@@ -238,12 +384,15 @@ const handleImageUpload = async (e) => {
 const Admin = () => {
     const {
         currentUser, questProgress, quests, rewards, users, redemptions,
-        approveSubmission, rejectSubmission, approveNewQuest, approveNewReward,
+        approveSubmission, rejectSubmission,
+        approveNewQuest, rejectNewQuest,
+        approveNewReward, rejectNewReward,
         updateQuest, deleteQuest, updateReward, deleteReward, showToast,
         generateInviteCode, partnerRequests,
         questSuggestions, approveQuestSuggestion, rejectQuestSuggestion
       } = useSideQuest();
 
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard'); // Default changed to dashboard
   const [editingId, setEditingId] = useState(null);
   // --- SECURITY VAULT STATE ---
@@ -262,6 +411,29 @@ const Admin = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [partnerRequestsData, setPartnerRequestsData] = useState([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
+
+  // Dashboard "Recent Activity" lists — collapsed by default so the page stays scannable.
+  const [showApproved, setShowApproved] = useState(false);
+  const [showRejected, setShowRejected] = useState(false);
+
+  // Reject-with-reason modal state. `target` is { type, id, title } or null.
+  const [rejectTarget, setRejectTarget] = useState(null);
+
+  const openRejectModal = (type, id, title) => setRejectTarget({ type, id, title });
+  const closeRejectModal = () => setRejectTarget(null);
+
+  const handleRejectConfirm = async (reason) => {
+    if (!rejectTarget) return;
+    const { type, id } = rejectTarget;
+    try {
+        if (type === 'submission')  await rejectSubmission(id, reason);
+        else if (type === 'quest')      await rejectNewQuest(id, reason);
+        else if (type === 'reward')     await rejectNewReward(id, reason);
+        else if (type === 'suggestion') await rejectQuestSuggestion(id, reason);
+    } finally {
+        closeRejectModal();
+    }
+  };
 
  // --- IMMORTAL ADMIN RESUME ENGINE ---
  useEffect(() => {
@@ -322,7 +494,33 @@ const Admin = () => {
   const stats = useMemo(() => {
     const approved = questProgress.filter(p => p.status === 'approved');
     const pending = questProgress.filter(p => p.status === 'pending');
-    const totalXP = users.reduce((sum, u) => sum + (u.xp || 0), 0);
+
+    // Per-user lifetime XP map (user_id -> Σ XP ever credited).
+    // Drives the leaderboard so rankings reflect real impact and don't regress
+    // when a user redeems a reward (which only deducts from profiles.xp wallet).
+    // Two sources contribute:
+    //   1. Σ quest.xp_value for the user's approved submissions
+    //   2. +50 for each of the user's approved traveler suggestions (mirrors
+    //      the DB trigger award_xp_on_quest_suggestion_approval — if that
+    //      constant ever changes, update SUGGESTION_XP_BONUS below too).
+    const SUGGESTION_XP_BONUS = 50;
+    const userLifetimeXP = approved.reduce((acc, p) => {
+        const q = quests.find(quest => quest.id === p.quest_id);
+        const xp = q?.xp_value || 0;
+        if (p.traveler_id) acc[p.traveler_id] = (acc[p.traveler_id] || 0) + xp;
+        return acc;
+    }, {});
+    (questSuggestions || []).forEach(s => {
+        if (s.status === 'approved' && s.xp_awarded && s.submitted_by) {
+            userLifetimeXP[s.submitted_by] = (userLifetimeXP[s.submitted_by] || 0) + SUGGESTION_XP_BONUS;
+        }
+    });
+
+    // Ecosystem Impact XP: the *lifetime* XP generated across the platform.
+    // This only grows — redemptions don't touch it because they deduct from
+    // profiles.xp (the user's spendable wallet), not from the approved ledger.
+    // Accounting identity: totalXP == Σ profiles.xp + Σ redemption spend.
+    const totalXP = Object.values(userLifetimeXP).reduce((sum, xp) => sum + xp, 0);
 
     const categories = approved.reduce((acc, p) => {
         const q = quests.find(quest => quest.id === p.quest_id);
@@ -331,12 +529,71 @@ const Admin = () => {
         return acc;
     }, {});
 
-    return { approvedCount: approved.length, pendingCount: pending.length, totalXP, redemptionCount: redemptions.length, userCount: users.length, categories };
-  }, [questProgress, quests, users, redemptions]);
+    return { approvedCount: approved.length, pendingCount: pending.length, totalXP, redemptionCount: redemptions.length, userCount: users.length, categories, userLifetimeXP };
+  }, [questProgress, quests, users, redemptions, questSuggestions]);
 
-  const pendingSubmissions = questProgress.filter(p => p.status === 'pending');
-  const pendingNewQuests = quests.filter(q => q.status === 'pending_admin');
-  const pendingNewRewards = rewards.filter(r => r.status === 'pending_admin');
+  // Pending queues sorted OLDEST-FIRST so the admin naturally clears the backlog in order.
+  // Items missing a timestamp (legacy rows) fall to the bottom rather than pretending to be old.
+  const sortOldestFirst = (list, getTimestamp) => {
+    const timeOf = (item) => {
+        const t = getTimestamp(item);
+        const ms = t ? new Date(t).getTime() : NaN;
+        return Number.isNaN(ms) ? Infinity : ms;
+    };
+    return [...list].sort((a, b) => timeOf(a) - timeOf(b));
+  };
+
+  const pendingSubmissions = useMemo(
+    () => sortOldestFirst(
+        questProgress.filter(p => p.status === 'pending'),
+        (p) => p.submitted_at || p.created_at
+    ),
+    [questProgress]
+  );
+
+  const pendingNewQuests = useMemo(
+    () => sortOldestFirst(
+        quests.filter(q => q.status === 'pending_admin'),
+        (q) => q.created_at
+    ),
+    [quests]
+  );
+
+  const pendingNewRewards = useMemo(
+    () => sortOldestFirst(
+        rewards.filter(r => r.status === 'pending_admin'),
+        (r) => r.created_at
+    ),
+    [rewards]
+  );
+
+  // Recent Activity: approved & rejected submissions, newest first.
+  // Replaces the need for a separate audit-log feature — admin sees every moderation
+  // outcome inline on the dashboard.
+  const sortNewestFirst = (list, getTimestamp) => {
+    const timeOf = (item) => {
+        const t = getTimestamp(item);
+        const ms = t ? new Date(t).getTime() : NaN;
+        return Number.isNaN(ms) ? -Infinity : ms;
+    };
+    return [...list].sort((a, b) => timeOf(b) - timeOf(a));
+  };
+
+  const approvedSubmissions = useMemo(
+    () => sortNewestFirst(
+        questProgress.filter(p => p.status === 'approved'),
+        (p) => p.submitted_at || p.created_at
+    ),
+    [questProgress]
+  );
+
+  const rejectedSubmissions = useMemo(
+    () => sortNewestFirst(
+        questProgress.filter(p => p.status === 'rejected'),
+        (p) => p.submitted_at || p.created_at
+    ),
+    [questProgress]
+  );
 
   const manageableQuests = useMemo(() => {
     return quests
@@ -347,6 +604,12 @@ const Admin = () => {
       );
   }, [quests, questSearch]);
 
+  // Exclude pending_admin rewards from the manager list — they belong in the
+  // moderation queue above, and double-listing them risks accidental deletes.
+  const manageableRewards = useMemo(
+    () => rewards.filter(r => r.status !== 'pending_admin'),
+    [rewards]
+  );
 
   const activeRewards = rewards.filter(r => r.status === 'active');
 
@@ -561,9 +824,10 @@ const Admin = () => {
                     </div>
 
                     <div className="overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                        {users
-                            // 1. Sort users by XP (Highest to Lowest)
-                            .sort((a, b) => (b.xp || 0) - (a.xp || 0))
+                        {[...users]
+                            // Sort by LIFETIME XP (immutable impact) so ranks don't
+                            // regress when users redeem rewards from their wallet.
+                            .sort((a, b) => (stats.userLifetimeXP[b.id] || 0) - (stats.userLifetimeXP[a.id] || 0))
                             .map((user, index) => (
 
                             <div key={user.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 hover:border-brand-200 transition-colors group">
@@ -588,9 +852,12 @@ const Admin = () => {
                                     </div>
                                 </div>
 
-                                {/* XP Badge */}
-                                <div className="font-mono font-bold text-brand-600 bg-white px-2 py-1 rounded-lg border border-gray-100 text-xs shadow-sm group-hover:bg-brand-50 group-hover:border-brand-100 transition-colors">
-                                    {user.xp || 0} XP
+                                {/* XP Badge (lifetime earned, not spendable wallet) */}
+                                <div
+                                    className="font-mono font-bold text-brand-600 bg-white px-2 py-1 rounded-lg border border-gray-100 text-xs shadow-sm group-hover:bg-brand-50 group-hover:border-brand-100 transition-colors"
+                                    title={`Lifetime earned: ${stats.userLifetimeXP[user.id] || 0} XP · Wallet: ${user.xp || 0} XP`}
+                                >
+                                    {stats.userLifetimeXP[user.id] || 0} XP
                                 </div>
                             </div>
                         ))}
@@ -599,6 +866,115 @@ const Admin = () => {
                             <p className="text-center text-gray-400 text-sm py-10">No users found.</p>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* --- RECENT ACTIVITY: APPROVED + REJECTED SUBMISSIONS --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* APPROVED LIST */}
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <button
+                        type="button"
+                        onClick={() => setShowApproved(v => !v)}
+                        className="w-full flex items-center justify-between"
+                        aria-expanded={showApproved}
+                    >
+                        <div className="flex items-center gap-2">
+                            <CheckCircle size={20} className="text-emerald-600" />
+                            <h3 className="font-bold text-xl text-gray-800">Approved Quests</h3>
+                            <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                {approvedSubmissions.length}
+                            </span>
+                        </div>
+                        {showApproved ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+                    </button>
+
+                    {showApproved && (
+                        <div className="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                            {approvedSubmissions.length === 0 ? (
+                                <p className="text-center text-gray-400 text-sm py-8">No approved submissions yet.</p>
+                            ) : approvedSubmissions.map(p => {
+                                const q = quests.find(x => x.id === p.quest_id);
+                                const t = users.find(u => u.id === p.traveler_id);
+                                const when = p.submitted_at || p.created_at;
+                                return (
+                                    <div key={p.id} className="flex items-center justify-between p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-sm">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-gray-900 truncate">{q?.title || 'Unknown quest'}</p>
+                                            <p className="text-xs text-gray-500 truncate">
+                                                {t?.full_name || t?.email || 'Unknown traveler'}
+                                                {when && (
+                                                    <>
+                                                        {' · '}
+                                                        <span title={formatAbsoluteTime(when)}>{formatTimeAgo(when)}</span>
+                                                    </>
+                                                )}
+                                            </p>
+                                        </div>
+                                        {q?.xp_value != null && (
+                                            <span className="ml-3 text-xs font-black text-emerald-700 bg-white border border-emerald-200 px-2 py-1 rounded-lg shadow-sm flex-shrink-0">
+                                                +{q.xp_value} XP
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* REJECTED LIST */}
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <button
+                        type="button"
+                        onClick={() => setShowRejected(v => !v)}
+                        className="w-full flex items-center justify-between"
+                        aria-expanded={showRejected}
+                    >
+                        <div className="flex items-center gap-2">
+                            <XCircle size={20} className="text-red-500" />
+                            <h3 className="font-bold text-xl text-gray-800">Rejected Quests</h3>
+                            <span className="text-xs font-black text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                                {rejectedSubmissions.length}
+                            </span>
+                        </div>
+                        {showRejected ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+                    </button>
+
+                    {showRejected && (
+                        <div className="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                            {rejectedSubmissions.length === 0 ? (
+                                <p className="text-center text-gray-400 text-sm py-8">No rejected submissions.</p>
+                            ) : rejectedSubmissions.map(p => {
+                                const q = quests.find(x => x.id === p.quest_id);
+                                const t = users.find(u => u.id === p.traveler_id);
+                                const when = p.submitted_at || p.created_at;
+                                return (
+                                    <div key={p.id} className="p-3 bg-red-50/50 border border-red-100 rounded-xl text-sm">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-gray-900 truncate">{q?.title || 'Unknown quest'}</p>
+                                                <p className="text-xs text-gray-500 truncate">
+                                                    {t?.full_name || t?.email || 'Unknown traveler'}
+                                                    {when && (
+                                                        <>
+                                                            {' · '}
+                                                            <span title={formatAbsoluteTime(when)}>{formatTimeAgo(when)}</span>
+                                                        </>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {p.rejection_reason && (
+                                            <p className="text-xs text-red-700 mt-2 bg-white border border-red-100 rounded-lg px-2 py-1 italic">
+                                                “{p.rejection_reason}”
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -618,6 +994,14 @@ const Admin = () => {
                     <h3 className="font-bold text-lg text-gray-800">{quest?.title}</h3>
                     <p className="text-sm text-gray-600">Traveler: {traveler?.email || 'Unknown'}</p>
                     <p className="text-sm text-gray-600 mt-1">XP to Award: <span className="font-bold text-green-600">{quest?.xp_value} XP</span></p>
+                    {formatTimeAgo(progress.submitted_at || progress.created_at) && (
+                        <p
+                            className="text-xs text-gray-500 mt-1 font-medium"
+                            title={formatAbsoluteTime(progress.submitted_at || progress.created_at)}
+                        >
+                            Submitted {formatTimeAgo(progress.submitted_at || progress.created_at)}
+                        </p>
+                    )}
                     <div className="mt-3 bg-gray-50 p-3 rounded">
                        <p className="text-sm font-medium text-gray-700">Submission Note:</p>
                        <p className="text-sm text-gray-600 mt-1 italic">
@@ -640,7 +1024,12 @@ const Admin = () => {
                     >
                         Approve
                     </button>
-                       <button onClick={() => rejectSubmission(progress.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 font-medium transition">Reject</button>
+                       <button
+                            onClick={() => openRejectModal('submission', progress.id, quest?.title)}
+                            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 font-medium transition"
+                        >
+                            Reject
+                        </button>
                   </div>
                 </div>
               </div>
@@ -663,6 +1052,14 @@ const Admin = () => {
                         <h3 className="font-bold text-lg text-gray-900">{quest.title}</h3>
                         <p className="text-sm text-gray-600 mt-1">Submitted by: {creator?.email || 'Partner'}</p>
                         <p className="text-xs text-brand-700 font-medium mt-1">{quest.location_address}</p>
+                        {formatTimeAgo(quest.created_at) && (
+                            <p
+                                className="text-xs text-gray-400 mt-1"
+                                title={formatAbsoluteTime(quest.created_at)}
+                            >
+                                Submitted {formatTimeAgo(quest.created_at)}
+                            </p>
+                        )}
                     </div>
                     <div className="flex gap-2 mt-3 md:mt-0"><button onClick={() => setViewDetailsId(isDetailsOpen ? null : quest.id)} className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 font-medium transition flex items-center">
                             <Info size={18} className="mr-1"/> {isDetailsOpen ? 'Hide' : 'Details'}
@@ -677,7 +1074,12 @@ const Admin = () => {
                         >
                             <Check size={18} className="mr-1"/> Approve
                         </button>
-                          <button onClick={() => deleteQuest(quest.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"><Trash2 size={18} className="mr-1"/> Reject</button>
+                          <button
+                            onClick={() => openRejectModal('quest', quest.id, quest.title)}
+                            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-medium transition flex items-center"
+                          >
+                            <Trash2 size={18} className="mr-1"/> Reject
+                          </button>
                     </div>
                 </div>
 
@@ -729,6 +1131,14 @@ const Admin = () => {
                             <div>
                                 <div className="flex items-center gap-2"><Gift size={20} className="text-orange-600"/><h3 className="font-bold text-gray-800">{reward.title}</h3></div>
                                 <p className="text-sm text-gray-600">Cost: {reward.xp_cost} XP | By: {creator?.email || 'Partner'}</p>
+                                {formatTimeAgo(reward.created_at) && (
+                                    <p
+                                        className="text-xs text-gray-400 mt-0.5"
+                                        title={formatAbsoluteTime(reward.created_at)}
+                                    >
+                                        Submitted {formatTimeAgo(reward.created_at)}
+                                    </p>
+                                )}
                             </div>
                         </div>
                         <div className="flex gap-2">
@@ -741,7 +1151,12 @@ const Admin = () => {
                             >
                                 <Check size={16} className="mr-1"/> Approve
                             </button>
-                               <button onClick={() => deleteReward(reward.id)} className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-red-600 shadow-sm"><Trash2 size={16} className="mr-1"/> Reject</button>
+                               <button
+                                    onClick={() => openRejectModal('reward', reward.id, reward.title)}
+                                    className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-red-600 shadow-sm"
+                               >
+                                    <Trash2 size={16} className="mr-1"/> Reject
+                               </button>
                         </div>
                     </div>
 
@@ -839,8 +1254,8 @@ const Admin = () => {
       {/* --- 5. REWARD MANAGER TAB --- */}
       {activeTab === 'rewards' && (
         <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Database: Rewards ({rewards.length})</h2>
-            {rewards.map(reward => (
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Database: Rewards ({manageableRewards.length})</h2>
+            {manageableRewards.map(reward => (
                 <div key={reward.id} className="border-b pb-4">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
@@ -1020,13 +1435,30 @@ const Admin = () => {
               {suggestion.status === 'pending' && (
                 <div className="flex md:flex-col gap-2 justify-end flex-shrink-0">
                   <button
-                    onClick={() => approveQuestSuggestion(suggestion.id)}
-                    className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all"
+                    onClick={() => {
+                      // Stash the suggestion's data for PartnerDashboard to pick up
+                      // on mount. The partner-side form will pre-fill, and on
+                      // successful creation will auto-approve this suggestion
+                      // (which in turn triggers the 50 XP award via DB trigger).
+                      sessionStorage.setItem('sq_admin_suggestion_prefill', JSON.stringify({
+                        suggestion_id: suggestion.id,
+                        title: suggestion.quest_name || '',
+                        description: suggestion.description || '',
+                        map_link: suggestion.maps_link || '',
+                        image: suggestion.photo_url || null,
+                        submitter_name: submitter?.full_name || submitter?.email?.split('@')[0] || 'Traveler'
+                      }));
+                      // Clear any lingering partner draft so prefill wins
+                      sessionStorage.removeItem('sq_partner_draft');
+                      navigate('/partner-dashboard?tab=create&mode=quest');
+                    }}
+                    className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all flex items-center gap-1.5 whitespace-nowrap"
+                    title="Opens the Quest Creator pre-filled with this suggestion's details. Publishing the quest will approve the suggestion and award the suggester 50 XP."
                   >
-                    ✓ Approve
+                    <Sparkles size={14} /> Approve &amp; Create Quest
                   </button>
                   <button
-                    onClick={() => rejectQuestSuggestion(suggestion.id)}
+                    onClick={() => openRejectModal('suggestion', suggestion.id, suggestion.quest_name)}
                     className="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-200 transition-all"
                   >
                     ✕ Reject
@@ -1080,6 +1512,12 @@ const Admin = () => {
 )}
 
 
+      <RejectReasonModal
+        open={Boolean(rejectTarget)}
+        target={rejectTarget}
+        onCancel={closeRejectModal}
+        onConfirm={handleRejectConfirm}
+      />
     </div>
   );
 };

@@ -811,31 +811,45 @@ if (role === 'Partner') {
 
   const approveQuestSuggestion = async (id) => {
     try {
-      const { error } = await withTimeout(
-        supabase.from('quest_suggestions').update({ status: 'approved' }).eq('id', id),
+      // DB trigger (trg_award_suggestion_xp) atomically credits the suggester
+      // 50 XP via profiles.xp when status transitions to 'approved' and
+      // flips xp_awarded=true for idempotency. The profiles realtime
+      // subscription syncs the XP to the suggester's UI if they're online.
+      const { data: updated, error } = await withTimeout(
+        supabase
+          .from('quest_suggestions')
+          .update({ status: 'approved' })
+          .eq('id', id)
+          .select()
+          .single(),
         10000
       );
       if (error) throw error;
-      
+
       setQuestSuggestions(prev => prev.map(s =>
-        s.id === id ? { ...s, status: 'approved', xp_awarded: true } : s
+        s.id === id ? { ...s, status: 'approved', xp_awarded: updated?.xp_awarded ?? true } : s
       ));
-      showToast("Approved! 50 XP awarded.", 'success');
+      showToast("Approved! 50 XP awarded to suggester.", 'success');
     } catch (err) {
       showToast(err.message === "Connection Timeout" ? "Signal weak. Try again." : err.message, 'error');
     }
   };
 
-  const rejectQuestSuggestion = async (id) => {
+  const rejectQuestSuggestion = async (id, reason = null) => {
+    const cleanReason = reason?.trim() || null;
+
     try {
       const { error } = await withTimeout(
-        supabase.from('quest_suggestions').update({ status: 'rejected' }).eq('id', id),
+        supabase
+          .from('quest_suggestions')
+          .update({ status: 'rejected', rejection_reason: cleanReason })
+          .eq('id', id),
         10000
       );
       if (error) throw error;
-      
+
       setQuestSuggestions(prev => prev.map(s =>
-        s.id === id ? { ...s, status: 'rejected' } : s
+        s.id === id ? { ...s, status: 'rejected', rejection_reason: cleanReason } : s
       ));
       showToast("Suggestion rejected.", 'info');
     } catch (err) {
@@ -949,8 +963,11 @@ if (role === 'Partner') {
   const addQuest = async (formData, imageFile) => {
     try {
         console.log("SQ-System: Processing upload on fresh connection...");
-        
-        let finalImageUrl = null;
+
+        // Fallback to any image URL already on formData (e.g. carried over from
+        // a prefilled quest suggestion's photo_url). If the user uploads a new
+        // file, that takes precedence and overrides the fallback below.
+        let finalImageUrl = formData.image || null;
         if (imageFile) {
             // Step A: Setup name
             const cleanFileName = `quest_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
@@ -1026,6 +1043,12 @@ const updateQuest = async (id, updates) => {
             instructions, proof_requirements, image,
             status: finalStatus
         };
+
+        // When a partner resubmits (any update sets status back to pending_admin)
+        // clear the stale rejection_reason so the admin re-review starts clean.
+        if (finalStatus === 'pending_admin') {
+            cleanPayload.rejection_reason = null;
+        }
 
         // 2. DEFINE THE SAVE OPERATION
         const executeSave = () => supabase.from('quests').update(cleanPayload).eq('id', Number(id));
@@ -1206,11 +1229,14 @@ const deleteQuest = async (id) => {
             }
 
             // STEP C: UPDATE OR INSERT (The Self-Healing Logic)
+            // Null out rejection_reason on retry so a stale reason doesn't linger
+            // after the traveler has addressed the feedback.
             const payload = {
                 status: 'pending',
                 completion_note: note,
                 proof_photo_url: proofUrl || optimisticUpdate.proof_photo_url,
-                submitted_at: new Date().toISOString()
+                submitted_at: new Date().toISOString(),
+                rejection_reason: null
             };
 
             if (realSubmissionId) {
@@ -1325,7 +1351,12 @@ const updateReward = async (id, updates) => {
             status: finalStatus 
         };
 
-        
+        // When a partner resubmits (status back to pending_admin) clear the
+        // stale rejection_reason so the admin re-review starts clean.
+        if (finalStatus === 'pending_admin') {
+            cleanPayload.rejection_reason = null;
+        }
+
         // If the internet is "Zombie", this kills the wait after 25s.
         const updatePromise = supabase
             .from('rewards')
@@ -1546,20 +1577,70 @@ const redeemReward = async (reward) => {
     }
   };
 
-  const rejectSubmission = async (id) => {
-    // 1. OPTIMISTIC UPDATE
-    setQuestProgress(prev => prev.map(p => 
-        p.id === id ? { ...p, status: 'rejected' } : p
+  const rejectSubmission = async (id, reason = null) => {
+    const cleanReason = reason?.trim() || null;
+
+    setQuestProgress(prev => prev.map(p =>
+        p.id === id ? { ...p, status: 'rejected', rejection_reason: cleanReason } : p
     ));
 
     try {
-      const { error } = await supabase.from('submissions').update({ status: 'rejected' }).eq('id', id);
+      const { error } = await supabase
+        .from('submissions')
+        .update({ status: 'rejected', rejection_reason: cleanReason })
+        .eq('id', id);
       if (error) throw error;
-      
+
       showToast("Submission Rejected.", 'info');
-    } catch (e) { 
+    } catch (e) {
         console.error(e);
         fetchSubmissions(currentUser.id, 'Admin'); // Revert on error
+    }
+};
+
+// Soft-reject a partner-submitted NEW QUEST. Unlike deleteQuest, this preserves
+// the row + any in_progress traveler submissions attached via ON DELETE CASCADE.
+// Partner sees a "rejected" badge + reason on their dashboard and can re-submit.
+const rejectNewQuest = async (id, reason = null) => {
+    const cleanReason = reason?.trim() || null;
+
+    setQuests(prev => prev.map(q =>
+        q.id === id ? { ...q, status: 'rejected', rejection_reason: cleanReason } : q
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('quests')
+        .update({ status: 'rejected', rejection_reason: cleanReason })
+        .eq('id', id);
+      if (error) throw error;
+
+      showToast("Quest rejected. Partner will see the reason.", 'info');
+    } catch (e) {
+        console.error(e);
+        fetchQuests(); // Revert on error
+    }
+};
+
+// Soft-reject a partner-submitted NEW REWARD. Same contract as rejectNewQuest.
+const rejectNewReward = async (id, reason = null) => {
+    const cleanReason = reason?.trim() || null;
+
+    setRewards(prev => prev.map(r =>
+        r.id === id ? { ...r, status: 'rejected', rejection_reason: cleanReason } : r
+    ));
+
+    try {
+      const { error } = await supabase
+        .from('rewards')
+        .update({ status: 'rejected', rejection_reason: cleanReason })
+        .eq('id', id);
+      if (error) throw error;
+
+      showToast("Reward rejected. Partner will see the reason.", 'info');
+    } catch (e) {
+        console.error(e);
+        fetchRewards(); // Revert on error
     }
 };
   
@@ -1627,8 +1708,8 @@ const approveNewReward = async (id) => {
       login, signup, logout,
       submitPartnerRequest, generateInviteCode, partnerRequests,
       questSuggestions, approveQuestSuggestion, rejectQuestSuggestion,
-      addQuest, updateQuest, deleteQuest, approveNewQuest,
-      addReward, updateReward, deleteReward, approveNewReward, 
+      addQuest, updateQuest, deleteQuest, approveNewQuest, rejectNewQuest,
+      addReward, updateReward, deleteReward, approveNewReward, rejectNewReward,
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
       redeemReward, verifyRedemptionCode,  switchRole, quizBank, completedQuizIds, submitQuizAnswer,
       toast, showToast, optimizeImage

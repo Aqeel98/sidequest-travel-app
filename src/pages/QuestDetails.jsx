@@ -421,9 +421,18 @@ const getRemainingText = (text) => {
             <form onSubmit={handleSubmit} className="border-t pt-6">
 
                 {status === 'rejected' && (
-                    <div className="mb-6 bg-red-50 p-4 rounded-lg flex items-center text-red-700 border border-red-200">
-                        <AlertCircle className="mr-2" />
-                        <span>Previous attempt rejected. Please try again with a clear photo.</span>
+                    <div className="mb-6 bg-red-50 p-4 rounded-lg flex items-start text-red-700 border border-red-200">
+                        <AlertCircle className="mr-2 mt-0.5 flex-shrink-0" />
+                        <div>
+                            <p className="font-bold">Previous attempt rejected.</p>
+                            {currentProgress?.rejection_reason ? (
+                                <p className="text-sm mt-1">
+                                    <span className="font-medium">Reason:</span> “{currentProgress.rejection_reason}”
+                                </p>
+                            ) : (
+                                <p className="text-sm mt-1">Please try again with a clear photo.</p>
+                            )}
+                        </div>
                     </div>
                 )}
 
