@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PlusCircle, UploadCloud, Gift, Map, Edit, CheckCircle, Clock, LayoutDashboard, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useSideQuest } from '../context/SideQuestContext';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 import { supabase } from '../supabaseClient';
 
 
@@ -9,6 +10,8 @@ const PartnerDashboard = () => {
     // 1. Updated Destructuring
     const { currentUser, quests, rewards, questProgress, redemptions, users, addQuest, addReward, updateQuest, updateReward, showToast,
         deleteQuest, deleteReward, verifyRedemptionCode, approveQuestSuggestion } = useSideQuest();
+    const { theme } = useAppPreferences();
+    const isDark = theme === 'dark';
     
     // UI State
     const [view, setView] = useState('create'); 
@@ -369,24 +372,24 @@ useEffect(() => {
     };
     
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className={`max-w-6xl mx-auto px-4 py-8 ${isDark ? 'text-cyan-50' : ''}`}>
             <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-                <h1 className="text-3xl font-black text-gray-900 flex items-center tracking-tight">
+                <h1 className={`text-3xl font-black flex items-center tracking-tight ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                     <LayoutDashboard className="text-brand-600 mr-3" size={32} />
                     Partner Portal
                 </h1>
                 
-                <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+                <div className={`flex p-1 rounded-2xl border shadow-inner ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50' : 'bg-gray-100 border-gray-200'}`}>
                     <button 
                         onClick={() => {setView('create'); setEditingId(null); setForm({category:'Environmental', xp_value: 50, xp_cost: 50}); setPreview(null); setSuggestionPrefill(null);}} 
-                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'create' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'create' ? 'bg-white text-brand-600 shadow-sm' : (isDark ? 'text-cyan-200/80' : 'text-gray-500')}`}
                     >
                         {editingId ? 'Edit Mode' : 'Add New'}
                     </button>
 
                     <button 
                         onClick={() => setView('manage')} 
-                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'manage' ? 'bg-white text-brand-600 shadow-sm' : 'text-gray-500'}`}
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${view === 'manage' ? 'bg-white text-brand-600 shadow-sm' : (isDark ? 'text-cyan-200/80' : 'text-gray-500')}`}
                     >
                         My Content
                     </button>
@@ -396,7 +399,7 @@ useEffect(() => {
             {view === 'create' ? (
                 /* --- FORM VIEW (CREATE & EDIT) --- */
                 <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <button onClick={() => setView('manage')} className="flex items-center text-sm font-bold text-gray-400 hover:text-brand-600 mb-6 transition-colors">
+                    <button onClick={() => setView('manage')} className={`flex items-center text-sm font-bold mb-6 transition-colors ${isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-400 hover:text-brand-600'}`}>
                         <ArrowLeft size={16} className="mr-1"/> Back to My Content
                     </button>
 
@@ -439,7 +442,11 @@ useEffect(() => {
         {/* IMPACT QUEST BUTTON */}
         <button 
             onClick={() => setMode('quest')} 
-            className={`flex-1 p-4 rounded-2xl border-2 flex flex-col items-center justify-center font-bold transition-all ${mode === 'quest' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}
+            className={`flex-1 p-4 rounded-2xl border-2 flex flex-col items-center justify-center font-bold transition-all ${
+              mode === 'quest'
+                ? (isDark ? 'border-cyan-600 bg-[#0f5c5c] text-cyan-50' : 'border-brand-500 bg-brand-50 text-brand-700')
+                : (isDark ? 'border-cyan-900/50 bg-[#0a3a3a] text-cyan-100 hover:border-cyan-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200')
+            }`}
         >
             <Map className="mb-2" size={24} />
             <span className="text-sm md:text-lg text-center leading-tight">Impact Quest</span>
@@ -448,7 +455,11 @@ useEffect(() => {
         {/* MARKETPLACE REWARD BUTTON */}
         <button 
             onClick={() => setMode('reward')} 
-            className={`flex-1 p-4 rounded-2xl border-2 flex flex-col items-center justify-center font-bold transition-all ${mode === 'reward' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200'}`}
+            className={`flex-1 p-4 rounded-2xl border-2 flex flex-col items-center justify-center font-bold transition-all ${
+              mode === 'reward'
+                ? (isDark ? 'border-cyan-600 bg-[#0f5c5c] text-cyan-50' : 'border-orange-500 bg-orange-50 text-orange-700')
+                : (isDark ? 'border-cyan-900/50 bg-[#0a3a3a] text-cyan-100 hover:border-cyan-700' : 'border-gray-100 bg-white text-gray-400 hover:border-gray-200')
+            }`}
         >
             <Gift className="mb-2" size={24} /> 
             <span className="text-sm md:text-lg text-center leading-tight">Marketplace Reward</span>
@@ -456,17 +467,17 @@ useEffect(() => {
     </div>
 )}
 
-                    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 space-y-6">
-                        <h2 className="text-2xl font-black text-gray-800">{editingId ? 'Edit Information' : `New ${mode === 'quest' ? 'Quest' : 'Reward'}`}</h2>
+                    <form onSubmit={handleSubmit} className={`p-8 rounded-3xl shadow-xl border space-y-6 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
+                        <h2 className={`text-2xl font-black ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>{editingId ? 'Edit Information' : `New ${mode === 'quest' ? 'Quest' : 'Reward'}`}</h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="col-span-full md:col-span-1">
-                                <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Title</label>
-                                <input type="text" name="title" value={form.title || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                                <label className={`block text-xs font-black uppercase mb-1 tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>Title</label>
+                                <input type="text" name="title" value={form.title || ''} onChange={handleChange} className={`w-full border-2 p-3 rounded-xl outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'border-gray-100 focus:border-brand-500'}`} required />
                             </div>
                             {/* PHONE NUMBER FIELD */}
                                 <div>
-                                 <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">
+                                 <label className={`block text-xs font-black uppercase mb-1 tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>
                                   WhatsApp Contact
                                  </label>
                                  <input 
@@ -480,17 +491,17 @@ useEffect(() => {
                                                        setForm({ ...form, contact_phone: cleanVal });
                                                        }} 
                                             placeholder="+94771234567"
-                                          className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+                                          className={`w-full border-2 p-3 rounded-xl outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'border-gray-100 focus:border-brand-500'}`} 
                                          required 
                                 />
-                                 <p className="text-[10px] text-gray-400 mt-1 italic">
+                                 <p className={`text-[10px] mt-1 italic ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`}>
                                         Required for verification. We will only contact you for urgent location issues.
                                    </p>
                                     </div>
                             {mode === 'quest' ? (
                                 <div>
-                                    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Category</label>
-                                    <select name="category" value={form.category || 'Environmental'} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none">
+                                    <label className={`block text-xs font-black uppercase mb-1 tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>Category</label>
+                                    <select name="category" value={form.category || 'Environmental'} onChange={handleChange} className={`w-full border-2 p-3 rounded-xl outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 focus:border-cyan-500' : 'border-gray-100 focus:border-brand-500'}`}>
                                         <option value="Environmental">Environmental</option>
                                         <option value="Social">Social</option>
                                         <option value="Animal Welfare">Animal Welfare</option>
@@ -506,14 +517,14 @@ useEffect(() => {
                                 </div>
                             ) : (
                                 <div>
-                                    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">XP Cost</label>
-                                    <input type="number" name="xp_cost" value={form.xp_cost} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                                    <label className={`block text-xs font-black uppercase mb-1 tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>XP Cost</label>
+                                    <input type="number" name="xp_cost" value={form.xp_cost} onChange={handleChange} className={`w-full border-2 p-3 rounded-xl outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 focus:border-cyan-500' : 'border-gray-100 focus:border-brand-500'}`} required />
                                 </div>
                             )}
                         </div>
                                 
                         {mode === 'reward' && (
-                            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                            <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50' : 'bg-orange-50 border-orange-100'}`}>
                                 <label className="block text-xs font-black text-orange-700 uppercase mb-2 tracking-widest flex items-center">
                                     <Map size={14} className="mr-1"/> Business Location (Google Maps)
                                 </label>
@@ -525,12 +536,12 @@ useEffect(() => {
                                         value={form.map_link || ''} 
                                         onChange={handleChange} 
                                         placeholder="Paste Google Maps link here..."
-                                        className="flex-1 border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-orange-200 text-sm"
+                                        className={`flex-1 p-3 rounded-xl shadow-sm outline-none text-sm ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:ring-2 focus:ring-cyan-600/30' : 'border-0 focus:ring-2 focus:ring-orange-200'}`}
                                     />
                                     <button 
                                         type="button"
                                         onClick={() => window.open('https://www.google.com/maps', '_blank')}
-                                        className="w-full sm:w-auto bg-white border border-orange-200 text-orange-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-orange-100 transition-colors shadow-sm whitespace-nowrap"
+                                        className={`w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm whitespace-nowrap ${isDark ? 'bg-[#0f5c5c] border border-cyan-700 text-cyan-50 hover:bg-[#125f5f]' : 'bg-white border border-orange-200 text-orange-600 hover:bg-orange-100'}`}
                                     >
                                         Open Maps
                                     </button>
@@ -554,7 +565,7 @@ useEffect(() => {
         value={form.description || ''} 
         onChange={handleChange} 
         rows="3" 
-        className={`w-full border-2 border-gray-100 p-3 rounded-xl outline-none transition-all ${mode === 'quest' ? 'focus:border-brand-500' : 'focus:border-orange-500'}`}
+        className={`w-full border-2 p-3 rounded-xl outline-none transition-all ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : `border-gray-100 ${mode === 'quest' ? 'focus:border-brand-500' : 'focus:border-orange-500'}`}`}
         required 
     />
 </div>
@@ -566,17 +577,17 @@ useEffect(() => {
         {/* 1. BASIC DETAILS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">XP Reward Value</label>
-                <input type="number" name="xp_value" value={form.xp_value} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" />
+                <label className={`block text-xs font-black uppercase mb-1 tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>XP Reward Value</label>
+                <input type="number" name="xp_value" value={form.xp_value} onChange={handleChange} className={`w-full border-2 p-3 rounded-xl outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 focus:border-cyan-500' : 'border-gray-100 focus:border-brand-500'}`} />
             </div>
             <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Location Name</label>
-                <input type="text" name="location_address" value={form.location_address || ''} onChange={handleChange} className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" required />
+                <label className={`block text-xs font-black uppercase mb-1 tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>Location Name</label>
+                <input type="text" name="location_address" value={form.location_address || ''} onChange={handleChange} className={`w-full border-2 p-3 rounded-xl outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'border-gray-100 focus:border-brand-500'}`} required />
             </div>
         </div>
 
         {/* 2. HYBRID LOCATION BLOCK  */}
-<div className="bg-brand-50 p-6 rounded-2xl border border-brand-100">
+<div className={`p-6 rounded-2xl border ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50' : 'bg-brand-50 border-brand-100'}`}>
     <label className="block text-[10px] font-black text-brand-600 uppercase mb-3 tracking-widest flex items-center">
         <Map size={14} className="mr-1"/> Location Source (Google Maps)
     </label>
@@ -588,13 +599,13 @@ useEffect(() => {
             value={form.map_link || ''} 
             onChange={handleChange}
             placeholder="Paste Google Maps Link here..."
-            className="flex-1 border-0 p-3 rounded-xl shadow-sm outline-none focus:ring-2 focus:ring-brand-200 text-sm"
+            className={`flex-1 p-3 rounded-xl shadow-sm outline-none text-sm ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:ring-2 focus:ring-cyan-600/30' : 'border-0 focus:ring-2 focus:ring-brand-200'}`}
             required
         />
         <button 
             type="button" 
             onClick={() => window.open('https://www.google.com/maps', '_blank')}
-            className="w-full sm:w-auto bg-white border border-brand-200 text-brand-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-brand-100 transition-colors shadow-sm whitespace-nowrap"
+            className={`w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm whitespace-nowrap ${isDark ? 'bg-[#0f5c5c] border border-cyan-700 text-cyan-50 hover:bg-[#125f5f]' : 'bg-white border border-brand-200 text-brand-600 hover:bg-brand-100'}`}
         >
             Open Maps
         </button>
@@ -617,22 +628,22 @@ useEffect(() => {
                     <div className="grid grid-cols-2 gap-4 mt-4">
                         <div>
                             <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Latitude</label>
-                            <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none text-xs" placeholder="6.6969" />
+                            <input type="number" step="any" name="lat" value={form.lat || ''} onChange={handleChange} className={`w-full p-3 rounded-xl shadow-sm outline-none text-xs ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60' : 'border-0'}`} placeholder="6.6969" />
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-brand-400 uppercase mb-1">Longitude</label>
-                            <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className="w-full border-0 p-3 rounded-xl shadow-sm outline-none text-xs" placeholder="80.6767" />
+                            <input type="number" step="any" name="lng" value={form.lng || ''} onChange={handleChange} className={`w-full p-3 rounded-xl shadow-sm outline-none text-xs ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60' : 'border-0'}`} placeholder="80.6767" />
                         </div>
                     </div>
 
                     <div className="mt-4">
-                        <div className="bg-white/60 p-3 rounded-lg border border-brand-200 text-center">
-                            <p className="text-[10px] text-gray-600 leading-relaxed">
+                        <div className={`p-3 rounded-lg border text-center ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50' : 'bg-white/60 border-brand-200'}`}>
+                            <p className={`text-[10px] leading-relaxed ${isDark ? 'text-cyan-200/80' : 'text-gray-600'}`}>
                                 <span className="font-bold text-brand-600">How to find this?</span> <br/>
                                 Open <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="text-blue-500 underline hover:text-blue-700 font-bold">Google Maps</a>. 
                                 <span className="font-bold"> Right-Click</span> (or Long-Press on mobile) on the exact spot. 
                                 Click the numbers at the top to copy them. <br/>
-                                <span className="italic text-gray-400">(Example: 6.9344, 79.8428)</span>
+                                <span className={`italic ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`}>(Example: 6.9344, 79.8428)</span>
                             </p>
                         </div>
                     </div>
@@ -642,7 +653,7 @@ useEffect(() => {
         
         {/* 3. INSTRUCTIONS & PROOF */}
         <div>
-    <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest flex justify-between">
+    <label className={`block text-xs font-black uppercase mb-1 tracking-widest flex justify-between ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>
         Instructions for Travelers
         <span className="text-[9px] text-brand-500 lowercase font-normal italic">
             tip: use [display text](link url) to hide links
@@ -653,20 +664,20 @@ useEffect(() => {
         value={form.instructions || ''} 
         onChange={handleChange} 
         rows="2" 
-        className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+        className={`w-full border-2 p-3 rounded-xl outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'border-gray-100 focus:border-brand-500'}`} 
         placeholder="How to find the location...."
         required 
               />
         </div>
 
         <div>
-            <label className="block text-xs font-black text-gray-400 uppercase mb-1 tracking-widest">Submission Proof Required</label>
+            <label className={`block text-xs font-black uppercase mb-1 tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>Submission Proof Required</label>
             <input 
                 type="text" 
                 name="proof_requirements" 
                 value={form.proof_requirements || ''} 
                 onChange={handleChange} 
-                className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none" 
+                className={`w-full border-2 p-3 rounded-xl outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'border-gray-100 focus:border-brand-500'}`} 
                 placeholder="e.g. Upload a photo of the statue..." 
             />
                  </div>
@@ -674,14 +685,14 @@ useEffect(() => {
                   </div>
                 )}
                 {/* 4. ITEM PHOTO (MOVED TO BOTTOM FOR PWA RELIABILITY) */}
-        <div className="bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-200">
-            <label className="block text-xs font-black text-gray-400 uppercase mb-3 tracking-widest">
+        <div className={`p-6 rounded-2xl border-2 border-dashed ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50' : 'bg-gray-50 border-gray-200'}`}>
+            <label className={`block text-xs font-black uppercase mb-3 tracking-widest ${isDark ? 'text-cyan-200/80' : 'text-gray-400'}`}>
             {mode === 'quest' ? 'Quest Photo' : 'Reward Photo'}</label>
 
             <div className="flex items-center gap-6">
-                <label className="cursor-pointer bg-white border border-gray-300 px-6 py-3 rounded-xl hover:bg-gray-100 flex items-center shadow-sm transition-all">
+                <label className={`cursor-pointer px-6 py-3 rounded-xl flex items-center shadow-sm transition-all ${isDark ? 'bg-[#0f5c5c] border border-cyan-700 hover:bg-[#125f5f]' : 'bg-white border border-gray-300 hover:bg-gray-100'}`}>
                     <UploadCloud className="text-brand-600 mr-2" size={20} />
-                    <span className="text-sm font-bold text-gray-600">Choose Image</span>
+                    <span className={`text-sm font-bold ${isDark ? 'text-cyan-100' : 'text-gray-600'}`}>Choose Image</span>
                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                 </label>
                 {preview && <img src={preview} alt="Preview" className="h-20 w-20 object-cover rounded-xl border-2 border-white shadow-lg" />}
@@ -705,11 +716,11 @@ useEffect(() => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in duration-500">
 
                     {/* NEW: QUICK VERIFY BOX (Add this here) */}
-             <div className="col-span-full bg-white p-6 rounded-3xl border-2 border-brand-100 shadow-sm mb-2">
-        <h3 className="text-lg font-black text-gray-900 mb-2 flex items-center">
+             <div className={`col-span-full p-6 rounded-3xl border-2 shadow-sm mb-2 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-brand-100'}`}>
+        <h3 className={`text-lg font-black mb-2 flex items-center ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
             <CheckCircle className="text-brand-600 mr-2" size={20}/> Verify Traveler Code
         </h3>
-        <p className="text-xs text-gray-500 mb-4">Enter the SQ-Code from the traveler's phone to mark it as used.</p>
+        <p className={`text-xs mb-4 ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Enter the SQ-Code from the traveler's phone to mark it as used.</p>
         <form className="flex gap-2" onSubmit={(e) => {
     e.preventDefault();
     const code = e.target.vCode.value;
@@ -725,7 +736,7 @@ useEffect(() => {
         name="vCode" 
         type="text" 
         placeholder="e.g. SQ-KJ92-45" 
-        className="flex-1 bg-gray-50 border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none font-mono font-bold uppercase" 
+        className={`flex-1 border-2 p-3 rounded-xl outline-none font-mono font-bold uppercase ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'bg-gray-50 border-gray-100 focus:border-brand-500'}`} 
         required 
     />
     <button type="submit" className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-700 transition-all">
@@ -736,31 +747,31 @@ useEffect(() => {
                     
                     {/* MY QUESTS SECTION */}
                     <div className="space-y-6">
-                        <h2 className="text-2xl font-black text-gray-900 flex items-center border-b pb-4">
+                        <h2 className={`text-2xl font-black flex items-center border-b pb-4 ${isDark ? 'text-cyan-50 border-cyan-900/50' : 'text-gray-900'}`}>
                             <Map size={24} className="mr-3 text-brand-600"/> My Active Quests
                         </h2>
                         
-                        {myQuests.length === 0 ? <p className="text-gray-400 py-10 text-center bg-white rounded-3xl border border-dashed">No quests yet.</p> :
+                        {myQuests.length === 0 ? <p className={`py-10 text-center rounded-3xl border border-dashed ${isDark ? 'text-cyan-200/80 bg-[#0d4b4b] border-cyan-900/50' : 'text-gray-400 bg-white'}`}>No quests yet.</p> :
                         myQuests.map(q => {
                             // CALCULATE 
                             const completedCount = questProgress.filter(p => p.quest_id === q.id && p.status === 'approved').length;
                             
                             const isRejected = q.status === 'rejected';
                             return (
-                                <div key={q.id} className={`bg-white p-5 rounded-3xl border shadow-sm transition-all hover:shadow-md ${isRejected ? 'border-red-200' : 'border-gray-100'}`}>
+                                <div key={q.id} className={`p-5 rounded-3xl border shadow-sm transition-all hover:shadow-md ${isRejected ? 'border-red-200' : (isDark ? 'border-cyan-900/50' : 'border-gray-100')} ${isDark ? 'bg-[#0d4b4b]' : 'bg-white'}`}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-2xl border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
+                                        <div className={`w-16 h-16 rounded-2xl border shadow-sm overflow-hidden flex-shrink-0 ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50' : 'bg-gray-100'}`}>
                                                              {q.image ? (
                                              <img src={q.image} className="w-full h-full object-cover" alt={q.title} />
                                                ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                            <div className={`w-full h-full flex items-center justify-center ${isDark ? 'text-cyan-200/50' : 'text-gray-400'}`}>
                                                   <Map size={24} />
                                             </div>
                                  )}
                                             </div>
                                             <div>
-                                                <p className="font-bold text-gray-900 leading-tight">{q.title}</p>
+                                                <p className={`font-bold leading-tight ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>{q.title}</p>
                                                 <div className="mt-1 flex items-center gap-2">
                                                     {q.status === 'active' && (
                                                         <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">LIVE</span>
@@ -813,11 +824,11 @@ useEffect(() => {
 
                     {/* MY REWARDS SECTION */}
                     <div className="space-y-6">
-                        <h2 className="text-2xl font-black text-gray-900 flex items-center border-b pb-4">
+                        <h2 className={`text-2xl font-black flex items-center border-b pb-4 ${isDark ? 'text-cyan-50 border-cyan-900/50' : 'text-gray-900'}`}>
                             <Gift size={24} className="mr-3 text-orange-600"/> My Rewards
                         </h2>
                         
-                        {myRewards.length === 0 ? <p className="text-gray-400 py-10 text-center bg-white rounded-3xl border border-dashed">No rewards yet.</p> :
+                        {myRewards.length === 0 ? <p className={`py-10 text-center rounded-3xl border border-dashed ${isDark ? 'text-cyan-200/80 bg-[#0d4b4b] border-cyan-900/50' : 'text-gray-400 bg-white'}`}>No rewards yet.</p> :
                         myRewards.map(r => {
                             // CALCULATE CLAIMS
                             const claims = redemptions.filter(red => red.reward_id === r.id);
@@ -825,20 +836,20 @@ useEffect(() => {
 
                             const isRejected = r.status === 'rejected';
                             return (
-                                <div key={r.id} className={`bg-white rounded-3xl border shadow-sm overflow-hidden transition-all hover:shadow-md ${isRejected ? 'border-red-200' : 'border-gray-100'}`}>
+                                <div key={r.id} className={`rounded-3xl border shadow-sm overflow-hidden transition-all hover:shadow-md ${isRejected ? 'border-red-200' : (isDark ? 'border-cyan-900/50' : 'border-gray-100')} ${isDark ? 'bg-[#0d4b4b]' : 'bg-white'}`}>
                                     <div className="p-5 flex justify-between items-center">
                                         <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-2xl border shadow-sm overflow-hidden bg-gray-100 flex-shrink-0">
+                                        <div className={`w-16 h-16 rounded-2xl border shadow-sm overflow-hidden flex-shrink-0 ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50' : 'bg-gray-100'}`}>
                                             {r.image ? (
                                           <img src={r.image} className="w-full h-full object-cover" alt={r.title} />
                                             ) : (
-                               <div className="w-full h-full flex items-center justify-center text-gray-400">
+                               <div className={`w-full h-full flex items-center justify-center ${isDark ? 'text-cyan-200/50' : 'text-gray-400'}`}>
                                           <Gift size={24} />
                            </div>
                                                       )}
                                             </div>
                                             <div>
-                                                <p className="font-bold text-gray-900 leading-tight">{r.title}</p>
+                                                <p className={`font-bold leading-tight ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>{r.title}</p>
                                                 <div className="mt-1 flex items-center gap-3">
                                                     {r.status === 'active' && (
                                                         <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black border border-emerald-100">ACTIVE</span>
@@ -892,16 +903,16 @@ useEffect(() => {
 
                                     {/* EXPANDED CLAIM LIST */}
                                 {isExpanded && (
-                                 <div className="bg-orange-50/50 p-4 border-t border-orange-100 animate-in slide-in-from-top-2 duration-200">
-                                 <h4 className="text-xs font-bold text-orange-800 uppercase mb-2 ml-1">Recent Claims</h4>
+                                 <div className={`p-4 border-t animate-in slide-in-from-top-2 duration-200 ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50' : 'bg-orange-50/50 border-orange-100'}`}>
+                                 <h4 className={`text-xs font-bold uppercase mb-2 ml-1 ${isDark ? 'text-cyan-200/90' : 'text-orange-800'}`}>Recent Claims</h4>
                                  {claims.length === 0 ? (
-                                    <p className="text-xs text-gray-500 italic ml-1">No claims yet.</p>
+                                    <p className={`text-xs italic ml-1 ${isDark ? 'text-cyan-200/70' : 'text-gray-500'}`}>No claims yet.</p>
                                           ) : (
                                             <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
                             {claims.map(claim => (
-                                 <div key={claim.id} className="flex justify-between items-center bg-white p-2 rounded-lg border border-orange-100 shadow-sm">
+                                 <div key={claim.id} className={`flex justify-between items-center p-2 rounded-lg border shadow-sm ${isDark ? 'bg-[#0d4b4b] border-cyan-900/50' : 'bg-white border-orange-100'}`}>
                                     <div className="flex flex-col">
-                                   <span className="text-xs font-bold text-gray-700">
+                                   <span className={`text-xs font-bold ${isDark ? 'text-cyan-50' : 'text-gray-700'}`}>
                                 {/* This uses the name joined from the profiles table in Context */}
                                 {claim.profiles?.full_name || 'Adventurer'}
                                  </span>
@@ -913,7 +924,7 @@ useEffect(() => {
                                    {/* Updated Code Badge styling */}
                                    <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded border ${
                                         claim.status === 'verified' 
-                                      ? 'text-gray-400 bg-gray-50 border-gray-100' 
+                                      ? (isDark ? 'text-cyan-200/60 bg-[#0a3a3a] border-cyan-900/50' : 'text-gray-400 bg-gray-50 border-gray-100')
                                        : 'text-orange-600 bg-orange-50 border-orange-200'
                                         }`}>
                                        {claim.redemption_code}

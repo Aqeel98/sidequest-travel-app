@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react'; // Added useEffect here
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { HelmetProvider } from 'react-helmet-async';
 import { SideQuestProvider, useSideQuest } from './context/SideQuestContext';
+import { AppPreferencesProvider, useAppPreferences } from './context/AppPreferencesContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
+import HomeFooter from './components/HomeFooter';
 import { Compass, CheckCircle, AlertCircle, Info } from 'lucide-react'; 
 import { Analytics } from "@vercel/analytics/react";
 
@@ -39,12 +41,13 @@ import Admin from './pages/Admin';
 import MapPage from './pages/MapPage';
 import Rewards from './pages/Rewards';
 import Profile from './pages/Profile';
-import PartnerDashboard from './pages/PartnerDashboard'; 
+import PartnerDashboard from './pages/PartnerDashboard';
 import Emergency from './pages/Emergency';
-import HowItWorks from './pages/HowItWorks'; 
-import InstallBanner from './components/InstallBanner';
+import HowItWorks from './pages/HowItWorks';
 import UpdatePrompt from './components/UpdatePrompt';
 import Quiz from './pages/Quiz';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 //import HuntDashboard from './pages/HuntDashboard';
 //import HuntStop from './pages/HuntStop';
 //import Leaderboard from './pages/Leaderboard';
@@ -122,6 +125,9 @@ const Toast = () => {
 // --- MAIN LAYOUT WRAPPER ---
 const MainLayout = () => {
   const { isLoading, currentUser } = useSideQuest();
+  const { theme } = useAppPreferences();
+  const location = useLocation();
+  const hideFooter = location.pathname === '/map';
 
   useEffect(() => {
       if (import.meta.env.PROD) {
@@ -161,13 +167,14 @@ const MainLayout = () => {
   if (isLoading) return <LoadingScreen />;
 
   return (
-      <div className="min-h-screen bg-gray-50 pt-20 font-sans text-gray-900">
+      <div className={`min-h-screen pt-20 font-sans ${theme === 'dark' ? 'bg-[#062f2f] text-cyan-50' : 'bg-gray-50 text-gray-900'}`}>
           <Navbar />
-          <InstallBanner />
+          {/* Install prompt hidden while kill switch is active */}
           <UpdatePrompt />
           <Toast />
           <AuthModal />
           <Outlet />
+          {!hideFooter && <HomeFooter />}
       </div>
   );
 };
@@ -185,28 +192,32 @@ export default function App() {
   return (
     <HelmetProvider>
       <SideQuestProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-            <Route index element={<Home />} />
-            <Route path="map" element={<MapPage />} />
-            <Route path="how-it-works" element={<HowItWorks />} />
-            <Route path="quest/:id" element={<QuestDetails />} />
-            <Route path="my-quests" element={<MyQuests />} />
-            <Route path="rewards" element={<Rewards />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="partner" element={<PartnerDashboard />} />
-            <Route path="admin" element={<Admin />} />
-            <Route path="emergency" element={<Emergency />} />
-            <Route path="quiz" element={<Quiz />} />
-            {/* <Route path="hunt" element={<HuntDashboard />} /> */}
+        <AppPreferencesProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<MainLayout />}>
+              <Route index element={<Home />} />
+              <Route path="map" element={<MapPage />} />
+              <Route path="how-it-works" element={<HowItWorks />} />
+              <Route path="quest/:id" element={<QuestDetails />} />
+              <Route path="my-quests" element={<MyQuests />} />
+              <Route path="rewards" element={<Rewards />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="partner" element={<PartnerDashboard />} />
+              <Route path="admin" element={<Admin />} />
+              <Route path="emergency" element={<Emergency />} />
+              <Route path="quiz" element={<Quiz />} />
+              <Route path="privacy" element={<Privacy />} />
+              <Route path="terms" element={<Terms />} />
+              {/* <Route path="hunt" element={<HuntDashboard />} /> */}
 {/* <Route path="hunt/:stopId" element={<HuntStop />} /> */}
 {/* <Route path="leaderboard" element={<Leaderboard />} /> */}
 {/* <Route path="plan-trip" element={<TravelAgency />} /> */}
 {/* <Route path="my-journey" element={<MyJourney />} /> */}
-            </Route>
-          </Routes>
-        </BrowserRouter>
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AppPreferencesProvider>
         <Analytics />
         <SpeedInsights />
       </SideQuestProvider>

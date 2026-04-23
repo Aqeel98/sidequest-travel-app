@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import { ExternalLink } from 'lucide-react';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 import "leaflet/dist/leaflet.css";
 
 // --- LEAFLET ICON FIXES (Required for Vite/Webpack) ---
@@ -115,6 +116,8 @@ function RecenterMap({ location }) {
 
 // --- MAIN COMPONENT ---
 export function MapView({ quests, questProgress, currentUser, onSelectQuest, setShowClosest, userLocation, onManualLocate, isLocating }) { 
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
   
   const mapCenter = userLocation || [7.8731, 80.7718]; // Default Center of Sri Lanka
 
@@ -129,10 +132,13 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
       
       {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
       {/* --- FIX: MOBILE FLOATING BUTTON --- */}
-   <div className="absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-[16rem] md:right-auto z-[1100] pointer-events-none">
+   <div className="absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-[16rem] md:right-auto z-[900] pointer-events-none">
     <button
-       className="pointer-events-auto w-44 sm:w-52 flex items-center justify-center bg-white/90 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
-       style={{ color: '#107870' }}
+       className={`pointer-events-auto w-44 sm:w-52 flex items-center justify-center backdrop-blur-md px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:scale-105 active:scale-95 transition-all duration-300 ${
+        isDark
+          ? 'bg-[#0d4b4b]/95 border border-cyan-900/60 text-cyan-50 hover:bg-[#0f5c5c]'
+          : 'bg-white/90 border border-white/20 text-[#107870] hover:bg-white'
+       }`}
        onClick={(e) => {
           e.stopPropagation(); 
           if (userLocation) { setShowClosest(true); } else { onManualLocate(); }
@@ -167,7 +173,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
           <Marker position={userLocation} icon={createAvatarIcon()}>
             <Popup>
               <div className="font-bold text-red-500 text-center">Current Location</div>
-              <div className="text-xs text-center text-gray-500 mt-1">lat: {userLocation[0].toFixed(4)}, lng: {userLocation[1].toFixed(4)}</div>
+              <div className={`text-xs text-center mt-1 ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>lat: {userLocation[0].toFixed(4)}, lng: {userLocation[1].toFixed(4)}</div>
             </Popup>
           </Marker>
         )}
@@ -188,36 +194,27 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                 <div className="p-1 flex flex-col items-start text-left">
                   
                   {/* Category & XP Badge */}
-                  <div className="flex justify-between items-center w-full mb-2 pb-2 border-b border-gray-100">
-                    <span className="bg-brand-100 text-brand-700 px-2 py-1 rounded text-[10px] font-bold uppercase whitespace-nowrap">
+                  <div className={`flex justify-between items-center w-full mb-2 pb-2 border-b ${isDark ? 'border-cyan-900/60' : 'border-gray-100'}`}>
+                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase whitespace-nowrap ${isDark ? 'bg-[#0f5c5c] text-cyan-100 border border-cyan-800/60' : 'bg-brand-100 text-brand-700'}`}>
                       {quest.category}
                     </span>
-                    <span className="text-sm font-extrabold text-brand-600 ml-2">
+                    <span className={`text-sm font-extrabold ml-2 ${isDark ? 'text-cyan-100' : 'text-brand-600'}`}>
                       ⭐ {quest.xp_value} XP
                     </span>
                   </div>
 
                   {/* Title & Address */}
-                  <h3 className="font-bold text-lg mb-1 text-gray-900 leading-tight">
+                  <h3 className={`font-bold text-lg mb-1 leading-tight ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                     {quest.title}
                   </h3>
-                  <div className="text-xs text-gray-500 mb-3">
+                  <div className={`text-xs mb-3 ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>
                     {quest.location_address}
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className={`text-xs font-bold mb-3 px-2 py-1 rounded-full ${
-                    status === 'approved' ? 'text-emerald-600 bg-emerald-50' : 
-                    status === 'in_progress' ? 'text-blue-600 bg-blue-50' : 
-                    'text-brand-600 bg-brand-50'
-                  }`}>
-                     {status.replace('_', ' ').toUpperCase()} 
                   </div>
 
                   {/* Main Action Button */}
                   <button
                       onClick={() => onSelectQuest(quest)}
-                      className="mt-2 w-full bg-brand-500 text-white px-3 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center hover:bg-brand-600 transition-colors shadow-sm"
+                      className={`mt-2 w-full text-white px-3 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center transition-colors shadow-sm ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f] border border-cyan-700' : 'bg-brand-500 hover:bg-brand-600'}`}
                     >
                       View Quest Details →
                     </button>
@@ -228,7 +225,7 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
                         e.stopPropagation(); 
                         window.open(`https://www.google.com/maps/dir/?api=1&destination=${quest.lat},${quest.lng}`, '_blank');
                       }}
-                      className="w-full mt-2 bg-blue-50 text-blue-600 px-3 py-2 rounded-xl text-sm font-bold flex items-center justify-center hover:bg-blue-100 transition-colors border border-blue-200 shadow-sm"
+                      className={`w-full mt-2 px-3 py-2 rounded-xl text-sm font-bold flex items-center justify-center transition-colors border shadow-sm ${isDark ? 'bg-[#0a3a3a] text-cyan-100 hover:bg-[#0f5c5c] border-cyan-900/60' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200'}`}
                     >
                       <ExternalLink size={14} className="mr-2" /> Open in Google Maps
                   </button>

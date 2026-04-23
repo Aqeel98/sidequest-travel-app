@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Lock, Eye, EyeOff, Mail, ArrowLeft } from 'lucide-react';
 import { useSideQuest } from '../context/SideQuestContext';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 import { supabase } from '../supabaseClient';
 import { validatePassword } from '../utils/security';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 
 const AuthModal = () => {
   const { showAuthModal, setShowAuthModal, logout, login, signup, showToast  } = useSideQuest();
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
 
   // --- INTERNAL STATE ---
   const [mode, setMode] = useState('login');
@@ -104,10 +107,10 @@ const [mfaFactorId, setMfaFactorId] = useState('');
   return (
     // FIX: z-[1200] ensures this sits on top of Navbar (1100) and Map (800)
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1200] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md relative shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className={`rounded-2xl w-full max-w-md relative shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 ${isDark ? 'bg-[#0d4b4b] border border-cyan-900/60' : 'bg-white'}`}>
 
         {/* Header */}
-        <div className="bg-brand-600 p-6 text-center relative">
+        <div className={`p-6 text-center relative ${isDark ? 'bg-[#0f5c5c]' : 'bg-brand-600'}`}>
         <button
           onClick={async () => {
         if (mode === 'mfa_challenge') {
@@ -133,18 +136,18 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                 </p>
         </div>
 
-        <div className="p-8">
+        <div className={`p-8 ${isDark ? 'text-cyan-50' : ''}`}>
             <form onSubmit={handleSubmit} className="space-y-4">
 
             {mode === 'mfa_challenge' && (
         <div className="space-y-4 animate-in fade-in zoom-in">
-            <div className="bg-brand-50 p-4 rounded-xl text-center">
-                <p className="text-sm font-bold text-brand-700">Authenticator Code Required</p>
+            <div className={`p-4 rounded-xl text-center ${isDark ? 'bg-[#0a3a3a] border border-cyan-900/50' : 'bg-brand-50'}`}>
+                <p className={`text-sm font-bold ${isDark ? 'text-cyan-100' : 'text-brand-700'}`}>Authenticator Code Required</p>
             </div>
             <input
                 type="text"
                 maxLength="6"
-                className="w-full border-2 border-gray-200 p-4 rounded-xl text-center text-3xl font-black tracking-[0.5em] focus:border-brand-500 outline-none"
+                className={`w-full border-2 p-4 rounded-xl text-center text-3xl font-black tracking-[0.5em] outline-none ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 focus:border-cyan-500' : 'border-gray-200 focus:border-brand-500'}`}
                 placeholder="000000"
                 value={mfaCode}
                 onChange={e => setMfaCode(e.target.value)}
@@ -155,9 +158,9 @@ const [mfaFactorId, setMfaFactorId] = useState('');
 
                 {mode === 'signup' && (
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Adventurer Name</label>
+                        <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Adventurer Name</label>
                         <input
-                            className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-brand-500 focus:ring-0 outline-none transition-all font-medium"
+                            className={`w-full border-2 p-3 rounded-xl focus:ring-0 outline-none transition-all font-medium ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'border-gray-200 focus:border-brand-500'}`}
                             placeholder="Your Name"
                             value={name}
                             onChange={e => setName(e.target.value)}
@@ -167,10 +170,10 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                 )}
                 {mode !== 'mfa_challenge' && (
                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Email</label>
+                    <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Email</label>
                     <input
                         type="email"
-                        className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-brand-500 focus:ring-0 outline-none transition-all"
+                        className={`w-full border-2 p-3 rounded-xl focus:ring-0 outline-none transition-all ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'border-gray-200 focus:border-brand-500'}`}
                         placeholder="you@example.com"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
@@ -182,12 +185,12 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                 {/* 1. HIDE PASSWORD IF RESETTING */}
                 {mode !== 'reset' && mode !== 'mfa_challenge' && (
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Password</label>
+                        <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Password</label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                            <Lock className={`absolute left-3 top-3.5 ${isDark ? 'text-cyan-300/70' : 'text-gray-400'}`} size={18} />
                             <input
                                 type={showPassword ? "text" : "password"}
-                                className="w-full border-2 border-gray-200 p-3 pl-10 pr-10 rounded-xl focus:border-brand-500 focus:ring-0 outline-none transition-all"
+                                className={`w-full border-2 p-3 pl-10 pr-10 rounded-xl focus:ring-0 outline-none transition-all ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'border-gray-200 focus:border-brand-500'}`}
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
@@ -196,7 +199,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-3.5 text-gray-400 hover:text-brand-600 focus:outline-none"
+                                className={`absolute right-3 top-3.5 focus:outline-none ${isDark ? 'text-cyan-300/70 hover:text-cyan-100' : 'text-gray-400 hover:text-brand-600'}`}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
@@ -210,7 +213,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                         <button
                             type="button"
                             onClick={() => setMode('reset')}
-                            className="text-xs font-bold text-brand-600 hover:text-brand-700"
+                            className={`text-xs font-bold ${isDark ? 'text-cyan-200 hover:text-cyan-50' : 'text-brand-600 hover:text-brand-700'}`}
                         >
                             Forgot Password?
                         </button>
@@ -224,7 +227,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                                 type="button"
                                 key={r}
                                 onClick={() => { setRole(r); setInviteCode(''); }}
-                                className={`p-2 rounded-xl border-2 text-sm font-bold transition-all ${role === r ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-100 hover:border-gray-200 text-gray-400'}`}
+                                className={`p-2 rounded-xl border-2 text-sm font-bold transition-all ${role === r ? (isDark ? 'border-cyan-600 bg-[#0f5c5c] text-cyan-50' : 'border-brand-500 bg-brand-50 text-brand-700') : (isDark ? 'border-cyan-900/50 bg-[#0a3a3a] text-cyan-200/70 hover:border-cyan-700' : 'border-gray-100 hover:border-gray-200 text-gray-400')}`}
                              >
                                 {r}
                              </button>
@@ -234,16 +237,16 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                 
                 {mode === 'signup' && role === 'Partner' && (
                     <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Invite Code</label>
+                        <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Invite Code</label>
                         <input
                             type="text"
                             maxLength="6"
                             placeholder="SQ1111"
                             value={inviteCode}
                             onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                            className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-brand-500 outline-none font-mono font-bold tracking-widest text-center uppercase"
+                            className={`w-full border-2 p-3 rounded-xl outline-none font-mono font-bold tracking-widest text-center uppercase ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 focus:border-cyan-500' : 'border-gray-200 focus:border-brand-500'}`}
                         />
-                        <p className="text-xs text-gray-400 mt-1">6-character code provided by the Game Masters.</p>
+                        <p className={`text-xs mt-1 ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`}>6-character code provided by the Game Masters.</p>
                         <button
                             type="button"
                             onClick={() => { setShowAuthModal(false); navigate('/how-it-works?tab=partner'); }}
@@ -259,8 +262,8 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                     <button
                     type="submit"
                     disabled={loading || (mode === 'signup' && role === 'Partner' && inviteCode.length !== 6)}
-                    className={`w-full text-white py-3.5 rounded-xl font-bold text-lg transition-all mt-4 shadow-lg flex items-center justify-center ${
-                        loading ? 'bg-brand-400 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700 active:scale-95 shadow-brand-200'
+                    className={`w-full text-white py-3.5 rounded-xl font-bold text-lg transition-all mt-4 flex items-center justify-center ${
+                        loading ? 'bg-brand-400 cursor-not-allowed' : `${isDark ? 'bg-brand-600 hover:bg-brand-700 active:scale-95' : 'bg-brand-600 hover:bg-brand-700 active:scale-95 shadow-lg shadow-brand-200'}`
                     }`}
                 >
                     {loading ? (
@@ -281,7 +284,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                              </form>
 
             {/* 3. UPDATE FOOTER FOR RESET MODE */}
-            <div className="mt-6 text-center text-sm text-gray-600 font-medium">
+            <div className={`mt-6 text-center text-sm font-medium ${isDark ? 'text-cyan-200/80' : 'text-gray-600'}`}>
             {(mode === 'reset' || mode === 'mfa_challenge') ? (
              <button
              type="button"
@@ -291,7 +294,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                  }
                  setMode('login');
              }}
-             className="flex items-center justify-center w-full text-gray-500 hover:text-brand-600"
+             className={`flex items-center justify-center w-full ${isDark ? 'text-cyan-200/80 hover:text-cyan-50' : 'text-gray-500 hover:text-brand-600'}`}
          >
              <ArrowLeft size={16} className="mr-1" /> Back to Login
          </button>
@@ -301,7 +304,7 @@ const [mfaFactorId, setMfaFactorId] = useState('');
                         <button
                             type="button"
                             onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                            className="text-brand-600 font-bold hover:underline"
+                            className={`font-bold hover:underline ${isDark ? 'text-cyan-200 hover:text-cyan-50' : 'text-brand-600'}`}
                             disabled={loading}
                         >
                             {mode === 'login' ? 'Create Account' : 'Log in'}

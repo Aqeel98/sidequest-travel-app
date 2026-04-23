@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { HeartPulse, Phone, MapPin, Shield, Siren, AlertCircle, Navigation, Search, Crosshair, Loader2 } from 'lucide-react';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 // --- DATA: ALL 25 DISTRICTS + YOUR REGIONAL NOTES ---
 const HOSPITAL_DATA = [
@@ -81,6 +82,8 @@ const HOSPITAL_DATA = [
 ];
 
 const Emergency = () => {
+    const { theme } = useAppPreferences();
+    const isDark = theme === 'dark';
     useEffect(() => {
         window.scrollTo(0, 0);
       }, []);
@@ -143,17 +146,17 @@ const Emergency = () => {
     }, [searchQuery, userLoc]);
 
     return (
-        <div className="min-h-screen bg-[#E6D5B8] pb-20">
+        <div className={`min-h-screen pb-20 ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
             <div className="max-w-4xl mx-auto px-4 py-8 pb-32 min-h-screen">
             
-            <h1 className="text-3xl font-black mb-2 text-gray-900 flex items-center tracking-tight">
+            <h1 className={`text-3xl font-black mb-2 flex items-center tracking-tight ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>
                 <HeartPulse className="text-red-600 mr-3" size={32} /> Safety & Emergency
             </h1>
-            <p className="text-gray-500 mb-8 font-medium italic">Crucial contacts for all 25 districts across the island.</p>
+            <p className={`mb-8 font-medium italic ${isDark ? 'text-cyan-100/80' : 'text-gray-500'}`}>Crucial contacts for all 25 districts across the island.</p>
 
             {/* --- TOP ACTIONS: 1990 & GPS --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <a href="tel:1990" className="bg-red-600 p-6 rounded-3xl text-white flex items-center justify-between shadow-xl shadow-red-300/60 active:scale-95 transition-all">
+                <a href="tel:1990" className={`bg-red-600 p-6 rounded-3xl text-white flex items-center justify-between active:scale-95 transition-all ${isDark ? 'shadow-[0_0_14px_rgba(248,113,113,0.18)]' : 'shadow-xl shadow-red-300/60'}`}>
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Primary Medical Help</p>
                         <h2 className="text-2xl font-black">Call Suwa Seriya 1990</h2>
@@ -161,7 +164,7 @@ const Emergency = () => {
                     <Siren size={32} className="opacity-50" />
                 </a>
 
-                <button onClick={findClosest} disabled={isLocating} className="bg-brand-600 p-6 rounded-3xl text-white flex items-center justify-between shadow-xl shadow-brand-200 active:scale-95 transition-all">
+                <button onClick={findClosest} disabled={isLocating} className={`bg-brand-600 p-6 rounded-3xl text-white flex items-center justify-between active:scale-95 transition-all ${isDark ? 'shadow-[0_0_14px_rgba(45,212,191,0.20)]' : 'shadow-xl shadow-brand-200'}`}>
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Location Based Help</p>
                         <h2 className="text-2xl font-black">{isLocating ? 'Locating...' : 'Find Nearest Hospital'}</h2>
@@ -173,10 +176,10 @@ const Emergency = () => {
             {/* --- QUICK CONTACT GRID --- */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {emergencyContacts.map(c => (
-                    <a key={c.name} href={`tel:${c.full || c.number}`} className="bg-white p-4 rounded-2xl shadow-sm border-b-4 border-red-500 flex flex-col items-center justify-center text-center active:scale-95 transition-all">
+                    <a key={c.name} href={`tel:${c.full || c.number}`} className={`p-4 rounded-2xl shadow-sm border-b-4 border-red-500 flex flex-col items-center justify-center text-center active:scale-95 transition-all ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white'}`}>
                         <div className={c.color}>{c.icon}</div>
-                        <span className="text-[10px] font-black text-gray-400 mt-2 uppercase">{c.name}</span>
-                        <span className="text-lg font-black text-gray-900">{c.number}</span>
+                        <span className={`text-[10px] font-black mt-2 uppercase ${isDark ? 'text-cyan-100/70' : 'text-gray-400'}`}>{c.name}</span>
+                        <span className={`text-lg font-black ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>{c.number}</span>
                     </a>
                 ))}
             </div>
@@ -189,7 +192,7 @@ const Emergency = () => {
                 <input 
                     type="text"
                     placeholder="Search by District or City (e.g. Galle, Ella)..."
-                    className="w-full pl-12 pr-4 py-4 bg-white border-0 rounded-2xl shadow-sm focus:ring-4 focus:ring-brand-500/10 outline-none font-medium"
+                    className={`w-full pl-12 pr-4 py-4 border-0 rounded-2xl shadow-sm focus:ring-4 focus:ring-brand-500/10 outline-none font-medium ${isDark ? 'bg-[#0d4b4b] text-cyan-50' : 'bg-white'}`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -200,11 +203,11 @@ const Emergency = () => {
                 {displayHospitals.map(h => {
                     const distance = userLoc ? calculateDistance(userLoc.lat, userLoc.lng, h.lat, h.lng).toFixed(1) : null;
                     return (
-                        <div key={h.name} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                        <div key={h.name} className={`p-5 rounded-3xl border shadow-sm transition-all hover:shadow-md ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-gray-100'}`}>
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-lg text-gray-900">{h.name}</h3>
+                                        <h3 className={`font-bold text-lg ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>{h.name}</h3>
                                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${h.type === 'Public' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
                                             {h.type}
                                         </span>
@@ -212,7 +215,7 @@ const Emergency = () => {
                                     <p className="text-xs font-black text-brand-600 uppercase tracking-widest mt-1">
                                         {h.district} District {distance && `• ${distance} km away`}
                                     </p>
-                                    <p className="text-sm text-gray-500 mt-2 italic font-medium">"{h.note}"</p>
+                                    <p className={`text-sm mt-2 italic font-medium ${isDark ? 'text-cyan-100/80' : 'text-gray-500'}`}>"{h.note}"</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
@@ -223,7 +226,7 @@ const Emergency = () => {
                                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.name + " " + h.district + " Sri Lanka")}`} 
                                      target="_blank" 
                                      rel="noreferrer" 
-                                     className="flex items-center justify-center gap-2 bg-gray-900 text-white py-3 rounded-2xl font-black text-sm active:scale-95 transition-all"
+                                     className={`flex items-center justify-center gap-2 py-3 rounded-2xl font-black text-sm active:scale-95 transition-all ${isDark ? 'bg-cyan-900 text-cyan-50' : 'bg-gray-900 text-white'}`}
                                         >
                                  <Navigation size={16} /> Directions
                                 </a>

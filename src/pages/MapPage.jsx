@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Camera, CheckCircle } from 'lucide-react';
 import { MapView } from '../components/MapView';
 import { useSideQuest } from '../context/SideQuestContext';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 import ClosestQuestsOverlay from '../components/ClosestQuestsOverlay';
 import SEO from '../components/SEO';
 
@@ -35,6 +36,8 @@ const CATEGORY_CONFIG = {
 
 const MapPage = () => {
   const { quests, questProgress, currentUser, setShowAuthModal, showToast, optimizeImage } = useSideQuest();
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
 
   const [showClosest, setShowClosest] = useState(false);
@@ -218,7 +221,7 @@ const MapPage = () => {
       />
 
       {/* --- SUGGEST A QUEST BUTTON --- */}
-      <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-4 z-[1100]">
+      <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-4 z-[900]">
         <button
           onClick={() => {
             if (!currentUser) { setShowAuthModal(true); return; }
@@ -228,8 +231,11 @@ const MapPage = () => {
             setSuggestImage(null);
             setSuggestPreview(null);
           }}
-          className="w-44 sm:w-52 flex items-center justify-center bg-white/90 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300"
-          style={{ color: '#107870' }}
+          className={`w-44 sm:w-52 flex items-center justify-center backdrop-blur-md px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:scale-105 active:scale-95 transition-all duration-300 ${
+            isDark
+              ? 'bg-[#0d4b4b]/95 border border-cyan-900/60 text-cyan-50 hover:bg-[#0f5c5c]'
+              : 'bg-white/90 border border-white/20 text-[#107870] hover:bg-white'
+          }`}
         >
           <span className="font-bold text-sm tracking-tight">Suggest a Quest</span>
         </button>
@@ -238,18 +244,20 @@ const MapPage = () => {
       {/* --- SUGGEST A QUEST MODAL --- */}
       {showSuggestModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1200] flex items-end md:items-center justify-center p-4">
-          <div className="bg-white rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl animate-in slide-in-from-bottom-4 md:zoom-in duration-300">
+          <div className={`rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl animate-in slide-in-from-bottom-4 md:zoom-in duration-300 ${
+            isDark ? 'bg-[#0d4b4b] border border-cyan-900/60 text-cyan-50' : 'bg-white'
+          }`}>
 
             {/* Header */}
-            <div className="p-6 border-b border-gray-100">
+            <div className={`p-6 border-b ${isDark ? 'border-cyan-900/60' : 'border-gray-100'}`}>
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-black text-gray-900">Suggest a Quest</h2>
-                  <p className="text-xs text-gray-400 mt-1 font-medium">Help grow the SideQuest map. Earn 50 XP if approved.</p>
+                  <h2 className={`text-xl font-black ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Suggest a Quest</h2>
+                  <p className={`text-xs mt-1 font-medium ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`}>Help grow the SideQuest map. Earn 50 XP if approved.</p>
                 </div>
                 <button
                   onClick={() => setShowSuggestModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
+                  className={`transition-colors p-2 rounded-full ${isDark ? 'text-cyan-200/80 hover:text-cyan-50 hover:bg-[#0f5c5c]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
                 >
                   <X size={20} />
                 </button>
@@ -259,8 +267,8 @@ const MapPage = () => {
             {suggestSuccess ? (
               <div className="p-10 text-center">
                 <div className="mb-4 flex justify-center"><CheckCircle size={56} className="text-emerald-500" /></div>
-                <h3 className="text-xl font-black text-gray-900 mb-2">Quest Suggestion Submitted</h3>
-                <p className="text-gray-500 text-sm mb-6">Game Masters will review your suggestion. You'll earn 50 XP if it gets approved.</p>
+                <h3 className={`text-xl font-black mb-2 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Quest Suggestion Submitted</h3>
+                <p className={`text-sm mb-6 ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Game Masters will review your suggestion. You'll earn 50 XP if it gets approved.</p>
                 <button
                   onClick={() => setShowSuggestModal(false)}
                   className="w-full text-white py-3 rounded-2xl font-bold transition-all"
@@ -274,31 +282,39 @@ const MapPage = () => {
 
                 {/* Quest Name */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Quest Name *</label>
+                  <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Quest Name *</label>
                   <input
                     type="text"
                     value={suggestForm.quest_name}
                     onChange={e => setSuggestForm(p => ({ ...p, quest_name: e.target.value }))}
                     placeholder="e.g. Hidden waterfall near Ella"
-                    className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none transition-all text-sm"
+                    className={`w-full border-2 p-3 rounded-xl outline-none transition-all text-sm ${
+                      isDark
+                        ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500'
+                        : 'border-gray-100 focus:border-brand-500'
+                    }`}
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Description *</label>
+                  <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Description *</label>
                   <textarea
                     value={suggestForm.description}
                     onChange={e => setSuggestForm(p => ({ ...p, description: e.target.value }))}
                     placeholder="Describe the location and why it would make a great quest..."
-                    className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none transition-all text-sm resize-none"
+                    className={`w-full border-2 p-3 rounded-xl outline-none transition-all text-sm resize-none ${
+                      isDark
+                        ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500'
+                        : 'border-gray-100 focus:border-brand-500'
+                    }`}
                     rows="3"
                   />
                 </div>
 
                 {/* Google Maps Link */}
                 <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">
+                <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>
                  Google Maps Link
                </label>
     
@@ -308,31 +324,39 @@ const MapPage = () => {
             value={suggestForm.maps_link}
             onChange={e => setSuggestForm(p => ({ ...p, maps_link: e.target.value }))}
             placeholder="Paste Link here..."
-            className="flex-1 border-2 border-gray-100 p-3 rounded-xl focus:border-brand-500 outline-none transition-all text-sm"
+            className={`flex-1 border-2 p-3 rounded-xl outline-none transition-all text-sm ${
+              isDark
+                ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500'
+                : 'border-gray-100 focus:border-brand-500'
+            }`}
             />
             <button 
             type="button"
             onClick={() => window.open('https://www.google.com/maps', '_blank')}
-            className="bg-gray-50 border-2 border-gray-100 text-gray-600 px-3 py-2 rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors shadow-sm whitespace-nowrap"
+            className={`border-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm whitespace-nowrap ${
+              isDark
+                ? 'bg-[#0f5c5c] border-cyan-700 text-cyan-50 hover:bg-[#125f5f]'
+                : 'bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100'
+            }`}
               >
             Open Maps
               </button>
            </div>
-             <p className="text-[10px] text-gray-400 mt-2 italic leading-tight">
+             <p className={`text-[10px] mt-2 italic leading-tight ${isDark ? 'text-cyan-200/70' : 'text-gray-400'}`}>
               Click "Open Maps", find the spot, select "Share", and copy the link here.
                   </p>
               </div>
 
                 {/* Photo Upload */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Photo</label>
+                  <label className={`block text-xs font-bold uppercase mb-1 tracking-wider ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Photo</label>
                   <div className="flex items-center gap-4">
                     {suggestPreview ? (
-                      <img src={suggestPreview} alt="Preview" className="w-16 h-16 object-cover rounded-xl border-2 border-gray-100" />
+                      <img src={suggestPreview} alt="Preview" className={`w-16 h-16 object-cover rounded-xl border-2 ${isDark ? 'border-cyan-900/50' : 'border-gray-100'}`} />
                     ) : (
-                      <div className="w-16 h-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300"><Camera size={24} /></div>
+                      <div className={`w-16 h-16 rounded-xl border-2 border-dashed flex items-center justify-center ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-200/40' : 'bg-gray-50 border-gray-200 text-gray-300'}`}><Camera size={24} /></div>
                     )}
-                    <label className="cursor-pointer bg-gray-50 border-2 border-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all">
+                    <label className={`cursor-pointer border-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-100 hover:bg-[#0f5c5c]' : 'bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100'}`}>
                       {suggestImage ? 'Change Photo' : 'Upload Photo'}
                       <input
                         type="file"
