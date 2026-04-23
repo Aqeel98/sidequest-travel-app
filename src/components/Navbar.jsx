@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogOut, Compass, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Zap, Gift, Trophy, Globe, Sparkles } from 'lucide-react'; 
+import { Menu, X, LogOut, Compass, HeartPulse, ChevronDown, PlusCircle, LayoutDashboard, CheckCircle, Zap, Gift, Trophy, Globe } from 'lucide-react'; 
 import { useSideQuest } from '../context/SideQuestContext';
 
 const Navbar = () => {
@@ -50,8 +50,6 @@ const Navbar = () => {
           <Link to="/" className={isActive('/')}>Quests</Link>
           <Link to="/map" className={isActive('/map')}>Map</Link>
 
-          {currentUser?.role === 'Admin' && (
-  <Link to="/plan-trip" className={isActive('/plan-trip')}>Travel (Dev)</Link> )}
           <Link to="/quiz" className={isActive('/quiz')}>Quiz</Link> 
           <Link to="/how-it-works" className={isActive('/how-it-works')}>Guide</Link>
           {currentUser && (
@@ -168,16 +166,8 @@ const Navbar = () => {
             
             <Link to="/" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Quests</Link>
             <Link to="/map" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>Map</Link>
-            {currentUser?.role === 'Admin' && (
-            <Link 
-              to="/plan-trip" 
-              className="p-3 rounded-lg hover:bg-teal-50 text-[#107870] font-bold flex items-center" 
-              onClick={() => setIsOpen(false)}
-            >
-               <Sparkles size={18} className="mr-2" /> Plan My Trip
-            </Link>)}
-            <Link to="/quiz" className="p-3 rounded-lg hover:bg-brand-50 text-brand-600 font-bold flex items-center" onClick={() => setIsOpen(false)}>
-               <Zap size={18} className="mr-2" fill="currentColor"/> Quiz Game
+            <Link to="/quiz" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>
+               Quiz Game
             </Link>
             <Link to="/how-it-works" className="p-3 rounded-lg hover:bg-gray-50" onClick={() => setIsOpen(false)}>How it Works</Link>
             {currentUser && (
@@ -219,8 +209,8 @@ const Navbar = () => {
             <LayoutDashboard size={18} className="mr-3 text-blue-500"/> My Content
         </Link>
 
-        <Link to="/partner?tab=verify" className="p-3 rounded-lg hover:bg-white flex items-center font-bold text-brand-600" onClick={() => setIsOpen(false)}>
-            <CheckCircle size={18} className="mr-3"/> Verify Traveler Code
+        <Link to="/partner?tab=verify" className="p-3 rounded-lg hover:bg-white flex items-center" onClick={() => setIsOpen(false)}>
+            <CheckCircle size={18} className="mr-3 text-brand-500"/> Verify Traveler Code
         </Link>
     </div>
 )}

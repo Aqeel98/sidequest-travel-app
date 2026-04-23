@@ -187,7 +187,9 @@ const getCategoryColor = (cat) => {
 
   const handleOpenMaps = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${quest.lat},${quest.lng}`;
-    window.open(url, '_blank');
+    // In PWA/mobile, open directions in the current view instead of spawning
+    // a blank intermediate tab before handing off to Google Maps.
+    window.location.assign(url);
   };
 
   const handleAccept = async () => {
