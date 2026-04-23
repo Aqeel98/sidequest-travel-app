@@ -19,7 +19,7 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 };
 
 const CATEGORY_CONFIG = {
-  'All': { color: '#334155' },
+  'All': { color: '#334155', iconFallback: '🗺️' },
   'Exploration': { color: '#854d0e', iconSrc: '/Exploration.webp' },
   'Adventure': { color: '#9a3412', iconSrc: '/Adventure.webp' },
   'Marine Adventure': { color: '#164e63', iconSrc: '/Marine_Adventure.webp' },
@@ -193,6 +193,8 @@ const MapPage = () => {
                       fetchPriority="high"
                       decoding="async"
                     />
+                  ) : config.iconFallback ? (
+                    <span>{config.iconFallback}</span>
                   ) : null}
                 </span>
                 <span className="text-[10px] font-black uppercase tracking-wide">{name}</span>
