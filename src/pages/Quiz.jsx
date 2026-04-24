@@ -203,7 +203,7 @@ useEffect(() => {
     // --- 1. GUEST CHECK (Keep this first) ---
     if (!currentUser) {
         return (
-            <div className={`min-h-screen flex items-center justify-center px-4 text-center relative overflow-hidden ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
+            <div className={`min-h-screen flex items-center justify-center px-4 text-center relative overflow-hidden ${isDark ? 'bg-[#4F452B] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
                     <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
                     <Leaf size={300} className="absolute top-10 -right-10 text-brand-900 opacity-[0.03] rotate-45" />
@@ -217,7 +217,7 @@ useEffect(() => {
                     </div>
                     <h2 className={`text-3xl font-black mb-3 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Locked Quest</h2>
                     <p className={`mb-8 font-medium leading-relaxed ${isDark ? 'text-cyan-100/90' : 'text-gray-600'}`}>Sri Lankan secrets are earned! Login to play the quiz and earn XP.</p>
-                    <button onClick={() => setShowAuthModal(true)} className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg ${isDark ? 'bg-brand-600 hover:bg-brand-700 text-white' : 'bg-brand-600 text-white'}`}>Login to Play</button>
+                    <button onClick={() => setShowAuthModal(true)} className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f] text-white' : 'bg-brand-600 text-white'}`}>Login to Play</button>
                     <button onClick={() => navigate('/')} className={`mt-4 font-bold block w-full text-center ${isDark ? 'text-cyan-200 hover:text-cyan-50' : 'text-gray-400 hover:text-brand-600'}`}>Maybe Later</button>
                 </div>
             </div>
@@ -226,7 +226,7 @@ useEffect(() => {
 
     if (allDone) {
         return (
-            <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-brand-50'}`}>
+            <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#4F452B] text-cyan-50' : 'bg-brand-50'}`}>
                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
                     <Compass size={400} className="absolute -top-20 -left-20 text-brand-900 opacity-[0.03] -rotate-12" />
                 </div>
@@ -237,7 +237,7 @@ useEffect(() => {
                         </div>
                         <h2 className={`text-3xl font-black mb-4 ${isDark ? 'text-cyan-50' : 'text-gray-900'}`}>Quiz Master!</h2>
                         <p className={`mb-8 font-medium ${isDark ? 'text-cyan-100/80' : 'text-gray-600'}`}>You've answered all available questions! Check back soon for more Sri Lankan secrets.</p>
-                        <button onClick={() => navigate('/rewards')} className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg">Go Redeem My XP</button>
+                        <button onClick={() => navigate('/rewards')} className={`w-full text-white py-4 rounded-2xl font-black text-lg shadow-lg ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-brand-600'}`}>Go Redeem My XP</button>
                     </div>
                 </div>
             </div>
@@ -251,7 +251,7 @@ useEffect(() => {
         
         if (activeLevel >= maxDefinedLevel) {
             return (
-                <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
+                <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#4F452B] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
                     <div className={`p-10 rounded-[2.5rem] shadow-2xl max-w-sm border z-10 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-white'}`}>
                         <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <CheckCircle size={40} className="text-emerald-500" />
@@ -262,7 +262,7 @@ useEffect(() => {
                         </p>
                         <button 
                             onClick={() => navigate('/rewards')} 
-                            className={`w-full bg-brand-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg`}
+                            className={`w-full text-white py-4 rounded-2xl font-black text-lg shadow-lg ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-brand-600'}`}
                         >
                             View All Rewards
                         </button>
@@ -272,7 +272,7 @@ useEffect(() => {
         }
         
         return (
-            <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
+            <div className={`min-h-screen flex items-center justify-center px-4 text-center ${isDark ? 'bg-[#4F452B] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
                 <div className={`p-10 rounded-[2.5rem] shadow-2xl max-w-sm border z-10 ${isDark ? 'bg-[#0d4b4b] border-cyan-900/60' : 'bg-white border-white'}`}>
                     <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle size={40} className="text-emerald-500" />
@@ -292,7 +292,7 @@ useEffect(() => {
                             setActiveLevel(nextLevel);
                           window.location.reload();
                          }} 
-                      className={`w-full ${isPromoting ? 'bg-gray-400' : 'bg-brand-600'} text-white py-4 rounded-2xl font-black text-lg shadow-lg`}
+                      className={`w-full ${isPromoting ? 'bg-gray-400' : (isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-brand-600')} text-white py-4 rounded-2xl font-black text-lg shadow-lg`}
                         >
                     {isPromoting ? "Saving XP..." : `Unlock Level ${activeLevel + 1}`}
                     </button>
@@ -302,11 +302,11 @@ useEffect(() => {
              }
 
     if (isLoading || (quizBank.length > 0 && !currentQuestion && !allDone)) {
-        return <div className={`min-h-screen ${isDark ? 'bg-[#062f2f]' : 'bg-[#E6D5B8]'}`} />;
+        return <div className={`min-h-screen ${isDark ? 'bg-[#4F452B]' : 'bg-[#E6D5B8]'}`} />;
     }
 
               return (
-                <div className={`min-h-screen pb-20 pt-10 px-4 relative overflow-hidden ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
+                <div className={`min-h-screen pb-20 pt-10 px-4 relative overflow-hidden ${isDark ? 'bg-[#4F452B] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
 
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
 

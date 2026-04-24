@@ -236,6 +236,47 @@ const createLandingDecor = (seed, config) => {
     remainingGapFill -= 1;
   }
 
+  let remainingBottomFill = config.bottomFillCount || 0;
+  let bottomFillAttempts = 0;
+  const bottomBandStart = typeof config.bottomBandStart === 'number' ? config.bottomBandStart : 0.56;
+  const bottomBandEnd = typeof config.bottomBandEnd === 'number' ? config.bottomBandEnd : 0.8;
+  while (remainingBottomFill > 0 && bottomFillAttempts < (config.bottomFillCount || 0) * 36) {
+    bottomFillAttempts += 1;
+    const size = Math.round(config.minSize + rand() * (config.maxSize - config.minSize));
+    const radius = size / 2;
+    const edgePadding = Math.max(2, radius * 0.25);
+    const src = shuffledSources[sourceIndex % shuffledSources.length];
+    sourceIndex += 1;
+    const family = getIconFamily(src);
+    const testX = edgePadding + rand() * Math.max(1, config.canvasWidth - edgePadding * 2);
+    const bottomStartPx = config.canvasHeight * bottomBandStart;
+    const bottomEndPx = config.canvasHeight * bottomBandEnd;
+    const testY = Math.min(
+      config.canvasHeight - edgePadding,
+      Math.max(edgePadding, bottomStartPx + rand() * Math.max(1, bottomEndPx - bottomStartPx)),
+    );
+    const candidate = { x: testX, y: testY, radius };
+
+    if (!fitsWithoutCollision(candidate)) continue;
+    if (!canUseFamilyHere(candidate, family)) continue;
+
+    items.push({
+      x: testX,
+      y: testY,
+      radius,
+      family,
+      src,
+      top: `${((testY / config.canvasHeight) * 100).toFixed(2)}%`,
+      left: `${((testX / config.canvasWidth) * 100).toFixed(2)}%`,
+      size,
+      rotate: Math.round(-25 + rand() * 50),
+      opacity: Number((config.opacityMin + rand() * (config.opacityMax - config.opacityMin)).toFixed(3)),
+      color: ICON_COLORS[Math.floor(rand() * ICON_COLORS.length)],
+      className: '',
+    });
+    remainingBottomFill -= 1;
+  }
+
   return items;
 };
 
@@ -250,9 +291,12 @@ const LANDING_DECOR_MOBILE = createLandingDecor(20260421, {
   nearRadius: 72,
   opacityMin: 0.3,
   opacityMax: 0.44,
-  topFillCount: 10,
+  topFillCount: 12,
   leftBiasStrength: 7,
-  gapFillCount: 10,
+  gapFillCount: 16,
+  bottomFillCount: 10,
+  bottomBandStart: 0.57,
+  bottomBandEnd: 0.82,
 });
 
 const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
@@ -266,9 +310,12 @@ const LANDING_DECOR_TABLET = createLandingDecor(20260422, {
   nearRadius: 88,
   opacityMin: 0.18,
   opacityMax: 0.28,
-  topFillCount: 6,
+  topFillCount: 7,
   leftBiasStrength: 10,
-  gapFillCount: 8,
+  gapFillCount: 10,
+  bottomFillCount: 6,
+  bottomBandStart: 0.56,
+  bottomBandEnd: 0.76,
 });
 
 const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
@@ -282,9 +329,12 @@ const LANDING_DECOR_DESKTOP = createLandingDecor(20260423, {
   nearRadius: 96,
   opacityMin: 0.22,
   opacityMax: 0.34,
-  topFillCount: 10,
+  topFillCount: 11,
   leftBiasStrength: 12,
-  gapFillCount: 16,
+  gapFillCount: 20,
+  bottomFillCount: 10,
+  bottomBandStart: 0.56,
+  bottomBandEnd: 0.76,
 });
 
 const LandingMaskIcon = React.memo(({ src, top, right, bottom, left, size, rotate, opacity, color, className = '' }) => (
@@ -350,12 +400,13 @@ const Home = () => {
     () => landingDecor
       .filter((icon) => {
         const topPercent = Number.parseFloat(icon.top);
-        return topPercent > 2 && topPercent < 70;
+        const lowerBandMax = viewportWidth < 768 ? 82 : 74;
+        return topPercent > 2 && topPercent < lowerBandMax;
       })
       .map((icon) => (
         <LandingMaskIcon key={`${icon.src}-${icon.top}-${icon.left}`} {...icon} />
       )),
-    [landingDecor],
+    [landingDecor, viewportWidth],
   );
 
   useEffect(() => {
@@ -441,7 +492,7 @@ const Home = () => {
 
   return (
 
-    <div className={`pb-12 min-h-screen relative overflow-hidden ${theme === 'dark' ? 'bg-[#062f2f]' : 'bg-[#E6D5B8]'}`}>
+    <div className={`pb-12 min-h-screen relative overflow-hidden ${theme === 'dark' ? 'bg-[#4F452B]' : 'bg-[#E6D5B8]'}`}>
       <SEO />
 
       {/* --- AESTHETIC HEADER START --- */}
@@ -495,7 +546,7 @@ const Home = () => {
      {/* --- THE EXPANDED BEACH (Stable Version with Ghost Wave) --- */}
 <div className="absolute bottom-0 left-0 w-full z-20 pointer-events-none overflow-hidden">
   {/* 1. TALLER SAND BASE */}
-  <div className={`absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] ${theme === 'dark' ? 'bg-[#062f2f]' : 'bg-[#E6D5B8]'}`}></div>
+  <div className={`absolute bottom-0 left-0 w-full h-[150px] md:h-[250px] lg:h-[320px] ${theme === 'dark' ? 'bg-[#4F452B]' : 'bg-[#E6D5B8]'}`}></div>
 
   <svg
     className="relative -mt-px block w-[210%] h-[150px] md:h-[250px] lg:h-[320px]"
@@ -548,13 +599,13 @@ const Home = () => {
     {/* 1. The Search Input */}
     <div className="relative w-full group">
         <Search
-            className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${theme === 'dark' ? 'text-cyan-200/70 group-focus-within:text-cyan-100' : 'text-gray-400 group-focus-within:text-brand-600'}`}
+            className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${theme === 'dark' ? 'text-[#D8C29B]/80 group-focus-within:text-[#F4E8D0]' : 'text-gray-400 group-focus-within:text-brand-600'}`}
             size={20}
         />
         <input
             type="text"
             placeholder="Search by name or location..."
-            className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl shadow-sm outline-none font-semibold transition-all ${theme === 'dark' ? 'bg-[#0d4b4b] text-cyan-50 placeholder:text-cyan-200/60 border-cyan-900/40 focus:border-cyan-500/60' : 'bg-white border-transparent focus:border-brand-500/30 text-gray-700 placeholder:text-gray-400'}`}
+            className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl shadow-sm outline-none font-semibold transition-all ${theme === 'dark' ? 'bg-[#6A5738] text-[#F4E8D0] placeholder:text-[#D8C29B]/80 border-[#9F855A] focus:border-[#D1BA8E]' : 'bg-white border-transparent focus:border-brand-500/30 text-gray-700 placeholder:text-gray-400'}`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -562,7 +613,11 @@ const Home = () => {
         <button
             onClick={findClosest}
             disabled={isLocating}
-            className={`w-full flex items-center justify-center gap-2 bg-brand-600 text-white py-4 rounded-2xl font-black active:scale-[0.98] transition-all disabled:opacity-70 ${theme === 'dark' ? 'shadow-[0_0_14px_rgba(45,212,191,0.22)]' : 'shadow-lg shadow-brand-200'}`}        >
+            className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black active:scale-[0.98] transition-all disabled:opacity-70 ${
+              theme === 'dark'
+                ? 'bg-[#0f5c5c] hover:bg-[#125f5f] text-cyan-50 shadow-[0_0_14px_rgba(20,184,166,0.22)]'
+                : 'bg-brand-600 text-white shadow-lg shadow-brand-200'
+            }`}        >
             {isLocating ? <Loader2 className="animate-spin" size={20}/> : <Crosshair size={20}/>}
             {isLocating ? 'Locating...' : 'Find Closest'}
         </button>
@@ -575,7 +630,9 @@ const Home = () => {
       <button
         onClick={() => navigate('/partner')}
         // Z-Index 100 ensures it is above the background but below the Install Banner (1400)
-        className="fixed bottom-24 right-6 md:bottom-10 md:right-10 z-[100] bg-brand-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform border-4 border-white/50 backdrop-blur active:bg-brand-700"
+        className={`fixed bottom-24 right-6 md:bottom-10 md:right-10 z-[100] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform border-4 border-white/50 backdrop-blur ${
+          theme === 'dark' ? 'bg-[#0f5c5c] active:bg-[#125f5f]' : 'bg-brand-600 active:bg-brand-700'
+        }`}
         title="Quick Add Quest"
       >
         <PlusCircle size={32} />
@@ -595,10 +652,10 @@ const Home = () => {
                     className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${
                         selectedCategory === cat
                         ? (theme === 'dark'
-                            ? 'bg-[#0f5c5c] text-white border-[#1e6b6b] shadow-[0_0_12px_rgba(20,184,166,0.2)] transform scale-105'
+                            ? 'bg-[#0a4444] text-cyan-50 border-[#1e6b6b] shadow-[0_0_12px_rgba(15,92,92,0.34)] transform scale-105'
                             : 'bg-brand-600 text-white border-brand-600 shadow-md transform scale-105')
                         : (theme === 'dark'
-                            ? 'bg-[#0d4b4b] text-cyan-100 border-cyan-900/50 hover:bg-[#125454] hover:border-[#1e6b6b]'
+                            ? 'bg-[#7A6A47] text-[#F1E6CD] border-[#A88D62] hover:bg-[#8A7851] hover:border-[#B69B6F]'
                             : 'bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:border-gray-200')
                     }`}
                 >
@@ -626,7 +683,7 @@ const Home = () => {
                 onClick={() => handleQuestClick(quest.id)}
                 className={`group backdrop-blur-md rounded-3xl shadow-sm overflow-hidden cursor-pointer h-[450px] border ${
                   theme === 'dark'
-                    ? 'bg-[#0d4b4b] border-cyan-900/50'
+                    ? 'bg-[#6A5738] border-[#9F855A]'
                     : 'bg-white/80 border-white/50'
                 }`}
                 style={{
@@ -635,7 +692,7 @@ const Home = () => {
                 }}
             >
                     {/* Image Section */}
-                    <div className="relative h-64 overflow-hidden bg-[#D9C9A8]" onContextMenu={(e) => e.preventDefault()}>
+                    <div className={`relative h-64 overflow-hidden ${theme === 'dark' ? 'bg-[#4F452B]' : 'bg-[#D9C9A8]'}`} onContextMenu={(e) => e.preventDefault()}>
                         <img
                             src={quest.image || "https://via.placeholder.com/600x400/CCCCCC/808080?text=SideQuest+Image+Missing"}
                             alt={quest.title}
@@ -645,7 +702,7 @@ const Home = () => {
                             draggable="false"
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             style={{
-                              backgroundColor: '#D9C9A8',
+                              backgroundColor: theme === 'dark' ? '#4F452B' : '#D9C9A8',
                               transform: 'translateZ(0)',
                               backfaceVisibility: 'hidden',
                               WebkitBackfaceVisibility: 'hidden',
@@ -658,7 +715,7 @@ const Home = () => {
 
                         <div className={`absolute top-4 right-4 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-lg ${
                           theme === 'dark'
-                            ? 'bg-[#0a3a3a]/95 text-cyan-100 border border-cyan-900/60'
+                            ? 'bg-[#8A724C]/95 text-[#F4E8D0] border border-[#B89B6A]'
                             : 'bg-white/90 text-brand-600'
                         }`}>
                             ⭐ {quest.xp_value} XP
@@ -687,13 +744,13 @@ const Home = () => {
                         </div>
 
                         <h3 className={`font-bold text-xl mb-2 transition-colors ${
-                          theme === 'dark' ? 'text-cyan-50 group-hover:text-cyan-200' : 'text-gray-900 group-hover:text-brand-600'
+                          theme === 'dark' ? 'text-[#F4E8D0] group-hover:text-[#FFF4DE]' : 'text-gray-900 group-hover:text-brand-600'
                         }`}>
                             {quest.title}
                         </h3>
 
-                        <div className={`flex items-center text-sm mt-4 ${theme === 'dark' ? 'text-cyan-200/80' : 'text-gray-500'}`}>
-                            <MapPin size={16} className={`mr-1.5 ${theme === 'dark' ? 'text-cyan-300/70' : 'text-gray-400'}`} />
+                        <div className={`flex items-center text-sm mt-4 ${theme === 'dark' ? 'text-[#E7D7B9]/90' : 'text-gray-500'}`}>
+                            <MapPin size={16} className={`mr-1.5 ${theme === 'dark' ? 'text-[#D8C29B]/80' : 'text-gray-400'}`} />
                             {quest.location_address}
                         </div>
                     </div>

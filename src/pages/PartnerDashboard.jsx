@@ -706,7 +706,7 @@ useEffect(() => {
             )}
                    </div>
 
-                        <button type="submit" disabled={isSubmitting} className={`w-full text-white py-4 rounded-2xl font-black text-lg shadow-xl transition-all transform active:scale-95 flex items-center justify-center ${mode === 'quest' ? 'bg-brand-600 hover:bg-brand-700 shadow-brand-200' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'}`}>
+                        <button type="submit" disabled={isSubmitting} className={`w-full text-white py-4 rounded-2xl font-black text-lg shadow-xl transition-all transform active:scale-95 flex items-center justify-center ${mode === 'quest' ? (isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f] shadow-cyan-900/40' : 'bg-brand-600 hover:bg-brand-700 shadow-brand-200') : 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'}`}>
                             {isSubmitting ? 'Processing...' : (editingId ? 'Save & Resubmit for Approval' : 'Publish to SideQuest')}
                         </button>
                     </form>
@@ -739,7 +739,7 @@ useEffect(() => {
         className={`flex-1 border-2 p-3 rounded-xl outline-none font-mono font-bold uppercase ${isDark ? 'bg-[#0a3a3a] border-cyan-900/50 text-cyan-50 placeholder:text-cyan-200/60 focus:border-cyan-500' : 'bg-gray-50 border-gray-100 focus:border-brand-500'}`} 
         required 
     />
-    <button type="submit" className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-700 transition-all">
+    <button type="submit" className={`text-white px-6 py-3 rounded-xl font-bold transition-all ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-brand-600 hover:bg-brand-700'}`}>
         Verify
     </button>
 </form>

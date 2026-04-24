@@ -1,9 +1,13 @@
 import React from 'react';
 import SEO from '../components/SEO';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 const Privacy = () => {
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-[#E6D5B8] px-4 py-10">
+    <div className={`min-h-screen px-4 py-10 ${isDark ? 'bg-[#4F452B]' : 'bg-[#E6D5B8]'}`}>
       <SEO title="Privacy Policy" description="How SideQuest handles traveler privacy and data." />
       <div className="max-w-3xl mx-auto rounded-3xl bg-white p-8 md:p-10 shadow-sm">
         <h1 className="text-3xl font-extrabold text-slate-900 mb-4">Privacy Policy</h1>

@@ -141,7 +141,7 @@ const QuestCard = ({ progress, quest, onSubmitProof }) => {
           <button 
             onClick={handleSubmit} 
             disabled={isSubmitting || isCompressing || !file}
-            className="w-full bg-brand-600 text-white py-3 rounded-xl font-bold hover:bg-brand-700 transition flex items-center justify-center shadow-lg shadow-brand-100 disabled:opacity-50 disabled:shadow-none"
+            className={`w-full text-white py-3 rounded-xl font-bold transition flex items-center justify-center shadow-lg disabled:opacity-50 disabled:shadow-none ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f] shadow-cyan-900/40' : 'bg-brand-600 hover:bg-brand-700 shadow-brand-100'}`}
           >
             {isSubmitting ? 'Uploading...' : 'Submit for Verification'}
           </button>
@@ -213,7 +213,7 @@ const MyQuests = () => {
         <div className={`flex flex-col items-center justify-center min-h-[60vh] text-center px-4 ${isDark ? 'text-cyan-50' : ''}`}>
             <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>Track Your Impact</h2>
             <p className={`mb-6 ${isDark ? 'text-cyan-200/80' : 'text-gray-500'}`}>Login to view your accepted quests and submit proofs.</p>
-            <button onClick={() => setShowAuthModal(true)} className="bg-brand-600 text-white px-8 py-3 rounded-full font-bold hover:bg-brand-700 transition shadow-lg">
+            <button onClick={() => setShowAuthModal(true)} className={`text-white px-8 py-3 rounded-full font-bold transition shadow-lg ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-brand-600 hover:bg-brand-700'}`}>
                 Login / Signup
             </button>
         </div>

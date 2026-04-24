@@ -63,11 +63,14 @@ It is intended for:
 
 ### PWA and Performance
 - **PWA Plugin:** `vite-plugin-pwa` `^1.2.0`
-- Manifest and Workbox runtime cache configured in `vite.config.ts`
-- **Update strategy:** `registerType: 'prompt'` with `injectRegister: false` (registration driven by `useRegisterSW` in `src/components/UpdatePrompt.jsx`)
-- `UpdatePrompt` renders a user-driven refresh banner when a new service worker is waiting; polls for updates hourly with an interval cleaned up on unmount
-- Workbox handles outdated cache cleanup (`cleanupOutdatedCaches: true`); no manual purge script in `index.html`
-- Install banner UX (including iOS manual install guidance)
+- **Current release mode:** plugin intentionally disabled in `vite.config.ts` during Phase 1 stale-SW recovery
+- Active service worker is the one-time kill-switch at `public/sw.js`:
+  - no fetch interception (network-first behavior preserved)
+  - cache purge in install/activate
+  - self-unregister on activate
+  - client reload message dispatch for stale-tab recovery
+- App-level fallback recovery in `App.jsx` (`recoverFromStaleServiceWorker`) with a loop guard key: `sq_sw_self_heal_attempted`
+- `UpdatePrompt` remains mounted but install/update prompt behavior is intentionally muted while kill switch is active
 - Long-term immutable cache for hashed build output via `Cache-Control: public, max-age=31536000, immutable` on `/assets/*` in `vercel.json`
 
 ### Analytics and Monitoring
@@ -83,7 +86,7 @@ It is intended for:
 ### Linting and Code Quality
 - **ESLint** `^9.39.1`
 - `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`
-- Current lint target is TypeScript files only (`**/*.{ts,tsx}`)
+- Lint script currently runs across the repo via `eslint .`
 
 ### Deployment / Hosting
 - **Deployment target detected:** Vercel
@@ -101,6 +104,7 @@ It is intended for:
 
 ### Global State and Domain Hub
 - **Main state container:** `src/context/SideQuestContext.jsx`
+- **Preferences state container:** `src/context/AppPreferencesContext.jsx` (theme + language + translation helper)
 - Handles:
   - Authentication/session hydration
   - Profile and role state
@@ -150,6 +154,8 @@ Defined in `App.jsx`:
 - `/admin` -> Admin moderation/oversight/security controls
 - `/emergency` -> Island-wide emergency and hospital lookup
 - `/quiz` -> Tiered quiz system with XP rewards
+- `/privacy` -> Privacy policy page
+- `/terms` -> Terms and conditions page
 
 ---
 
@@ -185,6 +191,7 @@ Defined in `App.jsx`:
 
 ### Not Present in Repo
 - `.env.example` not found
+- `.env.local` is present for local development secrets
 - Supabase SQL migrations not found in `supabase/**/*.sql`
 - GitHub Actions workflow files not found
 
@@ -221,6 +228,7 @@ From `package.json`:
 - Password complexity rules implemented
 - Supabase MFA logic for admin flows
 - Canonical tags and metadata present
+- No-store cache policy applied to `sw.js`, `workbox-*.js`, and `manifest.webmanifest`
 
 ### Risks / Gaps To Watch
 - Auth and admin logic partly enforced in frontend code; final authority should remain in Supabase RLS and policies
@@ -234,7 +242,7 @@ From `package.json`:
 
 - **Automated tests:** none detected (no Jest/Vitest/Playwright/Cypress config)
 - **CI pipelines:** none detected
-- **Type safety:** partial (mixed JS/TS; ESLint config only targets TS files)
+- **Type safety:** partial (mixed JS/TS; broad linting enabled via `eslint .`)
 
 Implication: regressions are currently likely to be caught mostly by manual testing.
 
@@ -247,7 +255,6 @@ Implication: regressions are currently likely to be caught mostly by manual test
 - **Google Maps web links** for navigation handoff
 - **Google Fonts CDN** for typography
 - **Carto tile servers** for map tiles
-- **Cloudinary URL pattern** appears in PWA runtime cache rule
 
 ---
 
@@ -273,7 +280,81 @@ Top-level key files/folders:
 
 ---
 
-## 13) Recommendations (Detected + Suggested Improvements)
+## 13) Cross-Branch Feature Inventory (Main + Active Feature Branches)
+
+This section captures branch-level deltas that are not fully merged into `main` yet.
+Source basis: `git diff --name-only main..feature/*` plus route inspection from branch `src/App.jsx`.
+
+### `feature/travel-agency` Delta (vs `main`)
+
+- **Additional routes observed:**
+  - `/hunt`
+  - `/hunt/:stopId`
+  - `/leaderboard`
+  - `/plan-trip`
+  - `/my-journey`
+- **Additional pages/components observed:**
+  - `src/pages/TravelAgency.jsx`
+  - `src/pages/MyJourney.jsx`
+  - `src/pages/HuntDashboard.jsx`
+  - `src/pages/HuntStop.jsx`
+  - `src/pages/Leaderboard.jsx`
+  - `src/pages/HuntAdminTab.jsx`
+  - `src/components/HuntCodeModal.jsx`
+  - `src/components/HuntStopCard.jsx`
+- **Backend/serverless additions observed:**
+  - `supabase/functions/create-checkout-session/index.ts`
+  - `supabase/functions/stripe-webhook/index.ts`
+- **Branch notes:**
+  - Introduces travel-planning and hunt gamification surfaces not currently active on `main`.
+  - Includes broad UI asset + theme updates (landing icons, category images, navigation assets).
+
+### `feature/colombo-hunt` Delta (vs `main`)
+
+- **Additional routes observed:**
+  - `/hunt`
+  - `/hunt/register`
+  - `/hunt/payment`
+  - `/hunt/:stopId`
+  - `/leaderboard`
+- **Additional pages/components observed:**
+  - `src/pages/HuntDashboard.jsx`
+  - `src/pages/HuntRegistration.jsx`
+  - `src/pages/HuntPayment.jsx`
+  - `src/pages/HuntStop.jsx`
+  - `src/pages/Leaderboard.jsx`
+  - `src/pages/HuntAdminTab.jsx`
+  - `src/components/HuntCodeModal.jsx`
+  - `src/components/HuntStopCard.jsx`
+- **Backend/serverless additions observed:**
+  - `supabase/functions/create-hunt-checkout-session/index.ts`
+  - `supabase/functions/stripe-webhook-hunt/index.ts`
+  - `supabase/functions/stripe-webhook/index.ts`
+- **DB migration footprint observed:**
+  - `supabase/migrations/001_hunt_rls_hardening.sql`
+  - `supabase/migrations/002_hunt_rpc_guardrails.sql`
+  - `supabase/migrations/003_hunt_leaderboard_ordering.sql`
+  - `supabase/migrations/004_hunt_teams_and_registrations.sql`
+  - `supabase/migrations/005_hunt_registration_rls.sql`
+  - `supabase/migrations/006_hunt_payments_core.sql`
+  - `supabase/migrations/007_hunt_bank_transfer.sql`
+  - `supabase/migrations/008_admin_reset_hunt_access_cleanup.sql`
+- **Branch notes:**
+  - Hunt feature is operationally deeper than `feature/travel-agency` (registration + payment + migration set).
+  - Adds explicit database hardening and payment lifecycle support for hunt operations.
+
+### Consolidation Guidance
+
+- Treat `main` as canonical runtime baseline until branch features are merged.
+- Before merging either branch, reconcile:
+  - route collisions in `src/App.jsx`
+  - Supabase edge function naming/ownership (`create-checkout-session` vs `create-hunt-checkout-session`)
+  - migration ordering and idempotency
+  - admin panel overlap (`HuntAdminTab` + existing moderation controls)
+
+---
+
+## 14) Recommendations (Detected + Suggested Improvements)
 
 Priority ordered for maintainability and safe scaling:
 
@@ -311,13 +392,16 @@ Priority ordered for maintainability and safe scaling:
 
 ### Recently Completed
 
-- PWA reload loop fixed: removed manual purge script in `index.html`; migrated `vite-plugin-pwa` from `autoUpdate` + `skipWaiting` to `prompt` mode with a user-controlled `UpdatePrompt` banner
+- Phase 1 stale-service-worker recovery deployed:
+  - `vite-plugin-pwa` temporarily disabled in `vite.config.ts`
+  - one-time self-destructing kill-switch service worker added at `public/sw.js`
+  - app-side stale SW fallback recovery added in `App.jsx` with loop guard
 - Collapsed duplicate Vite config to a single `vite.config.ts`; redirected `tsc -b` build artifacts into `node_modules/.cache/` so the repo root stays clean
 - Added long-term immutable caching for `/assets/*` in `vercel.json`
 
 ---
 
-## 14) AI Usage Notes (For Future Agent Work)
+## 15) AI Usage Notes (For Future Agent Work)
 
 When building features in this repo, assume:
 
@@ -325,8 +409,8 @@ When building features in this repo, assume:
 - Role-based behavior is tightly coupled to UI + context action guards.
 - Network instability handling is intentional; avoid removing local persistence/recovery paths unless replacing with equivalent reliability.
 - Realtime updates may duplicate local optimistic changes; preserve dedupe checks.
-- PWA behavior and cache invalidation are part of production stability strategy; test changes in install/refresh flows.
-- Do not reintroduce any synchronous service-worker-unregister or cache-clear script in `index.html` — it caused a reload loop. Updates are handled by `UpdatePrompt` via `vite-plugin-pwa` prompt mode.
+- PWA behavior is in a temporary kill-switch phase; do not remove `public/sw.js` or re-enable `vite-plugin-pwa` until Phase 2 is explicitly scheduled.
+- Keep stale-SW recovery guard semantics (`sq_sw_self_heal_attempted`) to avoid client reload loops.
 - Keep exactly one Vite config (`vite.config.ts`). If a `vite.config.js` or `vite.config.d.ts` reappears at the repo root, it means `tsc -b` emit paths regressed — fix `tsconfig.node.json` / `tsconfig.app.json` `outDir` + `tsBuildInfoFile` rather than committing the artifacts.
 
 Recommended first checks before major changes:
@@ -338,7 +422,7 @@ Recommended first checks before major changes:
 
 ---
 
-## 15) Quick Start for New Contributors
+## 16) Quick Start for New Contributors
 
 1. Install deps: `npm install`
 2. Add env vars:

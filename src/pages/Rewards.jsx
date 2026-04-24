@@ -114,7 +114,7 @@ const LinkifyText = ({ text }) => {
   };
 
   return (
-    <div className={`min-h-screen pb-20 ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
+    <div className={`min-h-screen pb-20 ${isDark ? 'bg-[#4F452B] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className={`text-3xl font-bold mb-2 flex items-center ${isDark ? 'text-cyan-50' : 'text-gray-800'}`}>
@@ -178,7 +178,7 @@ const LinkifyText = ({ text }) => {
                     </div>
 
 
-                    <div className={`mt-16 p-8 bg-brand-600 rounded-3xl text-white text-left relative overflow-hidden ${isDark ? 'shadow-[0_0_14px_rgba(45,212,191,0.20)]' : 'shadow-xl shadow-brand-100'}`}>
+                    <div className={`mt-16 p-8 rounded-3xl text-white text-left relative overflow-hidden ${isDark ? 'bg-[#0f5c5c] shadow-[0_0_14px_rgba(20,184,166,0.24)]' : 'bg-brand-600 shadow-xl shadow-brand-100'}`}>
                         <div className="relative z-10">
                             <h3 className="text-xl font-black mb-2">Own a local spot?</h3>
                             <p className="text-brand-100 text-sm mb-6 leading-relaxed max-w-md">

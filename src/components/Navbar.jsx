@@ -226,7 +226,11 @@ const Navbar = () => {
             <div className="grid grid-cols-1 gap-2 mt-2">
               <button
                 onClick={() => setThemeMode(theme === 'dark' ? 'light' : 'dark')}
-                className={`p-3 rounded-lg border border-gray-200 text-sm ${isDark ? 'border-cyan-900/60 text-cyan-50' : ''}`}
+                className={`p-3 rounded-lg border text-sm font-semibold transition-colors ${
+                  theme === 'dark'
+                    ? 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+                    : 'bg-[#0f5c5c] border-cyan-700 text-cyan-50 hover:bg-[#125f5f]'
+                }`}
               >
                 {theme === 'dark' ? t('lightMode') : t('darkMode')}
               </button>

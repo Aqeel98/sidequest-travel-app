@@ -400,7 +400,7 @@ const getRemainingText = (text) => {
             <button
                 onClick={handleAccept}
                 disabled={isAccepting}
-                className="w-full bg-brand-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-brand-700 transition-all flex items-center justify-center gap-2 shadow-lg"
+                className={`w-full text-white py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 shadow-lg ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-brand-600 hover:bg-brand-700'}`}
             >
                 {isAccepting ? <Loader2 className="animate-spin"/> : 'Accept Quest '}
             </button>
@@ -481,7 +481,7 @@ const getRemainingText = (text) => {
                 <button
                     type="submit"
                     disabled={isSubmitting || isCompressing || !selectedFile}
-                    className="w-full bg-brand-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-brand-700 flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-50"
+                    className={`w-full text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-50 ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-brand-600 hover:bg-brand-700'}`}
                 >
                     {isSubmitting ? <><Loader2 className="animate-spin"/> Uploading...</> : <><UploadCloud size={20}/> Submit Proof</>}
                 </button>

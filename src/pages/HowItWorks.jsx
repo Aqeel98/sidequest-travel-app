@@ -81,7 +81,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <div className={`min-h-screen pb-20 ${isDark ? 'bg-[#062f2f] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
+    <div className={`min-h-screen pb-20 ${isDark ? 'bg-[#4F452B] text-cyan-50' : 'bg-[#E6D5B8]'}`}>
       
       {/* --- HERO SECTION --- */}
       <div className={`pt-32 pb-20 px-4 text-center relative overflow-hidden ${isDark ? 'bg-[#0b5252]' : 'bg-brand-600'}`}>
@@ -295,7 +295,7 @@ const HowItWorks = () => {
             {activeTab === 'traveler' ? (
                 <button 
                   onClick={() => navigate('/')} 
-                  className="bg-brand-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-brand-700 hover:shadow-xl transition-all flex items-center justify-center mx-auto"
+                  className={`text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all flex items-center justify-center mx-auto ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : 'bg-brand-600 hover:bg-brand-700'}`}
                 >
                   Find a Quest <ArrowRight className="ml-2" />
                 </button>
@@ -308,7 +308,7 @@ const HowItWorks = () => {
                     {currentUser?.role === 'Partner' || currentUser?.role === 'Admin' ? (
                         <button
                             onClick={() => navigate('/partner')}
-                            className="text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all flex items-center justify-center" style={{ backgroundColor: '#107870' }}
+                            className={`text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all flex items-center justify-center ${isDark ? 'bg-[#0f5c5c] hover:bg-[#125f5f]' : ''}`} style={{ backgroundColor: isDark ? undefined : '#107870' }}
                         >
                             Go to Partner Dashboard <Users className="ml-2" />
                         </button>
@@ -369,7 +369,7 @@ const HowItWorks = () => {
                                         setIsRequestLoading(false);
                                     }}
                                     disabled={isRequestLoading}
-                                    className={`w-full text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${isRequestLoading ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`} style={{ backgroundColor: isRequestLoading ? '#0d6b60' : '#107870' }}
+                                    className={`w-full text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${isRequestLoading ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'} ${isDark ? (isRequestLoading ? 'bg-[#0b4f4f]' : 'bg-[#0f5c5c] hover:bg-[#125f5f]') : ''}`} style={{ backgroundColor: isDark ? undefined : (isRequestLoading ? '#0d6b60' : '#107870') }}
                                 >
                                     {isRequestLoading ? 'Sending...' : 'Request Invite'}
                                 </button>

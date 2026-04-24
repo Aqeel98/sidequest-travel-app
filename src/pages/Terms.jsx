@@ -1,9 +1,13 @@
 import React from 'react';
 import SEO from '../components/SEO';
+import { useAppPreferences } from '../context/AppPreferencesContext';
 
 const Terms = () => {
+  const { theme } = useAppPreferences();
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-[#E6D5B8] px-4 py-10">
+    <div className={`min-h-screen px-4 py-10 ${isDark ? 'bg-[#4F452B]' : 'bg-[#E6D5B8]'}`}>
       <SEO title="Terms and Conditions" description="Rules and terms for using SideQuest." />
       <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-sm p-8 md:p-10">
         <h1 className="text-3xl font-extrabold text-slate-900 mb-4">Terms and Conditions</h1>
