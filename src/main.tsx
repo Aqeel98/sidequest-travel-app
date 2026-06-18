@@ -2,6 +2,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 // @ts-expect-error App.jsx is not typed
 import App from './App.jsx'
+// @ts-expect-error swRecovery.js is not typed
+import { bootSweepIfNeeded } from './utils/swRecovery.js'
 
 // Phase 1 — Kill Switch fast path.
 // When the kill-switch service worker finishes cleanup it posts a
@@ -32,8 +34,10 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   }
 }
 
-createRoot(document.getElementById('root')!).render(
-  
-    <App />
-  
-)
+const rootEl = document.getElementById('root')!;
+
+bootSweepIfNeeded().then((reloading: boolean) => {
+  if (!reloading) {
+    createRoot(rootEl).render(<App />);
+  }
+});

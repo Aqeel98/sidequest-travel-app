@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
+import { STALE_SW_HEAL_FLAG, recoverFromStaleServiceWorker } from '../utils/swRecovery';
 
 
 /**
@@ -28,11 +29,16 @@ export const SideQuestProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true); 
   const userRef = useRef(null);
+  const isLoadingRef = useRef(true);
   const activeUploads = useRef(0); 
 
   useEffect(() => {
       userRef.current = currentUser;
   }, [currentUser]);
+
+  useEffect(() => {
+      isLoadingRef.current = isLoading;
+  }, [isLoading]);
 
     
   // Ecosystem content pools
@@ -382,13 +388,31 @@ useEffect(() => {
       }
     });
 
-    // Safety Timer
-    const safetyTimer = setTimeout(() => {
-      if (mounted && isLoading) {
-        console.warn("SQ-System: Network latency threshold exceeded. Safety override triggered.");
-        setIsLoading(false);
-        isInitialBoot.current = false;
+    // Safety Timer — release spinner on slow networks; only force SW recovery
+    // if a legacy registration is still present (boot sweep normally clears these).
+    const safetyTimer = setTimeout(async () => {
+      if (!mounted || !isLoadingRef.current) return;
+
+      let hasServiceWorker = false;
+      if ('serviceWorker' in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          hasServiceWorker = registrations.length > 0;
+        } catch (_e) {}
       }
+
+      if (
+        hasServiceWorker &&
+        sessionStorage.getItem(STALE_SW_HEAL_FLAG) !== '1'
+      ) {
+        sessionStorage.setItem(STALE_SW_HEAL_FLAG, '1');
+        recoverFromStaleServiceWorker();
+        return;
+      }
+
+      console.warn("SQ-System: Network latency threshold exceeded. Safety override triggered.");
+      setIsLoading(false);
+      isInitialBoot.current = false;
     }, 12000); 
 
     return () => {
