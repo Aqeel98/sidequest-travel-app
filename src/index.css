@@ -31,6 +31,17 @@ html.dark body {
 }
 
 /* --- 4. LEAFLET/MAP SPECIFIC FIXES --- */
+/* Fill remaining viewport under the fixed navbar (h-20 / pt-20 = 5rem).
+   svh/dvh keep CTAs above the fold on mobile browsers where 100vh is too tall. */
+.map-page-shell {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 5rem);
+  height: calc(100dvh - 5rem);
+  height: calc(100svh - 5rem);
+  overflow: hidden;
+}
+
 .leaflet-container {
   width: 100%;
   height: 100%;
@@ -156,6 +167,11 @@ html.dark body {
 }
 .leaflet-top, .leaflet-bottom {
   z-index: 1000 !important; /* Keeps map controls at 1000 */
+}
+
+/* Clear the category chip row when zoom is top-right */
+.leaflet-top.leaflet-right {
+  top: 4.5rem;
 }
 
 img {

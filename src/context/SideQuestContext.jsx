@@ -46,6 +46,8 @@ export const SideQuestProvider = ({ children }) => {
   const [rewards, setRewards] = useState([]); 
   const [quizBank, setQuizBank] = useState([]); 
   const [completedQuizIds, setCompletedQuizIds] = useState([]); 
+  /** Question IDs answered correctly — drives Total Impact Points on Profile. */
+  const [correctQuizIds, setCorrectQuizIds] = useState([]);
   const [questProgress, setQuestProgress] = useState([]); 
   const [redemptions, setRedemptions] = useState([]);
   
@@ -158,8 +160,27 @@ useEffect(() => {
 
 
   const fetchQuizHistory = async (userId) => {
-    const { data } = await supabase.from('quiz_completions').select('question_id').eq('user_id', userId);
-    if (data) setCompletedQuizIds(data.map(item => item.question_id));
+    const { data } = await supabase
+      .from('quiz_completions')
+      .select('question_id, was_correct')
+      .eq('user_id', userId);
+    if (!data) return;
+
+    // Normalize to strings — Supabase bigint ids can arrive as number or string.
+    const completed = data.map((item) => String(item.question_id));
+    const correctFromDb = data
+      .filter((item) => item.was_correct)
+      .map((item) => String(item.question_id));
+
+    // Keep optimistic / pending correct answers that have not synced yet
+    // (visibility refresh otherwise wipes Impact Points until RPC lands).
+    const pending = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
+    const pendingCorrect = pending
+      .filter((item) => item.isCorrect)
+      .map((item) => String(item.questionId));
+
+    setCompletedQuizIds([...new Set([...completed, ...pending.map((i) => String(i.questionId))])]);
+    setCorrectQuizIds([...new Set([...correctFromDb, ...pendingCorrect])]);
   };
 
 
@@ -177,7 +198,7 @@ useEffect(() => {
             });
             if (!error || error.message.includes('already claimed')) {
                 const currentBuffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
-                const filtered = currentBuffer.filter(i => i.questionId !== item.questionId);
+                const filtered = currentBuffer.filter(i => String(i.questionId) !== String(item.questionId));
                 localStorage.setItem('sq_pending_quiz', JSON.stringify(filtered));
             }
         } catch (e) { break; } 
@@ -249,15 +270,22 @@ useEffect(() => {
         return; 
     }
 
-    // 1. INSTANT LOCAL UI UPDATE
-    setCompletedQuizIds(prev => [...prev, questionId]);
+    // 1. INSTANT LOCAL UI UPDATE (normalize ids to avoid number/string dupes)
+    const qid = String(questionId);
+    setCompletedQuizIds(prev =>
+      prev.some((id) => String(id) === qid) ? prev : [...prev, qid],
+    );
     if (isCorrect) {
-        setCurrentUser(prev => ({ ...prev, xp: prev.xp + xpAmount }));
+        setCorrectQuizIds(prev =>
+          prev.some((id) => String(id) === qid) ? prev : [...prev, qid],
+        );
+        // Wallet (spendable) — mirrors profiles.xp from submit_quiz_answer RPC
+        setCurrentUser(prev => ({ ...prev, xp: (prev.xp || 0) + xpAmount }));
     }
 
     // 2. SAVE TO PERSISTENCE BUFFER (Resilience for Reloads/Offline)
     const pendingSyncs = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
-    pendingSyncs.push({ questionId, selectedIndex, xpAmount, isCorrect });
+    pendingSyncs.push({ questionId: qid, selectedIndex, xpAmount, isCorrect });
     localStorage.setItem('sq_pending_quiz', JSON.stringify(pendingSyncs));
 
     const performRobustSync = async () => {
@@ -278,7 +306,7 @@ useEffect(() => {
             if (error && !error.message.includes('already claimed')) throw error;
 
             const currentBuffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
-            const filtered = currentBuffer.filter(i => i.questionId !== questionId);
+            const filtered = currentBuffer.filter(i => String(i.questionId) !== String(questionId));
             localStorage.setItem('sq_pending_quiz', JSON.stringify(filtered));
 
         } catch (err) {
@@ -291,7 +319,7 @@ useEffect(() => {
 
             if (verify) {
                 const currentBuffer = JSON.parse(localStorage.getItem('sq_pending_quiz') || '[]');
-                const filtered = currentBuffer.filter(i => i.questionId !== questionId);
+                const filtered = currentBuffer.filter(i => String(i.questionId) !== String(questionId));
                 localStorage.setItem('sq_pending_quiz', JSON.stringify(filtered));
             } else {
                 console.warn("SQ-Vault: Sync postponed. Result stored in device memory.");
@@ -381,7 +409,8 @@ useEffect(() => {
         setCurrentUser(null);
         setQuestProgress([]);
         setRedemptions([]);
-        setCompletedQuizIds([]); 
+        setCompletedQuizIds([]);
+        setCorrectQuizIds([]); 
         setUsers([]);
         setShowAuthModal(false); 
         setIsLoading(false);
@@ -1735,7 +1764,7 @@ const approveNewReward = async (id) => {
       addQuest, updateQuest, deleteQuest, approveNewQuest, rejectNewQuest,
       addReward, updateReward, deleteReward, approveNewReward, rejectNewReward,
       acceptQuest, submitProof, approveSubmission, rejectSubmission,
-      redeemReward, verifyRedemptionCode,  switchRole, quizBank, completedQuizIds, submitQuizAnswer,
+      redeemReward, verifyRedemptionCode,  switchRole, quizBank, completedQuizIds, correctQuizIds, submitQuizAnswer,
       toast, showToast, optimizeImage
     }}>
       {children}

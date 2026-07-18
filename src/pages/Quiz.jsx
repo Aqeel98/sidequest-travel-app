@@ -31,7 +31,7 @@ const Quiz = () => {
     });
     
     const completedInLevelCount = useMemo(() => {
-        return quizBank.filter(q => q.level === activeLevel && completedQuizIds.includes(q.id)).length;
+        return quizBank.filter(q => q.level === activeLevel && completedQuizIds.some(id => String(id) === String(q.id))).length;
     }, [quizBank, activeLevel, completedQuizIds]);
     
 
@@ -51,7 +51,7 @@ const Quiz = () => {
     const availableQuestions = useMemo(() => {
         if (!quizBank.length || allDone) return [];
         
-        const pool = quizBank.filter(q => q.level === activeLevel && !completedQuizIds.includes(q.id));
+        const pool = quizBank.filter(q => q.level === activeLevel && !completedQuizIds.some(id => String(id) === String(q.id)));
         
         const shuffled = [...pool];
         for (let i = shuffled.length - 1; i > 0; i--) {

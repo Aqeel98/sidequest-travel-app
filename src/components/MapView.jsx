@@ -142,11 +142,10 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
   return (
     <div className="relative h-full w-full overflow-hidden z-0">
       
-      {/* --- FLOATING SEARCH BUTTON (Z-Index Adjusted to 800) --- */}
-      {/* --- FIX: MOBILE FLOATING BUTTON --- */}
-   <div className="absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-[16rem] md:right-auto z-[900] pointer-events-none">
+      {/* --- FLOATING SEARCH BUTTON --- */}
+   <div className="absolute right-4 bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] md:bottom-6 md:left-[16rem] md:right-auto z-[1100] pointer-events-none">
     <button
-       className={`pointer-events-auto w-44 sm:w-52 flex items-center justify-center backdrop-blur-md px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:scale-105 active:scale-95 transition-all duration-300 ${
+       className={`pointer-events-auto w-36 sm:w-44 md:w-52 flex items-center justify-center backdrop-blur-md px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:scale-105 active:scale-95 transition-all duration-300 ${
         isDark
           ? 'bg-[#0d4b4b]/95 border border-cyan-900/60 text-cyan-50 hover:bg-[#0f5c5c]'
           : 'bg-white/90 border border-white/20 text-[#107870] hover:bg-white'
@@ -175,8 +174,8 @@ export function MapView({ quests, questProgress, currentUser, onSelectQuest, set
            attribution='&copy; CARTO'
         />
         
-        {/* Custom Positioned Zoom Control */}
-        <ZoomControl position="bottomright" />
+        {/* Top-right so it never covers Find Quest on mobile */}
+        <ZoomControl position="topright" />
 
         <RecenterMap location={userLocation} />
 

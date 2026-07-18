@@ -163,7 +163,7 @@ const MapPage = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full relative">
+    <div className="map-page-shell">
       <SEO title="Explore Quests Map" description="View all available SideQuests on the map. Find adventures near you." />
 
       <div className="absolute top-2 left-0 right-0 z-[1050] px-2 pointer-events-none">
@@ -221,7 +221,7 @@ const MapPage = () => {
       />
 
       {/* --- SUGGEST A QUEST BUTTON --- */}
-      <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom)+2.75rem)] md:bottom-6 md:left-4 z-[900]">
+      <div className="absolute left-4 bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] md:bottom-6 md:left-4 z-[1100]">
         <button
           onClick={() => {
             if (!currentUser) { setShowAuthModal(true); return; }
@@ -231,7 +231,7 @@ const MapPage = () => {
             setSuggestImage(null);
             setSuggestPreview(null);
           }}
-          className={`w-44 sm:w-52 flex items-center justify-center backdrop-blur-md px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:scale-105 active:scale-95 transition-all duration-300 ${
+          className={`w-36 sm:w-44 md:w-52 flex items-center justify-center backdrop-blur-md px-4 py-2.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:scale-105 active:scale-95 transition-all duration-300 ${
             isDark
               ? 'bg-[#0d4b4b]/95 border border-cyan-900/60 text-cyan-50 hover:bg-[#0f5c5c]'
               : 'bg-white/90 border border-white/20 text-[#107870] hover:bg-white'

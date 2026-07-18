@@ -44,7 +44,7 @@ const Profile = () => {
 
 
     // 1. All Hooks called at the top level
-    const { currentUser, questProgress, quests, questSuggestions } = useSideQuest();
+    const { currentUser, questProgress, quests, questSuggestions, quizBank, correctQuizIds } = useSideQuest();
     const { theme } = useAppPreferences();
     const isDark = theme === 'dark';
 
@@ -65,10 +65,9 @@ const Profile = () => {
         const activeQuests = activeProgress.length; 
 
         // --- TWO DIFFERENT XP NUMBERS ---
-        // LIFETIME XP: total XP ever earned from approved quests AND the 50 XP
-        // bonus for each approved traveler suggestion. Immutable ledger.
-        // Drives Level, progress bar, and achievement badges so they never
-        // regress when a user redeems a reward.
+        // LIFETIME XP: total XP ever earned from approved quests, approved
+        // traveler suggestions, AND correctly answered quiz questions.
+        // Immutable ledger for Level / progress / Total Impact Points.
         //
         // The 50 constant mirrors the DB trigger award_xp_on_quest_suggestion_approval().
         // If that trigger ever changes the amount, update SUGGESTION_XP_BONUS here too.
@@ -81,7 +80,15 @@ const Profile = () => {
             s => s.submitted_by === currentUser.id && s.status === 'approved' && s.xp_awarded
         ).length;
         const suggestionBonusXP = approvedSuggestionCount * SUGGESTION_XP_BONUS;
-        const lifetimeXP = questXP + suggestionBonusXP;
+        const quizXP = (correctQuizIds || []).reduce((sum, questionId) => {
+            const q = (quizBank || []).find(
+                (question) => String(question.id) === String(questionId),
+            );
+            if (!q) return sum;
+            // Match Quiz.jsx award default (xp_reward || 2)
+            return sum + (q.xp_reward || 2);
+        }, 0);
+        const lifetimeXP = questXP + suggestionBonusXP + quizXP;
 
         // WALLET XP: spendable balance (profiles.xp). Goes down on redemption.
         // Used for display only — redemption gating is enforced server-side.
@@ -164,7 +171,7 @@ const Profile = () => {
             level, 
             progressPercent
         };
-    }, [currentUser, questProgress, quests, questSuggestions]);
+    }, [currentUser, questProgress, quests, questSuggestions, quizBank, correctQuizIds]);
     
     // 3. Early return after all hooks are called
     if (!currentUser) {
