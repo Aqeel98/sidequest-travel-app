@@ -493,7 +493,7 @@ const Home = () => {
   return (
 
     <div className={`pb-12 min-h-screen relative overflow-hidden ${theme === 'dark' ? 'bg-[#4F452B]' : 'bg-[#E6D5B8]'}`}>
-      <SEO />
+      <SEO description="Discover meaningful quests across Sri Lanka. Join the community, complete impactful quests, and earn rewards." />
 
       {/* --- AESTHETIC HEADER START --- */}
 
@@ -641,7 +641,7 @@ const Home = () => {
 
 
         {/* --- CATEGORY FILTER BUTTONS --- */}
-        <div className="flex overflow-x-auto pb-4 mb-8 gap-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+        <div data-nosnippet className="flex overflow-x-auto pb-4 mb-8 gap-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
             {categories.map(cat => (
                 <button
                     key={cat}
