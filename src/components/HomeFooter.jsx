@@ -1,6 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Instagram } from 'lucide-react';
 import { useAppPreferences } from '../context/AppPreferencesContext';
+
+const INSTAGRAM_URL = 'https://www.instagram.com/sidequest.lk';
 
 const HomeFooter = () => {
   const { t } = useAppPreferences();
@@ -12,6 +15,15 @@ const HomeFooter = () => {
           © {new Date().getFullYear()} SideQuest.lk™. {t('rights')}
         </p>
         <div className="flex items-center gap-4 text-sm font-semibold">
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer me"
+            aria-label="SideQuest on Instagram"
+            className="text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200"
+          >
+            <Instagram size={20} />
+          </a>
           <Link to="/privacy" className="text-brand-700 hover:underline dark:text-brand-300">{t('privacyPolicy')}</Link>
           <Link to="/terms" className="text-brand-700 hover:underline dark:text-brand-300">{t('termsAndConditions')}</Link>
         </div>
