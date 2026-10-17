@@ -202,7 +202,7 @@ export default function LaunchingSoon() {
 
       {/* Sand */}
       <footer className="flex justify-center px-4 pt-1 pb-6">
-        <p className="text-sm font-medium text-[#6b5a3c]">© {new Date().getFullYear()} SideQuest.lk™</p>
+        <p className="text-sm font-medium text-[#6b5a3c]">© {new Date().getFullYear()} SideQuest.lk</p>
       </footer>
 
       {quizOpen && <LaunchQuiz onClose={closeQuiz} />}
