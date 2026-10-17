@@ -74,7 +74,7 @@ export default function LaunchingSoon() {
     <div className="min-h-screen flex flex-col bg-[#E6D5B8] font-sans">
       <Helmet>
         <title>SideQuest · Launching soon</title>
-        <meta name="description" content="SideQuest opens on 28 November 2026. Quests across Sri Lanka. Follow @sidequest.lk on Instagram and TikTok." />
+        <meta name="description" content="SideQuest launches on 28 November 2026. Quests across Sri Lanka. Follow @sidequest.lk on Instagram and TikTok." />
       </Helmet>
 
       {/* Brand bar — same logo treatment as the Navbar */}
@@ -124,7 +124,7 @@ export default function LaunchingSoon() {
           <p className="mt-5 text-lg md:text-xl text-teal-50/90 font-light">
             {t.done
               ? 'We’re opening the doors.'
-              : <>Quests across Sri Lanka open on <span className="whitespace-nowrap font-semibold text-white">{launchLabel}</span></>}
+              : <>Quests across Sri Lanka launch on <span className="whitespace-nowrap font-semibold text-white">{launchLabel}</span></>}
           </p>
 
           {/* Countdown: one calm glass strip */}
@@ -150,7 +150,7 @@ export default function LaunchingSoon() {
           <button
             type="button"
             onClick={() => setQuizOpen(true)}
-            className="mt-8 inline-flex items-center gap-2 bg-white text-brand-600 px-6 py-3 rounded-full font-bold hover:shadow-xl hover:shadow-white/20 transition-shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="mt-8 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/30 text-white px-6 py-3 rounded-full font-semibold hover:bg-white/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             Play the 1-minute Sri Lanka quiz
           </button>
