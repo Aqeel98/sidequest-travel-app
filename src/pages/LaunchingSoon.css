@@ -1,0 +1,36 @@
+/* Launching Soon — only what Tailwind doesn't cover */
+
+/* The compass needle swings in and finds north once on load */
+.sqls-needle {
+  animation: sqls-settle 2.4s cubic-bezier(0.22, 1.2, 0.36, 1) 0.15s both;
+}
+
+@keyframes sqls-settle {
+  0%   { transform: rotate(-200deg); opacity: 0; }
+  35%  { transform: rotate(28deg);   opacity: 1; }
+  60%  { transform: rotate(-12deg); }
+  80%  { transform: rotate(5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Content settles in gently once on load */
+.sqls-rise {
+  animation: sqls-rise 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+@keyframes sqls-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Quiz sheet and answer reveal */
+.sqls-sheet { animation: sqls-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.sqls-reveal { animation: sqls-rise 0.35s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sqls-sheet,
+  .sqls-reveal,
+  .sqls-needle,
+  .sqls-rise,
+  .animate-wave-roll { animation: none !important; }
+}

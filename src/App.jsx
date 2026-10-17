@@ -27,6 +27,13 @@ import UpdatePrompt from './components/UpdatePrompt';
 import Quiz from './pages/Quiz';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import LaunchingSoon from './pages/LaunchingSoon';
+
+// --- LAUNCH GATE ---
+// While ON, every URL renders the holding page; no routes, auth or data load.
+// ON by default. To preview the real app locally, add VITE_LAUNCH_GATE=off to .env.local.
+// To launch: set VITE_LAUNCH_GATE=off in Vercel env vars and redeploy.
+const LAUNCH_GATE_ACTIVE = import.meta.env.VITE_LAUNCH_GATE !== 'off';
 //import HuntDashboard from './pages/HuntDashboard';
 //import HuntStop from './pages/HuntStop';
 //import Leaderboard from './pages/Leaderboard';
@@ -150,6 +157,16 @@ export default function App() {
     needle.decoding = 'async';
     needle.src = '/nav-needle.webp';
   }, []);
+
+  if (LAUNCH_GATE_ACTIVE) {
+    return (
+      <HelmetProvider>
+        <LaunchingSoon />
+        <Analytics />
+        <SpeedInsights />
+      </HelmetProvider>
+    );
+  }
 
   return (
     <HelmetProvider>
