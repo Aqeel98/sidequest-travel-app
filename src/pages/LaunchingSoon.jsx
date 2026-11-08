@@ -7,7 +7,7 @@ import './LaunchingSoon.css';
 
 // Official launch moment (Sri Lanka time). Override per-deploy with VITE_LAUNCH_DATE.
 export const LAUNCH_DATE = new Date(
-  import.meta.env.VITE_LAUNCH_DATE || '2026-11-28T09:00:00+05:30'
+  import.meta.env.VITE_LAUNCH_DATE || '2026-12-12T09:00:00+05:30'
 );
 
 const INSTAGRAM_URL = 'https://www.instagram.com/sidequest.lk';
@@ -74,7 +74,7 @@ export default function LaunchingSoon() {
     <div className="min-h-screen flex flex-col bg-[#E6D5B8] font-sans">
       <Helmet>
         <title>SideQuest · Launching soon</title>
-        <meta name="description" content="SideQuest launches on 28 November 2026. Quests across Sri Lanka. Follow @sidequest.lk on Instagram and TikTok." />
+        <meta name="description" content="SideQuest launches on 12 December 2026. Quests across Sri Lanka. Follow @sidequest.lk on Instagram and TikTok." />
       </Helmet>
 
       {/* Brand bar — same logo treatment as the Navbar */}
